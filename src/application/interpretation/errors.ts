@@ -359,3 +359,116 @@ export class InterpretiveClaimError extends Error {
     this.code = code;
   }
 }
+
+/**
+ * ETBZ-30 C3 — codes raised while validating a MetaNarrativePlan draft into an
+ * accepted `MetaNarrativePlan`.
+ *
+ * The plan is ORCHESTRATION OVER ACCEPTED MEANING, and every code below exists
+ * to keep it that. A plan may arrange, sequence, foreground and defer the
+ * claims an `InterpretiveClaimGraph` already carries; it may not add one,
+ * re-weight one, or say something the accepted grounding does not support.
+ * There is therefore no code here for "a new claim" — a plan has no channel
+ * through which one could enter, because every reference it makes is resolved
+ * against the accepted graph and an unresolvable reference is refused by name.
+ *
+ * Every one of them is a REFUSAL. Nothing repairs, pads, reorders or downgrades
+ * a draft: a plan that fails any check produces NO plan at all. In particular
+ * `PLAN_MOTIF_COUNT_INVALID` is a truth gate and not an instruction to invent a
+ * third motif — if the accepted graph cannot support three distinct grounded
+ * motifs, the run is blocked rather than filled.
+ *
+ * WHAT IS DELIBERATELY ABSENT. There is no code for an unapproved narrative
+ * operator, motif lifecycle state or thread role: all three vocabularies are
+ * the closed C1 sets, the draft schema refuses a non-member structurally, and a
+ * second semantic guard for it could never fail — which is not a guard. There
+ * is likewise no salience, confidence, rank or weight code, because the draft
+ * carries no such field for one to be raised about: `strictObject` refuses the
+ * key outright, which is the stronger property.
+ *
+ * `PLAN_MOTIF_UNGROUNDED`, `PLAN_THREAD_UNGROUNDED` and
+ * `PLAN_DUPLICATE_CHAPTER_REF` extend the contract's stated minimum rather than
+ * renaming part of it. A motif whose statement carries no meaning, a thread
+ * that is about neither a claim nor a motif, and two chapters sharing one local
+ * handle are each a distinct product failure that the listed codes would
+ * otherwise have to describe as something they are not.
+ */
+export type MetaNarrativePlanErrorCode =
+  /** The plan draft does not satisfy the strict structural schema. */
+  | 'PLAN_DRAFT_SCHEMA_INVALID'
+  /** The supplied brief is not the brief this HoroscopeModel produces. */
+  | 'PLAN_BRIEF_NOT_DERIVED_FROM_MODEL'
+  /** The claim graph was accepted against a DIFFERENT brief than this one. */
+  | 'PLAN_GRAPH_BRIEF_MISMATCH'
+  /** The claim graph's published hash is not the hash of its own content. */
+  | 'PLAN_GRAPH_HASH_INVALID'
+  /** The draft names a different brief than the one being validated. */
+  | 'PLAN_BRIEF_HASH_MISMATCH'
+  /** The draft names a different claim graph than the one being validated. */
+  | 'PLAN_GRAPH_HASH_MISMATCH'
+  /** A reference names a claim the accepted graph does not contain. */
+  | 'PLAN_UNKNOWN_CLAIM_REF'
+  /** The report thesis carries no meaning, or rests on fewer than two claims. */
+  | 'PLAN_THESIS_UNGROUNDED'
+  /** The thesis names a chart symbol its accepted grounding does not cover. */
+  | 'PLAN_THESIS_UNCITED_SYMBOL'
+  /** The thesis states a number its accepted grounding does not cover. */
+  | 'PLAN_THESIS_UNCITED_NUMBER'
+  /** The thesis invokes a BaZi method this slice does not evaluate. */
+  | 'PLAN_THESIS_OUT_OF_METHOD_SCOPE'
+  /** Fewer than three or more than five primary motifs. A truth gate: the
+   *  accepted graph either supports three distinct grounded motifs or it does
+   *  not, and padding one is exactly what this refusal prevents. */
+  | 'PLAN_MOTIF_COUNT_INVALID'
+  /** A motif carries no meaning, or rests on no accepted claim at all. */
+  | 'PLAN_MOTIF_UNGROUNDED'
+  /** A motif's anchor is absent from its own claimRefs, or two motifs claim
+   *  the same anchor: one claim cannot anchor two distinct motifs. */
+  | 'PLAN_MOTIF_ANCHOR_INVALID'
+  /** Two motifs share one local handle, or carry the same accepted identity. */
+  | 'PLAN_DUPLICATE_MOTIF'
+  /** A motif statement names a chart symbol its grounding does not cover. */
+  | 'PLAN_MOTIF_UNCITED_SYMBOL'
+  /** A motif statement states a number its grounding does not cover. */
+  | 'PLAN_MOTIF_UNCITED_NUMBER'
+  /** A motif statement invokes a method this slice does not evaluate. */
+  | 'PLAN_MOTIF_OUT_OF_METHOD_SCOPE'
+  /** A reference names a motif this plan does not declare as primary. */
+  | 'PLAN_UNKNOWN_MOTIF_REF'
+  /** A thread is about neither an accepted claim nor an accepted motif. */
+  | 'PLAN_THREAD_UNGROUNDED'
+  /** Two threads share one local handle, or carry the same accepted identity. */
+  | 'PLAN_DUPLICATE_THREAD'
+  /** A reference names a thread this plan does not declare. */
+  | 'PLAN_UNKNOWN_THREAD_REF'
+  /** A thread's resolution does not resolve: it closes in a chapter that does
+   *  not exist, does not come later, or does not itself close it — or it is
+   *  declared explicitly left open while a chapter closes it anyway. */
+  | 'PLAN_THREAD_RESOLUTION_INVALID'
+  /** Two chapters share one local handle; a resolution could name neither. */
+  | 'PLAN_DUPLICATE_CHAPTER_REF'
+  /** A planned chapter references no accepted claim. */
+  | 'PLAN_CHAPTER_UNGROUNDED'
+  /** An accepted claim of the graph appears in no chapter: accepted meaning
+   *  would be silently discarded between the graph and the plan. */
+  | 'PLAN_CLAIM_COVERAGE_INCOMPLETE'
+  /** No chapter integrates, or a chapter declares INTEGRATE without the
+   *  substance of one (two distinct claims and two distinct motifs). */
+  | 'PLAN_NO_INTEGRATION'
+  /** A tension the claim graph states is addressed by no chapter. */
+  | 'PLAN_TENSION_UNADDRESSED'
+  /** A planned motif transition targets UNSEEN, repeats the current state, or
+   *  moves a motif backwards through the approved lifecycle. */
+  | 'PLAN_MOTIF_TRANSITION_INVALID'
+  /** A primary motif is never advanced, or ends neither INTEGRATED nor CLOSED
+   *  while no accepted thread declares it explicitly left open. */
+  | 'PLAN_MOTIF_SILENTLY_DROPPED';
+
+export class MetaNarrativePlanError extends Error {
+  readonly code: MetaNarrativePlanErrorCode;
+  constructor(code: MetaNarrativePlanErrorCode, message: string) {
+    super(message);
+    this.name = 'MetaNarrativePlanError';
+    this.code = code;
+  }
+}
