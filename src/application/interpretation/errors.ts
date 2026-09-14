@@ -386,12 +386,24 @@ export class InterpretiveClaimError extends Error {
  * carries no such field for one to be raised about: `strictObject` refuses the
  * key outright, which is the stronger property.
  *
- * `PLAN_MOTIF_UNGROUNDED`, `PLAN_THREAD_UNGROUNDED` and
- * `PLAN_DUPLICATE_CHAPTER_REF` extend the contract's stated minimum rather than
- * renaming part of it. A motif whose statement carries no meaning, a thread
- * that is about neither a claim nor a motif, and two chapters sharing one local
- * handle are each a distinct product failure that the listed codes would
- * otherwise have to describe as something they are not.
+ * `PLAN_MOTIF_UNGROUNDED`, `PLAN_THREAD_UNGROUNDED`,
+ * `PLAN_DUPLICATE_CHAPTER_REF` and `PLAN_DUPLICATE_CHAPTER_CONTENT` extend the
+ * contract's stated minimum rather than renaming part of it. A motif whose
+ * statement carries no meaning, a thread that is about neither a claim nor a
+ * motif, two chapters sharing one local handle, and two chapters carrying one
+ * accepted identity are each a distinct product failure that the listed codes
+ * would otherwise have to describe as something they are not.
+ *
+ * THE TWO CHAPTER-DUPLICATE CODES ARE NOT SPELLINGS OF EACH OTHER.
+ * `PLAN_DUPLICATE_CHAPTER_REF` is a DRAFT-LOCAL collision: two chapters reused
+ * one handle, so a `CLOSE_IN_CHAPTER` resolution naming that handle points at
+ * two places and the draft cannot be read at all.
+ * `PLAN_DUPLICATE_CHAPTER_CONTENT` is an ACCEPTED-IDENTITY collision: the
+ * handles were distinct and well-formed, and the two chapters still normalized
+ * to one `chapterId` because they plan the same operation over the same claims,
+ * motifs, transitions and threads. A repeated semantic chapter is not two
+ * chapters, and a persisted resolution naming that shared id would be ambiguous
+ * in the ACCEPTED artefact rather than merely in the draft.
  */
 export type MetaNarrativePlanErrorCode =
   /** The plan draft does not satisfy the strict structural schema. */
@@ -447,6 +459,11 @@ export type MetaNarrativePlanErrorCode =
   | 'PLAN_THREAD_RESOLUTION_INVALID'
   /** Two chapters share one local handle; a resolution could name neither. */
   | 'PLAN_DUPLICATE_CHAPTER_REF'
+  /** Two locally distinct chapters normalize to ONE accepted `chapterId`: they
+   *  plan the same operation over the same claims, motifs, transitions and
+   *  threads. A repeated semantic chapter is not two chapters, and a persisted
+   *  CLOSE_IN_CHAPTER resolution naming that id could not say which it means. */
+  | 'PLAN_DUPLICATE_CHAPTER_CONTENT'
   /** A planned chapter references no accepted claim. */
   | 'PLAN_CHAPTER_UNGROUNDED'
   /** An accepted claim of the graph appears in no chapter: accepted meaning

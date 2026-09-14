@@ -17,7 +17,7 @@
  * and the motif statements - is held to exactly the C2 grounding discipline,
  * against the closure its own referenced claims imply.
  *
- * FIVE DECISIONS THAT ARE LOAD-BEARING, STATED SO THEY CANNOT DRIFT:
+ * SIX DECISIONS THAT ARE LOAD-BEARING, STATED SO THEY CANNOT DRIFT:
  *
  *  1. NO HIDDEN SALIENCE. Nothing here ranks. There is no score, confidence,
  *     salience, weight, rank or centrality, and no count is published as
@@ -62,6 +62,20 @@
  *     the accepted plan publishes sets rather than percentages or counts. For
  *     an accepted plan the claim coverage equals the graph's full claim set
  *     exactly: accepted meaning is not quietly dropped on the way to prose.
+ *
+ *  6. THE RENDERING CONSTRAINT IS ETBZ'S, NOT THE PLANNER'S. The accepted plan
+ *     carries `constraints.claimScope = ACCEPTED_GRAPH_CLAIMS_ONLY`, which is
+ *     the contract's required "explicit constraints against unsupported new
+ *     claims during rendering": prose governed by this plan may use only the
+ *     InterpretiveClaims of the graph named by `sourceClaimGraphHash`. The
+ *     draft schema has no `constraints` key and refuses one, so the value is
+ *     DERIVED by the application - a planner able to author its own scope could
+ *     widen it, which is the one thing the constraint exists to prevent. It
+ *     sits inside the structural hash, so an accepted plan's anchor commits to
+ *     the scope it was accepted under. There is exactly ONE policy in C3 and no
+ *     configurable second mode; this is the global floor, and refining it per
+ *     chapter into an allowed-claim list is ChapterContract's work, not this
+ *     module's.
  *
  * WHAT THIS MODULE DOES NOT DO. It implements no `NarrativeState` and no
  * `ChapterContract`: the motif transitions here are a PLAN of intended
@@ -363,6 +377,30 @@ export interface MetaNarrativePlanCoverage {
   readonly factRefs: readonly string[];
 }
 
+/**
+ * The single claim-scope policy an accepted plan is rendered under.
+ *
+ * Rendering governed by the plan may use ONLY InterpretiveClaims belonging to
+ * the graph identified by `sourceClaimGraphHash`. It is deliberately NOT a
+ * per-chapter allowed-claim list: this is the global floor every chapter
+ * inherits, which `ChapterContract` refines downward later. One policy, no
+ * second mode - a configurable scope would be the channel for widening exactly
+ * what this constraint closes.
+ */
+export const PLAN_CLAIM_SCOPE = 'ACCEPTED_GRAPH_CLAIMS_ONLY' as const;
+
+/**
+ * The contract's "explicit constraints against unsupported new claims during
+ * rendering", persisted on the accepted plan.
+ *
+ * ETBZ-OWNED. The draft schema carries no `constraints` key and refuses one, so
+ * a planner can neither supply, widen nor reinterpret this; the application
+ * derives it and the structural hash commits to it.
+ */
+export interface MetaNarrativePlanConstraints {
+  readonly claimScope: typeof PLAN_CLAIM_SCOPE;
+}
+
 export interface MetaNarrativePlan {
   readonly planVersion: typeof META_NARRATIVE_PLAN_VERSION;
   /** The brief the whole chain was accepted against. */
@@ -379,6 +417,8 @@ export interface MetaNarrativePlan {
   readonly coverage: MetaNarrativePlanCoverage;
   /** ORDER IS SEMANTIC. The one list in this artefact that is not sorted. */
   readonly chapterPlan: readonly AcceptedPlannedChapter[];
+  /** ETBZ-derived rendering constraints. Never planner-supplied. */
+  readonly constraints: MetaNarrativePlanConstraints;
   readonly structuralHash: string;
 }
 
@@ -492,6 +532,10 @@ export function hashMetaNarrativePlan(
     openThreads: plan.openThreads,
     coverage: plan.coverage,
     chapterPlan: plan.chapterPlan,
+    // Inside the core on purpose: an accepted plan's anchor commits to the
+    // claim scope it was accepted under, so the same chapters re-published
+    // under a wider scope are a different plan and the hash has to say so.
+    constraints: plan.constraints,
   });
 }
 
@@ -1070,9 +1114,34 @@ export function buildMetaNarrativePlan(input: BuildMetaNarrativePlanInput): Meta
   });
 
   // ORDER PRESERVED: this is the one list in the artefact that is not sorted.
-  const chapterPlan = draft.chapterPlan.map((chapterDraft) =>
-    validateChapter(chapterDraft, claimsById, motifIdByRef, threadIdByRef),
-  );
+  const validatedChapters = draft.chapterPlan.map((chapterDraft) => ({
+    chapterRef: chapterDraft.chapterRef,
+    chapter: validateChapter(chapterDraft, claimsById, motifIdByRef, threadIdByRef),
+  }));
+  const chapterPlan = validatedChapters.map((entry) => entry.chapter);
+
+  // Accepted chapter identity must be UNIQUE WITHIN ONE PLAN, and this runs
+  // before the thread resolutions and the lifecycle walk on purpose. Two
+  // chapters that normalize to one `chapterId` necessarily repeat their motif
+  // transitions, so a later check would report the collision as a lifecycle
+  // violation and leave this guard unreachable - the same ordering argument the
+  // duplicate-motif checks above are built on.
+  //
+  // Uniqueness is validated HERE rather than folded into `chapterId`. Position
+  // stays out of the identity (see `deriveChapterId`), so a repeated semantic
+  // chapter is refused rather than quietly made unique by where it sits - and
+  // `CLOSE_IN_CHAPTER` keeps resolving to exactly one accepted chapter.
+  const chapterRefByChapterId = new Map<string, string>();
+  for (const entry of validatedChapters) {
+    const existing = chapterRefByChapterId.get(entry.chapter.chapterId);
+    if (existing !== undefined) {
+      throw new MetaNarrativePlanError(
+        'PLAN_DUPLICATE_CHAPTER_CONTENT',
+        `chapters "${existing}" and "${entry.chapterRef}" carry the same accepted semantic identity; a repeated semantic chapter is not two chapters, and a CLOSE_IN_CHAPTER resolution naming that chapterId could not say which of them it means`,
+      );
+    }
+    chapterRefByChapterId.set(entry.chapter.chapterId, entry.chapterRef);
+  }
 
   // --- thread resolutions, against the real chapter sequence ---------------
   const openedAtIndex = new Map<string, number>();
@@ -1306,6 +1375,8 @@ export function buildMetaNarrativePlan(input: BuildMetaNarrativePlanInput): Meta
     openThreads,
     coverage,
     chapterPlan,
+    // DERIVED, never read from the draft: the schema has no such key at all.
+    constraints: { claimScope: PLAN_CLAIM_SCOPE },
   };
 
   return { ...core, structuralHash: hashMetaNarrativePlan(core) };

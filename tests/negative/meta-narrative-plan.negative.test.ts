@@ -63,6 +63,17 @@ describe('ETBZ-30 C3-N1: a structurally malformed draft is refused', () => {
     ['a planner-supplied structuralHash', { ...validPlanDraft(), structuralHash: 'sha256:0' }],
     ['a planner-supplied coverage', { ...validPlanDraft(), coverage: { claimRefs: [] } }],
     ['planner-authored tensions', { ...validPlanDraft(), tensions: [] }],
+    // The rendering claim scope is ETBZ's. A planner that could SUPPLY it could
+    // widen it, so both spellings are refused as an unrecognized key rather
+    // than validated away — including the one that states the correct value.
+    [
+      'planner-supplied rendering constraints',
+      { ...validPlanDraft(), constraints: { claimScope: 'ACCEPTED_GRAPH_CLAIMS_ONLY' } },
+    ],
+    [
+      'planner-WIDENED rendering constraints',
+      { ...validPlanDraft(), constraints: { claimScope: 'ANY_CLAIM' } },
+    ],
     ['a provider stamp', { ...validPlanDraft(), providerId: 'etbz-30.test.planner' }],
   ])('1: refuses a draft that is %s', (_label, planDraft) => {
     expectPlanRefusal('PLAN_DRAFT_SCHEMA_INVALID', planDraft);
@@ -473,6 +484,70 @@ describe('ETBZ-30 C3-N5: chapters reference only accepted structures', () => {
     chapter.chapterRef = CHAPTER_ESTABLISH;
 
     expectPlanRefusal('PLAN_DUPLICATE_CHAPTER_REF', draft);
+  });
+
+  it('refuses two DISTINCT handles that normalize to one accepted chapterId', () => {
+    // Different chapterRef values, identical accepted meaning: same
+    // narrativeRole, same accepted claimRefs, same accepted motifRefs, same
+    // motifTransitions, same openThreadRefs, same closeThreadRefs.
+    //
+    // Every reference list is written in a DIFFERENT order than the original,
+    // so the collision is proven to be on the NORMALIZED identity rather than
+    // on literal draft text.
+    //
+    // It also proves the guard's ORDERING. This echo repeats the CONTRAST
+    // chapter's motif transitions, which the later lifecycle walk would report
+    // as standing still on a state those motifs already hold. The duplicate
+    // identity has to be refused first, or the defect would be filed as
+    // something it is not — and the ambiguous CLOSE_IN_CHAPTER target, which is
+    // the actual product failure, would never be named.
+    const draft = validPlanDraft();
+    const contrast = draft.chapterPlan[2];
+    if (contrast === undefined) throw new Error('fixture defect');
+    draft.chapterPlan = [
+      ...draft.chapterPlan,
+      {
+        chapterRef: 'chapter-contrast-echo',
+        narrativeRole: contrast.narrativeRole,
+        claimRefs: [...contrast.claimRefs].reverse(),
+        motifRefs: [...contrast.motifRefs].reverse(),
+        motifTransitions: [...contrast.motifTransitions]
+          .reverse()
+          .map((transition) => ({ ...transition })),
+        openThreadRefs: [...contrast.openThreadRefs],
+        closeThreadRefs: [...contrast.closeThreadRefs],
+      },
+    ];
+
+    expectPlanRefusal('PLAN_DUPLICATE_CHAPTER_CONTENT', draft);
+  });
+
+  it('control: an echo differing in its accepted content is accepted', () => {
+    // The pair that makes the refusal above about IDENTITY rather than about
+    // "a plan may not carry two chapters that look alike".
+    const draft = validPlanDraft();
+    const contrast = draft.chapterPlan[2];
+    if (contrast === undefined) throw new Error('fixture defect');
+    draft.chapterPlan = [
+      ...draft.chapterPlan,
+      {
+        chapterRef: 'chapter-contrast-echo',
+        narrativeRole: contrast.narrativeRole,
+        // One claim instead of two, and no motif or thread work: a genuinely
+        // different chapter wearing the same operator.
+        claimRefs: [CLAIM_ELEMENTAL],
+        motifRefs: [],
+        motifTransitions: [],
+        openThreadRefs: [],
+        closeThreadRefs: [],
+      },
+    ];
+
+    const plan = buildPlan(draft);
+    const ids = plan.chapterPlan.map((chapter) => chapter.chapterId);
+
+    expect(plan.chapterPlan).toHaveLength(5);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
 

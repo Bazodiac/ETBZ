@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { canonicalJson } from '../../src/domain/canonical-json.js';
 import {
   META_NARRATIVE_PLAN_VERSION,
+  PLAN_CLAIM_SCOPE,
   PRIMARY_MOTIF_COUNT,
   TENSION_RELATION_TYPES,
   THREAD_NARRATIVE_ROLES,
@@ -142,6 +143,7 @@ describe('ETBZ-30 C3-A: a trusted draft builds an accepted plan', () => {
   it('A: accepts the verified baseline and publishes the contract shape', () => {
     expect(Object.keys(BASELINE).sort()).toEqual([
       'chapterPlan',
+      'constraints',
       'coverage',
       'openThreads',
       'planVersion',
@@ -696,6 +698,7 @@ describe('ETBZ-30 C3-H: the published hash is re-derivable and sensitive', () =>
       openThreads: BASELINE.openThreads,
       coverage: BASELINE.coverage,
       chapterPlan: BASELINE.chapterPlan,
+      constraints: BASELINE.constraints,
     };
     const independent = createHash('sha256').update(canonicalJson(core), 'utf8').digest('hex');
 
@@ -771,5 +774,141 @@ describe('ETBZ-30 C3-H: the published hash is re-derivable and sensitive', () =>
     // cannot pass by accident.
     expect(plan.sourceClaimGraphHash).not.toBe(plan.sourceBriefHash);
     expect(plan.structuralHash).toBe(BASELINE.structuralHash);
+  });
+});
+
+describe('ETBZ-30 C3-I: the plan persists its rendering claim constraint', () => {
+  it('publishes exactly the ETBZ-owned claim-scope constraint', () => {
+    expect(BASELINE.constraints).toEqual({ claimScope: 'ACCEPTED_GRAPH_CLAIMS_ONLY' });
+    expect(Object.keys(BASELINE.constraints)).toEqual(['claimScope']);
+    expect(BASELINE.constraints.claimScope).toBe(PLAN_CLAIM_SCOPE);
+  });
+
+  it('scopes rendering to the exact claim graph this plan is bound to', () => {
+    // The literal alone would not say WHICH claims are admissible. The
+    // constraint is only meaningful because the plan also names the graph, so
+    // both halves are asserted together.
+    expect(BASELINE.sourceClaimGraphHash).toBe(BASELINE_GRAPH.structuralHash);
+
+    const admissible = new Set(BASELINE_GRAPH.claims.map((claim) => claim.claimId));
+    for (const claimRef of BASELINE.coverage.claimRefs) {
+      expect(admissible.has(claimRef), claimRef).toBe(true);
+    }
+    expect(admissible.size).toBeGreaterThan(0);
+  });
+
+  it('commits the constraint to the plan structural hash', () => {
+    // Re-derived WITHOUT the module. Dropping `constraints` from the core must
+    // move the digest, or the published anchor would not commit to the scope
+    // the plan was accepted under.
+    const core = {
+      planVersion: BASELINE.planVersion,
+      sourceBriefHash: BASELINE.sourceBriefHash,
+      sourceClaimGraphHash: BASELINE.sourceClaimGraphHash,
+      reportThesis: BASELINE.reportThesis,
+      primaryMotifs: BASELINE.primaryMotifs,
+      tensions: BASELINE.tensions,
+      openThreads: BASELINE.openThreads,
+      coverage: BASELINE.coverage,
+      chapterPlan: BASELINE.chapterPlan,
+      constraints: BASELINE.constraints,
+    };
+    const withoutConstraints: Record<string, unknown> = { ...core };
+    delete withoutConstraints['constraints'];
+
+    const withIt = createHash('sha256').update(canonicalJson(core), 'utf8').digest('hex');
+    const withoutIt = createHash('sha256')
+      .update(canonicalJson(withoutConstraints), 'utf8')
+      .digest('hex');
+
+    expect(BASELINE.structuralHash).toBe(`sha256:${withIt}`);
+    expect(withoutIt).not.toBe(withIt);
+  });
+
+  it('adds no number and no ranking-shaped field with the constraint', () => {
+    // Anti-drift law 7 still holds WITH constraints on the artefact: the new
+    // field must not become the number-shaped hole the rest of C3 refuses.
+    expect(findNumericValues(BASELINE.constraints, 'constraints')).toEqual([]);
+    expect(findSignalNamedFields(BASELINE.constraints, 'constraints')).toEqual([]);
+    expect(findNumericValues(BASELINE, 'plan')).toEqual([]);
+    expect(findSignalNamedFields(BASELINE, 'plan')).toEqual([]);
+  });
+});
+
+describe('ETBZ-30 C3-J: accepted chapter identity is unique within one plan', () => {
+  it('publishes a distinct chapterId for every accepted chapter', () => {
+    const ids = BASELINE.chapterPlan.map((chapter) => chapter.chapterId);
+
+    expect(ids).toHaveLength(4);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('control: two chapters may share a narrativeRole when they differ in substance', () => {
+    // Uniqueness is about accepted MEANING, not about the operator. A plan that
+    // establishes twice over different claims is legal and stays legal.
+    const draft = validPlanDraft();
+    draft.chapterPlan = [
+      ...draft.chapterPlan,
+      {
+        chapterRef: 'chapter-second-establish',
+        narrativeRole: 'ESTABLISH',
+        claimRefs: [CLAIM_ELEMENTAL],
+        motifRefs: [],
+        motifTransitions: [],
+        openThreadRefs: [],
+        closeThreadRefs: [],
+      },
+    ];
+
+    const plan = buildPlan(draft);
+    const ids = plan.chapterPlan.map((chapter) => chapter.chapterId);
+
+    expect(
+      plan.chapterPlan.filter((chapter) => chapter.narrativeRole === 'ESTABLISH'),
+    ).toHaveLength(2);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('control: renaming a chapterRef leaves its accepted chapterId unchanged', () => {
+    // The handle is the planner's; the identity is the application's. Renaming
+    // every handle, and the resolution that points at one, moves nothing.
+    const renamed = validPlanDraft();
+    for (const chapter of renamed.chapterPlan) {
+      chapter.chapterRef = `renamed-${chapter.chapterRef}`;
+    }
+    for (const thread of renamed.openThreads) {
+      if (thread.resolution.chapterRef !== undefined) {
+        thread.resolution.chapterRef = `renamed-${thread.resolution.chapterRef}`;
+      }
+    }
+
+    const plan = buildPlan(renamed);
+
+    expect(plan.chapterPlan.map((chapter) => chapter.chapterId)).toEqual(
+      BASELINE.chapterPlan.map((chapter) => chapter.chapterId),
+    );
+    expect(plan.structuralHash).toBe(BASELINE.structuralHash);
+    expect(JSON.stringify(plan)).not.toContain('renamed-');
+  });
+
+  it('control: moving a unique chapter moves the plan hash and no chapterId', () => {
+    // Both halves at once: position is NOT part of a chapter's identity, and it
+    // IS part of the plan's. Uniqueness therefore cannot be an artefact of
+    // where a chapter happens to sit.
+    const reordered = validPlanDraft();
+    const qualify = reordered.chapterPlan[1];
+    const contrast = reordered.chapterPlan[2];
+    if (qualify === undefined || contrast === undefined) throw new Error('fixture defect');
+    reordered.chapterPlan[1] = contrast;
+    reordered.chapterPlan[2] = qualify;
+
+    const plan = buildPlan(reordered);
+    const ids = plan.chapterPlan.map((chapter) => chapter.chapterId);
+
+    expect(plan.structuralHash).not.toBe(BASELINE.structuralHash);
+    expect([...ids].sort()).toEqual(
+      [...BASELINE.chapterPlan.map((chapter) => chapter.chapterId)].sort(),
+    );
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
