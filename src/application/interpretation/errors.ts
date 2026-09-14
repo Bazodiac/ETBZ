@@ -289,3 +289,73 @@ export class NarrativeProviderError extends Error {
     this.prompt = prompt;
   }
 }
+
+/**
+ * ETBZ-30 — codes raised while validating an InterpretiveClaimSynthesisOutput
+ * into an accepted `InterpretiveClaimGraph`.
+ *
+ * The division of labour is the same one `report-model.ts` already draws
+ * against `narrative-provider.ts`: the port's schema proves SHAPE, and every
+ * code below answers a SEMANTIC question about one specific brief — is this
+ * fact a fact of THIS chart, is this theme approved for narration, does this
+ * statement stay inside the evaluated method scope, did provisionality survive.
+ *
+ * Every one of them is a REFUSAL. Nothing here repairs, trims, re-labels,
+ * downgrades or re-classifies a draft: a synthesis answer that fails any check
+ * produces NO graph at all, and the run is blocked rather than narrowed.
+ *
+ * `CLAIM_UNGROUNDED_INTERPRETATION` deliberately covers two shapes, exactly as
+ * `REPORT_UNGROUNDED_INTERPRETATION` does: a claim whose statement carries no
+ * meaning, and a claim that names neither a fact nor an approved theme. Both
+ * are the same product failure — an interpretation with nothing under it — and
+ * splitting them would add a code no consumer could act on differently.
+ *
+ * There is NO code here for an unsupported relation type. The closed C1 schema
+ * refuses one structurally before any of this runs, and a second guard for it
+ * could never fail — which is not a guard.
+ */
+export type InterpretiveClaimErrorCode =
+  /** The synthesis output does not satisfy the port's structural schema. */
+  | 'CLAIM_SYNTHESIS_SCHEMA_INVALID'
+  /** The supplied brief is not the brief this HoroscopeModel produces. */
+  | 'CLAIM_BRIEF_NOT_DERIVED_FROM_MODEL'
+  /** The provider answered a different brief than the one being validated. */
+  | 'CLAIM_BRIEF_HASH_MISMATCH'
+  /** A claim carries no meaning, or rests on neither a fact nor a theme. */
+  | 'CLAIM_UNGROUNDED_INTERPRETATION'
+  /** A referenced fact id is not an allowed fact of this chart. */
+  | 'CLAIM_UNKNOWN_FACT'
+  /** An echoed fact value differs from the value the chart carries. */
+  | 'CLAIM_FACT_MUTATED'
+  /** A themeRef names a CANDIDATE ThemeGraph id. Candidate themes are
+   *  structural nuance and are never semantic authorization for a claim. */
+  | 'CLAIM_CANDIDATE_THEME_NOT_APPROVED'
+  /** A themeRef names neither an approved nor a candidate theme. */
+  | 'CLAIM_UNKNOWN_THEME'
+  /** A statement names a chart symbol its accepted grounding does not cover. */
+  | 'CLAIM_UNCITED_SYMBOL'
+  /** A statement states a number its accepted grounding does not cover. */
+  | 'CLAIM_UNCITED_NUMBER'
+  /** A statement invokes a BaZi method this slice does not evaluate. */
+  | 'CLAIM_OUT_OF_METHOD_SCOPE'
+  /** A claim grounded in provisional facts declares itself supported: the
+   *  source's uncertainty would be laundered into a firmer epistemic class. */
+  | 'CLAIM_PROVISIONAL_LINEAGE_LAUNDERED'
+  /** Two drafts share one draftRef; a relation could not name either of them. */
+  | 'CLAIM_DUPLICATE_DRAFT_REF'
+  /** Two drafts carry the same accepted semantic identity. Accepting both
+   *  would publish one claim twice and weight it as if it were two. */
+  | 'CLAIM_DUPLICATE_CLAIM_CONTENT'
+  /** A relation names a draftRef this answer does not contain. */
+  | 'CLAIM_RELATION_UNKNOWN_ENDPOINT'
+  /** A relation points a claim at itself. */
+  | 'CLAIM_RELATION_SELF_REFERENCE';
+
+export class InterpretiveClaimError extends Error {
+  readonly code: InterpretiveClaimErrorCode;
+  constructor(code: InterpretiveClaimErrorCode, message: string) {
+    super(message);
+    this.name = 'InterpretiveClaimError';
+    this.code = code;
+  }
+}

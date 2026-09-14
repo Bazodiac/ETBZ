@@ -29,8 +29,8 @@
  * types and epistemic classes are members of the closed vocabularies, and that
  * it invented no key. They deliberately do not answer whether a `factRef` names
  * a fact of THIS chart, whether its echoed `value` matches, whether a
- * `themeRef` is narratable, whether a relation's endpoints exist, whether the
- * graph is acyclic, or whether provisional lineage was preserved. Every one of
+ * `themeRef` is narratable, whether a relation's endpoints exist, or whether
+ * provisional lineage was preserved. Every one of
  * those is a SEMANTIC question about a specific brief, application validation
  * owns the answer, and each will be refused by name in a later commit. Keeping
  * them out of the schema is what stops a structural guard from looking like a

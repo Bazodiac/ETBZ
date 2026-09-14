@@ -86,7 +86,10 @@ export const EVALUATED_METHODS: readonly EvaluatedMethodDefinition[] = [
 /**
  * Methods this slice does NOT evaluate, each with the terms a narrative must
  * not use. The vocabulary is what makes the scope statement enforceable rather
- * than decorative: `report-model.ts` refuses prose that invokes any of it.
+ * than decorative: `findOutOfScopeMethod` below is the one matcher over this
+ * table, and both `report-model.ts` (report prose) and
+ * `interpretive-claim-graph.ts` (an interpretive claim's statement) refuse
+ * text that invokes any of it.
  */
 export interface OutOfScopeMethodDefinition {
   readonly methodId: string;
@@ -136,3 +139,41 @@ export const NOT_EVALUATED_METHODS: readonly OutOfScopeMethodDefinition[] = [
 export const NOT_EVALUATED_METHOD_IDS: readonly string[] = NOT_EVALUATED_METHODS.map(
   (method) => method.methodId,
 );
+
+/** One out-of-scope method term found in a text, and the method it belongs to. */
+export interface OutOfScopeMethodMatch {
+  readonly methodId: string;
+  readonly term: string;
+}
+
+/**
+ * The FIRST out-of-scope method term `text` invokes, or `null` when it invokes
+ * none.
+ *
+ * Extracted here, beside the vocabulary it matches, because this slice now has
+ * TWO consumers that must refuse the same words: `report-model.ts` for report
+ * prose, and `interpretive-claim-graph.ts` for an interpretive claim's
+ * statement. Two copies of a matcher over one table is the shape that already
+ * went wrong once in this repository — `narrative-qa-policy.ts` exists because
+ * a prompt and a gate each kept their own copy of five numbers and drifted —
+ * and a second copy here would let a term be invisible to one guard while the
+ * other sees it.
+ *
+ * The matching semantics are unchanged from the private function this replaces:
+ * NFC normalization, every run of whitespace collapsed to one space, and a
+ * case-insensitive literal comparison against the lowercase vocabulary. The
+ * collapse is load-bearing — the multi-word terms ("yong shen", "da yun") are
+ * otherwise defeated by a non-breaking space or a line break between the words,
+ * which is exactly the shape wrapped prose produces.
+ */
+export function findOutOfScopeMethod(text: string): OutOfScopeMethodMatch | null {
+  const haystack = text.normalize('NFC').replace(/\s+/gu, ' ').toLowerCase();
+  for (const method of NOT_EVALUATED_METHODS) {
+    for (const term of method.vocabulary) {
+      if (haystack.includes(term)) {
+        return { methodId: method.methodId, term };
+      }
+    }
+  }
+  return null;
+}
