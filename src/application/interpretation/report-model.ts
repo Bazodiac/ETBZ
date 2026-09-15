@@ -51,7 +51,7 @@ import type { NarrativeSectionDraft } from '../ports/narrative-provider.js';
 import { findUncitedNumerals, findUncitedSymbols } from './chart-symbol-lexicon.js';
 import { ReportError } from './errors.js';
 import type { ChartFact } from './feature-set.js';
-import { NOT_EVALUATED_METHODS } from './method-scope.js';
+import { findOutOfScopeMethod } from './method-scope.js';
 import type { MethodNote } from './method-scope.js';
 import { buildNarrativeChain } from './narrative-brief.js';
 import type { NarrativeBrief } from './narrative-brief.js';
@@ -136,24 +136,6 @@ function sortedUnique(values: readonly string[]): readonly string[] {
 
 function isBlank(text: string): boolean {
   return text.trim().length === 0;
-}
-
-/**
- * Method-scope vocabulary, matched case-insensitively over whitespace-collapsed
- * text. The collapse matters: the multi-word terms ("yong shen", "da yun") are
- * otherwise defeated by a non-breaking space or a line break between the words,
- * which is exactly the shape wrapped prose produces.
- */
-function findOutOfScopeMethod(prose: string): { methodId: string; term: string } | null {
-  const haystack = prose.normalize('NFC').replace(/\s+/gu, ' ').toLowerCase();
-  for (const method of NOT_EVALUATED_METHODS) {
-    for (const term of method.vocabulary) {
-      if (haystack.includes(term)) {
-        return { methodId: method.methodId, term };
-      }
-    }
-  }
-  return null;
 }
 
 function assertSpecificity(

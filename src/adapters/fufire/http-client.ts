@@ -23,6 +23,7 @@ import type {
   FufireNatalSnapshot,
   FufirePillarFact,
   FufireTenGodFact,
+  WuxingElement,
   WuxingSnapshot,
 } from '../../application/ports/fufire-gateway.js';
 import {
@@ -37,6 +38,7 @@ import {
   TEN_GOD_NAMES,
   TEN_GOD_PINYIN,
   TEN_GOD_ROWS,
+  WUXING_BASIS_BAZI_FOUR_PILLARS,
   WUXING_ELEMENTS,
 } from '../../application/ports/fufire-gateway.js';
 import type { NormalizedBirthInput } from '../../domain/birth-input.js';
@@ -264,21 +266,50 @@ function mapBaziSnapshot(raw: unknown): FufireBaziSnapshot {
   };
 }
 
+/**
+ * Maps `POST /v1/calculate/bazi/wuxing` — the BaZi Four Pillars distribution.
+ *
+ * TWO checks here are the boundary's whole defence, because FuFirE's OTHER
+ * Wu-Xing operation (`POST /v1/calculate/wuxing`, the WESTERN PLANETARY vector
+ * that feeds the Fusion layer) answers 200 with the SAME five German element
+ * keys and the SAME `dominant_element` field. Measured against the live engine,
+ * that western payload passes every structural rule below. Shape is therefore
+ * not evidence of meaning:
+ *
+ *  - `basis` is PINNED to `bazi_four_pillars`. It is the only field that tells
+ *    the two operations apart, so a path rename — the obvious "quick fix" when
+ *    the BaZi route looks unavailable — now fails closed here instead of
+ *    silently importing western semantics into a BaZi reading. No basis is ever
+ *    defaulted or inferred: absent, empty or different all mean rejected.
+ *  - `dominant_element` is checked for MEMBERSHIP in the approved five, not
+ *    with `in`. `in` walks the prototype chain of the `{}`-literal vector, so
+ *    `toString`, `constructor`, `valueOf`, `__proto__` and `hasOwnProperty`
+ *    all passed the old check and were carried through as `dominant`.
+ */
 function mapWuxingSnapshot(raw: unknown): WuxingSnapshot {
   const body = asObject(raw, 'response');
   const vectorRaw = asObject(body['wu_xing_vector'], 'wu_xing_vector');
-  const vector = {} as Record<(typeof WUXING_ELEMENTS)[number], number>;
+  const vector = {} as Record<WuxingElement, number>;
   for (const element of WUXING_ELEMENTS) {
     vector[element] = asNumber(vectorRaw[element], `wu_xing_vector.${element}`);
   }
-  const dominant = asString(body['dominant_element'], 'dominant_element');
-  if (!(dominant in vector)) {
-    throw new FufireError('FUFIRE_CONTRACT_ERROR', `dominant_element ${dominant} is not a wu-xing element`);
+  const dominantRaw = asString(body['dominant_element'], 'dominant_element');
+  const dominant = WUXING_ELEMENTS.find((element) => element === dominantRaw);
+  if (dominant === undefined) {
+    throw new FufireError('FUFIRE_CONTRACT_ERROR', `dominant_element ${dominantRaw} is not a wu-xing element`);
+  }
+  const basis = asString(body['basis'], 'basis');
+  if (basis !== WUXING_BASIS_BAZI_FOUR_PILLARS) {
+    throw new FufireError(
+      'FUFIRE_CONTRACT_ERROR',
+      `wu-xing basis "${basis}" is not the BaZi four-pillars basis ` +
+        `("${WUXING_BASIS_BAZI_FOUR_PILLARS}") — this payload is not a BaZi fact`,
+    );
   }
   return {
     vector,
     dominant,
-    basis: asString(body['basis'], 'basis'),
+    basis: WUXING_BASIS_BAZI_FOUR_PILLARS,
   };
 }
 
