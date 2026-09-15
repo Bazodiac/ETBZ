@@ -16,6 +16,33 @@ export const WUXING_ELEMENTS = ['Holz', 'Feuer', 'Erde', 'Metall', 'Wasser'] as 
 
 export type WuxingElement = (typeof WUXING_ELEMENTS)[number];
 
+/**
+ * The ONLY Wu-Xing basis ETBZ accepts as a BaZi fact.
+ *
+ * FuFirE exposes TWO Wu-Xing operations whose payloads are shape-compatible:
+ *
+ *   POST /v1/calculate/bazi/wuxing  -> the Four Pillars distribution (this one).
+ *                                      `routers/bazi.py` builds it from the
+ *                                      pillars alone via
+ *                                      `calculate_wuxing_from_bazi_with_ledger`
+ *                                      and answers `basis: "bazi_four_pillars"`.
+ *   POST /v1/calculate/wuxing       -> a vector derived from WESTERN PLANETARY
+ *                                      positions (`routers/fusion.py`), the
+ *                                      Fusion layer's input. Same five German
+ *                                      element keys, same `dominant_element`,
+ *                                      and `basis: "western_planetary"`.
+ *
+ * Both answer 200 with a `wu_xing_vector` and a `dominant_element`, so SHAPE
+ * alone cannot tell them apart — measured against the live engine, the western
+ * payload satisfies every structural rule the BaZi mapping applies. `basis` is
+ * the only field that separates them, which is why it is PINNED here rather
+ * than carried as a free string. A payload that does not state this exact basis
+ * is not a BaZi fact and ETBZ refuses it; no default is ever manufactured.
+ */
+export const WUXING_BASIS_BAZI_FOUR_PILLARS = 'bazi_four_pillars';
+
+export type WuxingBasis = typeof WUXING_BASIS_BAZI_FOUR_PILLARS;
+
 export type WuxingVector = Readonly<Record<WuxingElement, number>>;
 
 /** One pillar exactly as FuFirE reports it (romanized + German labels). */
@@ -68,10 +95,10 @@ export interface FufireBaziSnapshot {
 
 export interface WuxingSnapshot {
   readonly vector: WuxingVector;
-  /** `dominant_element` */
-  readonly dominant: string;
-  /** `basis` (e.g. `bazi_four_pillars`) */
-  readonly basis: string;
+  /** `dominant_element` — one of the five approved elements, never a free string. */
+  readonly dominant: WuxingElement;
+  /** `basis` — pinned to `bazi_four_pillars`; see WUXING_BASIS_BAZI_FOUR_PILLARS. */
+  readonly basis: WuxingBasis;
 }
 
 /**
