@@ -92,6 +92,9 @@ describe('FuFirE HTTP client: request contract', () => {
     expect(payload['lat']).toBe(52.52);
     expect(payload['lon']).toBe(13.405);
     expect(payload['standard']).toBe('CIVIL');
+    // PD-9: the day-boundary convention is sent explicitly, never left to the
+    // producer default.
+    expect(payload['boundary']).toBe('midnight');
     expect(payload['birth_time_known']).toBe(true);
   });
 
@@ -115,6 +118,12 @@ describe('FuFirE HTTP client: request contract', () => {
     expect(payload['date']).toBe('1985-11-03');
     expect(payload['birth_time_known']).toBe(false);
     expect(String(payload['date'])).not.toContain('T00:00:00');
+    // Canonical FuFirE contract (Confluence BG 62259202): for an unknown birth
+    // time the consumer sends the DATE ONLY. The noon normalisation is the
+    // producer's; an ETBZ-side 12:00 sentinel would duplicate FUF-163.
+    expect(String(payload['date'])).toMatch(/^\d{4}-\d{2}-\d{2}$/u);
+    expect(String(payload['date'])).not.toContain('12:00');
+    expect(payload['boundary']).toBe('midnight');
   });
 });
 

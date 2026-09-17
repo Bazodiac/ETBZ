@@ -107,16 +107,30 @@ function detailCodeOf(body: FufireErrorBody): string | undefined {
   return typeof body.error === 'string' ? body.error : undefined;
 }
 
+/**
+ * PD-9 — the canonical Bazodiac MVP day-boundary convention.
+ *
+ * FuFirE accepts `boundary: "midnight" | "zi"` and defaults to `midnight`.
+ * ETBZ sends the value EXPLICITLY: a product convention that only holds because
+ * a producer default happens to agree with it is not a convention, it is an
+ * accident waiting for a default to change.
+ */
+export const FUFIRE_DAY_BOUNDARY = 'midnight' as const;
+
 function buildRequest(input: NormalizedBirthInput): Record<string, unknown> {
   // BaziRequest: `date` is local ISO8601; when the birth time is unknown the
   // time is OMITTED and `birth_time_known: false` is sent. ETBZ never sends a
-  // substituted time.
+  // substituted time — not 00:00 and not 12:00. Under the canonical FuFirE
+  // contract (Confluence BG 62259202, FUF-163/164/165) the date-only request IS
+  // the correct unknown-time request, and the server-side noon normalisation is
+  // FuFirE's sole responsibility. ETBZ must not duplicate it.
   const payload: Record<string, unknown> = {
     date: input.birthTimeKnown ? `${input.birthDate}T${input.birthTime}` : input.birthDate,
     tz: input.timezone,
     lat: input.location.lat,
     lon: input.location.lon,
     standard: 'CIVIL',
+    boundary: FUFIRE_DAY_BOUNDARY,
     birth_time_known: input.birthTimeKnown,
   };
   return payload;
@@ -293,8 +307,8 @@ function mapWuxingSnapshot(raw: unknown): WuxingSnapshot {
 // The request payload is `buildRequest(...)` unchanged: `NatalRequest`
 // (`schemas/calculate/bazi/natal.request.schema.json`, `additionalProperties:
 // false`) accepts exactly the keys ETBZ already sends — date, tz, lat, lon,
-// standard, birth_time_known — so unknown time still means an OMITTED time and
-// `birth_time_known: false`, never a substituted `T00:00`.
+// standard, boundary, birth_time_known — so unknown time still means an OMITTED
+// time and `birth_time_known: false`, never a substituted time of day.
 // =============================================================================
 
 export const FUFIRE_NATAL_PATH = '/v1/calculate/bazi/natal';
