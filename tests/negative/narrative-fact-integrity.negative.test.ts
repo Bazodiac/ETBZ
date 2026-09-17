@@ -446,9 +446,13 @@ describe('ETBZ-25 E5: a narrative may not claim a method this slice does not eva
 });
 
 describe('ETBZ-25 E6: provisionality may not be dropped on the way to the report', () => {
+  // ETBZ-34: under an unknown birth time the provisional-but-narratable facts
+  // are the Wu-Xing facts (F-1). The hour pillar is no longer narratable at all
+  // (PD-10), so the section that proves this guard moved from
+  // `primary.positional_context` to `primary.elemental_profile`.
   it('refuses a section that leans on a provisional fact and states no uncertainty', () => {
     const output = draftFor(UNKNOWN_CHAIN.brief);
-    const section = sectionOf(output, 'primary.positional_context');
+    const section = sectionOf(output, 'primary.elemental_profile');
     expect(section.uncertaintyNotes.length).toBeGreaterThan(0);
     section.uncertaintyNotes = [];
 
@@ -457,9 +461,21 @@ describe('ETBZ-25 E6: provisionality may not be dropped on the way to the report
 
   it('refuses a blank uncertainty note as if it were absent', () => {
     const output = draftFor(UNKNOWN_CHAIN.brief);
-    sectionOf(output, 'primary.positional_context').uncertaintyNotes = ['   '];
+    sectionOf(output, 'primary.elemental_profile').uncertaintyNotes = ['   '];
 
     expectRefusal('REPORT_PROVISIONAL_WITHOUT_NOTE', UNKNOWN, UNKNOWN_CHAIN.brief, output);
+  });
+
+  it('accepts the SAME elemental section without a note when the birth time is known (counterfactual)', () => {
+    const output = draftFor(KNOWN_CHAIN.brief);
+    sectionOf(output, 'primary.elemental_profile').uncertaintyNotes = [];
+
+    const report = buildReportModel({
+      model: KNOWN,
+      brief: KNOWN_CHAIN.brief,
+      providerOutput: output,
+    });
+    expect(report.uncertainty.provisionalFactIds).toEqual([]);
   });
 
   it('refuses an uncertainty note that invokes a method this slice does not evaluate', () => {

@@ -51,7 +51,29 @@ export type ChartFactKind =
   | 'hidden_stem_element'
   | 'hidden_stem_ten_god'
   | 'month_command_branch'
-  | 'month_command_principal_qi_stem';
+  | 'month_command_principal_qi_stem'
+  // ETBZ-34 / BaZi Method Profile v1.0.0 — addressable facts. Each of these
+  // values was already validated inside the HoroscopeModel but had no stable
+  // fact id, so an approved interpretive operation could only have reached it
+  // through a raw path. A raw path is not evidence a claim may cite (AF-1).
+  | 'pillar_stem_polarity'
+  | 'ten_god_element_relation'
+  | 'hidden_stem_qi_role'
+  | 'hidden_stem_ten_god_element_relation'
+  | 'month_command_element';
+
+/**
+ * Why a fact that IS present in the chart may nevertheless not be interpreted.
+ *
+ * `ASSUMED_TIME_DERIVED` (PD-10): with `birth_time_known=false` FuFirE still
+ * computes a concrete hour pillar, from a technical assumption about the time
+ * of day (canonical contract CONF-62259202: the producer's server-side noon
+ * normalisation, "never a claimed birth time"). Everything that hangs on that
+ * pillar is a deterministic function of the assumption, not of the customer's
+ * birth. It stays in the fact set as source evidence and is excluded from
+ * interpretation. ETBZ neither invents nor substitutes that time.
+ */
+export type FactExclusionReason = 'ASSUMED_TIME_DERIVED';
 
 /**
  * One addressable chart fact.
@@ -72,15 +94,26 @@ export interface ChartFact {
   /** The pillar this fact's lineage runs through, or null when it has none. */
   readonly pillar: PillarName | null;
   readonly provisional: boolean;
+  /**
+   * False when the fact may not ground any interpretation. An excluded fact is
+   * always also `provisional`: exclusion is the stronger statement, never a way
+   * to make an uncertainty disappear.
+   */
+  readonly interpretable: boolean;
+  readonly exclusionReason: FactExclusionReason | null;
 }
 
+export const FEATURE_SET_VERSION = 'etbz-34.feature-set.v2' as const;
+
 export interface InterpretationFeatureSet {
-  readonly featureSetVersion: 'etbz-25.feature-set.v1';
+  readonly featureSetVersion: typeof FEATURE_SET_VERSION;
   /** Hash of the HoroscopeModel's own canonical fact text. */
   readonly sourceStructuralHash: string;
   readonly facts: readonly ChartFact[];
   readonly factIds: readonly string[];
   readonly provisionalFactIds: readonly string[];
+  /** Facts present as source evidence but excluded from interpretation (PD-10). */
+  readonly excludedFactIds: readonly string[];
   /**
    * FuFirE's provisional-field statements, BOTH preserved verbatim and
    * separately, because they are two source statements and collapsing them
@@ -137,6 +170,9 @@ function resolveProvisionalPillars(model: HoroscopeModel): readonly PillarName[]
 function buildFacts(model: HoroscopeModel, provisionalPillars: readonly PillarName[]): ChartFact[] {
   const provisional = new Set<PillarName>(provisionalPillars);
   const facts: ChartFact[] = [];
+  // The ACCEPTED precision statement — the one the HoroscopeModel has already
+  // cross-checked between input, BaZi and Natal. No raw payload is consulted.
+  const birthTimeKnown = model.precision.birthTimeKnown;
 
   const push = (
     id: string,
@@ -146,6 +182,15 @@ function buildFacts(model: HoroscopeModel, provisionalPillars: readonly PillarNa
     sourceLabel: string | null,
     pillar: PillarName | null,
   ): void => {
+    const assumedTimeDerived = !birthTimeKnown && pillar === 'hour';
+    // ETBZ-34 (F-1): FuFirE's BaZi Wu-Xing vector sums ALL FOUR pillars — the
+    // hour stem and the hour branch's hidden stems included. With an unknown
+    // birth time that share is computed from an assumed time of day, so the
+    // vector and its dominant element are provisional as a whole. The source
+    // path names no pillar, which is why pillar lineage alone used to report
+    // these facts as certain.
+    const wuXingUnderUnknownTime =
+      !birthTimeKnown && (kind === 'wu_xing_weight' || kind === 'wu_xing_dominant');
     facts.push({
       id,
       path,
@@ -153,7 +198,10 @@ function buildFacts(model: HoroscopeModel, provisionalPillars: readonly PillarNa
       value,
       sourceLabel,
       pillar,
-      provisional: pillar !== null && provisional.has(pillar),
+      provisional:
+        (pillar !== null && provisional.has(pillar)) || assumedTimeDerived || wuXingUnderUnknownTime,
+      interpretable: !assumedTimeDerived,
+      exclusionReason: assumedTimeDerived ? 'ASSUMED_TIME_DERIVED' : null,
     });
   };
 
@@ -219,10 +267,11 @@ function buildFacts(model: HoroscopeModel, provisionalPillars: readonly PillarNa
     'day',
   );
 
-  // Wu Xing carries no pillar in its source path, so it inherits no pillar
-  // provisionality. Whether FuFirE's distribution is itself provisional under an
-  // unknown birth time is a SOURCE statement ETBZ does not have and will not
-  // invent; `precision.provisionalFields` does not name it.
+  // Wu Xing carries no pillar in its source path, so it inherits no PILLAR
+  // provisionality. It is nevertheless provisional under an unknown birth time
+  // (ETBZ-34, F-1): the producer's own endpoint builds the vector from all four
+  // pillars and states `provisional_fields: ["hour"]` for the same request, and
+  // the HoroscopeModel has accepted `birthTimeKnown=false`. See `push` above.
   push(
     'chart.wuxing.dominant',
     'wuxing.dominant',
@@ -251,8 +300,24 @@ function buildFacts(model: HoroscopeModel, provisionalPillars: readonly PillarNa
 
   for (const pillar of PILLAR_NAMES) {
     const natalPillar = model.natal.pillars[pillar];
+    push(
+      `chart.natal.pillar.${pillar}.stemPolarity`,
+      `natal.pillars.${pillar}.polarity`,
+      'pillar_stem_polarity',
+      natalPillar.polarity,
+      null,
+      pillar,
+    );
     const tenGod = natalPillar.tenGod;
     if (tenGod !== null) {
+      push(
+        `chart.natal.pillar.${pillar}.tenGod.elementRelation`,
+        `natal.pillars.${pillar}.tenGod.elementRelation`,
+        'ten_god_element_relation',
+        tenGod.elementRelation,
+        null,
+        pillar,
+      );
       push(
         `chart.natal.pillar.${pillar}.tenGod`,
         `natal.pillars.${pillar}.tenGod.name`,
@@ -276,6 +341,22 @@ function buildFacts(model: HoroscopeModel, provisionalPillars: readonly PillarNa
         `natal.pillars.${pillar}.hiddenStems[${index}].element`,
         'hidden_stem_element',
         hidden.element,
+        null,
+        pillar,
+      );
+      push(
+        `chart.natal.pillar.${pillar}.hiddenStem.${index}.qi`,
+        `natal.pillars.${pillar}.hiddenStems[${index}].qi`,
+        'hidden_stem_qi_role',
+        hidden.qi,
+        null,
+        pillar,
+      );
+      push(
+        `chart.natal.pillar.${pillar}.hiddenStem.${index}.tenGod.elementRelation`,
+        `natal.pillars.${pillar}.hiddenStems[${index}].tenGod.elementRelation`,
+        'hidden_stem_ten_god_element_relation',
+        hidden.tenGod.elementRelation,
         null,
         pillar,
       );
@@ -305,6 +386,14 @@ function buildFacts(model: HoroscopeModel, provisionalPillars: readonly PillarNa
     'natal.monthCommand.principalQiStem',
     'month_command_principal_qi_stem',
     model.natal.monthCommand.principalQiStem,
+    null,
+    'month',
+  );
+  push(
+    'chart.natal.monthCommand.element',
+    'natal.monthCommand.element',
+    'month_command_element',
+    model.natal.monthCommand.element,
     null,
     'month',
   );
@@ -365,13 +454,14 @@ export function deriveInterpretationFeatureSet(
   const methodScope = buildMethodScope(facts);
 
   const core = {
-    featureSetVersion: 'etbz-25.feature-set.v1' as const,
+    featureSetVersion: FEATURE_SET_VERSION,
     // The model's canonical text is already canonical: hash the TEXT, so the
     // value can be re-derived with a plain sha256 of `model.canonicalJson`.
     sourceStructuralHash: structuralHashOfCanonicalText(model.canonicalJson),
     facts,
     factIds: facts.map((fact) => fact.id),
     provisionalFactIds: facts.filter((fact) => fact.provisional).map((fact) => fact.id),
+    excludedFactIds: facts.filter((fact) => !fact.interpretable).map((fact) => fact.id),
     provisionalFields: {
       bazi: [...model.precision.provisionalFields],
       natal: [...model.natal.precision.provisionalFields],

@@ -193,16 +193,31 @@ describe('ETBZ-25 B4: provisionality reaches the theme level', () => {
     expect(graphOf().themes.every((theme) => !theme.containsProvisionalFacts)).toBe(true);
   });
 
-  it('marks the hour pillar theme provisional when the birth time is unknown', () => {
+  it('gives the assumed-time-derived hour pillar NO theme when the birth time is unknown (PD-10)', () => {
     const themes = graphOf(unknownTimeModel()).themes;
-    const hour = themes.find((theme) => theme.id === 'theme.pillar.hour');
 
-    expect(hour).toBeDefined();
-    expect(hour?.containsProvisionalFacts).toBe(true);
-    expect(hour?.provisionalFactIds).toEqual(hour?.factIds);
+    // Supersedes the ETBZ-25 expectation "hour theme exists and is provisional":
+    // with birth_time_known=false the hour pillar is computed from an assumed
+    // time of day, so it may not be narrated at all — not even with a caveat.
+    expect(themes.find((theme) => theme.id === 'theme.pillar.hour')).toBeUndefined();
+    expect(themes.some((theme) => theme.factIds.some((id) => id.includes('.hour.')))).toBe(false);
 
     const year = themes.find((theme) => theme.id === 'theme.pillar.year');
     expect(year?.containsProvisionalFacts).toBe(false);
+  });
+
+  it('still gives the hour pillar a certain theme when the birth time is known', () => {
+    const hour = graphOf(knownTimeModel()).themes.find((theme) => theme.id === 'theme.pillar.hour');
+    expect(hour).toBeDefined();
+    expect(hour?.containsProvisionalFacts).toBe(false);
+  });
+
+  it('marks every Wu-Xing theme provisional when the birth time is unknown (F-1)', () => {
+    const wuXing = graphOf(unknownTimeModel()).themes.filter(
+      (theme) => theme.kind === 'wu_xing_element',
+    );
+    expect(wuXing.length).toBeGreaterThan(0);
+    expect(wuXing.every((theme) => theme.containsProvisionalFacts)).toBe(true);
   });
 });
 

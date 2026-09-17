@@ -42,6 +42,7 @@ import {
   NATAL_ELEMENTS,
   NATAL_POLARITIES,
   NATAL_QI_ROLES,
+  TEN_GOD_ELEMENT_RELATIONS,
   TEN_GOD_ROWS,
   WUXING_ELEMENTS,
 } from '../ports/fufire-gateway.js';
@@ -85,6 +86,9 @@ export const CHART_SYMBOL_LEXICON: ChartSymbolLexicon = {
     // does not.
     ...NATAL_POLARITIES,
     ...NATAL_QI_ROLES,
+    // ETBZ-34: the element relation of a Ten God to the day master became an
+    // addressable fact, so naming it in prose is asserting it — same rule.
+    ...TEN_GOD_ELEMENT_RELATIONS,
   ]),
   hanTerms: unique([
     ...TEN_STEMS.map((stem) => stem.hanzi),

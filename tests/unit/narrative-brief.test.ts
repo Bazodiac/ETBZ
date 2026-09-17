@@ -167,9 +167,14 @@ describe('ETBZ-25 C3: uncertainty reaches the brief whole', () => {
     expect(brief.uncertainty.provisionalFields.bazi).toContain('hour');
     expect(brief.uncertainty.provisionalFields.natal).toContain('hour');
     expect(brief.uncertainty.provisionalFactIds.length).toBeGreaterThan(0);
+    // ETBZ-34: the provisional set is the hour pillar PLUS the Wu-Xing facts,
+    // whose vector contains the hour pillar's share (F-1). Nothing else.
     expect(
-      brief.uncertainty.provisionalFactIds.every((id) => id.includes('hour')),
+      brief.uncertainty.provisionalFactIds.every(
+        (id) => id.includes('hour') || id.startsWith('chart.wuxing.'),
+      ),
     ).toBe(true);
+    expect(brief.uncertainty.provisionalFactIds.some((id) => id.startsWith('chart.wuxing.'))).toBe(true);
   });
 
   it('states no provisionality for a known-time chart', () => {

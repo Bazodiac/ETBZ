@@ -256,10 +256,22 @@ describe('ETBZ-25 G5: provisional lineage survives the projection', () => {
 
     expect(provisional.size).toBeGreaterThan(0);
     const carried = new Set(projection.primaryThemes.flatMap((theme) => theme.provisionalFactIds));
-    // Every provisional fact of the chart is still marked provisional somewhere
-    // in the primary layer - the projection narrows no uncertainty.
+    // Every provisional fact that MAY be interpreted is still marked provisional
+    // somewhere in the primary layer - the projection narrows no uncertainty.
+    // (ETBZ-34 / PD-10: assumed-time-derived hour facts are excluded from every
+    // theme on purpose; their uncertainty is carried by `excludedFactIds`, which
+    // is a stronger statement than "provisional", never a weaker one.)
+    const excluded = new Set(featureSet.excludedFactIds);
+    expect(excluded.size).toBeGreaterThan(0);
     for (const factId of provisional) {
-      expect(carried, factId).toContain(factId);
+      if (excluded.has(factId)) {
+        expect(carried, factId).not.toContain(factId);
+      } else {
+        expect(carried, factId).toContain(factId);
+      }
+    }
+    for (const factId of excluded) {
+      expect(provisional, factId).toContain(factId);
     }
     // And a primary theme calls itself provisional exactly when it holds one.
     for (const theme of projection.primaryThemes) {

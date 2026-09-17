@@ -62,6 +62,7 @@ export type ReportErrorCode =
   | 'REPORT_OUT_OF_METHOD_SCOPE'
   /** A section cites a provisional fact without stating the uncertainty. */
   | 'REPORT_PROVISIONAL_WITHOUT_NOTE'
+  | 'REPORT_EXCLUDED_FACT_CITED'
   /** The report is generic: too few sections, facts, or no synthesis. */
   | 'REPORT_INSUFFICIENT_SPECIFICITY'
   /** Two sections carry the same paragraph: boilerplate wearing two hats. */
