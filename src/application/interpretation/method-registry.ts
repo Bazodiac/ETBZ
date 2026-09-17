@@ -89,9 +89,31 @@ export interface MethodDefinition {
   readonly legacyScopeId?: string;
 }
 
+/**
+ * Operations that cannot be performed by citing, comparing or counting accepted
+ * facts: each needs a symbolic LOOKUP TABLE. Such an operation is permitted
+ * only while the mapping it names is in `approvedDeterministicMappings`.
+ *
+ * `MARK_SEASON` / `CONTEXTUALIZE_SEASON` need branch -> season. FuFirE delivers
+ * no season (its month command is branch, principal Qi stem and element — and
+ * deliberately no seasonal state), and no versioned branch->season mapping has
+ * been approved. "Every practitioner knows Wu is summer" is exactly the model
+ * memory this registry exists to keep out. Both operations are therefore NOT
+ * part of v1.0.0, and this table makes re-adding them fail closed.
+ */
+export const LOOKUP_DEPENDENT_OPERATIONS: Readonly<Record<string, string>> = {
+  MARK_SEASON: 'branch_to_season',
+  CONTEXTUALIZE_SEASON: 'branch_to_season',
+};
+
 export interface MethodRegistry {
   readonly profileId: typeof METHOD_PROFILE_ID;
   readonly profileVersion: string;
+  /**
+   * Versioned deterministic mappings delivered WITH the interpretation input.
+   * Empty in v1.0.0: no symbolic lookup table of any kind is approved.
+   */
+  readonly approvedDeterministicMappings: readonly string[];
   readonly methods: readonly MethodDefinition[];
   readonly enabledSets: Readonly<{
     minimumSellableCore: readonly string[];
@@ -198,7 +220,7 @@ const METHODS: readonly MethodDefinition[] = [
   // ---- OPTIONAL_SUPPORTING_METHODS ---------------------------------------------
   approved('month_command', 'Month Command (Yue Ling) — contextual use only', 'APPROVED_CONDITIONAL', 'SUPPORTING',
     kinds('month_command_branch', 'month_command_principal_qi_stem', 'month_command_element'),
-    ['CONTEXTUALIZE_SEASON', 'RELATE_PRINCIPAL_QI_TO_DAY_MASTER', 'QUALIFY_WITH_BACKDROP']),
+    ['RELATE_PRINCIPAL_QI_TO_DAY_MASTER', 'QUALIFY_WITH_BACKDROP']),
   approved('yin_yang_polarity', 'Yin / Yang polarity', 'APPROVED_MVP_V1', 'SUPPORTING',
     kinds('day_master_polarity', 'pillar_stem_polarity'),
     ['DESCRIBE_MODE', 'OBSERVE_POLARITY_COMPOSITION', 'EXPLAIN_VARIANT']),
@@ -207,7 +229,7 @@ const METHODS: readonly MethodDefinition[] = [
     ['DESCRIBE_SURFACE', 'COMPARE_VISIBLE_STEMS']),
   approved('earthly_branches', 'Earthly Branches', 'APPROVED_CONDITIONAL', 'SUPPORTING',
     kinds('pillar_branch', 'pillar_branch_tier'),
-    ['NAME_BRANCH', 'HAND_OFF_TO_HIDDEN_STEMS', 'MARK_SEASON']),
+    ['NAME_BRANCH', 'HAND_OFF_TO_HIDDEN_STEMS']),
   approved('wu_xing_relations', 'Wu Xing relations — state A: day-master-relative, source-supplied only',
     'APPROVED_CONDITIONAL', 'SUPPORTING',
     kinds('ten_god_element_relation', 'hidden_stem_ten_god_element_relation'),
@@ -271,6 +293,7 @@ const METHODS: readonly MethodDefinition[] = [
 export const BAZI_METHOD_REGISTRY_V1: MethodRegistry = {
   profileId: METHOD_PROFILE_ID,
   profileVersion: METHOD_PROFILE_VERSION,
+  approvedDeterministicMappings: [],
   methods: METHODS,
   enabledSets: {
     minimumSellableCore: ['four_pillars', 'day_master', 'ten_gods', 'hidden_stems', 'positional_context', 'fact_relations'],
@@ -301,6 +324,7 @@ export type MethodRegistryErrorCode =
   | 'REGISTRY_APPROVED_WITHOUT_OPERATIONS'
   | 'REGISTRY_CLAIM_BEARING_WITHOUT_EVIDENCE'
   | 'REGISTRY_MODIFIER_NOT_CLAIM_BEARING'
+  | 'REGISTRY_OPERATION_NEEDS_UNAPPROVED_MAPPING'
   | 'REGISTRY_SCOPE_DRIFT';
 
 export class MethodRegistryError extends Error {
@@ -314,6 +338,19 @@ export class MethodRegistryError extends Error {
 
 export function isApprovedStatus(status: MethodStatus): boolean {
   return status === 'APPROVED_MVP_V1' || status === 'APPROVED_CONDITIONAL';
+}
+
+/**
+ * The mapping an operation depends on, or null. Besides the explicit table, any
+ * operation id that names a season is treated as season-dependent: renaming
+ * `MARK_SEASON` to `NOTE_SEASONAL_TONE` must not slip through.
+ */
+function operationMapping(operation: string): string | null {
+  const listed = LOOKUP_DEPENDENT_OPERATIONS[operation];
+  if (listed !== undefined) {
+    return listed;
+  }
+  return /SEASON/u.test(operation.toUpperCase()) ? 'branch_to_season' : null;
 }
 
 /** The closed set of fact kinds a registry may name. Kept in lockstep by a test. */
@@ -363,6 +400,15 @@ export function validateMethodRegistry(registry: MethodRegistry): void {
         if (!kindVocabulary.has(kind)) {
           throw new MethodRegistryError('REGISTRY_UNKNOWN_FACT_KIND', `method "${method.methodId}" names fact kind "${String(kind)}", which no ChartFact carries`);
         }
+      }
+    }
+    for (const operation of method.operations) {
+      const mapping = operationMapping(operation);
+      if (mapping !== null && !registry.approvedDeterministicMappings.includes(mapping)) {
+        throw new MethodRegistryError(
+          'REGISTRY_OPERATION_NEEDS_UNAPPROVED_MAPPING',
+          `method "${method.methodId}" declares operation "${operation}", which needs the deterministic mapping "${mapping}"; FuFirE does not deliver it and no versioned mapping is approved — general BaZi knowledge is not symbolic authority`,
+        );
       }
     }
     if (isApprovedStatus(method.status)) {
@@ -446,7 +492,9 @@ export interface MethodEnablement {
     | 'PRECONDITIONS_MET'
     | 'NOT_APPROVED'
     | 'REQUIRED_FACT_KIND_MISSING'
-    | 'MONTH_COMMAND_IDENTITY_NOT_PROVEN';
+    | 'MONTH_COMMAND_IDENTITY_NOT_PROVEN'
+    | 'NO_IDENTITY_PAIR'
+    | 'NO_ELIGIBLE_PILLAR_FACT';
   readonly detail: string | null;
 }
 
@@ -455,14 +503,75 @@ function interpretable(facts: readonly ChartFact[]): readonly ChartFact[] {
 }
 
 /**
- * Decides, for ONE chart, which approved methods may actually be used.
+ * Value domains in which "the same value occurs twice" is a statement about the
+ * chart. Two facts form an identity pair only inside one domain.
  *
- * A method is enabled only when every fact kind it names is present among the
- * INTERPRETABLE facts of this chart. `month_command` additionally requires the
- * identity `month hiddenStem[0].stem === monthCommand.principalQiStem`: the
- * month-command claim cites the principal hidden stem's Ten God, and that is
- * only the same thing if the two accepted facts are literally identical. This
- * is an identity comparison of two accepted values — no table is consulted.
+ * Deliberately ABSENT, because their equality is true by construction and
+ * therefore observes nothing:
+ *  - `day_master*`            — the day master IS the day pillar's stem;
+ *  - `month_command_*`        — the month command IS the month branch / its principal hidden stem;
+ *  - `*_hanzi`, `*_pinyin`, `pillar_branch_tier` — other spellings of a stem or branch already in a domain;
+ *  - `hidden_stem_qi_role`    — every branch has a `principal` Qi;
+ *  - `wu_xing_*`              — a tally, not an occurrence.
+ * No symbolic table is involved: a domain only says which VALUES are comparable.
+ */
+const IDENTITY_DOMAINS: Readonly<Partial<Record<ChartFactKind, string>>> = {
+  pillar_stem: 'stem',
+  hidden_stem: 'stem',
+  pillar_branch: 'branch',
+  pillar_stem_element: 'stem_element_de',
+  hidden_stem_element: 'hidden_stem_element',
+  pillar_stem_polarity: 'polarity',
+  ten_god: 'ten_god',
+  hidden_stem_ten_god: 'ten_god',
+  ten_god_element_relation: 'element_relation',
+  hidden_stem_ten_god_element_relation: 'element_relation',
+};
+
+/**
+ * THE identity rule of `fact_relations` — used by per-chart enablement and by
+ * claim validation (I2 / I3) alike, so "enabled" and "usable" cannot drift.
+ */
+export function isIdentityPair(left: ChartFact, right: ChartFact): boolean {
+  if (left.id === right.id || !left.interpretable || !right.interpretable) {
+    return false;
+  }
+  const domain = IDENTITY_DOMAINS[left.kind];
+  return domain !== undefined && domain === IDENTITY_DOMAINS[right.kind] && left.value === right.value;
+}
+
+function firstIdentityPair(facts: readonly ChartFact[]): readonly [ChartFact, ChartFact] | null {
+  // Grouped by domain+value: the answer does not depend on fact order, and a
+  // duplicated fact (same id) can never pair with itself.
+  const seen = new Map<string, ChartFact>();
+  for (const fact of [...facts].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))) {
+    const domain = IDENTITY_DOMAINS[fact.kind];
+    if (domain === undefined) {
+      continue;
+    }
+    const key = `${domain}\u0000${fact.value}`;
+    const earlier = seen.get(key);
+    if (earlier !== undefined && earlier.id !== fact.id) {
+      return [earlier, fact];
+    }
+    seen.set(key, fact);
+  }
+  return null;
+}
+
+/**
+ * Decides, for ONE chart, which approved methods may actually be used.
+ * "Enabled" means: a valid claim naming this method CAN be built on this chart.
+ *
+ *  - `kinds`: every fact kind the method names is present among the
+ *    INTERPRETABLE facts;
+ *  - `month_command` additionally requires the identity
+ *    `month hiddenStem[0].stem === monthCommand.principalQiStem` (two accepted
+ *    values compared — no table is consulted);
+ *  - `ANY_TWO_FACTS`: at least one identity pair exists (see `isIdentityPair`);
+ *  - `ANY_FACT_WITH_PILLAR`: the modifier never stands alone (I5), so it is
+ *    usable only if some interpretable fact sits in a pillar AND is readable by
+ *    an ENABLED non-modifier claim-bearing method.
  */
 export function resolveMethodEnablement(
   registry: MethodRegistry,
@@ -473,7 +582,7 @@ export function resolveMethodEnablement(
   const presentKinds = new Set(facts.map((fact) => fact.kind));
   const valueOf = (id: string): string | null => facts.find((fact) => fact.id === id)?.value ?? null;
 
-  return registry.methods.map((method): MethodEnablement => {
+  const resolveOne = (method: MethodDefinition, enabledCarriers: readonly MethodDefinition[]): MethodEnablement => {
     if (!isApprovedStatus(method.status)) {
       return { methodId: method.methodId, enabled: false, reason: 'NOT_APPROVED', detail: method.status };
     }
@@ -481,6 +590,27 @@ export function resolveMethodEnablement(
       const missing = method.evidence.kinds.filter((kind) => !presentKinds.has(kind));
       if (missing.length > 0) {
         return { methodId: method.methodId, enabled: false, reason: 'REQUIRED_FACT_KIND_MISSING', detail: missing.join(', ') };
+      }
+    }
+    if (method.evidence.mode === 'ANY_TWO_FACTS' && firstIdentityPair(facts) === null) {
+      return {
+        methodId: method.methodId,
+        enabled: false,
+        reason: 'NO_IDENTITY_PAIR',
+        detail: 'no two interpretable facts of one value domain carry the same value',
+      };
+    }
+    if (method.evidence.mode === 'ANY_FACT_WITH_PILLAR') {
+      const readable = new Set<ChartFactKind>(
+        enabledCarriers.flatMap((carrier) => (carrier.evidence.mode === 'kinds' ? [...carrier.evidence.kinds] : [])),
+      );
+      if (!facts.some((fact) => fact.pillar !== null && readable.has(fact.kind))) {
+        return {
+          methodId: method.methodId,
+          enabled: false,
+          reason: 'NO_ELIGIBLE_PILLAR_FACT',
+          detail: 'no interpretable fact sits in a pillar and is readable by an enabled non-modifier method',
+        };
       }
     }
     if (method.methodId === 'month_command') {
@@ -496,7 +626,22 @@ export function resolveMethodEnablement(
       }
     }
     return { methodId: method.methodId, enabled: true, reason: 'PRECONDITIONS_MET', detail: null };
-  });
+  };
+
+  // Pass 1: everything that is not a modifier. Pass 2: modifiers, which depend
+  // on which carriers pass 1 actually enabled.
+  const firstPass = new Map<string, MethodEnablement>();
+  for (const method of registry.methods) {
+    if (!method.modifier) {
+      firstPass.set(method.methodId, resolveOne(method, []));
+    }
+  }
+  const enabledCarriers = registry.methods.filter(
+    (method) => !method.modifier && method.claimBearing && firstPass.get(method.methodId)?.enabled === true,
+  );
+  return registry.methods.map(
+    (method) => firstPass.get(method.methodId) ?? resolveOne(method, enabledCarriers),
+  );
 }
 
 /** Hash of the registry content — what a run records to prove WHICH profile authorised it. */

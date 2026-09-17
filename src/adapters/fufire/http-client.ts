@@ -23,6 +23,8 @@ import type {
   FufireNatalSnapshot,
   FufirePillarFact,
   FufireTenGodFact,
+  ProducerJson,
+  ProducerRawResponse,
   WuxingSnapshot,
 } from '../../application/ports/fufire-gateway.js';
 import {
@@ -637,6 +639,16 @@ function mapNatalSnapshot(raw: unknown): FufireNatalSnapshot {
   return { pillars, dayMaster, monthCommand, provenance, precision, warnings };
 }
 
+/**
+ * ETBZ-34 (finding A) — keeps the body that was just mapped as producer
+ * evidence. `raw` came out of `response.json()`, so it is JSON by construction;
+ * the mapper above has already accepted it, so an unmappable body never gets
+ * here. The clone detaches the evidence from anything the caller might mutate.
+ */
+function rawEvidence(endpoint: string, raw: unknown): ProducerRawResponse {
+  return { endpoint, payload: structuredClone(raw) as ProducerJson };
+}
+
 export interface FufireClientDependencies {
   readonly config: FufireClientConfig;
   /** Injectable for tests; production uses the global fetch. */
@@ -650,15 +662,15 @@ export function createFufireClient(dependencies: FufireClientDependencies): Fufi
   return {
     async calculateBazi(input: NormalizedBirthInput): Promise<FufireBaziSnapshot> {
       const raw = await postJson(config, transport, FUFIRE_BAZI_PATH, buildRequest(input));
-      return mapBaziSnapshot(raw);
+      return { ...mapBaziSnapshot(raw), raw: rawEvidence(FUFIRE_BAZI_PATH, raw) };
     },
     async calculateBaziWuxing(input: NormalizedBirthInput): Promise<WuxingSnapshot> {
       const raw = await postJson(config, transport, FUFIRE_WUXING_PATH, buildRequest(input));
-      return mapWuxingSnapshot(raw);
+      return { ...mapWuxingSnapshot(raw), raw: rawEvidence(FUFIRE_WUXING_PATH, raw) };
     },
     async calculateNatal(input: NormalizedBirthInput): Promise<FufireNatalSnapshot> {
       const raw = await postJson(config, transport, FUFIRE_NATAL_PATH, buildRequest(input));
-      return mapNatalSnapshot(raw);
+      return { ...mapNatalSnapshot(raw), raw: rawEvidence(FUFIRE_NATAL_PATH, raw) };
     },
   };
 }

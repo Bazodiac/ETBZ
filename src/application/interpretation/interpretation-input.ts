@@ -22,6 +22,13 @@
 import { structuralHash } from '../../domain/structural-hash.js';
 import type { HoroscopeModel } from '../horoscope-model.js';
 import { WUXING_ELEMENTS } from '../ports/fufire-gateway.js';
+import type {
+  FufireBaziSnapshot,
+  FufireNatalSnapshot,
+  ProducerJson,
+  ProducerRawResponse,
+  WuxingSnapshot,
+} from '../ports/fufire-gateway.js';
 import { deriveInterpretationFeatureSet } from './feature-set.js';
 import type { ChartFact, InterpretationFeatureSet } from './feature-set.js';
 import {
@@ -43,6 +50,8 @@ export type InterpretationInputErrorCode =
   | 'INTERPRETATION_INPUT_WUXING_KEYSET_INVALID'
   | 'INTERPRETATION_INPUT_DOMINANT_INCONSISTENT'
   | 'INTERPRETATION_INPUT_PRECISION_CONTRADICTION'
+  | 'INTERPRETATION_INPUT_RAW_EVIDENCE_MISSING'
+  | 'INTERPRETATION_INPUT_EVIDENCE_NOT_SAME_CHART'
   | 'INTERPRETATION_INPUT_NOT_PRODUCTION_ELIGIBLE';
 
 export class InterpretationInputError extends Error {
@@ -64,6 +73,40 @@ export type ProductionBlocker =
   /** ETBZ-34 source-pillar guard not yet in the consumer: Wu-Xing same-chart is unproven. */
   | 'WUXING_SOURCE_PILLARS_NOT_VERIFIED';
 
+/**
+ * The three producer snapshots the HoroscopeModel was built from, each still
+ * carrying the wire body it was mapped from (`raw`).
+ */
+export interface ProducerSnapshots {
+  readonly bazi: FufireBaziSnapshot;
+  readonly wuxing: WuxingSnapshot;
+  readonly natal: FufireNatalSnapshot;
+}
+
+/**
+ * One raw producer response inside the hand-off.
+ *
+ * EVIDENCE / REPRODUCIBILITY ONLY. `claimBearing` is the literal `false`: no
+ * theme, claim or section may cite this block, and no path into `payload` is a
+ * `factRef`. The only semantic source is `validatedChart.facts`.
+ */
+export interface RawProducerEvidence {
+  readonly endpoint: string;
+  readonly claimBearing: false;
+  /** SHA-256 of the canonical JSON of the payload AS RECEIVED, before redaction. */
+  readonly payloadStructuralHash: string;
+  /**
+   * Paths replaced by `REDACTED_PII`. Closed list: the producer's ECHO of ETBZ's
+   * own request coordinates. Nothing FuFirE calculated is ever redacted.
+   */
+  readonly redactions: readonly string[];
+  readonly payload: ProducerJson;
+}
+
+export const RAW_EVIDENCE_REDACTED = 'REDACTED_PII' as const;
+/** Request-echo keys that are customer PII, not producer facts. */
+const ECHO_PII_KEYS: readonly string[] = ['lat', 'lon', 'latitude', 'longitude'];
+
 export interface BazodiacInterpretationInput {
   readonly schemaVersion: typeof INTERPRETATION_INPUT_SCHEMA_VERSION;
   /** PII-minimised: no display name, no coordinates, no place label. */
@@ -74,8 +117,21 @@ export interface BazodiacInterpretationInput {
     birthTime?: string;
     timezone: string;
   }>;
-  /** Consumer-validated producer snapshots (the gateway port retains no raw wire bytes). */
+  /**
+   * The complete relevant FuFirE responses, verbatim (section 3 of CONF-62128133:
+   * `bazi_raw`, `wuxing_raw`, `natal_raw`). Evidence, never a claim source.
+   * Under an unknown birth time these bodies contain the producer's ASSUMED
+   * instant; `containsAssumedTime` says so, and it is not the customer's birth.
+   */
   readonly fufire: Readonly<{
+    claimBearing: false;
+    containsAssumedTime: boolean;
+    baziRaw: RawProducerEvidence;
+    wuxingRaw: RawProducerEvidence;
+    natalRaw: RawProducerEvidence;
+  }>;
+  /** Consumer-validated producer snapshots — what the raw bodies were accepted AS. */
+  readonly validatedSnapshots: Readonly<{
     bazi: Readonly<{
       pillars: HoroscopeModel['pillars'];
       dayMaster: HoroscopeModel['dayMaster'];
@@ -131,6 +187,8 @@ export interface BazodiacInterpretationInput {
     basis: typeof REQUIRED_WUXING_BASIS;
     wuxingKeysetValid: true;
     dominantConsistent: true;
+    /** The snapshots carrying the raw evidence are the ones this model was built from. */
+    rawEvidenceSameChart: true;
   }>;
   readonly methodProfile: Readonly<{
     ref: string;
@@ -178,6 +236,101 @@ function assertWuxing(model: HoroscopeModel): void {
   }
 }
 
+function redactEcho(payload: ProducerJson): Readonly<{ payload: ProducerJson; redactions: readonly string[] }> {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { payload, redactions: [] };
+  }
+  const body = payload as { readonly [key: string]: ProducerJson };
+  const echo = body['input'];
+  if (echo === undefined || echo === null || typeof echo !== 'object' || Array.isArray(echo)) {
+    return { payload, redactions: [] };
+  }
+  const redactions: string[] = [];
+  const cleaned: Record<string, ProducerJson> = {};
+  for (const [key, value] of Object.entries(echo as { readonly [key: string]: ProducerJson })) {
+    if (ECHO_PII_KEYS.includes(key)) {
+      cleaned[key] = RAW_EVIDENCE_REDACTED;
+      redactions.push(`input.${key}`);
+    } else {
+      cleaned[key] = value;
+    }
+  }
+  return { payload: { ...body, input: cleaned }, redactions: redactions.sort() };
+}
+
+function rawEvidenceOf(what: string, raw: ProducerRawResponse | undefined): RawProducerEvidence {
+  if (raw === undefined || raw.payload === null || typeof raw.payload !== 'object' || Array.isArray(raw.payload)) {
+    throw new InterpretationInputError(
+      'INTERPRETATION_INPUT_RAW_EVIDENCE_MISSING',
+      `the ${what} snapshot carries no raw producer response; an interpretation input without its producer evidence is not reproducible and is refused`,
+    );
+  }
+  const { payload, redactions } = redactEcho(raw.payload);
+  return {
+    endpoint: raw.endpoint,
+    claimBearing: false,
+    payloadStructuralHash: structuralHash(raw.payload),
+    redactions,
+    payload,
+  };
+}
+
+/**
+ * The raw evidence must belong to THIS chart. The model keeps every snapshot
+ * value it accepted, so the check is a comparison of accepted values — no raw
+ * path is read and nothing is recomputed.
+ */
+function assertSnapshotsBuiltThisModel(model: HoroscopeModel, source: ProducerSnapshots): void {
+  const pillarsOf = (name: 'year' | 'month' | 'day' | 'hour'): unknown => ({
+    stem: model.pillars[name].stem,
+    branch: model.pillars[name].branch,
+    tierDe: model.pillars[name].tierDe,
+    elementDe: model.pillars[name].stemElementDe,
+  });
+  const fromModel = structuralHash({
+    bazi: {
+      pillars: { year: pillarsOf('year'), month: pillarsOf('month'), day: pillarsOf('day'), hour: pillarsOf('hour') },
+      dayMaster: model.dayMaster.stem,
+      dates: model.dates,
+      precision: model.precision,
+      computationTimestamp: model.provenance.computationTimestamp,
+    },
+    wuxing: model.wuxing,
+    natal: {
+      pillars: model.natal.pillars,
+      dayMaster: model.natal.dayMaster,
+      monthCommand: model.natal.monthCommand,
+      precision: model.natal.precision,
+      provenance: model.natal.provenance,
+      warnings: model.sourceWarnings,
+    },
+  });
+  const fromSource = structuralHash({
+    bazi: {
+      pillars: source.bazi.pillars,
+      dayMaster: source.bazi.dayMaster,
+      dates: source.bazi.dates,
+      precision: source.bazi.precision,
+      computationTimestamp: source.bazi.provenance.computationTimestamp,
+    },
+    wuxing: { vector: source.wuxing.vector, dominant: source.wuxing.dominant, basis: source.wuxing.basis },
+    natal: {
+      pillars: source.natal.pillars,
+      dayMaster: source.natal.dayMaster,
+      monthCommand: source.natal.monthCommand,
+      precision: source.natal.precision,
+      provenance: source.natal.provenance,
+      warnings: source.natal.warnings,
+    },
+  });
+  if (fromModel !== fromSource) {
+    throw new InterpretationInputError(
+      'INTERPRETATION_INPUT_EVIDENCE_NOT_SAME_CHART',
+      'the producer snapshots carrying the raw evidence are not the ones this HoroscopeModel was built from; evidence of another chart is refused',
+    );
+  }
+}
+
 export interface BuildInterpretationInputOptions {
   readonly registry?: MethodRegistry;
 }
@@ -185,11 +338,16 @@ export interface BuildInterpretationInputOptions {
 /** Pure: same HoroscopeModel and registry in, byte-identical input out. */
 export function buildBazodiacInterpretationInput(
   model: HoroscopeModel,
+  source: ProducerSnapshots,
   options: BuildInterpretationInputOptions = {},
 ): BazodiacInterpretationInput {
   const registry = options.registry ?? BAZI_METHOD_REGISTRY_V1;
   validateMethodRegistry(registry);
   assertWuxing(model);
+  assertSnapshotsBuiltThisModel(model, source);
+  const baziRaw = rawEvidenceOf('BaZi', source.bazi.raw);
+  const wuxingRaw = rawEvidenceOf('BaZi/WuXing', source.wuxing.raw);
+  const natalRaw = rawEvidenceOf('Natal', source.natal.raw);
   if (model.precision.birthTimeKnown !== model.birth.birthTimeKnown || model.natal.precision.birthTimeKnown !== model.birth.birthTimeKnown) {
     throw new InterpretationInputError(
       'INTERPRETATION_INPUT_PRECISION_CONTRADICTION',
@@ -213,6 +371,13 @@ export function buildBazodiacInterpretationInput(
       timezone: model.birth.timezone,
     },
     fufire: {
+      claimBearing: false as const,
+      containsAssumedTime: !birthTimeKnown,
+      baziRaw,
+      wuxingRaw,
+      natalRaw,
+    },
+    validatedSnapshots: {
       bazi: {
         pillars: model.pillars,
         dayMaster: model.dayMaster,
@@ -256,6 +421,7 @@ export function buildBazodiacInterpretationInput(
       basis: REQUIRED_WUXING_BASIS,
       wuxingKeysetValid: true as const,
       dominantConsistent: true as const,
+      rawEvidenceSameChart: true as const,
     },
     methodProfile: {
       ref: `${METHOD_PROFILE_ID}@${registry.profileVersion}`,
@@ -276,9 +442,29 @@ export function buildBazodiacInterpretationInput(
   };
   // `fufire.natal.provenance.computedAt` and the BaZi computation timestamp are
   // volatile per call; the hash covers the facts and the contract, not the clock.
+  // The raw bodies carry those same clocks, so the package hash covers their
+  // endpoint and redaction list but not their bytes; each body has its own
+  // `payloadStructuralHash` for byte-level reproducibility.
+  const withoutBytes = (evidence: RawProducerEvidence): unknown => ({
+    endpoint: evidence.endpoint,
+    claimBearing: evidence.claimBearing,
+    redactions: evidence.redactions,
+  });
   const hashed = {
     ...core,
-    fufire: { ...core.fufire, natal: { ...core.fufire.natal, provenance: { ...core.fufire.natal.provenance, computedAt: null } } },
+    fufire: {
+      ...core.fufire,
+      baziRaw: withoutBytes(baziRaw),
+      wuxingRaw: withoutBytes(wuxingRaw),
+      natalRaw: withoutBytes(natalRaw),
+    },
+    validatedSnapshots: {
+      ...core.validatedSnapshots,
+      natal: {
+        ...core.validatedSnapshots.natal,
+        provenance: { ...core.validatedSnapshots.natal.provenance, computedAt: null },
+      },
+    },
   };
   return { ...core, structuralHash: structuralHash(hashed) };
 }

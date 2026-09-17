@@ -31,6 +31,8 @@ export interface FufirePillarFact {
 }
 
 export interface FufireBaziSnapshot {
+  /** See `ProducerRawResponse`. Evidence only. */
+  readonly raw?: ProducerRawResponse;
   readonly pillars: Readonly<{
     year: FufirePillarFact;
     month: FufirePillarFact;
@@ -66,7 +68,34 @@ export interface FufireBaziSnapshot {
   }>;
 }
 
+/**
+ * ETBZ-34 (finding A) — the producer response exactly as it crossed the wire,
+ * kept as EVIDENCE next to the snapshot that was mapped from it.
+ *
+ * It is reproducibility material, never a semantic source: no theme, claim or
+ * section may cite it, and no path into it is a `factRef`. It is optional on
+ * the snapshot types only so that hand-built test snapshots stay valid;
+ * `BazodiacInterpretationInput v1` REQUIRES it and refuses to build without it.
+ * It never enters the HoroscopeModel or its canonical hash.
+ */
+export type ProducerJson =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly ProducerJson[]
+  | { readonly [key: string]: ProducerJson };
+
+export interface ProducerRawResponse {
+  /** The FuFirE path this body was returned by, e.g. `/v1/calculate/bazi`. */
+  readonly endpoint: string;
+  /** The parsed JSON body, verbatim: no key dropped, renamed or reordered. */
+  readonly payload: ProducerJson;
+}
+
 export interface WuxingSnapshot {
+  /** See {@link ProducerRawResponse}. Evidence only. */
+  readonly raw?: ProducerRawResponse;
   readonly vector: WuxingVector;
   /** `dominant_element` */
   readonly dominant: string;
@@ -241,6 +270,8 @@ export interface FufireNatalProvenance {
 }
 
 export interface FufireNatalSnapshot {
+  /** See {@link ProducerRawResponse}. Evidence only. */
+  readonly raw?: ProducerRawResponse;
   readonly pillars: Readonly<{
     year: FufireNatalPillarFact;
     month: FufireNatalPillarFact;

@@ -28,6 +28,7 @@ import type { ChartFact, InterpretationFeatureSet } from './feature-set.js';
 import {
   METHOD_PROFILE_ID,
   isApprovedStatus,
+  isIdentityPair,
   resolveMethodEnablement,
 } from './method-registry.js';
 import type { MethodDefinition, MethodEnablement, MethodRegistry } from './method-registry.js';
@@ -116,7 +117,8 @@ function methodCoversFact(
       // An identity relation needs two things that ARE identical: the fact is
       // covered only if ANOTHER cited fact carries the very same value. Without
       // this, naming `fact_relations` would legitimise any fact whatsoever.
-      return cited.some((other) => other.id !== fact.id && other.value === fact.value);
+      // "Identical" is decided by ONE rule, shared with per-chart enablement.
+      return cited.some((other) => isIdentityPair(fact, other));
     case 'NONE':
       return false;
   }
@@ -244,9 +246,10 @@ export function validateInterpretiveClaim(
  * PD-5 — the multi-signal floor for a claim that carries the report thesis or
  * the core of a primary motif.
  *
- * NORMALLY: >= 2 distinct fact kinds AND >= 2 approved method contributions.
- * EXCEPTION: an explicitly declared distinctive single configuration, which
- * must be TENTATIVE and carry a QUALIFIES or ALTERNATIVE_READING relation.
+ * MVP v1, WITHOUT EXCEPTION: >= 2 distinct fact kinds AND >= 2 approved method
+ * contributions. There is no "distinctive single configuration" escape and no
+ * caller-controlled option of any kind: a flag the caller sets is not evidence.
+ * The signature takes the claim and its validation context and nothing else.
  *
  * This is a structural grounding floor. It is not, and must never be turned
  * into, a confidence or salience score.
@@ -254,21 +257,12 @@ export function validateInterpretiveClaim(
 export function assertCentralClaimSignals(
   claim: InterpretiveClaim,
   context: ClaimValidationContext,
-  options: Readonly<{ declaredDistinctiveSingleConfiguration?: boolean }> = {},
 ): void {
   const cited = validateInterpretiveClaim(claim, context);
   const kinds = new Set(cited.map((fact) => fact.kind));
+  // `methodRefs` is already proven duplicate-free, approved, claim-bearing,
+  // enabled and evidence-backed (I1, I2, I4) by the validation above.
   if (kinds.size >= 2 && claim.methodRefs.length >= 2) {
-    return;
-  }
-  const qualified = claim.relations.some(
-    (relation) => relation.type === 'QUALIFIES' || relation.type === 'ALTERNATIVE_READING',
-  );
-  if (
-    options.declaredDistinctiveSingleConfiguration === true &&
-    claim.epistemicClass === 'TENTATIVE_INTERPRETATION' &&
-    qualified
-  ) {
     return;
   }
   throw new ClaimError(

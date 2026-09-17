@@ -189,8 +189,14 @@ function buildFacts(model: HoroscopeModel, provisionalPillars: readonly PillarNa
     // vector and its dominant element are provisional as a whole. The source
     // path names no pillar, which is why pillar lineage alone used to report
     // these facts as certain.
+    //
+    // Finding E: the same holds for ANY pillar the producer marks provisional
+    // (FuFirE may mark `month` on a Jie transition day or `year` on the Li-Chun
+    // day): the vector sums that pillar too. So the trigger is "unknown time OR
+    // any producer-stated provisional pillar" — never "hour" by name.
     const wuXingUnderUnknownTime =
-      !birthTimeKnown && (kind === 'wu_xing_weight' || kind === 'wu_xing_dominant');
+      (!birthTimeKnown || provisional.size > 0) &&
+      (kind === 'wu_xing_weight' || kind === 'wu_xing_dominant');
     facts.push({
       id,
       path,

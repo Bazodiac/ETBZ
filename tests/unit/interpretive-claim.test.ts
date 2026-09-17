@@ -227,14 +227,77 @@ describe('ETBZ-34 M4: PD-5 — a shared single primitive must not carry a thesis
     }
   });
 
-  it('allows a DECLARED distinctive single configuration only as tentative and qualified', () => {
+  it('has NO caller-controlled bypass: a tentative, qualified single configuration is still refused', () => {
     const single = claim({
       factRefs: ['chart.dayMaster.stem'], methodRefs: ['day_master'],
       epistemicClass: 'TENTATIVE_INTERPRETATION',
       relations: [{ type: 'ALTERNATIVE_READING', targetClaimId: 'claim.other' }],
     });
-    expect(() => assertCentralClaimSignals(single, KNOWN, { declaredDistinctiveSingleConfiguration: true })).not.toThrow();
     expect(() => assertCentralClaimSignals(single, KNOWN)).toThrow(ClaimError);
-    expect(() => assertCentralClaimSignals({ ...single, relations: [] }, KNOWN, { declaredDistinctiveSingleConfiguration: true })).toThrow(ClaimError);
+    // The former escape hatch. It must not exist as a parameter, and passing it
+    // anyway (as untyped callers can) must change nothing.
+    expect(assertCentralClaimSignals.length).toBe(2);
+    const untyped = assertCentralClaimSignals as unknown as (...args: unknown[]) => void;
+    for (const option of [
+      { declaredDistinctiveSingleConfiguration: true },
+      { distinctiveSingleConfiguration: true },
+      { allowSingleSignal: true },
+      true,
+    ]) {
+      expect(() => untyped(single, KNOWN, option)).toThrow(ClaimError);
+    }
+  });
+
+  it('does not count a method twice, nor a fact twice, towards the floor', () => {
+    try {
+      assertCentralClaimSignals(claim({ factRefs: ['chart.dayMaster.stem', 'chart.dayMaster.stem'], methodRefs: ['day_master'] }), KNOWN);
+      expect.unreachable('a repeated fact is one signal');
+    } catch (error) {
+      expect((error as ClaimError).code).toBe('CLAIM_INSUFFICIENT_SIGNALS');
+    }
+    expectRefusal('CLAIM_DUPLICATE_METHOD_REF', claim({ methodRefs: ['ten_gods', 'ten_gods', 'fact_relations'] }));
+  });
+});
+
+describe('ETBZ-34 M5: raw evidence, deferred methods and salience', () => {
+  it('refuses raw producer paths and model paths as factRefs — only addressable fact ids ground a claim', () => {
+    for (const rawPath of [
+      'fufire.baziRaw.payload.pillars.year.stamm',
+      'fufire.wuxingRaw.payload.wu_xing_vector.Feuer',
+      'fufire.natalRaw.payload.month_command.branch',
+      'natal.pillars.month.tenGod.name', // the fact's own `path`, which is not its id
+      'wu_xing_vector.Feuer',
+    ]) {
+      expectRefusal('CLAIM_UNKNOWN_FACT', claim({ factRefs: [rawPath, MONTH_TEN_GOD] }));
+    }
+  });
+
+  it('refuses every deferred and forbidden methodRef', () => {
+    for (const method of BAZI_METHOD_REGISTRY_V1.methods.filter((candidate) => !candidate.status.startsWith('APPROVED'))) {
+      expectRefusal('CLAIM_METHOD_NOT_APPROVED', claim({ methodRefs: ['ten_gods', method.methodId] }));
+    }
+  });
+
+  it('refuses fact_relations over two facts that merely restate one datum (day master = day stem)', () => {
+    expectRefusal('CLAIM_METHOD_WITHOUT_EVIDENCE', claim({
+      factRefs: ['chart.dayMaster.stem', 'chart.pillar.day.stem'],
+      methodRefs: ['day_master', 'heavenly_stems', 'fact_relations'],
+    }));
+  });
+
+  it('validates identically whatever the order of facts, factRefs and methodRefs', () => {
+    const reversedContext: ClaimValidationContext = {
+      ...KNOWN,
+      featureSet: { ...KNOWN.featureSet, facts: [...KNOWN.featureSet.facts].reverse() },
+    };
+    const forward = claim();
+    const backward = claim({ factRefs: [...forward.factRefs].reverse(), methodRefs: [...forward.methodRefs].reverse() });
+    expect(() => assertCentralClaimSignals(backward, reversedContext)).not.toThrow();
+    expect(interpretiveClaimStructuralHash(backward, METHOD_PROFILE_REF)).toBe(interpretiveClaimStructuralHash(forward, METHOD_PROFILE_REF));
+  });
+
+  it('carries no salience, rank, weight or score anywhere on a claim', () => {
+    const keys = Object.keys(claim()).sort();
+    expect(keys).toEqual(['claimId', 'epistemicClass', 'factRefs', 'methodRefs', 'provisionalFactRefs', 'relations', 'statement', 'themeRefs']);
   });
 });

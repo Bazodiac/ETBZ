@@ -137,6 +137,14 @@ describe('FuFirE HTTP client: response mapping', () => {
     expect(snapshot.provenance.engineVersion).toBe('1.0.0-rc1-20260220');
   });
 
+  it('keeps the complete wire body as raw producer evidence, including keys the port does not map (finding A)', async () => {
+    const body = { ...okBaziBody(), transition: { solar_year: 1990, is_before_lichun: false }, derivation_trace: null };
+    const client = clientWith(async () => jsonResponse(200, body));
+    const snapshot = await client.calculateBazi(INPUT.value);
+    expect(snapshot.raw).toEqual({ endpoint: '/v1/calculate/bazi', payload: body });
+    expect(Object.keys(snapshot).sort()).toEqual(['dates', 'dayMaster', 'pillars', 'precision', 'provenance', 'raw']);
+  });
+
   it('maps the wu-xing endpoint against the pinned contract', async () => {
     const client = clientWith(async () => jsonResponse(200, {
       wu_xing_vector: { Holz: 1.8, Feuer: 2.5, Erde: 2.0, Metall: 2.0, Wasser: 2.0 },

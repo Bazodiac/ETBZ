@@ -21,11 +21,13 @@ import type {
   MethodRegistryErrorCode,
 } from '../../src/application/interpretation/method-registry.js';
 import { knownTimeModel, unknownTimeModel } from '../support/narrativeFixture.js';
+import type { ChartFact, InterpretationFeatureSet } from '../../src/application/interpretation/feature-set.js';
 
-function mutate(change: (draft: { methods: MethodDefinition[]; enabledSets: MethodRegistry['enabledSets']; profileVersion: string }) => void): MethodRegistry {
+function mutate(change: (draft: { methods: MethodDefinition[]; enabledSets: MethodRegistry['enabledSets']; profileVersion: string; approvedDeterministicMappings: string[] }) => void): MethodRegistry {
   const draft = structuredClone(BAZI_METHOD_REGISTRY_V1) as unknown as {
     profileId: MethodRegistry['profileId'];
     profileVersion: string;
+    approvedDeterministicMappings: string[];
     methods: MethodDefinition[];
     enabledSets: MethodRegistry['enabledSets'];
   };
@@ -203,5 +205,111 @@ describe('ETBZ-34 R4: enablement is decided per chart', () => {
       .find((candidate) => candidate.methodId === 'month_command');
     expect(entry?.enabled).toBe(false);
     expect(entry?.reason).toBe('MONTH_COMMAND_IDENTITY_NOT_PROVEN');
+  });
+});
+
+function featureSetWith(select: (fact: ChartFact) => ChartFact | null): InterpretationFeatureSet {
+  const base = deriveInterpretationFeatureSet(knownTimeModel());
+  const facts = base.facts.map(select).filter((fact): fact is ChartFact => fact !== null);
+  return { ...base, facts, factIds: facts.map((fact) => fact.id) };
+}
+
+function entryOf(featureSet: InterpretationFeatureSet, methodId: string): ReturnType<typeof resolveMethodEnablement>[number] {
+  const entry = resolveMethodEnablement(BAZI_METHOD_REGISTRY_V1, featureSet).find((candidate) => candidate.methodId === methodId);
+  if (entry === undefined) throw new Error(`no enablement for ${methodId}`);
+  return entry;
+}
+
+describe('ETBZ-34 R5: season operations need a mapping nobody delivered (finding C)', () => {
+  it('v1.0.0 declares no season operation and approves no deterministic mapping', () => {
+    expect(BAZI_METHOD_REGISTRY_V1.approvedDeterministicMappings).toEqual([]);
+    const operations = BAZI_METHOD_REGISTRY_V1.methods.flatMap((method) => method.operations);
+    expect(operations.filter((operation) => /season/iu.test(operation))).toEqual([]);
+  });
+
+  it.each([
+    ['earthly_branches', 'MARK_SEASON'],
+    ['month_command', 'CONTEXTUALIZE_SEASON'],
+    ['month_command', 'NOTE_SEASONAL_TONE'],
+  ])('refuses %s re-gaining %s without an approved mapping', (methodId, operation) => {
+    expectRefusal('REGISTRY_OPERATION_NEEDS_UNAPPROVED_MAPPING', mutate((draft) => {
+      const index = draft.methods.findIndex((method) => method.methodId === methodId);
+      draft.methods[index] = { ...byId(methodId), operations: [...byId(methodId).operations, operation] };
+    }));
+  });
+
+  it('would accept it only with the versioned mapping delivered — never from model memory (counterfactual)', () => {
+    const registry = mutate((draft) => {
+      const index = draft.methods.findIndex((method) => method.methodId === 'earthly_branches');
+      draft.methods[index] = { ...byId('earthly_branches'), operations: [...byId('earthly_branches').operations, 'MARK_SEASON'] };
+      draft.approvedDeterministicMappings = ['branch_to_season'];
+    });
+    expect(() => validateMethodRegistry(registry)).not.toThrow();
+  });
+
+  it('no fact kind carries a season, so nothing the skill may cite says one', () => {
+    const facts = deriveInterpretationFeatureSet(knownTimeModel()).facts;
+    expect(facts.filter((fact) => /season|spring|summer|autumn|winter|frühling|sommer|herbst/iu.test(`${fact.kind} ${fact.value}`))).toEqual([]);
+  });
+});
+
+describe('ETBZ-34 R6: enabled means usable on THIS chart (finding D)', () => {
+  it('disables fact_relations when no identity pair exists', () => {
+    const seen = new Set<string>();
+    const featureSet = featureSetWith((fact) => {
+      // Keep at most one fact per value: no value can then occur twice.
+      if (seen.has(fact.value)) return null;
+      seen.add(fact.value);
+      return fact;
+    });
+    const entry = entryOf(featureSet, 'fact_relations');
+    expect(entry.enabled).toBe(false);
+    expect(entry.reason).toBe('NO_IDENTITY_PAIR');
+  });
+
+  it('does not count trivially identical facts as a pair (day master = day stem; Hanzi/Pinyin spellings)', () => {
+    const keep = new Set(['chart.dayMaster.stem', 'chart.pillar.day.stem', 'chart.pillar.day.stemPinyin', 'chart.natal.monthCommand.branch', 'chart.pillar.month.branch']);
+    const entry = entryOf(featureSetWith((fact) => (keep.has(fact.id) ? fact : null)), 'fact_relations');
+    expect(entry.enabled).toBe(false);
+  });
+
+  it('does not pair an excluded (assumed-hour) fact', () => {
+    const featureSet = deriveInterpretationFeatureSet(unknownTimeModel());
+    const hourTenGod = featureSet.facts.find((fact) => fact.id === 'chart.natal.pillar.hour.tenGod');
+    expect(hourTenGod?.interpretable).toBe(false);
+    const only = featureSetWith((fact) => fact).facts.filter((fact) => fact.kind === 'ten_god' && fact.pillar === 'year');
+    const year = only[0];
+    if (year === undefined || hourTenGod === undefined) throw new Error('fixture');
+    const pairOnly: InterpretationFeatureSet = { ...featureSet, facts: [{ ...year, value: hourTenGod.value }, hourTenGod] };
+    expect(entryOf(pairOnly, 'fact_relations').enabled).toBe(false);
+  });
+
+  it('is independent of fact order and of duplicated facts', () => {
+    const base = deriveInterpretationFeatureSet(knownTimeModel());
+    const shuffled = { ...base, facts: [...base.facts].reverse() };
+    const duplicated = { ...base, facts: [...base.facts, ...base.facts] };
+    const reference = resolveMethodEnablement(BAZI_METHOD_REGISTRY_V1, base);
+    expect(resolveMethodEnablement(BAZI_METHOD_REGISTRY_V1, shuffled)).toEqual(reference);
+    expect(resolveMethodEnablement(BAZI_METHOD_REGISTRY_V1, duplicated)).toEqual(reference);
+    // A lone fact duplicated is still one occurrence, not a recurrence.
+    const lone = base.facts.find((fact) => fact.id === 'chart.natal.pillar.year.tenGod');
+    if (lone === undefined) throw new Error('fixture');
+    expect(entryOf({ ...base, facts: [lone, lone] }, 'fact_relations').enabled).toBe(false);
+  });
+
+  it('disables positional_context when no pillar fact is readable by an enabled carrier', () => {
+    const noPillar = featureSetWith((fact) => (fact.pillar === null ? fact : null));
+    const entry = entryOf(noPillar, 'positional_context');
+    expect(entry.enabled).toBe(false);
+    expect(entry.reason).toBe('NO_ELIGIBLE_PILLAR_FACT');
+    // Pillar facts exist, but only of kinds whose carrier method is itself disabled.
+    const onlyHanzi = featureSetWith((fact) => (fact.kind === 'pillar_stem_hanzi' ? fact : null));
+    expect(entryOf(onlyHanzi, 'positional_context').enabled).toBe(false);
+  });
+
+  it('keeps both enabled on the full fixture chart (positive control)', () => {
+    const featureSet = deriveInterpretationFeatureSet(knownTimeModel());
+    expect(entryOf(featureSet, 'fact_relations').enabled).toBe(true);
+    expect(entryOf(featureSet, 'positional_context').enabled).toBe(true);
   });
 });

@@ -13,13 +13,17 @@ import { buildHoroscopeModel } from '../../src/application/horoscope-model.js';
 import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
 import type {
   FufireBaziSnapshot,
+  FufireNatalSnapshot,
+  ProducerJson,
   WuxingSnapshot,
 } from '../../src/application/ports/fufire-gateway.js';
 import { validateBirthInput } from '../../src/domain/birth-input.js';
 import {
   UNKNOWN_TIME_NATAL_OVERRIDES,
+  UNKNOWN_TIME_NATAL_WIRE_OVERRIDES,
   deepMergeFixture,
   natalSnapshot,
+  natalWireBody,
 } from './natalFixture.js';
 
 export const RUNTIME = {
@@ -142,4 +146,107 @@ export function unknownTimeModel(
     natalSnapshot(natal),
     RUNTIME,
   );
+}
+
+// ---------------------------------------------------------------------------
+// ETBZ-34 (finding A) — charts WITH their raw producer evidence.
+//
+// The wire bodies below are synthetic and wire-SHAPED (the keys the pinned
+// FuFirE build emits, including the request echo of `/bazi/wuxing`, which
+// carries coordinates). They exist so the evidence boundary can be tested; the
+// application never maps them — only the adapter maps wire bodies.
+// ---------------------------------------------------------------------------
+
+export interface ChartWithEvidence {
+  readonly model: HoroscopeModel;
+  readonly source: Readonly<{
+    bazi: FufireBaziSnapshot;
+    wuxing: WuxingSnapshot;
+    natal: FufireNatalSnapshot;
+  }>;
+}
+
+function baziWireBody(snapshot: FufireBaziSnapshot): ProducerJson {
+  const pillar = (name: 'year' | 'month' | 'day' | 'hour'): ProducerJson => ({
+    stamm: snapshot.pillars[name].stem,
+    zweig: snapshot.pillars[name].branch,
+    tier: snapshot.pillars[name].tierDe,
+    element: snapshot.pillars[name].elementDe,
+  });
+  return {
+    pillars: { year: pillar('year'), month: pillar('month'), day: pillar('day'), hour: pillar('hour') },
+    chinese: { day_master: snapshot.dayMaster },
+    dates: {
+      birth_local: snapshot.dates.birthLocal,
+      birth_utc: snapshot.dates.birthUtc,
+      lichun_local: snapshot.dates.lichunLocal,
+    },
+    precision: {
+      birth_time_known: snapshot.precision.birthTimeKnown,
+      provisional_fields: [...snapshot.precision.provisionalFields],
+    },
+    provenance: {
+      engine_version: snapshot.provenance.engineVersion,
+      ruleset_id: snapshot.provenance.rulesetId,
+      ephemeris_id: snapshot.provenance.ephemerisId,
+      tzdb_version_id: snapshot.provenance.tzdbVersionId,
+      computation_timestamp: snapshot.provenance.computationTimestamp,
+    },
+  };
+}
+
+function wuxingWireBody(snapshot: WuxingSnapshot, known: boolean): ProducerJson {
+  return {
+    input: { date: known ? '1990-06-15T14:30:00' : '1985-11-03', tz: 'Europe/Berlin', lon: 13.405, lat: 52.52, birth_time_known: known },
+    wu_xing_vector: { ...snapshot.vector },
+    dominant_element: snapshot.dominant,
+    basis: snapshot.basis,
+    precision: { birth_time_known: known, provisional_fields: known ? [] : ['hour'] },
+  };
+}
+
+function withEvidence(
+  known: boolean,
+  overrides: Readonly<{ bazi?: Record<string, unknown>; wuxing?: Record<string, unknown>; natal?: Record<string, unknown> }>,
+): ChartWithEvidence {
+  const baziBase = known
+    ? {}
+    : {
+        precision: { birthTimeKnown: false, provisionalFields: ['hour'] },
+        dates: {
+          birthLocal: '1985-11-03T14:30:00+01:00',
+          birthUtc: '1985-11-03T13:30:00+00:00',
+          lichunLocal: '1985-02-04T05:12:00+01:00',
+        },
+      };
+  const bazi = baziSnapshot(deepMergeFixture(baziBase, overrides.bazi ?? {}) as Record<string, unknown>);
+  const wuxing = wuxingSnapshot(overrides.wuxing ?? {});
+  const natal = natalSnapshot(
+    deepMergeFixture(known ? {} : structuredClone(UNKNOWN_TIME_NATAL_OVERRIDES), overrides.natal ?? {}) as Record<string, unknown>,
+  );
+  const source = {
+    bazi: { ...bazi, raw: { endpoint: '/v1/calculate/bazi', payload: baziWireBody(bazi) } },
+    wuxing: { ...wuxing, raw: { endpoint: '/v1/calculate/bazi/wuxing', payload: wuxingWireBody(wuxing, known) } },
+    natal: {
+      ...natal,
+      raw: {
+        endpoint: '/v1/calculate/bazi/natal',
+        payload: natalWireBody(known ? {} : structuredClone(UNKNOWN_TIME_NATAL_WIRE_OVERRIDES)) as ProducerJson,
+      },
+    },
+  };
+  const model = buildHoroscopeModel(known ? KNOWN_BIRTH : UNKNOWN_BIRTH, source.bazi, source.wuxing, source.natal, RUNTIME);
+  return { model, source };
+}
+
+export function knownTimeChart(
+  overrides: Readonly<{ bazi?: Record<string, unknown>; wuxing?: Record<string, unknown>; natal?: Record<string, unknown> }> = {},
+): ChartWithEvidence {
+  return withEvidence(true, overrides);
+}
+
+export function unknownTimeChart(
+  overrides: Readonly<{ bazi?: Record<string, unknown>; wuxing?: Record<string, unknown>; natal?: Record<string, unknown> }> = {},
+): ChartWithEvidence {
+  return withEvidence(false, overrides);
 }

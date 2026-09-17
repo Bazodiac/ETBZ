@@ -125,7 +125,11 @@ describe('ETBZ-29 natal boundary: request contract', () => {
 describe('ETBZ-29 natal boundary: response mapping', () => {
   it('maps the wire body to exactly the port snapshot (the two fixtures cannot drift)', async () => {
     const client = clientReturning(natalWireBody());
-    await expect(client.calculateNatal(INPUT.value)).resolves.toEqual(natalSnapshot());
+    const { raw, ...mapped } = await client.calculateNatal(INPUT.value);
+    expect(mapped).toEqual(natalSnapshot());
+    // ETBZ-34 (finding A): the wire body travels with the snapshot, verbatim,
+    // as evidence — and stays out of the mapped facts.
+    expect(raw).toEqual({ endpoint: '/v1/calculate/bazi/natal', payload: natalWireBody() });
   });
 
   it('preserves the deterministic natal facts the slice exists for', async () => {
