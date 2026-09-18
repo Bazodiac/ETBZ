@@ -25,6 +25,7 @@ import type {
   FufireTenGodFact,
   ProducerJson,
   ProducerRawResponse,
+  ProducerResponseMapper,
   WuxingSnapshot,
 } from '../../application/ports/fufire-gateway.js';
 import {
@@ -35,6 +36,7 @@ import {
   NATAL_RESPONSE_KEYS,
   NATAL_ROLE_WEIGHTS,
   NATAL_STEMS,
+  REQUIRED_WUXING_BASIS,
   TEN_GOD_ELEMENT_RELATIONS,
   TEN_GOD_NAMES,
   TEN_GOD_PINYIN,
@@ -280,25 +282,84 @@ function mapBaziSnapshot(raw: unknown): FufireBaziSnapshot {
   };
 }
 
+function mapPrecision(raw: unknown, what: string): Readonly<{ birthTimeKnown: boolean; provisionalFields: readonly string[] }> {
+  const precision = asObject(raw, what);
+  const known = precision['birth_time_known'];
+  if (typeof known !== 'boolean') {
+    throw new FufireError('FUFIRE_CONTRACT_ERROR', `${what}.birth_time_known is not a boolean`);
+  }
+  const provisional = precision['provisional_fields'];
+  if (!Array.isArray(provisional) || !provisional.every((entry) => typeof entry === 'string')) {
+    throw new FufireError('FUFIRE_CONTRACT_ERROR', `${what}.provisional_fields is not a string array`);
+  }
+  return { birthTimeKnown: known, provisionalFields: [...provisional] as string[] };
+}
+
+function assertExactKeys(object: Record<string, unknown>, expected: readonly string[], what: string): void {
+  const actual = Object.keys(object).sort();
+  const wanted = [...expected].sort();
+  if (actual.length !== wanted.length || actual.some((key, index) => key !== wanted[index])) {
+    throw new FufireError(
+      'FUFIRE_CONTRACT_ERROR',
+      `${what} has keys [${actual.join(', ')}], expected exactly [${wanted.join(', ')}]`,
+    );
+  }
+}
+
+/**
+ * `POST /v1/calculate/bazi/wuxing` — ETBZ-34 AC 1–4 at the wire.
+ *
+ * Nothing is repaired: a sixth key is not dropped, a missing key is not
+ * defaulted, a non-maximum dominant is not replaced, a foreign basis is not
+ * relabelled. Each is contract drift and fails closed.
+ */
 function mapWuxingSnapshot(raw: unknown): WuxingSnapshot {
   const body = asObject(raw, 'response');
+  const basis = asString(body['basis'], 'basis');
+  if (basis !== REQUIRED_WUXING_BASIS) {
+    throw new FufireError(
+      'FUFIRE_CONTRACT_ERROR',
+      `basis is "${basis}"; only "${REQUIRED_WUXING_BASIS}" is a BaZi Wu-Xing vector — a planetary or fusion vector is a different chart`,
+    );
+  }
   const vectorRaw = asObject(body['wu_xing_vector'], 'wu_xing_vector');
+  assertExactKeys(vectorRaw, WUXING_ELEMENTS, 'wu_xing_vector');
   const vector = {} as Record<(typeof WUXING_ELEMENTS)[number], number>;
   for (const element of WUXING_ELEMENTS) {
     vector[element] = asNumber(vectorRaw[element], `wu_xing_vector.${element}`);
   }
   const dominant = asString(body['dominant_element'], 'dominant_element');
-  if (!(dominant in vector)) {
+  if (!(WUXING_ELEMENTS as readonly string[]).includes(dominant)) {
     throw new FufireError('FUFIRE_CONTRACT_ERROR', `dominant_element ${dominant} is not a wu-xing element`);
   }
+  // A tie is valid: ANY maximum may be named. No tie-break is invented.
+  if (vector[dominant as (typeof WUXING_ELEMENTS)[number]] !== Math.max(...Object.values(vector))) {
+    throw new FufireError('FUFIRE_CONTRACT_ERROR', `dominant_element ${dominant} is not a maximum of wu_xing_vector`);
+  }
+  const pillarsRaw = asObject(body['pillars'], 'pillars');
+  assertExactKeys(pillarsRaw, PILLAR_NAMES, 'pillars');
+  const sourcePillar = (name: (typeof PILLAR_NAMES)[number]): WuxingSnapshot['sourcePillars']['year'] => {
+    const pillar = asObject(pillarsRaw[name], `pillars.${name}`);
+    assertExactKeys(pillar, ['stem', 'branch'], `pillars.${name}`);
+    return { stem: asString(pillar['stem'], `pillars.${name}.stem`), branch: asString(pillar['branch'], `pillars.${name}.branch`) };
+  };
   return {
     vector,
     dominant,
-    basis: asString(body['basis'], 'basis'),
+    basis,
+    sourcePillars: { year: sourcePillar('year'), month: sourcePillar('month'), day: sourcePillar('day'), hour: sourcePillar('hour') },
+    precision: mapPrecision(body['precision'], 'precision'),
   };
 }
 
-// =============================================================================
+/** The adapter's response mappers, exposed through the application port. */
+export const fufireResponseMapper: ProducerResponseMapper = {
+  mapBazi: (payload) => mapBaziSnapshot(payload),
+  mapWuxing: (payload) => mapWuxingSnapshot(payload),
+  mapNatal: (payload) => mapNatalSnapshot(payload),
+};
+
+// ---------------------------------------------------------------------------
 // ETBZ-29 — the NATAL operation of the same boundary.
 //
 // This is a minimal extension of the client above, NOT a second client: the

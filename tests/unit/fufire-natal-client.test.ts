@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { wuxingWireBody } from '../support/wuxingFixture.js';
 import {
   FUFIRE_NATAL_PATH,
   createFufireClient,
@@ -516,11 +517,7 @@ describe('ETBZ-29: a natal failure never yields a partial HoroscopeModel', () =>
   }
 
   function okWuxingBody(): Record<string, unknown> {
-    return {
-      wu_xing_vector: { Holz: 1.8, Feuer: 2.5, Erde: 2.0, Metall: 2.0, Wasser: 2.0 },
-      dominant_element: 'Feuer',
-      basis: 'bazi_four_pillars',
-    };
+    return wuxingWireBody();
   }
 
   const RAW_INPUT = {

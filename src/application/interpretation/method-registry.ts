@@ -25,6 +25,7 @@
  * between two non-day-master elements. Only relations FuFirE itself supplies
  * (`ten_god.element_relation`) may be read.
  */
+import { UnknownSymbolError, elementDeByEn } from '../../domain/sizhu.js';
 import { structuralHash } from '../../domain/structural-hash.js';
 import type { ChartFact, ChartFactKind, InterpretationFeatureSet } from './feature-set.js';
 import { EVALUATED_METHODS, NOT_EVALUATED_METHODS } from './method-scope.js';
@@ -325,7 +326,8 @@ export type MethodRegistryErrorCode =
   | 'REGISTRY_CLAIM_BEARING_WITHOUT_EVIDENCE'
   | 'REGISTRY_MODIFIER_NOT_CLAIM_BEARING'
   | 'REGISTRY_OPERATION_NEEDS_UNAPPROVED_MAPPING'
-  | 'REGISTRY_SCOPE_DRIFT';
+  | 'REGISTRY_SCOPE_DRIFT'
+  | 'REGISTRY_NOT_RELEASED';
 
 export class MethodRegistryError extends Error {
   readonly code: MethodRegistryErrorCode;
@@ -514,13 +516,27 @@ function interpretable(facts: readonly ChartFact[]): readonly ChartFact[] {
  *  - `hidden_stem_qi_role`    — every branch has a `principal` Qi;
  *  - `wu_xing_*`              — a tally, not an occurrence.
  * No symbolic table is involved: a domain only says which VALUES are comparable.
+ *
+ * `stem_element` is ONE domain (Method Profile v1.0.0, 6.2): the element of a
+ * visible stem and the element of a hidden stem are the same kind of thing.
+ * FuFirE spells them in two vocabularies (`Metall` on `/bazi`, `metal` on
+ * `/bazi/natal`), so they are compared through the RELEASED English->German
+ * element bridge of `domain/sizhu` — the same approved mapping the
+ * HoroscopeModel already uses to cross-check the two responses. It renames; it
+ * derives nothing.
+ *
+ * What such a pair authorises is an IDENTITY OBSERVATION and nothing more: "the
+ * element of this visible stem also appears among these hidden stems". It is
+ * not rooting (Tong Gen), not strength, not support, not favourable or
+ * unfavourable, not salience, not Yong Shen. Those methods stay DEFERRED and a
+ * claim naming them is refused whatever pairs exist.
  */
 const IDENTITY_DOMAINS: Readonly<Partial<Record<ChartFactKind, string>>> = {
   pillar_stem: 'stem',
   hidden_stem: 'stem',
   pillar_branch: 'branch',
-  pillar_stem_element: 'stem_element_de',
-  hidden_stem_element: 'hidden_stem_element',
+  pillar_stem_element: 'stem_element',
+  hidden_stem_element: 'stem_element',
   pillar_stem_polarity: 'polarity',
   ten_god: 'ten_god',
   hidden_stem_ten_god: 'ten_god',
@@ -537,7 +553,31 @@ export function isIdentityPair(left: ChartFact, right: ChartFact): boolean {
     return false;
   }
   const domain = IDENTITY_DOMAINS[left.kind];
-  return domain !== undefined && domain === IDENTITY_DOMAINS[right.kind] && left.value === right.value;
+  if (domain === undefined || domain !== IDENTITY_DOMAINS[right.kind]) {
+    return false;
+  }
+  const leftValue = identityValue(left);
+  return leftValue !== null && leftValue === identityValue(right);
+}
+
+/**
+ * The value a fact is compared BY inside its domain. Identical to `fact.value`
+ * except for `hidden_stem_element`, which is renamed into the vocabulary of
+ * `pillar_stem_element`. An element the released bridge does not know is not
+ * guessed: the fact then pairs with nothing.
+ */
+function identityValue(fact: ChartFact): string | null {
+  if (fact.kind !== 'hidden_stem_element') {
+    return fact.value;
+  }
+  try {
+    return elementDeByEn(fact.value);
+  } catch (error) {
+    if (error instanceof UnknownSymbolError) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 function firstIdentityPair(facts: readonly ChartFact[]): readonly [ChartFact, ChartFact] | null {
@@ -549,7 +589,11 @@ function firstIdentityPair(facts: readonly ChartFact[]): readonly [ChartFact, Ch
     if (domain === undefined) {
       continue;
     }
-    const key = `${domain}\u0000${fact.value}`;
+    const value = identityValue(fact);
+    if (value === null) {
+      continue;
+    }
+    const key = `${domain}\u0000${value}`;
     const earlier = seen.get(key);
     if (earlier !== undefined && earlier.id !== fact.id) {
       return [earlier, fact];
@@ -642,6 +686,33 @@ export function resolveMethodEnablement(
   return registry.methods.map(
     (method) => firstPass.get(method.methodId) ?? resolveOne(method, enabledCarriers),
   );
+}
+
+/**
+ * The content hash each RELEASED profile version is frozen to.
+ *
+ * Confluence `ETBZ — BaZi Method Profile v1` owns the approved Product Method
+ * Contract; this registry is its executable representation, and the page records
+ * this same hash. Changing the registry without releasing a new version — or
+ * running a registry whose content is not the released one — is a
+ * CONTRADICTION: execution is BLOCKED until page and registry are reconciled.
+ * Neither side silently wins.
+ */
+export const RELEASED_REGISTRY_HASHES: Readonly<Record<string, string>> = {
+  '1.0.0': 'sha256:77545607f6e547f67df14ec9936ff66a9f90d643b51302e614c7bc0922085224',
+};
+
+/** Fails closed unless `registry` is, byte for byte, a released profile version. */
+export function assertReleasedRegistry(registry: MethodRegistry): void {
+  validateMethodRegistry(registry);
+  const released = RELEASED_REGISTRY_HASHES[registry.profileVersion];
+  const actual = structuralHash(registry);
+  if (released === undefined || released !== actual) {
+    throw new MethodRegistryError(
+      'REGISTRY_NOT_RELEASED',
+      `registry ${registry.profileVersion} has content hash ${actual}, which is ${released === undefined ? 'not a released version' : `not the released ${released}`}; CONTRADICTION between the approved Method Profile and its executable registry — reconcile before running`,
+    );
+  }
 }
 
 /** Hash of the registry content — what a run records to prove WHICH profile authorised it. */

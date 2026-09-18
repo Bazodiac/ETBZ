@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { WUXING_SNAPSHOT, WUXING_UNKNOWN_SNAPSHOT } from '../support/wuxingFixture.js';
 import { buildHoroscopeModel, HoroscopeError } from '../../src/application/horoscope-model.js';
 import type { FufireBaziSnapshot, WuxingSnapshot } from '../../src/application/ports/fufire-gateway.js';
 import { validateBirthInput } from '../../src/domain/birth-input.js';
@@ -46,11 +47,7 @@ function bazi(overrides: Record<string, unknown> = {}): FufireBaziSnapshot {
   return deepMergeFixture(structuredClone(BAZI), overrides) as FufireBaziSnapshot;
 }
 
-const WUXING: WuxingSnapshot = {
-  vector: { Holz: 1.8, Feuer: 2.5, Erde: 2.0, Metall: 2.0, Wasser: 2.0 },
-  dominant: 'Feuer',
-  basis: 'bazi_four_pillars',
-};
+const WUXING: WuxingSnapshot = WUXING_SNAPSHOT;
 
 const KNOWN_INPUT = validateBirthInput({
   displayName: 'Musterkundin A',
@@ -83,7 +80,7 @@ function unknownModel(extra: Record<string, unknown> = {}) {
   const natal = natalSnapshot(
     deepMergeFixture(structuredClone(UNKNOWN_TIME_NATAL_OVERRIDES), extra) as Record<string, unknown>,
   );
-  return buildHoroscopeModel(UNKNOWN_BIRTH, UNKNOWN_BAZI, WUXING, natal, RUNTIME);
+  return buildHoroscopeModel(UNKNOWN_BIRTH, UNKNOWN_BAZI, WUXING_UNKNOWN_SNAPSHOT, natal, RUNTIME);
 }
 
 // --- A. known-time integration ---------------------------------------------
@@ -242,8 +239,11 @@ describe('ETBZ-29 H: a natal day-master contradiction fails closed', () => {
       dayMaster: 'Ren',
       pillars: { day: { stem: 'Ren', elementDe: 'Wasser' } },
     });
+    // ETBZ-34: the Wu-Xing answer moves WITH the BaZi answer, so the guard under
+    // test here is the natal one and not the Wu-Xing same-chart guard.
+    const wuxing = { ...WUXING, sourcePillars: { ...WUXING.sourcePillars, day: { stem: 'Ren', branch: 'Hai' } } };
     expect(() =>
-      buildHoroscopeModel(KNOWN_BIRTH, drifted, WUXING, natalSnapshot(), RUNTIME),
+      buildHoroscopeModel(KNOWN_BIRTH, drifted, wuxing, natalSnapshot(), RUNTIME),
     ).toThrow(expect.objectContaining({ code: 'HOROSCOPE_NATAL_PILLAR_CONTRADICTION' }) as HoroscopeError);
   });
 
@@ -268,7 +268,7 @@ describe('ETBZ-29 I: a precision contradiction fails closed', () => {
       precision: { birthTimeKnown: false, provisionalFields: [] },
       warnings: ['DAY_ANCHOR_UNVERIFIED', 'BIRTH_TIME_UNKNOWN'],
     });
-    expect(() => buildHoroscopeModel(UNKNOWN_BIRTH, UNKNOWN_BAZI, WUXING, natal, RUNTIME)).toThrow(
+    expect(() => buildHoroscopeModel(UNKNOWN_BIRTH, UNKNOWN_BAZI, WUXING_UNKNOWN_SNAPSHOT, natal, RUNTIME)).toThrow(
       expect.objectContaining({ code: 'HOROSCOPE_NATAL_PRECISION_CONTRADICTION' }) as HoroscopeError,
     );
   });

@@ -12,6 +12,9 @@ import {
   MethodRegistryError,
   isApprovedStatus,
   methodRegistryStructuralHash,
+  RELEASED_REGISTRY_HASHES,
+  assertReleasedRegistry,
+  isIdentityPair,
   resolveMethodEnablement,
   validateMethodRegistry,
 } from '../../src/application/interpretation/method-registry.js';
@@ -257,8 +260,10 @@ describe('ETBZ-34 R6: enabled means usable on THIS chart (finding D)', () => {
   it('disables fact_relations when no identity pair exists', () => {
     const seen = new Set<string>();
     const featureSet = featureSetWith((fact) => {
-      // Keep at most one fact per value: no value can then occur twice.
-      if (seen.has(fact.value)) return null;
+      // Keep at most one fact per value: no value can then occur twice. Hidden-stem
+      // elements are dropped altogether — they share the stem-element domain with
+      // the visible ones under another spelling (`metal` / `Metall`).
+      if (fact.kind === 'hidden_stem_element' || seen.has(fact.value)) return null;
       seen.add(fact.value);
       return fact;
     });
@@ -311,5 +316,84 @@ describe('ETBZ-34 R6: enabled means usable on THIS chart (finding D)', () => {
     const featureSet = deriveInterpretationFeatureSet(knownTimeModel());
     expect(entryOf(featureSet, 'fact_relations').enabled).toBe(true);
     expect(entryOf(featureSet, 'positional_context').enabled).toBe(true);
+  });
+});
+
+describe('ETBZ-34 R7: visible and hidden stem elements are ONE identity domain', () => {
+  const base = deriveInterpretationFeatureSet(knownTimeModel());
+  const visible = (pillar: string): ChartFact => {
+    const fact = base.facts.find((candidate) => candidate.id === `chart.pillar.${pillar}.stemElement`);
+    if (fact === undefined) throw new Error('fixture');
+    return fact;
+  };
+  const hidden = base.facts.filter((fact) => fact.kind === 'hidden_stem_element');
+
+  it('pairs the same accepted element seen on a visible stem and on a hidden stem', () => {
+    const water = visible('month'); // Ren -> Wasser
+    const hiddenWater = hidden.find((fact) => fact.value === 'water');
+    if (hiddenWater === undefined) throw new Error('fixture: the chart carries a hidden water stem (Hai -> Ren)');
+    expect(water.value).toBe('Wasser');
+    expect(isIdentityPair(water, hiddenWater)).toBe(true);
+    expect(isIdentityPair(hiddenWater, water)).toBe(true);
+    expect(entryOf({ ...base, facts: [water, hiddenWater] }, 'fact_relations').enabled).toBe(true);
+  });
+
+  it('does not pair different elements', () => {
+    const metal = visible('year'); // Geng -> Metall
+    for (const fact of hidden.filter((candidate) => candidate.value !== 'metal')) {
+      expect(isIdentityPair(metal, fact), fact.id).toBe(false);
+    }
+    const hiddenFire = hidden.find((fact) => fact.value === 'fire');
+    if (hiddenFire === undefined) throw new Error('fixture');
+    expect(entryOf({ ...base, facts: [metal, hiddenFire] }, 'fact_relations').enabled).toBe(false);
+  });
+
+  it('pairs nothing for an element the released bridge does not know — it never guesses', () => {
+    const water = visible('month');
+    const unknown = { ...hidden[0], id: 'chart.test.unknown', value: 'aether' } as ChartFact;
+    expect(isIdentityPair(water, unknown)).toBe(false);
+    expect(isIdentityPair(unknown, { ...unknown, id: 'chart.test.unknown2' })).toBe(false);
+  });
+
+  it('authorises an identity observation ONLY: rooting, strength and Yong Shen stay unavailable', () => {
+    for (const methodId of ['rooting', 'day_master_strength', 'seasonal_strength', 'useful_god', 'favourable_elements_xi_shen']) {
+      const method = byId(methodId);
+      expect(method.status.startsWith('APPROVED'), methodId).toBe(false);
+      expect(method.operations).toEqual([]);
+      expect(method.claimBearing).toBe(false);
+    }
+    const operations = byId('fact_relations').operations.join(' ');
+    expect(operations).not.toMatch(/ROOT|STRENGTH|SUPPORT|FAVOUR|SALIEN|YONG/u);
+  });
+});
+
+describe('ETBZ-34 R8: registry and approved profile may not drift apart', () => {
+  it('the shipped registry IS the released 1.0.0 content', () => {
+    expect(() => { assertReleasedRegistry(BAZI_METHOD_REGISTRY_V1); }).not.toThrow();
+    expect(RELEASED_REGISTRY_HASHES['1.0.0']).toBe(methodRegistryStructuralHash(BAZI_METHOD_REGISTRY_V1));
+  });
+
+  it('blocks a registry whose content changed under the same version — even a VALID change', () => {
+    const edited = mutate((draft) => {
+      const index = draft.methods.findIndex((method) => method.methodId === 'heavenly_stems');
+      draft.methods[index] = { ...byId('heavenly_stems'), operations: [...byId('heavenly_stems').operations, 'DESCRIBE_TONE'] };
+    });
+    expect(() => { validateMethodRegistry(edited); }).not.toThrow();
+    try {
+      assertReleasedRegistry(edited);
+      expect.unreachable('an unreleased registry must not authorise a run');
+    } catch (error) {
+      expect((error as MethodRegistryError).code).toBe('REGISTRY_NOT_RELEASED');
+      expect((error as MethodRegistryError).message).toContain('CONTRADICTION');
+    }
+  });
+
+  it('blocks a version nobody released', () => {
+    try {
+      assertReleasedRegistry(mutate((draft) => { draft.profileVersion = '1.0.1'; }));
+      expect.unreachable('1.0.1 was never released');
+    } catch (error) {
+      expect((error as MethodRegistryError).code).toBe('REGISTRY_NOT_RELEASED');
+    }
   });
 });

@@ -9,13 +9,14 @@ import {
   buildBazodiacInterpretationInput,
 } from '../../src/application/interpretation/interpretation-input.js';
 import type { InterpretationInputErrorCode } from '../../src/application/interpretation/interpretation-input.js';
-import { FUFIRE_DAY_BOUNDARY } from '../../src/adapters/fufire/http-client.js';
+import { FUFIRE_DAY_BOUNDARY, fufireResponseMapper } from '../../src/adapters/fufire/http-client.js';
 import { knownTimeChart, knownTimeModel, unknownTimeChart } from '../support/narrativeFixture.js';
 import type { ChartWithEvidence } from '../support/narrativeFixture.js';
 
 type Overrides = Parameters<typeof knownTimeChart>[0];
+const MAPPER = { mapper: fufireResponseMapper };
 const build = (chart: ChartWithEvidence): ReturnType<typeof buildBazodiacInterpretationInput> =>
-  buildBazodiacInterpretationInput(chart.model, chart.source);
+  buildBazodiacInterpretationInput(chart.model, chart.source, MAPPER);
 const known = (overrides: Overrides = {}): ReturnType<typeof build> => build(knownTimeChart(overrides));
 const unknown = (overrides: Overrides = {}): ReturnType<typeof build> => build(unknownTimeChart(overrides));
 
@@ -45,7 +46,10 @@ describe('ETBZ-34 N1: the hand-off package', () => {
   });
 
   it('does not let a volatile producer timestamp change the hash', () => {
-    const later = known({ natal: { provenance: { computedAt: '2030-01-01T00:00:00Z' } } });
+    const later = known({
+      natal: { provenance: { computedAt: '2030-01-01T00:00:00Z' } },
+      natalWire: { provenance: { computed_at: '2030-01-01T00:00:00Z' } },
+    });
     expect(later.structuralHash).toBe(input.structuralHash);
   });
 
@@ -88,14 +92,26 @@ describe('ETBZ-34 N1: the hand-off package', () => {
 });
 
 describe('ETBZ-34 N2: fail-closed validation', () => {
-  it('refuses a Wu-Xing vector that is not the BaZi four-pillars basis', () => {
-    expectRefusal('INTERPRETATION_INPUT_BASIS_INVALID', () =>
-      known({ wuxing: { basis: 'western_planets' } }));
+  // ETBZ-34 AC 2–4 now fail at the consumer boundary that builds the
+  // HoroscopeModel (see tests/unit/wuxing-consumer-boundary.test.ts), so no model
+  // with these defects can exist. The builder keeps its own check as a second
+  // line of defence against a hand-assembled model.
+  it('refuses a hand-assembled model whose Wu-Xing basis is foreign', () => {
+    const chart = knownTimeChart();
+    const forged = { ...chart.model, wuxing: { ...chart.model.wuxing, basis: 'western_planetary' } };
+    expectRefusal('INTERPRETATION_INPUT_BASIS_INVALID', () => buildBazodiacInterpretationInput(forged, chart.source, MAPPER));
   });
 
-  it('refuses a dominant element that is not a maximum of the vector', () => {
-    expectRefusal('INTERPRETATION_INPUT_DOMINANT_INCONSISTENT', () =>
-      known({ wuxing: { dominant: 'Holz' } }));
+  it('refuses a hand-assembled model whose dominant is not a maximum', () => {
+    const chart = knownTimeChart();
+    const forged = { ...chart.model, wuxing: { ...chart.model.wuxing, dominant: 'Holz' } };
+    expectRefusal('INTERPRETATION_INPUT_DOMINANT_INCONSISTENT', () => buildBazodiacInterpretationInput(forged, chart.source, MAPPER));
+  });
+
+  it('refuses a hand-assembled model with a sixth vector key', () => {
+    const chart = knownTimeChart();
+    const forged = { ...chart.model, wuxing: { ...chart.model.wuxing, vector: { ...chart.model.wuxing.vector, Aether: 1 } } };
+    expectRefusal('INTERPRETATION_INPUT_WUXING_KEYSET_INVALID', () => buildBazodiacInterpretationInput(forged, chart.source, MAPPER));
   });
 
   it('accepts ANY maximum on a tie and invents no tie-break', () => {
@@ -163,10 +179,11 @@ describe('ETBZ-34 N4: no false production claim', () => {
     expectRefusal('INTERPRETATION_INPUT_NOT_PRODUCTION_ELIGIBLE', () => assertProductionEligible(input));
   });
 
-  it('is not production-eligible for known time either, until the ETBZ-34 source-pillar guard exists', () => {
+  it('is not production-eligible for known time either, until the runtime attestation PASSED', () => {
     const input = known();
-    expect(input.validation.sameChartWuxing).toBe('NOT_VERIFIED');
-    expect(input.productionEligibility.blockers).toEqual(['WUXING_SOURCE_PILLARS_NOT_VERIFIED']);
+    expect(input.validation.sameChartWuxing).toBe(true);
+    expect(input.runtimeAttestation).toEqual({ status: 'NOT_PASSED', observedStatus: null });
+    expect(input.productionEligibility.blockers).toEqual(['RUNTIME_ATTESTATION_NOT_PASSED']);
     expectRefusal('INTERPRETATION_INPUT_NOT_PRODUCTION_ELIGIBLE', () => assertProductionEligible(input));
   });
 });
@@ -182,7 +199,7 @@ describe('ETBZ-34 N5: raw producer evidence (finding A)', () => {
     expect(input.fufire.baziRaw.payload).toEqual(chart.source.bazi.raw?.payload);
     expect(input.fufire.natalRaw.payload).toEqual(chart.source.natal.raw?.payload);
     expect(input.fufire.baziRaw.redactions).toEqual([]);
-    expect(input.fufire.baziRaw.payloadStructuralHash).toMatch(/^sha256:[0-9a-f]{64}$/u);
+    expect(input.fufire.baziRaw.originalPayloadSha256).toMatch(/^sha256:[0-9a-f]{64}$/u);
   });
 
   it('redacts ONLY the echoed request coordinates and says so; every producer value survives', () => {
@@ -207,23 +224,23 @@ describe('ETBZ-34 N5: raw producer evidence (finding A)', () => {
       const bare = Object.fromEntries(Object.entries(chart.source[endpoint]).filter(([key]) => key !== 'raw'));
       const source = { ...chart.source, [endpoint]: bare } as unknown as typeof chart.source;
       expectRefusal('INTERPRETATION_INPUT_RAW_EVIDENCE_MISSING', () =>
-        buildBazodiacInterpretationInput(chart.model, source));
+        buildBazodiacInterpretationInput(chart.model, source, MAPPER));
     }
   });
 
   it('refuses evidence that belongs to another chart', () => {
     const other = knownTimeChart({ wuxing: { vector: { Holz: 1.8, Feuer: 2.6, Erde: 2, Metall: 2, Wasser: 2 } } });
     expectRefusal('INTERPRETATION_INPUT_EVIDENCE_NOT_SAME_CHART', () =>
-      buildBazodiacInterpretationInput(chart.model, other.source));
+      buildBazodiacInterpretationInput(chart.model, other.source, MAPPER));
     expectRefusal('INTERPRETATION_INPUT_EVIDENCE_NOT_SAME_CHART', () =>
-      buildBazodiacInterpretationInput(knownTimeModel(), unknownTimeChart().source));
+      buildBazodiacInterpretationInput(knownTimeModel(), unknownTimeChart().source, MAPPER));
   });
 
   it('a change in the raw bytes changes that body\'s hash, never the fact boundary', () => {
     const tampered = structuredClone(chart.source) as { wuxing: { raw: { payload: Record<string, unknown> } } } & typeof chart.source;
     tampered.wuxing.raw.payload['contribution_ledger'] = { injected: 'Day Master is strong' };
-    const other = buildBazodiacInterpretationInput(chart.model, tampered);
-    expect(other.fufire.wuxingRaw.payloadStructuralHash).not.toBe(input.fufire.wuxingRaw.payloadStructuralHash);
+    const other = buildBazodiacInterpretationInput(chart.model, tampered, MAPPER);
+    expect(other.fufire.wuxingRaw.originalPayloadSha256).not.toBe(input.fufire.wuxingRaw.originalPayloadSha256);
     expect(other.validatedChart.facts).toEqual(input.validatedChart.facts);
     expect(other.validatedChart.featureSetStructuralHash).toBe(input.validatedChart.featureSetStructuralHash);
   });

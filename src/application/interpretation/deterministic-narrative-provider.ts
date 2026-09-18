@@ -96,6 +96,7 @@ export function composeDeterministicNarrative(brief: NarrativeBrief): NarrativeP
     ...new Set([
       ...brief.uncertainty.provisionalFields.bazi,
       ...brief.uncertainty.provisionalFields.natal,
+      ...brief.uncertainty.provisionalFields.wuxing,
     ]),
   ].sort();
   const sections: NarrativeSectionDraft[] = brief.primaryThemes.map(

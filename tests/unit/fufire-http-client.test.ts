@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { wuxingWireBody } from '../support/wuxingFixture.js';
 import { FUFIRE_BAZI_PATH, createFufireClient } from '../../src/adapters/fufire/http-client.js';
 import type { FufireClientConfig } from '../../src/adapters/fufire/http-client.js';
 import { createCalculateHoroscopeUseCase } from '../../src/application/horoscope-use-case.js';
@@ -146,11 +147,7 @@ describe('FuFirE HTTP client: response mapping', () => {
   });
 
   it('maps the wu-xing endpoint against the pinned contract', async () => {
-    const client = clientWith(async () => jsonResponse(200, {
-      wu_xing_vector: { Holz: 1.8, Feuer: 2.5, Erde: 2.0, Metall: 2.0, Wasser: 2.0 },
-      dominant_element: 'Feuer',
-      basis: 'bazi_four_pillars',
-    }));
+    const client = clientWith(async () => jsonResponse(200, wuxingWireBody()));
     const snapshot = await client.calculateBaziWuxing(INPUT.value);
     expect(snapshot.dominant).toBe('Feuer');
     expect(snapshot.vector.Feuer).toBe(2.5);

@@ -103,7 +103,7 @@ export interface ChartFact {
   readonly exclusionReason: FactExclusionReason | null;
 }
 
-export const FEATURE_SET_VERSION = 'etbz-34.feature-set.v2' as const;
+export const FEATURE_SET_VERSION = 'etbz-34.feature-set.v3' as const;
 
 export interface InterpretationFeatureSet {
   readonly featureSetVersion: typeof FEATURE_SET_VERSION;
@@ -116,12 +116,13 @@ export interface InterpretationFeatureSet {
   readonly excludedFactIds: readonly string[];
   /**
    * FuFirE's provisional-field statements, BOTH preserved verbatim and
-   * separately, because they are two source statements and collapsing them
+   * separately, because they are three source statements and collapsing them
    * would silently pick a winner.
    */
   readonly provisionalFields: Readonly<{
     bazi: readonly string[];
     natal: readonly string[];
+    wuxing: readonly string[];
   }>;
   /** The pillars marked provisional by either statement (union; never a narrowing). */
   readonly provisionalPillars: readonly PillarName[];
@@ -152,6 +153,7 @@ function resolveProvisionalPillars(model: HoroscopeModel): readonly PillarName[]
   const sources: readonly (readonly [string, readonly string[]])[] = [
     ['precision.provisionalFields', model.precision.provisionalFields],
     ['natal.precision.provisionalFields', model.natal.precision.provisionalFields],
+    ['wuxing.precision.provisionalFields', model.wuxing.precision.provisionalFields],
   ];
   for (const [where, fields] of sources) {
     for (const field of fields) {
@@ -471,6 +473,7 @@ export function deriveInterpretationFeatureSet(
     provisionalFields: {
       bazi: [...model.precision.provisionalFields],
       natal: [...model.natal.precision.provisionalFields],
+      wuxing: [...model.wuxing.precision.provisionalFields],
     },
     provisionalPillars,
     birthTimeKnown: model.precision.birthTimeKnown,

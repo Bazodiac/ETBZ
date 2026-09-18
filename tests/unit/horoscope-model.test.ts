@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { WUXING_SNAPSHOT, WUXING_UNKNOWN_PRECISION } from '../support/wuxingFixture.js';
 import { buildHoroscopeModel, HoroscopeError } from '../../src/application/horoscope-model.js';
 import type { FufireBaziSnapshot, WuxingSnapshot } from '../../src/application/ports/fufire-gateway.js';
 import { validateBirthInput } from '../../src/domain/birth-input.js';
@@ -39,12 +40,7 @@ function baziFixture(overrides: Record<string, unknown> = {}): FufireBaziSnapsho
 }
 
 function wuxingFixture(overrides: Record<string, unknown> = {}): WuxingSnapshot {
-  const base = {
-    vector: { Holz: 1.8, Feuer: 2.5, Erde: 2.0, Metall: 2.0, Wasser: 2.0 },
-    dominant: 'Feuer',
-    basis: 'bazi_four_pillars',
-  };
-  return deepMerge(base, overrides) as WuxingSnapshot;
+  return deepMerge(structuredClone(WUXING_SNAPSHOT), overrides) as WuxingSnapshot;
 }
 
 function deepMerge(base: unknown, overrides: Record<string, unknown>): unknown {
@@ -106,7 +102,7 @@ describe('HoroscopeModel: source traceability', () => {
 
   it('preserves unknown-time uncertainty: hour stays explicitly provisional downstream', () => {
     const unknownTime = baziFixture({ precision: { birthTimeKnown: false, provisionalFields: ['hour'] } });
-    const model = buildHoroscopeModel(UNKNOWN_INPUT_RESULT.value, unknownTime, wuxingFixture(), UNKNOWN_NATAL, RUNTIME);
+    const model = buildHoroscopeModel(UNKNOWN_INPUT_RESULT.value, unknownTime, wuxingFixture({ precision: WUXING_UNKNOWN_PRECISION }), UNKNOWN_NATAL, RUNTIME);
     expect(model.birth.birthTimeKnown).toBe(false);
     expect(model.birth.time).toBeUndefined();
     // The uncertainty survives into the model: explicit, typed, consultable.
@@ -121,7 +117,7 @@ describe('HoroscopeModel: source traceability', () => {
 
   it('fails closed when input says unknown time but FuFirE does not mark the hour provisional', () => {
     const drifted = baziFixture({ precision: { birthTimeKnown: false, provisionalFields: [] } });
-    expect(() => buildHoroscopeModel(UNKNOWN_INPUT_RESULT.value, drifted, wuxingFixture(), UNKNOWN_NATAL, RUNTIME)).toThrow(
+    expect(() => buildHoroscopeModel(UNKNOWN_INPUT_RESULT.value, drifted, wuxingFixture({ precision: WUXING_UNKNOWN_PRECISION }), UNKNOWN_NATAL, RUNTIME)).toThrow(
       expect.objectContaining({ code: 'HOROSCOPE_CONTRACT_CONTRADICTION' }) as HoroscopeError,
     );
   });

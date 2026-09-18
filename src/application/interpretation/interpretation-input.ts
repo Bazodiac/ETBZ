@@ -21,12 +21,15 @@
  */
 import { structuralHash } from '../../domain/structural-hash.js';
 import type { HoroscopeModel } from '../horoscope-model.js';
-import { WUXING_ELEMENTS } from '../ports/fufire-gateway.js';
+import { REQUIRED_WUXING_BASIS, WUXING_ELEMENTS } from '../ports/fufire-gateway.js';
+import { evaluateRuntimeAttestation } from '../attestation/runtime-attestation.js';
+import type { AttestationVerdict } from '../attestation/runtime-attestation.js';
 import type {
   FufireBaziSnapshot,
   FufireNatalSnapshot,
   ProducerJson,
   ProducerRawResponse,
+  ProducerResponseMapper,
   WuxingSnapshot,
 } from '../ports/fufire-gateway.js';
 import { deriveInterpretationFeatureSet } from './feature-set.js';
@@ -35,13 +38,13 @@ import {
   BAZI_METHOD_REGISTRY_V1,
   METHOD_PROFILE_ID,
   methodRegistryStructuralHash,
+  assertReleasedRegistry,
   resolveMethodEnablement,
-  validateMethodRegistry,
 } from './method-registry.js';
 import type { MethodEnablement, MethodRegistry } from './method-registry.js';
 
 export const INTERPRETATION_INPUT_SCHEMA_VERSION = 'bazodiac-interpretation-input.v1' as const;
-export const REQUIRED_WUXING_BASIS = 'bazi_four_pillars' as const;
+export { REQUIRED_WUXING_BASIS };
 /** PD-9. Must equal the value the FuFirE adapter sends. */
 export const CANONICAL_DAY_BOUNDARY = 'midnight' as const;
 
@@ -52,6 +55,8 @@ export type InterpretationInputErrorCode =
   | 'INTERPRETATION_INPUT_PRECISION_CONTRADICTION'
   | 'INTERPRETATION_INPUT_RAW_EVIDENCE_MISSING'
   | 'INTERPRETATION_INPUT_EVIDENCE_NOT_SAME_CHART'
+  | 'INTERPRETATION_INPUT_RAW_EVIDENCE_MISMATCH'
+  | 'INTERPRETATION_INPUT_ATTESTATION_FOREIGN'
   | 'INTERPRETATION_INPUT_NOT_PRODUCTION_ELIGIBLE';
 
 export class InterpretationInputError extends Error {
@@ -70,8 +75,11 @@ export class InterpretationInputError extends Error {
 export type ProductionBlocker =
   /** FUF-163/164/165 not delivered: the producer cannot yet prove its unknown-time assumption. */
   | 'UNKNOWN_TIME_PRODUCER_CONTRACT_NOT_DELIVERED'
-  /** ETBZ-34 source-pillar guard not yet in the consumer: Wu-Xing same-chart is unproven. */
-  | 'WUXING_SOURCE_PILLARS_NOT_VERIFIED';
+  /**
+   * ETBZ-34 AC 5–7: no PASS verdict of the runtime attestation (OpenAPI bytes +
+   * immutable source revision) was supplied for this chart's runtime.
+   */
+  | 'RUNTIME_ATTESTATION_NOT_PASSED';
 
 /**
  * The three producer snapshots the HoroscopeModel was built from, each still
@@ -93,13 +101,17 @@ export interface ProducerSnapshots {
 export interface RawProducerEvidence {
   readonly endpoint: string;
   readonly claimBearing: false;
-  /** SHA-256 of the canonical JSON of the payload AS RECEIVED, before redaction. */
-  readonly payloadStructuralHash: string;
+  /** SHA-256 of the canonical JSON of the ORIGINAL, unredacted producer body. */
+  readonly originalPayloadSha256: string;
+  /** SHA-256 of the canonical JSON of `payload` as stored here, after redaction. */
+  readonly storedPayloadSha256: string;
   /**
-   * Paths replaced by `REDACTED_PII`. Closed list: the producer's ECHO of ETBZ's
-   * own request coordinates. Nothing FuFirE calculated is ever redacted.
+   * The redaction manifest: every path replaced by `REDACTED_PII`. Closed list —
+   * the producer's ECHO of ETBZ's own request coordinates. Nothing FuFirE
+   * calculated is ever redacted. Empty means `payload` is the original body.
    */
   readonly redactions: readonly string[];
+  /** The stored evidence body. NOT byte-verbatim when `redactions` is non-empty. */
   readonly payload: ProducerJson;
 }
 
@@ -118,8 +130,11 @@ export interface BazodiacInterpretationInput {
     timezone: string;
   }>;
   /**
-   * The complete relevant FuFirE responses, verbatim (section 3 of CONF-62128133:
-   * `bazi_raw`, `wuxing_raw`, `natal_raw`). Evidence, never a claim source.
+   * The complete relevant FuFirE responses (section 3 of CONF-62128133:
+   * `bazi_raw`, `wuxing_raw`, `natal_raw`), each proven to map — through the
+   * adapter's own response mapper — to exactly the snapshot this chart accepted.
+   * Stored with echoed request coordinates redacted (see `redactions`).
+   * Evidence, never a claim source.
    * Under an unknown birth time these bodies contain the producer's ASSUMED
    * instant; `containsAssumedTime` says so, and it is not the customer's birth.
    */
@@ -182,12 +197,16 @@ export interface BazodiacInterpretationInput {
   readonly validation: Readonly<{
     /** Enforced inside buildHoroscopeModel: natal pillars/day master == BaZi. */
     sameChartBaziNatal: true;
-    /** ETBZ-34 source-pillar guard. Honest until that guard exists. */
-    sameChartWuxing: 'NOT_VERIFIED';
+    /** Enforced inside buildHoroscopeModel (ETBZ-34 AC 1): Wu-Xing source pillars == BaZi pillars. */
+    sameChartWuxing: true;
     basis: typeof REQUIRED_WUXING_BASIS;
     wuxingKeysetValid: true;
     dominantConsistent: true;
-    /** The snapshots carrying the raw evidence are the ones this model was built from. */
+    /**
+     * PROVEN, not declared: every raw body was re-mapped by the producer response
+     * mapper and equals its snapshot, and those snapshots are the ones this model
+     * was built from. RAW -> mapper -> snapshot -> HoroscopeModel.
+     */
     rawEvidenceSameChart: true;
   }>;
   readonly methodProfile: Readonly<{
@@ -205,6 +224,10 @@ export interface BazodiacInterpretationInput {
     natalRulesetId: string;
     natalRulesetVersion: string;
   }>;
+  /** ETBZ-34 AC 5–7 as seen by this input: PASS with its expectation, or not passed. */
+  readonly runtimeAttestation:
+    | Readonly<{ status: 'PASS'; expectation: AttestationVerdict['expectation'] }>
+    | Readonly<{ status: 'NOT_PASSED'; observedStatus: AttestationVerdict['status'] | null }>;
   readonly productionEligibility: Readonly<{ eligible: boolean; blockers: readonly ProductionBlocker[] }>;
   /** Hash of everything above. Volatile producer timestamps are not part of it. */
   readonly structuralHash: string;
@@ -258,18 +281,55 @@ function redactEcho(payload: ProducerJson): Readonly<{ payload: ProducerJson; re
   return { payload: { ...body, input: cleaned }, redactions: redactions.sort() };
 }
 
-function rawEvidenceOf(what: string, raw: ProducerRawResponse | undefined): RawProducerEvidence {
+function withoutRaw<T extends { readonly raw?: ProducerRawResponse }>(snapshot: T): Omit<T, 'raw'> {
+  const { raw: _raw, ...rest } = snapshot;
+  void _raw;
+  return rest;
+}
+
+/**
+ * RAW PRODUCER PAYLOAD -> producer mapper/validator -> snapshot, and that
+ * snapshot must EQUAL the accepted one. A body that no longer maps, or maps to
+ * different facts, is not this chart's evidence — whatever it is attached to.
+ *
+ * The mapper is the adapter's own (`ProducerResponseMapper`); nothing symbolic
+ * is recomputed here. An additive field the pinned contract tolerates leaves
+ * the mapped snapshot unchanged and is accepted; one the contract forbids
+ * (the Natal response is `additionalProperties: false`) makes the mapper throw.
+ */
+function rawEvidenceOf<T extends { readonly raw?: ProducerRawResponse }>(
+  what: string,
+  snapshot: T,
+  map: (payload: unknown) => T,
+): RawProducerEvidence {
+  const raw = snapshot.raw;
   if (raw === undefined || raw.payload === null || typeof raw.payload !== 'object' || Array.isArray(raw.payload)) {
     throw new InterpretationInputError(
       'INTERPRETATION_INPUT_RAW_EVIDENCE_MISSING',
       `the ${what} snapshot carries no raw producer response; an interpretation input without its producer evidence is not reproducible and is refused`,
     );
   }
+  let remapped: T;
+  try {
+    remapped = map(structuredClone(raw.payload));
+  } catch (error) {
+    throw new InterpretationInputError(
+      'INTERPRETATION_INPUT_RAW_EVIDENCE_MISMATCH',
+      `the ${what} raw evidence does not pass the producer contract it claims to come from: ${error instanceof Error ? error.message : 'mapping failed'}`,
+    );
+  }
+  if (structuralHash(withoutRaw(remapped)) !== structuralHash(withoutRaw(snapshot))) {
+    throw new InterpretationInputError(
+      'INTERPRETATION_INPUT_RAW_EVIDENCE_MISMATCH',
+      `the ${what} raw evidence maps to different facts than the accepted ${what} snapshot; it is not the body this chart was validated from`,
+    );
+  }
   const { payload, redactions } = redactEcho(raw.payload);
   return {
     endpoint: raw.endpoint,
     claimBearing: false,
-    payloadStructuralHash: structuralHash(raw.payload),
+    originalPayloadSha256: structuralHash(raw.payload),
+    storedPayloadSha256: structuralHash(payload),
     redactions,
     payload,
   };
@@ -313,7 +373,13 @@ function assertSnapshotsBuiltThisModel(model: HoroscopeModel, source: ProducerSn
       precision: source.bazi.precision,
       computationTimestamp: source.bazi.provenance.computationTimestamp,
     },
-    wuxing: { vector: source.wuxing.vector, dominant: source.wuxing.dominant, basis: source.wuxing.basis },
+    wuxing: {
+      vector: source.wuxing.vector,
+      dominant: source.wuxing.dominant,
+      basis: source.wuxing.basis,
+      sourcePillars: source.wuxing.sourcePillars,
+      precision: source.wuxing.precision,
+    },
     natal: {
       pillars: source.natal.pillars,
       dayMaster: source.natal.dayMaster,
@@ -332,22 +398,30 @@ function assertSnapshotsBuiltThisModel(model: HoroscopeModel, source: ProducerSn
 }
 
 export interface BuildInterpretationInputOptions {
+  /** The adapter's response mappers — what proves raw evidence against its snapshot. Required. */
+  readonly mapper: ProducerResponseMapper;
   readonly registry?: MethodRegistry;
+  /**
+   * ETBZ-34 AC 5–7. Only a PASS verdict whose observed OpenAPI SHA-256 is the one
+   * this chart's runtime is pinned to lifts `RUNTIME_ATTESTATION_NOT_PASSED`.
+   */
+  readonly attestation?: AttestationVerdict;
 }
 
 /** Pure: same HoroscopeModel and registry in, byte-identical input out. */
 export function buildBazodiacInterpretationInput(
   model: HoroscopeModel,
   source: ProducerSnapshots,
-  options: BuildInterpretationInputOptions = {},
+  options: BuildInterpretationInputOptions,
 ): BazodiacInterpretationInput {
   const registry = options.registry ?? BAZI_METHOD_REGISTRY_V1;
-  validateMethodRegistry(registry);
+  // Only a RELEASED profile may authorise a hand-off (registry <-> Confluence anti-drift).
+  assertReleasedRegistry(registry);
   assertWuxing(model);
   assertSnapshotsBuiltThisModel(model, source);
-  const baziRaw = rawEvidenceOf('BaZi', source.bazi.raw);
-  const wuxingRaw = rawEvidenceOf('BaZi/WuXing', source.wuxing.raw);
-  const natalRaw = rawEvidenceOf('Natal', source.natal.raw);
+  const baziRaw = rawEvidenceOf('BaZi', source.bazi, (payload) => options.mapper.mapBazi(payload));
+  const wuxingRaw = rawEvidenceOf('BaZi/WuXing', source.wuxing, (payload) => options.mapper.mapWuxing(payload));
+  const natalRaw = rawEvidenceOf('Natal', source.natal, (payload) => options.mapper.mapNatal(payload));
   if (model.precision.birthTimeKnown !== model.birth.birthTimeKnown || model.natal.precision.birthTimeKnown !== model.birth.birthTimeKnown) {
     throw new InterpretationInputError(
       'INTERPRETATION_INPUT_PRECISION_CONTRADICTION',
@@ -357,11 +431,43 @@ export function buildBazodiacInterpretationInput(
 
   const featureSet = deriveInterpretationFeatureSet(model);
   const birthTimeKnown = featureSet.birthTimeKnown;
-  const blockers: ProductionBlocker[] = ['WUXING_SOURCE_PILLARS_NOT_VERIFIED'];
+  const blockers: ProductionBlocker[] = [];
   if (!birthTimeKnown) {
-    blockers.unshift('UNKNOWN_TIME_PRODUCER_CONTRACT_NOT_DELIVERED');
+    blockers.push('UNKNOWN_TIME_PRODUCER_CONTRACT_NOT_DELIVERED');
+  }
+  const attestation = options.attestation;
+  // The verdict is RE-DERIVED from its own expectation and observation: a
+  // `status: 'PASS'` somebody typed is not an attestation.
+  const attestationPassed =
+    attestation !== undefined &&
+    attestation.status === 'PASS' &&
+    evaluateRuntimeAttestation(
+      { openapiSha256: attestation.expectation.openapiSha256 ?? undefined, sourceRevision: attestation.expectation.sourceRevision ?? undefined },
+      attestation.observation,
+    ).status === 'PASS';
+  if (attestation !== undefined && attestation.status === 'PASS' && !attestationPassed) {
+    throw new InterpretationInputError(
+      'INTERPRETATION_INPUT_ATTESTATION_FOREIGN',
+      'the supplied attestation claims PASS but its own expectation and observation do not evaluate to PASS',
+    );
+  }
+  if (attestation !== undefined && attestationPassed) {
+    // A PASS for some OTHER runtime proves nothing about this chart's producer.
+    const observed = attestation.observation.openapi.status === 'OBSERVED' ? attestation.observation.openapi.sha256 : null;
+    if (observed === null || observed !== model.provenance.openapiSha256) {
+      throw new InterpretationInputError(
+        'INTERPRETATION_INPUT_ATTESTATION_FOREIGN',
+        'the supplied attestation PASS was observed for a different OpenAPI document than the one this chart is pinned to',
+      );
+    }
+  } else {
+    blockers.push('RUNTIME_ATTESTATION_NOT_PASSED');
   }
 
+  const attested =
+    attestation !== undefined && attestation.status === 'PASS'
+      ? { status: 'PASS' as const, expectation: attestation.expectation }
+      : { status: 'NOT_PASSED' as const, observedStatus: attestation?.status ?? null };
   const core = {
     schemaVersion: INTERPRETATION_INPUT_SCHEMA_VERSION,
     input: {
@@ -417,7 +523,7 @@ export function buildBazodiacInterpretationInput(
     },
     validation: {
       sameChartBaziNatal: true as const,
-      sameChartWuxing: 'NOT_VERIFIED' as const,
+      sameChartWuxing: true as const,
       basis: REQUIRED_WUXING_BASIS,
       wuxingKeysetValid: true as const,
       dominantConsistent: true as const,
@@ -438,13 +544,14 @@ export function buildBazodiacInterpretationInput(
       natalRulesetId: model.natal.provenance.rulesetId,
       natalRulesetVersion: model.natal.provenance.rulesetVersion,
     },
+    runtimeAttestation: attested,
     productionEligibility: { eligible: blockers.length === 0, blockers },
   };
   // `fufire.natal.provenance.computedAt` and the BaZi computation timestamp are
   // volatile per call; the hash covers the facts and the contract, not the clock.
   // The raw bodies carry those same clocks, so the package hash covers their
   // endpoint and redaction list but not their bytes; each body has its own
-  // `payloadStructuralHash` for byte-level reproducibility.
+  // `originalPayloadSha256` / `storedPayloadSha256` for byte-level reproducibility.
   const withoutBytes = (evidence: RawProducerEvidence): unknown => ({
     endpoint: evidence.endpoint,
     claimBearing: evidence.claimBearing,
@@ -472,10 +579,9 @@ export function buildBazodiacInterpretationInput(
 /**
  * The gate a paid run must pass. Fails closed and names every blocker.
  *
- * Today it ALWAYS throws: the Wu-Xing source-pillar guard of ETBZ-34 is not in
- * the consumer yet, and for unknown time the producer contract (FUF-163/164/165)
- * is not delivered. That is the honest state, and a gate that reported anything
- * else would be decoration.
+ * It opens only when the runtime attestation PASSED for this chart's runtime
+ * and — for an unknown birth time — never, until the producer contract
+ * (FUF-163/164/165) is delivered and this code is taught to validate it.
  */
 export function assertProductionEligible(input: BazodiacInterpretationInput): void {
   if (!input.productionEligibility.eligible) {

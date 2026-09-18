@@ -61,7 +61,8 @@ describe('ETBZ-25 B1: the graph is a pure function of the feature set', () => {
   it('changes the graph hash when a theme membership changes', () => {
     const base = graphOf();
     // A different dominant element moves one fact between wu-xing themes.
-    const drifted = graphOf(knownTimeModel({ wuxing: { dominant: 'Metall' } }));
+    // ETBZ-34 AC 2: a dominant must BE a maximum, so the vector moves with it.
+    const drifted = graphOf(knownTimeModel({ wuxing: { dominant: 'Metall', vector: { Metall: 2.6 } } }));
 
     expect(drifted.structuralHash).not.toBe(base.structuralHash);
   });

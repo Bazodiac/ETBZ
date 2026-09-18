@@ -25,6 +25,7 @@ import {
   natalSnapshot,
   natalWireBody,
 } from './natalFixture.js';
+import { WUXING_SNAPSHOT, WUXING_UNKNOWN_PRECISION, wuxingWireBody } from './wuxingFixture.js';
 
 export const RUNTIME = {
   runtimeImage: 'fufire-lunar@sha256:c9162edd',
@@ -58,11 +59,7 @@ export function baziSnapshot(overrides: Record<string, unknown> = {}): FufireBaz
   return deepMergeFixture(structuredClone(BAZI), overrides) as FufireBaziSnapshot;
 }
 
-const WUXING: WuxingSnapshot = {
-  vector: { Holz: 1.8, Feuer: 2.5, Erde: 2, Metall: 2, Wasser: 2 },
-  dominant: 'Feuer',
-  basis: 'bazi_four_pillars',
-};
+const WUXING: WuxingSnapshot = WUXING_SNAPSHOT;
 
 export function wuxingSnapshot(overrides: Record<string, unknown> = {}): WuxingSnapshot {
   return deepMergeFixture(structuredClone(WUXING), overrides) as WuxingSnapshot;
@@ -142,7 +139,7 @@ export function unknownTimeModel(
   return buildHoroscopeModel(
     UNKNOWN_BIRTH,
     baziSnapshot(bazi),
-    wuxingSnapshot(overrides.wuxing ?? {}),
+    wuxingSnapshot(deepMergeFixture({ precision: structuredClone(WUXING_UNKNOWN_PRECISION) }, overrides.wuxing ?? {}) as Record<string, unknown>),
     natalSnapshot(natal),
     RUNTIME,
   );
@@ -195,19 +192,20 @@ function baziWireBody(snapshot: FufireBaziSnapshot): ProducerJson {
   };
 }
 
-function wuxingWireBody(snapshot: WuxingSnapshot, known: boolean): ProducerJson {
-  return {
-    input: { date: known ? '1990-06-15T14:30:00' : '1985-11-03', tz: 'Europe/Berlin', lon: 13.405, lat: 52.52, birth_time_known: known },
-    wu_xing_vector: { ...snapshot.vector },
-    dominant_element: snapshot.dominant,
-    basis: snapshot.basis,
-    precision: { birth_time_known: known, provisional_fields: known ? [] : ['hour'] },
-  };
-}
+/**
+ * `natalWire` is the SAME override expressed in wire keys: the raw body must map
+ * to the snapshot, so a test that moves a natal fact moves it in both shapes.
+ */
+export type ChartOverrides = Readonly<{
+  bazi?: Record<string, unknown>;
+  wuxing?: Record<string, unknown>;
+  natal?: Record<string, unknown>;
+  natalWire?: Record<string, unknown>;
+}>;
 
 function withEvidence(
   known: boolean,
-  overrides: Readonly<{ bazi?: Record<string, unknown>; wuxing?: Record<string, unknown>; natal?: Record<string, unknown> }>,
+  overrides: ChartOverrides,
 ): ChartWithEvidence {
   const baziBase = known
     ? {}
@@ -220,18 +218,22 @@ function withEvidence(
         },
       };
   const bazi = baziSnapshot(deepMergeFixture(baziBase, overrides.bazi ?? {}) as Record<string, unknown>);
-  const wuxing = wuxingSnapshot(overrides.wuxing ?? {});
+  const wuxing = wuxingSnapshot(
+    deepMergeFixture(known ? {} : { precision: structuredClone(WUXING_UNKNOWN_PRECISION) }, overrides.wuxing ?? {}) as Record<string, unknown>,
+  );
   const natal = natalSnapshot(
     deepMergeFixture(known ? {} : structuredClone(UNKNOWN_TIME_NATAL_OVERRIDES), overrides.natal ?? {}) as Record<string, unknown>,
   );
   const source = {
     bazi: { ...bazi, raw: { endpoint: '/v1/calculate/bazi', payload: baziWireBody(bazi) } },
-    wuxing: { ...wuxing, raw: { endpoint: '/v1/calculate/bazi/wuxing', payload: wuxingWireBody(wuxing, known) } },
+    wuxing: { ...wuxing, raw: { endpoint: '/v1/calculate/bazi/wuxing', payload: wuxingWireBody(wuxing) as ProducerJson } },
     natal: {
       ...natal,
       raw: {
         endpoint: '/v1/calculate/bazi/natal',
-        payload: natalWireBody(known ? {} : structuredClone(UNKNOWN_TIME_NATAL_WIRE_OVERRIDES)) as ProducerJson,
+        payload: natalWireBody(
+          deepMergeFixture(known ? {} : structuredClone(UNKNOWN_TIME_NATAL_WIRE_OVERRIDES), overrides.natalWire ?? {}) as Record<string, unknown>,
+        ) as ProducerJson,
       },
     },
   };
@@ -240,13 +242,13 @@ function withEvidence(
 }
 
 export function knownTimeChart(
-  overrides: Readonly<{ bazi?: Record<string, unknown>; wuxing?: Record<string, unknown>; natal?: Record<string, unknown> }> = {},
+  overrides: ChartOverrides = {},
 ): ChartWithEvidence {
   return withEvidence(true, overrides);
 }
 
 export function unknownTimeChart(
-  overrides: Readonly<{ bazi?: Record<string, unknown>; wuxing?: Record<string, unknown>; natal?: Record<string, unknown> }> = {},
+  overrides: ChartOverrides = {},
 ): ChartWithEvidence {
   return withEvidence(false, overrides);
 }

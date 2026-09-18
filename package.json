@@ -14,6 +14,7 @@
     "lint": "eslint . --max-warnings=0",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
+    "attest:fufire": "node dist/attest-fufire.js",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",

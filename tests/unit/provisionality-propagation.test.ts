@@ -28,6 +28,7 @@ function modelWith(fields: readonly string[]): HoroscopeModel {
   return unknownTimeModel({
     bazi: { precision: { birthTimeKnown: false, provisionalFields: [...fields] } },
     natal: { precision: { birthTimeKnown: false, provisionalFields: [...fields] } },
+    wuxing: { precision: { birthTimeKnown: false, provisionalFields: [...fields] } },
   });
 }
 
@@ -78,7 +79,7 @@ describe.each([
     // Provisional is not excluded: only the ASSUMED hour is non-interpretable.
     expect(derived.every((fact) => fact.interpretable && fact.exclusionReason === null)).toBe(true);
     expect(provisionalPillarsOf(featureSet)).toEqual([...fields].sort());
-    expect(featureSet.provisionalFields).toEqual({ bazi: [...fields], natal: [...fields] });
+    expect(featureSet.provisionalFields).toEqual({ bazi: [...fields], natal: [...fields], wuxing: [...fields] });
   });
 
   it('leaves the pillars the producer did not name certain', () => {
@@ -169,6 +170,16 @@ describe('ETBZ-34 E3: what ETBZ does not understand, it does not drop', () => {
     });
     const featureSet = deriveInterpretationFeatureSet(model);
     expect(featureSet.provisionalPillars).toEqual(['month', 'hour']);
-    expect(featureSet.provisionalFields).toEqual({ bazi: ['hour', 'month'], natal: ['hour'] });
+    expect(featureSet.provisionalFields).toEqual({ bazi: ['hour', 'month'], natal: ['hour'], wuxing: ['hour'] });
+  });
+
+  it("understands the Wu-Xing endpoint's OWN statement: a pillar only IT names still propagates", () => {
+    const model = unknownTimeModel({
+      wuxing: { precision: { birthTimeKnown: false, provisionalFields: ['hour', 'year'] } },
+    });
+    const featureSet = deriveInterpretationFeatureSet(model);
+    expect(featureSet.provisionalPillars).toEqual(['year', 'hour']);
+    expect(featureSet.facts.filter((fact) => fact.pillar === 'year').every((fact) => fact.provisional)).toBe(true);
+    expect(featureSet.facts.filter((fact) => fact.pillar === 'month').some((fact) => fact.provisional)).toBe(false);
   });
 });

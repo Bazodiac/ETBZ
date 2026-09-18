@@ -301,3 +301,24 @@ describe('ETBZ-34 M5: raw evidence, deferred methods and salience', () => {
     expect(keys).toEqual(['claimId', 'epistemicClass', 'factRefs', 'methodRefs', 'provisionalFactRefs', 'relations', 'statement', 'themeRefs']);
   });
 });
+
+describe('ETBZ-34 M6: a visible + hidden element pair is an observation, never rooting', () => {
+  const VISIBLE_WATER = 'chart.pillar.month.stemElement';
+  const hiddenWater = KNOWN.featureSet.facts.find((fact) => fact.kind === 'hidden_stem_element' && fact.value === 'water');
+  if (hiddenWater === undefined) throw new Error('fixture: hidden water stem expected');
+
+  it('accepts the identity observation through fact_relations', () => {
+    expect(() => validateInterpretiveClaim(claim({
+      statement: 'The element of the visible month stem also appears among the accepted hidden stems.',
+      factRefs: [VISIBLE_WATER, hiddenWater.id],
+      methodRefs: ['heavenly_stems', 'hidden_stems', 'fact_relations'],
+    }), KNOWN)).not.toThrow();
+  });
+
+  it.each(['rooting', 'day_master_strength', 'useful_god'])('refuses the same pair when the claim names %s', (methodId) => {
+    expectRefusal('CLAIM_METHOD_NOT_APPROVED', claim({
+      factRefs: [VISIBLE_WATER, hiddenWater.id],
+      methodRefs: ['heavenly_stems', 'hidden_stems', 'fact_relations', methodId],
+    }));
+  });
+});

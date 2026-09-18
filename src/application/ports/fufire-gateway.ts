@@ -93,6 +93,16 @@ export interface ProducerRawResponse {
   readonly payload: ProducerJson;
 }
 
+/** `pillars.<p>` of the BaZi Wu-Xing response — the pillars the vector was summed FROM. */
+export interface WuxingSourcePillar {
+  /** `pillars.<p>.stem` — same `STEMS` vocabulary as `pillars.<p>.stamm` of `/calculate/bazi`. */
+  readonly stem: string;
+  /** `pillars.<p>.branch` — same `BRANCHES` vocabulary as `pillars.<p>.zweig`. */
+  readonly branch: string;
+}
+
+export const REQUIRED_WUXING_BASIS = 'bazi_four_pillars' as const;
+
 export interface WuxingSnapshot {
   /** See {@link ProducerRawResponse}. Evidence only. */
   readonly raw?: ProducerRawResponse;
@@ -101,6 +111,35 @@ export interface WuxingSnapshot {
   readonly dominant: string;
   /** `basis` (e.g. `bazi_four_pillars`) */
   readonly basis: string;
+  /**
+   * ETBZ-34 AC 1 — `pillars`: producer-owned source pillars. They are what lets
+   * the consumer prove the vector belongs to the SAME chart as the BaZi answer.
+   */
+  readonly sourcePillars: Readonly<{
+    year: WuxingSourcePillar;
+    month: WuxingSourcePillar;
+    day: WuxingSourcePillar;
+    hour: WuxingSourcePillar;
+  }>;
+  /** `precision` — the Wu-Xing endpoint's OWN statement about time confidence. */
+  readonly precision: Readonly<{
+    birthTimeKnown: boolean;
+    provisionalFields: readonly string[];
+  }>;
+}
+
+/**
+ * ETBZ-34 (raw-evidence binding) — the producer response mappers as a port.
+ *
+ * The ONE mapping/validation of a FuFirE wire body lives in the adapter. The
+ * application re-runs it over stored raw evidence to prove that the evidence
+ * maps to exactly the snapshot it accepted. It is not a calculator: it reads a
+ * body FuFirE produced and either yields the snapshot or throws.
+ */
+export interface ProducerResponseMapper {
+  mapBazi(payload: unknown): FufireBaziSnapshot;
+  mapWuxing(payload: unknown): WuxingSnapshot;
+  mapNatal(payload: unknown): FufireNatalSnapshot;
 }
 
 /**

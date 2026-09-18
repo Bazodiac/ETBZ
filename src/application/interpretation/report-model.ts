@@ -80,7 +80,7 @@ export interface ReportProviderNote {
 
 export interface ReportUncertainty {
   readonly birthTimeKnown: boolean;
-  readonly provisionalFields: Readonly<{ bazi: readonly string[]; natal: readonly string[] }>;
+  readonly provisionalFields: Readonly<{ bazi: readonly string[]; natal: readonly string[]; wuxing: readonly string[] }>;
   readonly provisionalFactIds: readonly string[];
   /** FuFirE's warning codes, verbatim: source order, duplicates, unknown codes. */
   readonly sourceWarnings: readonly string[];
