@@ -3,7 +3,8 @@
  * `InterpretiveClaim`s of one chart.
  *
  * Positive shape, bindings, identity, determinism, counterfactuals,
- * provisionality and the PD-5 composition. The refusals live in
+ * provisionality, the consistency check and the PD-5 composition — including
+ * the refusals that belong to those (G3, G5). The draft-level refusals live in
  * `tests/negative/interpretive-claim-graph.negative.test.ts`.
  */
 import { createHash } from 'node:crypto';
@@ -268,7 +269,12 @@ describe('ETBZ-30A G2: claim identity is semantic, and the graph is a pure funct
     const forward = [
       recurrenceClaim({
         themeRefs: [...MONTH_THEMES],
-        relations: [{ type: 'DEVELOPS', targetClaimId: H.relation }, { type: 'CONTEXTUALIZES', targetClaimId: H.dayMaster }],
+        // Two relations of the SAME type: their order can only come from the target.
+        relations: [
+          { type: 'DEVELOPS', targetClaimId: H.relation },
+          { type: 'DEVELOPS', targetClaimId: H.dayMaster },
+          { type: 'CONTEXTUALIZES', targetClaimId: H.dayMaster },
+        ],
       }),
       relationClaim(),
       dayMasterClaim(),
@@ -291,7 +297,10 @@ describe('ETBZ-30A G2: claim identity is semantic, and the graph is a pure funct
     expect(recurrence.factRefs).toEqual([DAY_HIDDEN_TEN_GOD, MONTH_TEN_GOD]);
     expect(recurrence.themeRefs).toEqual([...MONTH_THEMES].sort());
     expect(recurrence.methodRefs).toEqual(['fact_relations', 'positional_context', 'ten_gods']);
-    expect(recurrence.relations.map((relation) => relation.type)).toEqual(['CONTEXTUALIZES', 'DEVELOPS']);
+    expect(recurrence.relations.map((relation) => relation.type)).toEqual(['CONTEXTUALIZES', 'DEVELOPS', 'DEVELOPS']);
+    const developed = recurrence.relations.filter((relation) => relation.type === 'DEVELOPS').map((relation) => relation.targetClaimId);
+    expect(developed).toEqual([...developed].sort());
+    expect(new Set(developed).size).toBe(2);
   });
 
   it('does not let the order of provisional lineage create a difference', () => {
@@ -305,6 +314,17 @@ describe('ETBZ-30A G2: claim identity is semantic, and the graph is a pure funct
     expect(left.claims[0]?.provisionalFactRefs).toEqual([DOMINANT, FIRE_WEIGHT]);
     expect(right.claims[0]?.claimId).toBe(left.claims[0]?.claimId);
     expect(canonicalJson(right)).toBe(canonicalJson(left));
+  });
+
+  it('makes provisional lineage part of identity: the same words over the same values, certain here and provisional there', () => {
+    const value = (context: ClaimGraphContext): string | undefined => context.brief.facts.find((fact) => fact.id === DOMINANT)?.value;
+    expect(value(KNOWN)).toBeDefined();
+    expect(value(UNKNOWN)).toBe(value(KNOWN));
+    const certain = buildInterpretiveClaimGraph(draftOf([dominantClaim({ epistemicClass: 'TENTATIVE_INTERPRETATION', relations: [] })], KNOWN), KNOWN);
+    const provisional = buildInterpretiveClaimGraph(draftOf([tentativeDominantClaim({ relations: [] })], UNKNOWN), UNKNOWN);
+    expect(certain.claims[0]?.provisionalFactRefs).toEqual([]);
+    expect(provisional.claims[0]?.provisionalFactRefs).toEqual([DOMINANT]);
+    expect(provisional.claims[0]?.claimId).not.toBe(certain.claims[0]?.claimId);
   });
 
   it('is idempotent on the draft projection of its own output', () => {
@@ -393,6 +413,9 @@ describe('ETBZ-30A G3: counterfactual and ablation — the graph depends on the 
     const forged = { ...KNOWN.brief, facts: KNOWN.brief.facts.slice(1) };
     expect(forged.structuralHash).toBe(KNOWN.brief.structuralHash);
     expectGraphRefusal('CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL', () => buildInterpretiveClaimGraph(draftOf(baselineClaims()), { ...KNOWN, brief: forged }));
+    // A brief that cannot even be canonicalised is not this model's brief either.
+    const unhashable = { ...KNOWN.brief, weight: 10n } as unknown as ClaimGraphContext['brief'];
+    expectGraphRefusal('CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL', () => buildInterpretiveClaimGraph(draftOf(baselineClaims()), { ...KNOWN, brief: unhashable }));
   });
 
   it('refuses a graph that is not exactly what its own claims produce for this chart', () => {
@@ -409,6 +432,10 @@ describe('ETBZ-30A G3: counterfactual and ablation — the graph depends on the 
       ['a number smuggled onto the graph', { ...graph, rank: 1 } as InterpretiveClaimGraph, KNOWN],
       ['a value that cannot be canonicalised', { ...graph, weight: 10n } as unknown as InterpretiveClaimGraph, KNOWN],
       ['claims out of canonical order', { ...graph, claims: [...graph.claims].reverse() }, KNOWN],
+      ['a claim edited into one the claim contract refuses', { ...graph, claims: [{ ...first, factRefs: [...first.factRefs, 'chart.natal.pillar.month.luck'] }, ...graph.claims.slice(1)] }, KNOWN],
+      ['no claims at all', { ...graph, claims: null } as unknown as InterpretiveClaimGraph, KNOWN],
+      ['a claim slot that is not a claim', { ...graph, claims: [null, ...graph.claims.slice(1)] } as unknown as InterpretiveClaimGraph, KNOWN],
+      ['not a graph', null as unknown as InterpretiveClaimGraph, KNOWN],
     ];
     for (const [what, forged, context] of forgeries) {
       let caught: unknown;

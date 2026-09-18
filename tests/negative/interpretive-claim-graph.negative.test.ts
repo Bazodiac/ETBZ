@@ -1,8 +1,10 @@
 /**
- * ETBZ-30A — every required refusal of the InterpretiveClaimGraph.
+ * ETBZ-30A — the draft-level refusals of the InterpretiveClaimGraph. The
+ * binding, consistency-check and central-claim refusals are in the unit suite
+ * (G3, G5).
  *
- * Pattern: the baseline is proven green first, then each test applies exactly
- * ONE change to it. A refusal that comes from the claim contract must surface as
+ * Pattern: the baseline is proven green first, then each test changes as little
+ * of it as the refusal needs. A refusal that comes from the claim contract must surface as
  * the claim validator's own `ClaimError` — the graph composes that gate, it does
  * not re-word it. A refusal that only a graph can see is a `ClaimGraphError`.
  * In both cases nothing partial is returned.
@@ -281,20 +283,38 @@ describe('ETBZ-30A N5: duplication and order never become importance', () => {
     }
   });
 
-  it('refuses a statement that is not in canonical form, so one sentence cannot be submitted as two', () => {
+  it('refuses a statement that is not in canonical form: one spelling, one kind of space, nothing invisible', () => {
     const statement = recurrenceClaim().statement;
-    const nonCanonical = [
-      `${statement} `,
-      ` ${statement}`,
-      statement.replace(' ', '  '),
-      statement.replace(' ', '\n'),
-      `${statement}\u200b`,
-      '\u200b',
-      'Re\u0301sume\u0301 of the month pillar.', // NFD: e + combining acute
+    const nonCanonical: [string, string][] = [
+      ['trailing space', `${statement} `],
+      ['leading space', ` ${statement}`],
+      ['doubled space', statement.replace(' ', '  ')],
+      ['line feed', statement.replace(' ', '\n')],
+      ['tab', statement.replace(' ', '\t')],
+      ['no-break space', statement.replace(' ', '\u00a0')],
+      ['thin space', statement.replace(' ', '\u2009')],
+      ['ideographic space', statement.replace(' ', '\u3000')],
+      ['line separator', statement.replace(' ', '\u2028')],
+      ['zero-width space appended', `${statement}\u200b`],
+      ['zero-width space only', '\u200b'],
+      ['combining grapheme joiner appended', `${statement}\u034f`],
+      ['variation selector appended', `${statement}\ufe0f`],
+      ['hangul filler only', '\u3164'],
+      ['braille blank only', '\u2800'],
+      ['NFD instead of NFC', 'Re\u0301sume\u0301 of the month pillar.'],
     ];
-    for (const variant of nonCanonical) {
-      expectDraftRefusal('CLAIM_GRAPH_STATEMENT_NOT_CANONICAL', withRecurrence({ statement: variant }));
+    for (const [what, variant] of nonCanonical) {
+      const caught = refusalOf(() => buildInterpretiveClaimGraph(draftOf(withRecurrence({ statement: variant })), KNOWN));
+      expect(caught, what).toBeInstanceOf(ClaimGraphError);
+      expect((caught as ClaimGraphError).code, what).toBe('CLAIM_GRAPH_STATEMENT_NOT_CANONICAL');
     }
+    // The twin this closes: the same sentence with ONE no-break space, "supporting" its original.
+    const twin = recurrenceClaim({
+      claimId: 'draft.again',
+      statement: statement.replace(' ', '\u00a0'),
+      relations: [{ type: 'SUPPORTS', targetClaimId: H.recurrence }],
+    });
+    expectDraftRefusal('CLAIM_GRAPH_STATEMENT_NOT_CANONICAL', [...baselineClaims(), twin]);
     // Control: the same sentence in NFC, and non-ASCII text as such, are fine.
     expect(buildInterpretiveClaimGraph(draftOf(withRecurrence({ statement: 'R\u00e9sum\u00e9 of the month pillar — 月.' })), KNOWN).claims).toHaveLength(4);
   });
@@ -342,7 +362,8 @@ describe('ETBZ-30A N6: the draft is untrusted input with a closed shape', () => 
       { ...valid(), claims: 'not an array' },
       { ...valid(), claims: [{ ...recurrenceClaim(), factRefs: [marker, 7] }] },
       { ...valid(), claims: [{ ...recurrenceClaim(), claimId: '' }] },
-      { ...valid(), claims: [{ ...recurrenceClaim(), relations: [{ type: 'SUPPORTS', targetClaimId: H.relation, weight: marker }] }] },
+      // Valid in every other respect, so that ONLY the unknown relation field can refuse it.
+      { ...valid(), claims: [{ ...recurrenceClaim(), relations: [{ type: 'DEVELOPS', targetClaimId: H.relation, weight: marker }] }, relationClaim()] },
       { ...valid(), sourceBriefStructuralHash: undefined },
       { ...valid(), [marker]: 'x' },
       { ...valid(), claims: [{ ...recurrenceClaim(), [marker]: 1 }] },

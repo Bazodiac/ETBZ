@@ -32,8 +32,10 @@
  * sentence under a second handle is the same interpretation again, whatever
  * label — epistemic class, theme, method set, grounding — was changed to tell
  * the two apart. For that to mean anything a statement must be in canonical
- * form (NFC, trimmed, single spaces, no control or format characters); one that
- * is not is refused, never repaired. Identity stays STRUCTURAL beyond that: two
+ * form (NFC; U+0020 as the only white space, single and not at the ends; no
+ * control, format or otherwise invisible character); one that is not is
+ * refused, never repaired. That closes spelling, spacing and invisible marks —
+ * not look-alike letters. Identity stays STRUCTURAL beyond that: two
  * differently worded statements are two claims — `ALTERNATIVE_READING` needs
  * exactly that — and judging paraphrase is not this slice's business.
  *
@@ -125,7 +127,9 @@ export class ClaimGraphError extends Error {
 /**
  * An id-like string. Bounded, because refusals further down NAME the offending
  * id — the identifier is the finding — and an unbounded one would turn an error
- * message into a channel for untrusted bulk.
+ * message into a channel for untrusted bulk. The bound is per string: the NUMBER
+ * of refs is not limited here (the Method Profile sets no maximum), and the
+ * claim validator's lineage refusal lists what a claim declared.
  */
 const idLike = z.string().min(1).max(256);
 
@@ -174,14 +178,28 @@ function refuseRepeated(claimId: string, what: string, values: readonly string[]
   }
 }
 
-/** Control and format characters: line breaks, tabs, zero-width and other invisible marks. */
-const INVISIBLE = /[\p{Cc}\p{Cf}]/u;
+/** Every white-space character except U+0020: tabs, line breaks, no-break, thin, ideographic space, U+2028... */
+const FOREIGN_SPACE = /[^\S ]/u;
 
-/** One sentence, one spelling: otherwise a trailing space would make a second claim. */
+/**
+ * Characters that render as nothing: controls, format characters (zero-width
+ * space and joiners, soft hyphen, directional marks), everything Unicode calls
+ * default-ignorable (variation selectors, grapheme joiner, Hangul fillers) and
+ * the blank Braille pattern.
+ */
+const INVISIBLE = /[\p{Cc}\p{Cf}\p{Default_Ignorable_Code_Point}\u2800]/u;
+
+/**
+ * One sentence, one spelling, one kind of space, nothing unseen — otherwise a
+ * trailing space, a no-break space or a zero-width mark would make a second
+ * claim out of the same sentence. Look-alike letters of another script are NOT
+ * caught here; that would need a confusables table nobody approved.
+ */
 function isCanonicalStatement(statement: string): boolean {
   return statement === statement.normalize('NFC')
     && statement === statement.trim()
     && !statement.includes('  ')
+    && !FOREIGN_SPACE.test(statement)
     && !INVISIBLE.test(statement);
 }
 
@@ -206,14 +224,21 @@ function deriveClaimId(claim: InterpretiveClaim, cited: readonly ChartFact[], me
 
 /**
  * Validates a draft against the chart it claims to interpret and assembles the
- * graph. Throws `ClaimGraphError`, or the claim validator's own `ClaimError` /
- * `MethodRegistryError` unchanged, and returns nothing partial.
+ * graph. Refuses with `ClaimGraphError`, or with the claim validator's own
+ * `ClaimError` / `MethodRegistryError` unchanged, and returns nothing partial.
+ * (A model the narrative chain itself cannot derive fails as that chain fails.)
  */
 export function buildInterpretiveClaimGraph(draft: unknown, context: ClaimGraphContext): InterpretiveClaimGraph {
   // The chain is RE-DERIVED from the model. The supplied brief is only ever
   // compared against this one; it is never the authority.
   const rederived = buildNarrativeChain(context.model);
-  if (structuralHash(context.brief) !== structuralHash(rederived.brief)) {
+  let supplied: string | null;
+  try {
+    supplied = structuralHash(context.brief);
+  } catch {
+    supplied = null; // not even JSON-representable: certainly not what the chain produces
+  }
+  if (supplied !== structuralHash(rederived.brief)) {
     throw new ClaimGraphError(
       'CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL',
       'the supplied brief is not the brief this HoroscopeModel produces; claims are never accepted against an unverified brief',
@@ -262,7 +287,7 @@ export function buildInterpretiveClaimGraph(draft: unknown, context: ClaimGraphC
     if (!isCanonicalStatement(claim.statement)) {
       throw new ClaimGraphError(
         'CLAIM_GRAPH_STATEMENT_NOT_CANONICAL',
-        `the statement of claim "${claim.claimId}" is not in canonical form (NFC, trimmed, single spaces, no control or format characters)`,
+        `the statement of claim "${claim.claimId}" is not in canonical form (NFC, U+0020 as the only white space, single and not at the ends, no invisible characters)`,
       );
     }
     refuseRepeated(claim.claimId, 'fact', claim.factRefs);
@@ -367,14 +392,16 @@ export function claimGraphDraftOf(graph: InterpretiveClaimGraph): InterpretiveCl
  */
 export function assertInterpretiveClaimGraphIntact(graph: InterpretiveClaimGraph, context: ClaimGraphContext): void {
   let presented: string;
+  let draft: InterpretiveClaimGraphDraft;
   try {
     presented = structuralHash(graph);
+    draft = claimGraphDraftOf(graph);
   } catch {
-    throw new ClaimGraphError('CLAIM_GRAPH_NOT_INTACT', 'the graph carries a value no accepted graph can carry');
+    throw new ClaimGraphError('CLAIM_GRAPH_NOT_INTACT', 'the value does not have the shape of an accepted graph');
   }
   let rebuilt: InterpretiveClaimGraph;
   try {
-    rebuilt = buildInterpretiveClaimGraph(claimGraphDraftOf(graph), context);
+    rebuilt = buildInterpretiveClaimGraph(draft, context);
   } catch (error) {
     const refusedClaims = error instanceof ClaimError
       || (error instanceof ClaimGraphError && error.code !== 'CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL');

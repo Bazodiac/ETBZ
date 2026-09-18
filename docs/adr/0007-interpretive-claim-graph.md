@@ -37,15 +37,17 @@ the builder their refusals surface unchanged (`ClaimError`,
 
 | Concern | Rule | Refusal |
 |---|---|---|
-| Brief binding | The chain is re-derived from the `HoroscopeModel`; the supplied brief is compared as a whole object, never trusted by the hash it prints on itself. The draft names the brief it was written for. The graph carries `sourceBriefStructuralHash` and `featureSetStructuralHash`. | `CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL`, `CLAIM_GRAPH_BRIEF_HASH_MISMATCH` |
+| Brief binding | The chain is re-derived from the `HoroscopeModel`; the supplied brief is compared as a whole object, never trusted by the hash it prints on itself (a brief that cannot be canonicalised is not this model's brief). The draft names the brief it was written for. The graph carries `sourceBriefStructuralHash` and `featureSetStructuralHash`. | `CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL`, `CLAIM_GRAPH_BRIEF_HASH_MISMATCH` |
 | Method Profile binding | The graph carries `methodProfileRef`, `methodProfileVersion` and the content hash of the released registry. Release and version are checked by the claim validator for every claim. | `CLAIM_PROFILE_MISMATCH`, `REGISTRY_NOT_RELEASED` |
 | Claims | Every claim passes the current claim contract (grounding, I1–I5, PD-10, provisional lineage, closed relation vocabulary). One refused claim refuses the graph. | the `CLAIM_*` codes of `interpretive-claim.ts` |
 | Themes | A `themeRef` must be a theme of the bound brief (primary or candidate) **and** the claim must cite at least one of that theme's facts. A theme's `factIds` are "its entire evidence" (`theme-graph.ts`); a claim that shares none of them has no basis for the reference and would borrow the theme's standing — e.g. a supported claim filed under a provisional theme. A theme never grounds a claim. | `CLAIM_GRAPH_UNKNOWN_THEME`, `CLAIM_GRAPH_THEME_NOT_GROUNDED` |
 | Relations | A target must resolve to an ACCEPTED claim of the same graph; a claim may not relate to itself. Cycles between claims are allowed — the contract names no acyclicity rule, and mutual contrast is one. | `CLAIM_GRAPH_DANGLING_RELATION`, `CLAIM_GRAPH_SELF_RELATION` |
 | Duplication | Refused, never merged and never counted: two claims under one handle; one statement made twice, whatever label (epistemic class, themes, method set, grounding) was changed to tell the two apart; a repeated `factRef` / `themeRef` / relation. (`methodRefs`: already `CLAIM_DUPLICATE_METHOD_REF`.) | `CLAIM_GRAPH_DUPLICATE_CLAIM_ID`, `CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT`, `CLAIM_GRAPH_DUPLICATE_REF` |
-| Statement form | A statement must be in canonical form: NFC, trimmed, single spaces, no control or format characters (line breaks, tabs, zero-width marks). Refused, not repaired — otherwise a trailing space makes a second claim and an invisible statement passes as one. | `CLAIM_GRAPH_STATEMENT_NOT_CANONICAL` |
-| Shape | The draft is untrusted and its schema is closed (`z.strictObject`). A `salience`, `confidence`, `rank`, `providerId`, `model` or `runId` field is a refusal, not something dropped quietly. Id-like strings are bounded (256), because later refusals name the offending id. Schema refusals name path and code, never the value. | `CLAIM_GRAPH_SCHEMA_INVALID` |
+| Statement form | A statement must be in canonical form: NFC; U+0020 as the only white-space character, single and not at the ends (no tab, line break, no-break / thin / ideographic space, U+2028); no control, format or default-ignorable character and no blank Braille pattern (zero-width marks, soft hyphen, variation selectors, Hangul fillers). Refused, not repaired — otherwise a trailing or no-break space makes a second claim and an invisible statement passes as one. **Not** covered: look-alike letters of another script (that needs a confusables table nobody approved). Cost: zero-width joiners and variation selectors are refused too, so emoji sequences and scripts that need ZWNJ cannot appear in a statement. | `CLAIM_GRAPH_STATEMENT_NOT_CANONICAL` |
+| Shape | The draft is untrusted and its schema is closed (`z.strictObject`). A `salience`, `confidence`, `rank`, `providerId`, `model` or `runId` field is a refusal, not something dropped quietly. Id-like strings are bounded (256 each), because later refusals name the offending id; the *number* of refs is not bounded (the Method Profile sets no maximum). Schema refusals name path and code, never the value. | `CLAIM_GRAPH_SCHEMA_INVALID` |
 | Empty | A draft without claims is refused. | `CLAIM_GRAPH_EMPTY` |
+| Consistency | A presented graph must be exactly what the builder produces from its own claims for this chart and profile (see below). | `CLAIM_GRAPH_NOT_INTACT` |
+| Central claim lookup | The `claimId` must be a derived id of this graph; a draft handle is not. | `CLAIM_GRAPH_UNKNOWN_CLAIM` |
 
 ### Identity and normalisation
 
@@ -90,8 +92,9 @@ re-derives it with `node:crypto`.
 builder is idempotent on that projection, and
 `assertInterpretiveClaimGraphIntact(graph, context)` uses exactly that: a graph
 that is not, byte for byte, what the builder produces from the graph's own
-claims for this chart and profile — an edited claim, an added field, another
-chart — is refused (`CLAIM_GRAPH_NOT_INTACT`). It is a **consistency proof, not
+claims for this chart and profile — an edited claim, a claim the claim contract
+refuses, an added field, another chart, a value that is not graph-shaped at all —
+is refused (`CLAIM_GRAPH_NOT_INTACT`). It is a **consistency proof, not
 tamper evidence**: the hashes are plain SHA-256, so an edit that is itself
 acceptable, re-hashed, is an intact *different* graph. Whoever must know that a
 graph is still the one they accepted pins its `structuralHash` — which is what

@@ -4,7 +4,8 @@
  * Every chart comes from the real `buildHoroscopeModel` fixtures and every brief
  * from the real `buildNarrativeChain`, so nothing here can drift from the chain
  * the graph is bound to. The draft claims are hand-written against the known
- * fixture chart; each one is valid on its own under `validateInterpretiveClaim`.
+ * fixture chart; each one passes `validateInterpretiveClaim` on its own. Their
+ * relations resolve only inside a draft that also contains the claim they name.
  *
  * `claimId` in a DRAFT is a handle: it only has to be unique inside the draft
  * and is what `relations[].targetClaimId` points at. The graph replaces it.

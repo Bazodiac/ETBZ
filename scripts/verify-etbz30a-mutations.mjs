@@ -2,9 +2,10 @@
 /**
  * ETBZ-30A — source-mutation proofs for the guards of the InterpretiveClaimGraph.
  *
- * For every guard: weaken the SOURCE in one place, run the tests that claim to
- * protect it, and require them to turn RED. A guard whose removal leaves the
- * suite green is decoration. The unmutated baseline must be GREEN first —
+ * For each guard listed below: weaken the SOURCE in one place, run the tests
+ * that claim to protect it, and require them to turn RED. A guard whose removal
+ * leaves the suite green is decoration. The list is the proof; a guard that is
+ * not in it has not been proven. The unmutated baseline must be GREEN first —
  * otherwise "red" proves nothing. Every file is restored byte-for-byte
  * afterwards, and the run fails if the working tree is not clean at the end.
  *
@@ -25,8 +26,11 @@ const T = {
 /** [name, file, find, replace, tests] — `find` must occur exactly once. */
 const MUTANTS = [
   // --- bindings ---------------------------------------------------------------------
-  ['BIND: an unverified brief is accepted', GRAPH, "if (structuralHash(context.brief) !== structuralHash(rederived.brief)) {", "if (context.brief.structuralHash === '') {", [T.unit]],
-  ['BIND: a brief is believed by the hash it prints on itself', GRAPH, "if (structuralHash(context.brief) !== structuralHash(rederived.brief)) {", "if (context.brief.structuralHash !== rederived.brief.structuralHash) {", [T.unit]],
+  ['BIND: an unverified brief is accepted', GRAPH, "  if (supplied !== structuralHash(rederived.brief)) {", "  if (supplied === '') {", [T.unit]],
+  ['BIND: a brief is believed by the hash it prints on itself', GRAPH, "  if (supplied !== structuralHash(rederived.brief)) {", "  if (context.brief.structuralHash !== rederived.brief.structuralHash) {", [T.unit]],
+  ['BIND: a brief that cannot be canonicalised is waved through', GRAPH, "    supplied = null;", "    supplied = structuralHash(rederived.brief);", [T.unit]],
+  ['BIND: the graph does not carry its version', GRAPH, "    graphVersion: INTERPRETIVE_CLAIM_GRAPH_VERSION,\n    sourceBrief", "    sourceBrief", [T.unit]],
+  ['BIND: the graph does not carry methodProfileRef', GRAPH, "    methodProfileRef,\n    methodProfileVersion", "    methodProfileVersion", [T.unit]],
   ['BIND: a draft written for another brief is accepted', GRAPH, "if (sourceBriefStructuralHash !== brief.structuralHash) {", "if (sourceBriefStructuralHash === '') {", [T.unit]],
   ['BIND: the graph does not name its brief', GRAPH, "    sourceBriefStructuralHash: brief.structuralHash,\n", "    sourceBriefStructuralHash: '',\n", [T.unit]],
   ['BIND: the graph does not name its feature set', GRAPH, "    featureSetStructuralHash: rederived.featureSet.structuralHash,\n", "", [T.unit]],
@@ -43,6 +47,13 @@ const MUTANTS = [
   // --- graph-only refusals -------------------------------------------------------------
   ['GRAPH: an empty graph is accepted', GRAPH, "if (drafts.length === 0) {", "if (drafts.length < 0) {", [T.negative]],
   ['GRAPH: two claims under one handle', GRAPH, "if (acceptedIdByHandle.has(claim.claimId)) {", "if (acceptedIdByHandle.has(claim.claimId) && drafts.length < 0) {", [T.negative]],
+  ['GRAPH: repeated factRefs are not looked at', GRAPH, "    refuseRepeated(claim.claimId, 'fact', claim.factRefs);\n", "", [T.negative]],
+  ['GRAPH: repeated themeRefs are not looked at', GRAPH, "    refuseRepeated(claim.claimId, 'theme', claim.themeRefs);\n", "", [T.negative]],
+  ['GRAPH: repeated relations are not looked at', GRAPH, "    refuseRepeated(claim.claimId, 'relation', claim.relations.map(relationKey));\n", "", [T.negative]],
+  ['GRAPH: primary themes are not themes of the brief', GRAPH, "[...brief.primaryThemes, ...brief.candidateThemes].map(", "[...brief.candidateThemes].map(", [T.unit]],
+  ['GRAPH: candidate themes are not themes of the brief', GRAPH, "[...brief.primaryThemes, ...brief.candidateThemes].map(", "[...brief.primaryThemes].map(", [T.unit]],
+  ['GRAPH: an empty id is an id', GRAPH, "const idLike = z.string().min(1).max(256);", "const idLike = z.string().max(256);", [T.negative]],
+  ['GRAPH: a schema refusal echoes what it received', GRAPH, "}: ${issue.code}`)", "}: ${issue.message}`)", [T.negative]],
   ['GRAPH: a repeated ref is counted instead of refused', GRAPH, "    if (seen.has(value)) {", "    if (seen.has(value) && values.length < 0) {", [T.negative]],
   ['GRAPH: a theme the brief does not contain', GRAPH, "      if (evidence === undefined) {\n        throw", "      if (evidence === undefined) {\n        continue;\n        throw", [T.negative]],
   ['GRAPH: a theme is borrowed without citing its evidence', GRAPH, "      if (!claim.factRefs.some((factRef) => evidence.has(factRef))) {", "      if (!claim.factRefs.some((factRef) => evidence.has(factRef)) && drafts.length < 0) {", [T.negative]],
@@ -52,6 +63,8 @@ const MUTANTS = [
   ['STATEMENT: NFC is not required', GRAPH, "  return statement === statement.normalize('NFC')\n    && statement", "  return statement", [T.negative]],
   ['STATEMENT: surrounding whitespace is tolerated', GRAPH, "    && statement === statement.trim()\n", "", [T.negative]],
   ['STATEMENT: doubled spaces are tolerated', GRAPH, "    && !statement.includes('  ')\n", "", [T.negative]],
+  ['STATEMENT: foreign white space is tolerated', GRAPH, "    && !FOREIGN_SPACE.test(statement)\n", "", [T.negative]],
+  ['STATEMENT: only Cc/Cf count as invisible', GRAPH, "const INVISIBLE = /[\\p{Cc}\\p{Cf}\\p{Default_Ignorable_Code_Point}\\u2800]/u;", "const INVISIBLE = /[\\p{Cc}\\p{Cf}]/u;", [T.negative]],
   ['STATEMENT: invisible characters are tolerated', GRAPH, "\n    && !INVISIBLE.test(statement);", ";", [T.negative]],
   ['GRAPH: id-like strings are unbounded', GRAPH, "const idLike = z.string().min(1).max(256);", "const idLike = z.string().min(1);", [T.negative]],
   ['GRAPH: a dangling relation is kept', GRAPH, "      if (targetClaimId === undefined) {\n        throw", "      if (targetClaimId === undefined) {\n        return { type: relation.type, targetClaimId: relation.targetClaimId };\n        throw", [T.negative]],
@@ -61,6 +74,13 @@ const MUTANTS = [
   ['GRAPH: unknown fields on a relation are tolerated', GRAPH, "    relations: z.array(z.strictObject({", "    relations: z.array(z.object({", [T.negative]],
   // --- identity and determinism ----------------------------------------------------------
   ['IDENTITY: the draft handle enters claim identity', GRAPH, "    methodProfileRef,\n    statement: claim.statement,", "    methodProfileRef,\n    handle: claim.claimId,\n    statement: claim.statement,", [T.unit]],
+  ['IDENTITY: the statement left out of claim identity', GRAPH, "    methodProfileRef,\n    statement: claim.statement,\n    citedFacts", "    methodProfileRef,\n    citedFacts", [T.unit]],
+  ['IDENTITY: cited fact IDS left out of claim identity', GRAPH, "      .map((fact) => ({ id: fact.id, value: fact.value }))", "      .map((fact) => ({ value: fact.value }))", [T.unit]],
+  ['IDENTITY: themeRefs left out of claim identity', GRAPH, "\n    themeRefs: sorted(claim.themeRefs),\n", "\n", [T.unit]],
+  ['IDENTITY: themeRef order enters claim identity', GRAPH, "\n    themeRefs: sorted(claim.themeRefs),\n", "\n    themeRefs: claim.themeRefs,\n", [T.unit]],
+  ['IDENTITY: methodRef order enters claim identity', GRAPH, "\n    methodRefs: sorted(claim.methodRefs),\n", "\n    methodRefs: claim.methodRefs,\n", [T.unit]],
+  ['IDENTITY: the epistemic class left out of claim identity', GRAPH, "\n    epistemicClass: claim.epistemicClass,\n    provisionalFactRefs: sorted", "\n    provisionalFactRefs: sorted", [T.unit]],
+  ['IDENTITY: provisional lineage left out of claim identity', GRAPH, "    provisionalFactRefs: sorted(claim.provisionalFactRefs),\n  })}", "  })}", [T.unit]],
   ['IDENTITY: cited fact VALUES left out of claim identity', GRAPH, "      .map((fact) => ({ id: fact.id, value: fact.value }))", "      .map((fact) => ({ id: fact.id }))", [T.unit]],
   ['IDENTITY: cited fact order enters claim identity', GRAPH, "\n      .sort((left, right) => (left.id < right.id ? -1 : 1)),", ",", [T.unit]],
   ['IDENTITY: lineage order enters claim identity', GRAPH, "    provisionalFactRefs: sorted(claim.provisionalFactRefs),\n  })}", "    provisionalFactRefs: claim.provisionalFactRefs,\n  })}", [T.unit]],
@@ -75,6 +95,8 @@ const MUTANTS = [
   // --- integrity and PD-5 ------------------------------------------------------------------
   ['INTACT: an edited graph passes', GRAPH, "  if (presented !== structuralHash(rebuilt)) {", "  if (presented === '') {", [T.unit]],
   ['INTACT: only the printed hash is compared, so an added field passes', GRAPH, "  if (presented !== structuralHash(rebuilt)) {", "  if (graph.structuralHash !== rebuilt.structuralHash) {", [T.unit]],
+  ['INTACT: a refused claim escapes as a raw ClaimError', GRAPH, "    const refusedClaims = error instanceof ClaimError\n      || (", "    const refusedClaims = (", [T.unit]],
+  ['INTACT: a value that is not graph-shaped escapes as a raw TypeError', GRAPH, "  } catch {\n    throw new ClaimGraphError('CLAIM_GRAPH_NOT_INTACT', 'the value does not have the shape of an accepted graph');", "  } catch (shapeError) {\n    throw shapeError;", [T.unit]],
   ['INTACT: an unreleased registry is reported as a damaged graph', GRAPH, "    if (!refusedClaims) {\n      throw error;\n    }\n", "", [T.unit]],
   ['INTACT: a foreign brief is reported as a damaged graph', GRAPH, "      || (error instanceof ClaimGraphError && error.code !== 'CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL');", "      || error instanceof ClaimGraphError;", [T.unit]],
   ['PD-5: the floor is not composed', GRAPH, "  assertCentralClaimSignals(claim, {", "  validateInterpretiveClaim(claim, {", [T.unit]],
