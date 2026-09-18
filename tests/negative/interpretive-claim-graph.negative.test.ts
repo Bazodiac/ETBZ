@@ -292,6 +292,9 @@ describe('ETBZ-30A N5: duplication and order never become importance', () => {
       ['other grounding', { factRefs: [MONTH_TEN_GOD, 'chart.natal.pillar.year.tenGod'], methodRefs: ['ten_gods', 'positional_context'] }],
       ['other method set', { methodRefs: ['ten_gods', 'fact_relations'] }],
       ['other epistemic class', { epistemicClass: 'TENTATIVE_INTERPRETATION' }],
+      // themeRefs are inside the derived identity, so this is another claim. Whether a
+      // supplementary theme alone is a material difference is open with the PO (ADR 0007);
+      // this pins the current behaviour so that a decision either way is visible.
       ['other themes', { themeRefs: ['theme.pillar.month'] }],
     ];
     for (const [what, overrides] of differentIdentity) {

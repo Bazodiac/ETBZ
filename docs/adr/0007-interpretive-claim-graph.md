@@ -44,7 +44,7 @@ the builder their refusals surface unchanged (`ClaimError`,
 | Claims | Every claim passes the current claim contract (grounding, I1–I5, PD-10, provisional lineage, closed relation vocabulary). One refused claim refuses the graph. | the `CLAIM_*` codes of `interpretive-claim.ts` |
 | Themes | A `themeRef` must be a theme of the bound brief (primary or candidate). Themes are supplementary structure: a theme never grounds a claim (the claim validator demands direct `factRefs`), it changes no claim's epistemic class or lineage, and it need not share a cited fact (PO 2026-09-19). | `CLAIM_GRAPH_UNKNOWN_THEME` (theme-only claim: `CLAIM_UNGROUNDED`) |
 | Relations | A target must resolve to an ACCEPTED claim of the same graph; a claim may not relate to itself. Cycles between claims are allowed — the contract names no acyclicity rule, and mutual contrast is one. | `CLAIM_GRAPH_DANGLING_RELATION`, `CLAIM_GRAPH_SELF_RELATION` |
-| Duplication | Refused, never merged and never counted: two claims under one handle; two claims with the same accepted semantic identity (see below), whatever handle, ref order or relations they carry; a repeated `factRef` / `themeRef` / relation. (`methodRefs`: already `CLAIM_DUPLICATE_METHOD_REF`.) The statement text alone decides nothing: the same sentence over other grounding, methods or epistemic class is another claim (PO 2026-09-19). | `CLAIM_GRAPH_DUPLICATE_CLAIM_ID`, `CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT`, `CLAIM_GRAPH_DUPLICATE_REF` |
+| Duplication | Refused, never merged and never counted: two claims under one handle; two claims with the same accepted semantic identity (see below), whatever handle, ref order or relations they carry; a repeated `factRef` / `themeRef` / relation. (`methodRefs`: already `CLAIM_DUPLICATE_METHOD_REF`. A repeated *provisional* `factRef` is refused one step earlier by the claim validator, as `CLAIM_PROVISIONAL_LINEAGE_MISMATCH`.) The statement text alone decides nothing: the same sentence over other grounding, methods or epistemic class is another claim (PO 2026-09-19). | `CLAIM_GRAPH_DUPLICATE_CLAIM_ID`, `CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT`, `CLAIM_GRAPH_DUPLICATE_REF` |
 | Statement | No rule of the graph's own. The claim validator's statement rule (a blank statement is `CLAIM_UNGROUNDED`) is the only one; the graph adds no Unicode or typography policy (no NFC, white-space or invisible-character refusal) and stores the statement exactly as written, never normalised or rewritten (PO 2026-09-19). | the claim validator's |
 | Shape | The draft is untrusted and its schema is closed (`z.strictObject`). A `salience`, `confidence`, `rank`, `providerId`, `model` or `runId` field is a refusal, not something dropped quietly. Id-like strings are bounded (256 each), because later refusals name the offending id; the *number* of refs is not bounded (the Method Profile sets no maximum). Schema refusals name path and code, never the value. | `CLAIM_GRAPH_SCHEMA_INVALID` |
 | Empty | A draft without claims is refused. | `CLAIM_GRAPH_EMPTY` |
@@ -75,9 +75,13 @@ targets cannot be computed for a cycle) and inside each claim's I6 hash
 is inside the graph hash.
 
 This derived id is the claim's full semantic identity, and it alone decides
-duplication: two drafts that resolve to the same id are one interpretation
-submitted twice and are refused (`CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT`); two
-drafts with the same statement text and a different id are two claims.
+duplicate *content*: two drafts that resolve to the same id are one
+interpretation submitted twice and are refused
+(`CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT`); two drafts with the same statement text
+and a different id are two claims. (A repeated handle and a repeated ref are
+refused on their own, see the table.) Because `themeRefs` are part of the id, two
+drafts that differ only in a supplementary theme are two claims — an open
+question for the Product Owner, not changed by this slice.
 
 Normalisation is ordering only: claims by `claimId`, refs lexicographically,
 relations by `type -> target`. Nothing is repaired, deduplicated or defaulted,

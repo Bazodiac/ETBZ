@@ -28,9 +28,10 @@
  * identity that contained its own targets could not be computed for a cycle);
  * they are inside each claim's I6 hash and therefore inside the graph hash.
  *
- * Duplicates are decided by that identity and by nothing else. Two drafts with
- * the same accepted identity are one interpretation submitted twice and are
- * refused; the statement TEXT alone decides nothing — the same sentence over
+ * Duplicate CONTENT is decided by that identity and by nothing else (a repeated
+ * handle or ref is refused on its own). Two drafts with the same accepted
+ * identity are one interpretation submitted twice and are refused; the
+ * statement TEXT alone decides nothing — the same sentence over
  * other grounding, other methods or another epistemic class is another claim
  * (PO 2026-09-19). The graph has no statement rule of its own: whatever the
  * claim validator accepts as a statement is stored exactly as written, never

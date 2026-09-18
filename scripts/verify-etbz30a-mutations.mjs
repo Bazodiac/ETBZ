@@ -43,6 +43,7 @@ const MUTANTS = [
   ['CLAIM: a deferred methodRef accepted', CLAIM, "    if (!isApprovedStatus(method.status)) {\n      throw", "    if (!isApprovedStatus(method.status) && method.methodId === '') {\n      throw", [T.negative]],
   ['CLAIM: a provisional claim laundered', CLAIM, "if (provisional.length > 0 && claim.epistemicClass !== 'TENTATIVE_INTERPRETATION') {", "if (provisional.length > 99 && claim.epistemicClass !== 'TENTATIVE_INTERPRETATION') {", [T.negative]],
   ['CLAIM: an unreleased registry authorises a graph', CLAIM, "  assertReleasedRegistry(registry);\n", "", [T.negative]],
+  ['CLAIM: a blank statement is accepted (the only statement rule left)', CLAIM, "  if (isBlank(claim.statement) || (claim.factRefs.length === 0 && claim.themeRefs.length === 0)) {", "  if (claim.factRefs.length === 0 && claim.themeRefs.length === 0) {", [T.negative]],
   ['CLAIM: an assumed hour is interpretable', FEATURES, "interpretable: !assumedTimeDerived,", "interpretable: true,", [T.negative]],
   // --- graph-only refusals -------------------------------------------------------------
   ['GRAPH: an empty graph is accepted', GRAPH, "if (drafts.length === 0) {", "if (drafts.length < 0) {", [T.negative]],
