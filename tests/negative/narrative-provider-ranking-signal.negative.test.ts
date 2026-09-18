@@ -237,18 +237,19 @@ describe('ETBZ-25A-R2 I1: the provider-visible theme metadata names no ranking s
 
 describe('ETBZ-25A-R2 I2: the counterexample — materially different fact counts, no published count', () => {
   it('really does group wildly different numbers of facts', () => {
-    // Measured on this fixture: candidate themes span 1 fact
-    // (theme.tenGod.DirectWealth, theme.wuXing.Erde) to 19 (theme.pillar.day);
-    // primary themes span 4 (seasonal_anchor) to 69 (positional_context). If
+    // Measured on this fixture (re-measured for ETBZ-34, which added addressable
+    // facts for stem polarity, Qi role, Ten-God element relation and the
+    // month-command element): candidate themes span 1 fact to 26; primary themes
+    // span 5 (seasonal_anchor) to 95 (positional_context). If
     // cardinality were a salience signal, THIS is the spread a provider would
     // be reading as a nineteen-fold difference in importance.
     const candidateCounts = KNOWN_CHAIN.brief.candidateThemes.map((theme) => theme.factIds.length);
     const primaryCounts = KNOWN_CHAIN.brief.primaryThemes.map((theme) => theme.factIds.length);
 
     expect(Math.min(...candidateCounts)).toBe(1);
-    expect(Math.max(...candidateCounts)).toBe(19);
-    expect(Math.min(...primaryCounts)).toBe(4);
-    expect(Math.max(...primaryCounts)).toBe(69);
+    expect(Math.max(...candidateCounts)).toBe(26);
+    expect(Math.min(...primaryCounts)).toBe(5);
+    expect(Math.max(...primaryCounts)).toBe(95);
     // Stated as a property too, so the point survives a fixture change: the
     // spread is material, not a rounding difference.
     expect(Math.max(...candidateCounts)).toBeGreaterThanOrEqual(

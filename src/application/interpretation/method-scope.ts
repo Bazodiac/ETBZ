@@ -63,18 +63,28 @@ export const EVALUATED_METHODS: readonly EvaluatedMethodDefinition[] = [
   },
   {
     methodId: 'hidden_stems',
-    factKinds: ['hidden_stem', 'hidden_stem_element'],
+    factKinds: ['hidden_stem', 'hidden_stem_element', 'hidden_stem_qi_role'],
     statement: 'Hidden stems are present as FuFirE facts, in the source Qi order.',
   },
   {
     methodId: 'ten_gods',
-    factKinds: ['ten_god', 'hidden_stem_ten_god'],
+    factKinds: [
+      'ten_god',
+      'hidden_stem_ten_god',
+      'ten_god_element_relation',
+      'hidden_stem_ten_god_element_relation',
+    ],
     statement: 'Ten Gods are present as FuFirE facts, with FuFirE’s own labels.',
   },
   {
     methodId: 'month_command',
-    factKinds: ['month_command_branch', 'month_command_principal_qi_stem'],
+    factKinds: ['month_command_branch', 'month_command_principal_qi_stem', 'month_command_element'],
     statement: 'The month command is present as a deterministic FuFirE ruleset fact.',
+  },
+  {
+    methodId: 'yin_yang_polarity',
+    factKinds: ['day_master_polarity', 'pillar_stem_polarity'],
+    statement: 'Stem polarity is present as a FuFirE fact and is carried verbatim.',
   },
   {
     methodId: 'wu_xing_distribution',

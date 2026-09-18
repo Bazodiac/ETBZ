@@ -13,14 +13,19 @@ import { buildHoroscopeModel } from '../../src/application/horoscope-model.js';
 import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
 import type {
   FufireBaziSnapshot,
+  FufireNatalSnapshot,
+  ProducerJson,
   WuxingSnapshot,
 } from '../../src/application/ports/fufire-gateway.js';
 import { validateBirthInput } from '../../src/domain/birth-input.js';
 import {
   UNKNOWN_TIME_NATAL_OVERRIDES,
+  UNKNOWN_TIME_NATAL_WIRE_OVERRIDES,
   deepMergeFixture,
   natalSnapshot,
+  natalWireBody,
 } from './natalFixture.js';
+import { WUXING_SNAPSHOT, WUXING_UNKNOWN_PRECISION, wuxingWireBody } from './wuxingFixture.js';
 
 export const RUNTIME = {
   runtimeImage: 'fufire-lunar@sha256:c9162edd',
@@ -54,11 +59,7 @@ export function baziSnapshot(overrides: Record<string, unknown> = {}): FufireBaz
   return deepMergeFixture(structuredClone(BAZI), overrides) as FufireBaziSnapshot;
 }
 
-const WUXING: WuxingSnapshot = {
-  vector: { Holz: 1.8, Feuer: 2.5, Erde: 2, Metall: 2, Wasser: 2 },
-  dominant: 'Feuer',
-  basis: 'bazi_four_pillars',
-};
+const WUXING: WuxingSnapshot = WUXING_SNAPSHOT;
 
 export function wuxingSnapshot(overrides: Record<string, unknown> = {}): WuxingSnapshot {
   return deepMergeFixture(structuredClone(WUXING), overrides) as WuxingSnapshot;
@@ -138,8 +139,119 @@ export function unknownTimeModel(
   return buildHoroscopeModel(
     UNKNOWN_BIRTH,
     baziSnapshot(bazi),
-    wuxingSnapshot(overrides.wuxing ?? {}),
+    wuxingSnapshot(deepMergeFixture({ precision: structuredClone(WUXING_UNKNOWN_PRECISION) }, overrides.wuxing ?? {}) as Record<string, unknown>),
     natalSnapshot(natal),
     RUNTIME,
   );
+}
+
+// ---------------------------------------------------------------------------
+// ETBZ-34 (finding A) — charts WITH their raw producer evidence.
+//
+// The wire bodies below are synthetic and wire-SHAPED (the keys the pinned
+// FuFirE build emits, including the request echo of `/bazi/wuxing`, which
+// carries coordinates). They exist so the evidence boundary can be tested; the
+// application never maps them — only the adapter maps wire bodies.
+// ---------------------------------------------------------------------------
+
+export interface ChartWithEvidence {
+  readonly model: HoroscopeModel;
+  readonly source: Readonly<{
+    bazi: FufireBaziSnapshot;
+    wuxing: WuxingSnapshot;
+    natal: FufireNatalSnapshot;
+  }>;
+}
+
+function baziWireBody(snapshot: FufireBaziSnapshot): ProducerJson {
+  const pillar = (name: 'year' | 'month' | 'day' | 'hour'): ProducerJson => ({
+    stamm: snapshot.pillars[name].stem,
+    zweig: snapshot.pillars[name].branch,
+    tier: snapshot.pillars[name].tierDe,
+    element: snapshot.pillars[name].elementDe,
+  });
+  const known = snapshot.precision.birthTimeKnown;
+  return {
+    // FuFirE echoes the request (ADR-1 "zero snapshot churn"), coordinates included.
+    input: { date: known ? '1990-06-15T14:30:00' : '1985-11-03', tz: 'Europe/Berlin', lon: 13.405, lat: 52.52, standard: 'CIVIL', boundary: 'midnight', birth_time_known: known },
+    pillars: { year: pillar('year'), month: pillar('month'), day: pillar('day'), hour: pillar('hour') },
+    chinese: { day_master: snapshot.dayMaster },
+    dates: {
+      birth_local: snapshot.dates.birthLocal,
+      birth_utc: snapshot.dates.birthUtc,
+      lichun_local: snapshot.dates.lichunLocal,
+    },
+    precision: {
+      birth_time_known: snapshot.precision.birthTimeKnown,
+      provisional_fields: [...snapshot.precision.provisionalFields],
+    },
+    provenance: {
+      engine_version: snapshot.provenance.engineVersion,
+      ruleset_id: snapshot.provenance.rulesetId,
+      ephemeris_id: snapshot.provenance.ephemerisId,
+      tzdb_version_id: snapshot.provenance.tzdbVersionId,
+      computation_timestamp: snapshot.provenance.computationTimestamp,
+    },
+  };
+}
+
+/**
+ * `natalWire` is the SAME override expressed in wire keys: the raw body must map
+ * to the snapshot, so a test that moves a natal fact moves it in both shapes.
+ */
+export type ChartOverrides = Readonly<{
+  bazi?: Record<string, unknown>;
+  wuxing?: Record<string, unknown>;
+  natal?: Record<string, unknown>;
+  natalWire?: Record<string, unknown>;
+}>;
+
+function withEvidence(
+  known: boolean,
+  overrides: ChartOverrides,
+): ChartWithEvidence {
+  const baziBase = known
+    ? {}
+    : {
+        precision: { birthTimeKnown: false, provisionalFields: ['hour'] },
+        dates: {
+          birthLocal: '1985-11-03T14:30:00+01:00',
+          birthUtc: '1985-11-03T13:30:00+00:00',
+          lichunLocal: '1985-02-04T05:12:00+01:00',
+        },
+      };
+  const bazi = baziSnapshot(deepMergeFixture(baziBase, overrides.bazi ?? {}) as Record<string, unknown>);
+  const wuxing = wuxingSnapshot(
+    deepMergeFixture(known ? {} : { precision: structuredClone(WUXING_UNKNOWN_PRECISION) }, overrides.wuxing ?? {}) as Record<string, unknown>,
+  );
+  const natal = natalSnapshot(
+    deepMergeFixture(known ? {} : structuredClone(UNKNOWN_TIME_NATAL_OVERRIDES), overrides.natal ?? {}) as Record<string, unknown>,
+  );
+  const source = {
+    bazi: { ...bazi, raw: { endpoint: '/v1/calculate/bazi', payload: baziWireBody(bazi) } },
+    wuxing: { ...wuxing, raw: { endpoint: '/v1/calculate/bazi/wuxing', payload: wuxingWireBody(wuxing) as ProducerJson } },
+    natal: {
+      ...natal,
+      raw: {
+        endpoint: '/v1/calculate/bazi/natal',
+        payload: natalWireBody(
+          deepMergeFixture(known ? {} : structuredClone(UNKNOWN_TIME_NATAL_WIRE_OVERRIDES), overrides.natalWire ?? {}) as Record<string, unknown>,
+        ) as ProducerJson,
+      },
+    },
+  };
+  const model = buildHoroscopeModel(known ? KNOWN_BIRTH : UNKNOWN_BIRTH, source.bazi, source.wuxing, source.natal, RUNTIME);
+  return { model, source };
+}
+
+export function knownTimeChart(
+  overrides: ChartOverrides = {},
+): ChartWithEvidence {
+  return withEvidence(true, overrides);
+}
+
+export function unknownTimeChart(
+  overrides: ChartOverrides = {},
+): ChartWithEvidence {
+  return withEvidence(false, overrides);
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { wuxingWireBody } from '../support/wuxingFixture.js';
 import { FUFIRE_BAZI_PATH, createFufireClient } from '../../src/adapters/fufire/http-client.js';
 import type { FufireClientConfig } from '../../src/adapters/fufire/http-client.js';
 import { createCalculateHoroscopeUseCase } from '../../src/application/horoscope-use-case.js';
@@ -92,6 +93,9 @@ describe('FuFirE HTTP client: request contract', () => {
     expect(payload['lat']).toBe(52.52);
     expect(payload['lon']).toBe(13.405);
     expect(payload['standard']).toBe('CIVIL');
+    // PD-9: the day-boundary convention is sent explicitly, never left to the
+    // producer default.
+    expect(payload['boundary']).toBe('midnight');
     expect(payload['birth_time_known']).toBe(true);
   });
 
@@ -115,6 +119,12 @@ describe('FuFirE HTTP client: request contract', () => {
     expect(payload['date']).toBe('1985-11-03');
     expect(payload['birth_time_known']).toBe(false);
     expect(String(payload['date'])).not.toContain('T00:00:00');
+    // Canonical FuFirE contract (Confluence BG 62259202): for an unknown birth
+    // time the consumer sends the DATE ONLY. The noon normalisation is the
+    // producer's; an ETBZ-side 12:00 sentinel would duplicate FUF-163.
+    expect(String(payload['date'])).toMatch(/^\d{4}-\d{2}-\d{2}$/u);
+    expect(String(payload['date'])).not.toContain('12:00');
+    expect(payload['boundary']).toBe('midnight');
   });
 });
 
@@ -128,12 +138,16 @@ describe('FuFirE HTTP client: response mapping', () => {
     expect(snapshot.provenance.engineVersion).toBe('1.0.0-rc1-20260220');
   });
 
+  it('keeps the complete wire body as raw producer evidence, including keys the port does not map (finding A)', async () => {
+    const body = { ...okBaziBody(), transition: { solar_year: 1990, is_before_lichun: false }, derivation_trace: null };
+    const client = clientWith(async () => jsonResponse(200, body));
+    const snapshot = await client.calculateBazi(INPUT.value);
+    expect(snapshot.raw).toEqual({ endpoint: '/v1/calculate/bazi', payload: body });
+    expect(Object.keys(snapshot).sort()).toEqual(['dates', 'dayMaster', 'pillars', 'precision', 'provenance', 'raw']);
+  });
+
   it('maps the wu-xing endpoint against the pinned contract', async () => {
-    const client = clientWith(async () => jsonResponse(200, {
-      wu_xing_vector: { Holz: 1.8, Feuer: 2.5, Erde: 2.0, Metall: 2.0, Wasser: 2.0 },
-      dominant_element: 'Feuer',
-      basis: 'bazi_four_pillars',
-    }));
+    const client = clientWith(async () => jsonResponse(200, wuxingWireBody()));
     const snapshot = await client.calculateBaziWuxing(INPUT.value);
     expect(snapshot.dominant).toBe('Feuer');
     expect(snapshot.vector.Feuer).toBe(2.5);

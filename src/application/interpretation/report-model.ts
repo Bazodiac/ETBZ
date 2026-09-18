@@ -80,7 +80,7 @@ export interface ReportProviderNote {
 
 export interface ReportUncertainty {
   readonly birthTimeKnown: boolean;
-  readonly provisionalFields: Readonly<{ bazi: readonly string[]; natal: readonly string[] }>;
+  readonly provisionalFields: Readonly<{ bazi: readonly string[]; natal: readonly string[]; wuxing: readonly string[] }>;
   readonly provisionalFactIds: readonly string[];
   /** FuFirE's warning codes, verbatim: source order, duplicates, unknown codes. */
   readonly sourceWarnings: readonly string[];
@@ -247,6 +247,12 @@ function validateSection(
       throw new ReportError(
         'REPORT_UNKNOWN_FACT',
         `section for theme "${theme.id}" cites fact "${citation.factId}", which is not a fact of this chart`,
+      );
+    }
+    if (!fact.interpretable) {
+      throw new ReportError(
+        'REPORT_EXCLUDED_FACT_CITED',
+        `section for theme "${theme.id}" cites fact "${fact.id}", which is excluded from interpretation (${fact.exclusionReason ?? 'excluded'}); an assumed time of day is not the customer's birth`,
       );
     }
     if (!themeFactIds.has(fact.id)) {

@@ -22,7 +22,16 @@ import type { HoroscopeModel } from './horoscope-model.js';
 export type HoroscopeUseCaseErrorCode = 'BIRTH_INPUT_INVALID' | 'FUFIRE_ERROR' | 'HOROSCOPE_ERROR';
 
 export type HoroscopeUseCaseResult =
-  | { readonly ok: true; readonly model: HoroscopeModel }
+  | {
+      readonly ok: true;
+      readonly model: HoroscopeModel;
+      /**
+       * ETBZ-34 — the producer snapshots this model was built from, each still
+       * carrying its raw wire body. They are what `buildBazodiacInterpretationInput`
+       * needs to prove the raw evidence; they are evidence, never a claim source.
+       */
+      readonly source: Readonly<{ bazi: FufireBaziSnapshot; wuxing: WuxingSnapshot; natal: FufireNatalSnapshot }>;
+    }
   | {
       readonly ok: false;
       readonly error:
@@ -68,7 +77,7 @@ export function createCalculateHoroscopeUseCase(dependencies: HoroscopeUseCaseDe
         // is ever returned.
         const natal: FufireNatalSnapshot = await gateway.calculateNatal(input);
         const model = buildHoroscopeModel(input, bazi, wuxing, natal, runtime);
-        return { ok: true, model };
+        return { ok: true, model, source: { bazi, wuxing, natal } };
       } catch (error) {
         const message = error instanceof Error ? error.message : 'unknown FuFirE failure';
         const errorCode = typeof (error as { code?: unknown })?.code === 'string' ? (error as { code: string }).code : 'UNKNOWN';

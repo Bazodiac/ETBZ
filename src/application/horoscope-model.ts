@@ -33,11 +33,10 @@ import type {
   FufirePillarFact,
   WuxingSnapshot,
 } from './ports/fufire-gateway.js';
-import { WUXING_ELEMENTS } from './ports/fufire-gateway.js';
+import { REQUIRED_WUXING_BASIS, WUXING_ELEMENTS } from './ports/fufire-gateway.js';
 
 const PILLAR_ORDER = ['year', 'month', 'day', 'hour'] as const;
 export type PillarName = (typeof PILLAR_ORDER)[number];
-void PILLAR_ORDER;
 
 export interface HoroscopeModel {
   readonly displayName: string;
@@ -54,6 +53,10 @@ export interface HoroscopeModel {
     vector: Readonly<Record<string, number>>;
     dominant: string;
     basis: string;
+    /** ETBZ-34 AC 1 — proven equal to `pillars` (stem/branch) before the model exists. */
+    sourcePillars: Readonly<Record<PillarName, Readonly<{ stem: string; branch: string }>>>;
+    /** The Wu-Xing endpoint's own precision statement, verbatim. */
+    precision: Readonly<{ birthTimeKnown: boolean; provisionalFields: readonly string[] }>;
   }>;
   /**
    * FuFirE's own precision statement, preserved verbatim. When the birth time
@@ -141,6 +144,11 @@ export type HoroscopeErrorCode =
   | 'HOROSCOPE_DAY_MASTER_CONTRADICTION'
   | 'HOROSCOPE_WUXING_VECTOR_ERROR'
   | 'HOROSCOPE_WUXING_ELEMENT_ERROR'
+  | 'HOROSCOPE_WUXING_BASIS_ERROR'
+  | 'HOROSCOPE_WUXING_KEYSET_ERROR'
+  | 'HOROSCOPE_WUXING_DOMINANT_INCONSISTENT'
+  | 'HOROSCOPE_WUXING_SOURCE_PILLAR_CONTRADICTION'
+  | 'HOROSCOPE_WUXING_PRECISION_CONTRADICTION'
   | 'HOROSCOPE_NATAL_PILLAR_CONTRADICTION'
   | 'HOROSCOPE_NATAL_DAY_MASTER_CONTRADICTION'
   | 'HOROSCOPE_NATAL_PRECISION_CONTRADICTION'
@@ -195,7 +203,29 @@ function mapPillar(name: PillarName, fact: FufirePillarFact): HoroscopePillar {
   };
 }
 
+/**
+ * ETBZ-34 AC 1–4 — the BaZi Wu-Xing answer is accepted only if it is a BaZi
+ * four-pillars vector over exactly the five elements, names a real maximum as
+ * dominant, and was summed from the SAME four pillars the BaZi answer carries.
+ *
+ * Every check compares values FuFirE delivered. Nothing is recomputed: ETBZ
+ * does not know how the vector follows from the pillars and does not try to.
+ */
 function assertWuxingVector(snapshot: WuxingSnapshot): WuxingSnapshot {
+  if (snapshot.basis !== REQUIRED_WUXING_BASIS) {
+    throw new HoroscopeError(
+      'HOROSCOPE_WUXING_BASIS_ERROR',
+      `wu-xing basis is "${snapshot.basis}"; only "${REQUIRED_WUXING_BASIS}" may enter a BaZi chart`,
+    );
+  }
+  const expected = [...WUXING_ELEMENTS].sort();
+  const actual = Object.keys(snapshot.vector).sort();
+  if (expected.length !== actual.length || expected.some((key, index) => key !== actual[index])) {
+    throw new HoroscopeError(
+      'HOROSCOPE_WUXING_KEYSET_ERROR',
+      `wu-xing vector keys are [${actual.join(', ')}], expected exactly [${expected.join(', ')}]`,
+    );
+  }
   for (const element of WUXING_ELEMENTS) {
     const value = snapshot.vector[element];
     if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
@@ -206,6 +236,55 @@ function assertWuxingVector(snapshot: WuxingSnapshot): WuxingSnapshot {
     }
   }
   return snapshot;
+}
+
+function assertWuxingDominant(snapshot: WuxingSnapshot): void {
+  if (!(WUXING_ELEMENTS as readonly string[]).includes(snapshot.dominant)) {
+    throw new HoroscopeError(
+      'HOROSCOPE_WUXING_ELEMENT_ERROR',
+      `dominant element ${snapshot.dominant} is not one of the five wu-xing elements`,
+    );
+  }
+  const maximum = Math.max(...WUXING_ELEMENTS.map((element) => snapshot.vector[element]));
+  // A tie is valid: ANY maximum may be named dominant. No tie-break is invented.
+  if (snapshot.vector[snapshot.dominant as (typeof WUXING_ELEMENTS)[number]] !== maximum) {
+    throw new HoroscopeError(
+      'HOROSCOPE_WUXING_DOMINANT_INCONSISTENT',
+      `dominant element "${snapshot.dominant}" is not a maximum of the delivered vector`,
+    );
+  }
+}
+
+function assertWuxingSameChart(
+  input: NormalizedBirthInput,
+  bazi: FufireBaziSnapshot,
+  wuxing: WuxingSnapshot,
+): void {
+  for (const name of PILLAR_ORDER) {
+    const source = (wuxing.sourcePillars as Partial<WuxingSnapshot['sourcePillars']> | undefined)?.[name];
+    const accepted = bazi.pillars[name];
+    if (source === undefined || source.stem !== accepted.stem || source.branch !== accepted.branch) {
+      throw new HoroscopeError(
+        'HOROSCOPE_WUXING_SOURCE_PILLAR_CONTRADICTION',
+        `wu-xing source pillar ${name} (${String(source?.stem)}/${String(source?.branch)}) is not the BaZi ${name} pillar (${accepted.stem}/${accepted.branch}); the vector belongs to another chart`,
+      );
+    }
+  }
+  if (wuxing.precision.birthTimeKnown !== input.birthTimeKnown) {
+    throw new HoroscopeError(
+      'HOROSCOPE_WUXING_PRECISION_CONTRADICTION',
+      `input birthTimeKnown=${String(input.birthTimeKnown)} contradicts the wu-xing precision.birth_time_known=${String(wuxing.precision.birthTimeKnown)}`,
+    );
+  }
+  const marksHour = wuxing.precision.provisionalFields.includes('hour');
+  if (marksHour === input.birthTimeKnown) {
+    throw new HoroscopeError(
+      'HOROSCOPE_WUXING_PRECISION_CONTRADICTION',
+      input.birthTimeKnown
+        ? 'birth time known but the wu-xing response marks the hour pillar provisional'
+        : 'birth time unknown but the wu-xing response did not mark the hour pillar provisional',
+    );
+  }
 }
 
 const NATAL_PILLARS = ['year', 'month', 'day', 'hour'] as const;
@@ -426,13 +505,9 @@ export function buildHoroscopeModel(
   };
 
   const vector = assertWuxingVector(wuxing).vector;
+  assertWuxingDominant(wuxing);
   const dominant = wuxing.dominant;
-  if (!(dominant in vector)) {
-    throw new HoroscopeError(
-      'HOROSCOPE_WUXING_ELEMENT_ERROR',
-      `dominant element ${dominant} is not one of the five wu-xing elements`,
-    );
-  }
+  assertWuxingSameChart(input, bazi, wuxing);
 
   const birth: HoroscopeModel['birth'] = {
     date: input.birthDate,
@@ -489,7 +564,21 @@ export function buildHoroscopeModel(
     birth,
     pillars,
     dayMaster,
-    wuxing: { vector, dominant, basis: wuxing.basis },
+    wuxing: {
+      vector,
+      dominant,
+      basis: wuxing.basis,
+      sourcePillars: {
+        year: { ...wuxing.sourcePillars.year },
+        month: { ...wuxing.sourcePillars.month },
+        day: { ...wuxing.sourcePillars.day },
+        hour: { ...wuxing.sourcePillars.hour },
+      },
+      precision: {
+        birthTimeKnown: wuxing.precision.birthTimeKnown,
+        provisionalFields: [...wuxing.precision.provisionalFields],
+      },
+    },
     precision: {
       birthTimeKnown: bazi.precision.birthTimeKnown,
       provisionalFields: [...bazi.precision.provisionalFields],

@@ -113,10 +113,18 @@ describe('ETBZ-25 A3: certainty is carried, never widened', () => {
     expect(hourFacts.length).toBeGreaterThan(0);
     expect(hourFacts.every((fact) => fact.provisional)).toBe(true);
 
+    // ETBZ-34 (F-1): besides the hour pillar, ONLY the Wu-Xing facts are
+    // provisional — the producer's vector contains the hour pillar's share.
+    // Year, month and day facts stay certain (boundary=midnight, PD-9).
     const nonHourProvisional = featureSet.facts.filter(
       (fact) => fact.provisional && fact.pillar !== 'hour',
     );
-    expect(nonHourProvisional).toEqual([]);
+    expect(nonHourProvisional.length).toBeGreaterThan(0);
+    expect(
+      nonHourProvisional.every(
+        (fact) => fact.kind === 'wu_xing_weight' || fact.kind === 'wu_xing_dominant',
+      ),
+    ).toBe(true);
   });
 
   it('preserves BOTH provisional-field statements verbatim and separately', () => {

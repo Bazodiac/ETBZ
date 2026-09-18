@@ -101,7 +101,7 @@ export interface NarrativeBrief {
   readonly candidateEdges: readonly ThemeEdge[];
   readonly uncertainty: Readonly<{
     birthTimeKnown: boolean;
-    provisionalFields: Readonly<{ bazi: readonly string[]; natal: readonly string[] }>;
+    provisionalFields: Readonly<{ bazi: readonly string[]; natal: readonly string[]; wuxing: readonly string[] }>;
     provisionalFactIds: readonly string[];
     /** FuFirE's warning codes, verbatim. Evidence, never a rendered message. */
     sourceWarnings: readonly string[];

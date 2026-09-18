@@ -8,6 +8,9 @@
  * Every snapshot field is traceable to a live FuFirE response field, verified
  * against the pinned runtime (fufire-lunar, engine 1.0.0-rc1-20260220,
  * OpenAPI SHA-256 6c1db672…8da). No field is inferred or computed locally.
+ * ETBZ-34: the Wu-Xing `pillars` and `precision` fields were read from the
+ * producer source accepted for that slice (`Bazodiac/FUFIRE_API_lunar@c914d567`,
+ * `routers/bazi.py`), which is also where the request echo under `input` is defined.
  */
 
 import type { NormalizedBirthInput } from '../../domain/birth-input.js';
@@ -31,6 +34,8 @@ export interface FufirePillarFact {
 }
 
 export interface FufireBaziSnapshot {
+  /** See `ProducerRawResponse`. Evidence only. */
+  readonly raw?: ProducerRawResponse;
   readonly pillars: Readonly<{
     year: FufirePillarFact;
     month: FufirePillarFact;
@@ -66,12 +71,78 @@ export interface FufireBaziSnapshot {
   }>;
 }
 
+/**
+ * ETBZ-34 (finding A) — the producer response exactly as it crossed the wire,
+ * kept as EVIDENCE next to the snapshot that was mapped from it.
+ *
+ * It is reproducibility material, never a semantic source: no theme, claim or
+ * section may cite it, and no path into it is a `factRef`. It is optional on
+ * the snapshot types only so that hand-built test snapshots stay valid;
+ * `BazodiacInterpretationInput v1` REQUIRES it and refuses to build without it.
+ * It never enters the HoroscopeModel or its canonical hash.
+ */
+export type ProducerJson =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly ProducerJson[]
+  | { readonly [key: string]: ProducerJson };
+
+export interface ProducerRawResponse {
+  /** The FuFirE path this body was returned by, e.g. `/v1/calculate/bazi`. */
+  readonly endpoint: string;
+  /** The parsed JSON body, verbatim: no key dropped, renamed or reordered. */
+  readonly payload: ProducerJson;
+}
+
+/** `pillars.<p>` of the BaZi Wu-Xing response — the pillars the vector was summed FROM. */
+export interface WuxingSourcePillar {
+  /** `pillars.<p>.stem` — same `STEMS` vocabulary as `pillars.<p>.stamm` of `/calculate/bazi`. */
+  readonly stem: string;
+  /** `pillars.<p>.branch` — same `BRANCHES` vocabulary as `pillars.<p>.zweig`. */
+  readonly branch: string;
+}
+
+export const REQUIRED_WUXING_BASIS = 'bazi_four_pillars' as const;
+
 export interface WuxingSnapshot {
+  /** See {@link ProducerRawResponse}. Evidence only. */
+  readonly raw?: ProducerRawResponse;
   readonly vector: WuxingVector;
   /** `dominant_element` */
   readonly dominant: string;
   /** `basis` (e.g. `bazi_four_pillars`) */
   readonly basis: string;
+  /**
+   * ETBZ-34 AC 1 — `pillars`: producer-owned source pillars. They are what lets
+   * the consumer prove the vector belongs to the SAME chart as the BaZi answer.
+   */
+  readonly sourcePillars: Readonly<{
+    year: WuxingSourcePillar;
+    month: WuxingSourcePillar;
+    day: WuxingSourcePillar;
+    hour: WuxingSourcePillar;
+  }>;
+  /** `precision` — the Wu-Xing endpoint's OWN statement about time confidence. */
+  readonly precision: Readonly<{
+    birthTimeKnown: boolean;
+    provisionalFields: readonly string[];
+  }>;
+}
+
+/**
+ * ETBZ-34 (raw-evidence binding) — the producer response mappers as a port.
+ *
+ * The ONE mapping/validation of a FuFirE wire body lives in the adapter. The
+ * application re-runs it over stored raw evidence to prove that the evidence
+ * maps to exactly the snapshot it accepted. It is not a calculator: it reads a
+ * body FuFirE produced and either yields the snapshot or throws.
+ */
+export interface ProducerResponseMapper {
+  mapBazi(payload: unknown): FufireBaziSnapshot;
+  mapWuxing(payload: unknown): WuxingSnapshot;
+  mapNatal(payload: unknown): FufireNatalSnapshot;
 }
 
 /**
@@ -241,6 +312,8 @@ export interface FufireNatalProvenance {
 }
 
 export interface FufireNatalSnapshot {
+  /** See {@link ProducerRawResponse}. Evidence only. */
+  readonly raw?: ProducerRawResponse;
   readonly pillars: Readonly<{
     year: FufireNatalPillarFact;
     month: FufireNatalPillarFact;

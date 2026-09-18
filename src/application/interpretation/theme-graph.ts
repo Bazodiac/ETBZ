@@ -137,7 +137,13 @@ function requireFact(facts: readonly ChartFact[], id: string): ChartFact {
 }
 
 function pillarThemes(facts: readonly ChartFact[]): ThemeDraft[] {
-  return PILLAR_NAMES.map((pillar: PillarName): ThemeDraft => {
+  // A pillar whose facts were all excluded from interpretation (PD-10: the
+  // assumed-time-derived hour pillar under an unknown birth time) gets NO theme.
+  // Its facts remain in the feature set as source evidence; what is absent is
+  // only the handle a narrative sentence could attach to.
+  return PILLAR_NAMES.filter((pillar) =>
+    facts.some((fact) => fact.id === `chart.pillar.${pillar}.tier`),
+  ).map((pillar: PillarName): ThemeDraft => {
     const tier = requireFact(facts, `chart.pillar.${pillar}.tier`);
     return {
       id: `theme.pillar.${pillar}`,
@@ -184,6 +190,7 @@ function monthCommandTheme(facts: readonly ChartFact[]): ThemeDraft {
       (fact) =>
         fact.kind === 'month_command_branch' ||
         fact.kind === 'month_command_principal_qi_stem' ||
+        fact.kind === 'month_command_element' ||
         fact.id === 'chart.pillar.month.branch' ||
         fact.id === 'chart.pillar.month.tier',
     ),
@@ -294,7 +301,10 @@ function buildEdges(themes: readonly Theme[]): readonly ThemeEdge[] {
  * Builds the ThemeGraph. Pure: same feature set in, byte-identical graph out.
  */
 export function buildThemeGraph(featureSet: InterpretationFeatureSet): ThemeGraph {
-  const facts = featureSet.facts;
+  // Only interpretable facts may be grouped into a theme. This is the single
+  // choke point that keeps an assumed-time-derived fact out of every theme,
+  // every brief and therefore every sentence downstream.
+  const facts = featureSet.facts.filter((fact) => fact.interpretable);
   const drafts: ThemeDraft[] = [
     ...pillarThemes(facts),
     dayMasterTheme(facts),
