@@ -28,16 +28,19 @@
  * identity that contained its own targets could not be computed for a cycle);
  * they are inside each claim's I6 hash and therefore inside the graph hash.
  *
- * One statement, one claim. Inside a graph a statement may occur once: the same
- * sentence under a second handle is the same interpretation again, whatever
- * label — epistemic class, theme, method set, grounding — was changed to tell
- * the two apart. For that to mean anything a statement must be in canonical
- * form (NFC; U+0020 as the only white space, single and not at the ends; no
- * control, format or otherwise invisible character); one that is not is
- * refused, never repaired. That closes spelling, spacing and invisible marks —
- * not look-alike letters. Identity stays STRUCTURAL beyond that: two
- * differently worded statements are two claims — `ALTERNATIVE_READING` needs
- * exactly that — and judging paraphrase is not this slice's business.
+ * Duplicates are decided by that identity and by nothing else. Two drafts with
+ * the same accepted identity are one interpretation submitted twice and are
+ * refused; the statement TEXT alone decides nothing — the same sentence over
+ * other grounding, other methods or another epistemic class is another claim
+ * (PO 2026-09-19). The graph has no statement rule of its own: whatever the
+ * claim validator accepts as a statement is stored exactly as written, never
+ * normalised or rewritten. Identity stays STRUCTURAL: two differently worded
+ * statements are two claims — `ALTERNATIVE_READING` needs exactly that — and
+ * judging paraphrase is not this slice's business.
+ *
+ * Themes are supplementary structure. A `themeRef` must name a theme of the
+ * bound brief; it never grounds a claim (the claim validator demands direct
+ * `factRefs`) and it need not share a cited fact.
  *
  * Nothing here is a number. There is no salience, rank, weight, count,
  * confidence or score on the graph, on a claim or on a relation, and an input
@@ -105,10 +108,8 @@ export type ClaimGraphErrorCode =
   | 'CLAIM_GRAPH_BRIEF_HASH_MISMATCH'
   | 'CLAIM_GRAPH_EMPTY'
   | 'CLAIM_GRAPH_DUPLICATE_CLAIM_ID'
-  | 'CLAIM_GRAPH_STATEMENT_NOT_CANONICAL'
   | 'CLAIM_GRAPH_DUPLICATE_REF'
   | 'CLAIM_GRAPH_UNKNOWN_THEME'
-  | 'CLAIM_GRAPH_THEME_NOT_GROUNDED'
   | 'CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT'
   | 'CLAIM_GRAPH_DANGLING_RELATION'
   | 'CLAIM_GRAPH_SELF_RELATION'
@@ -176,31 +177,6 @@ function refuseRepeated(claimId: string, what: string, values: readonly string[]
     }
     seen.add(value);
   }
-}
-
-/** Every white-space character except U+0020: tabs, line breaks, no-break, thin, ideographic space, U+2028... */
-const FOREIGN_SPACE = /[^\S ]/u;
-
-/**
- * Characters that render as nothing: controls, format characters (zero-width
- * space and joiners, soft hyphen, directional marks), everything Unicode calls
- * default-ignorable (variation selectors, grapheme joiner, Hangul fillers) and
- * the blank Braille pattern.
- */
-const INVISIBLE = /[\p{Cc}\p{Cf}\p{Default_Ignorable_Code_Point}\u2800]/u;
-
-/**
- * One sentence, one spelling, one kind of space, nothing unseen — otherwise a
- * trailing space, a no-break space or a zero-width mark would make a second
- * claim out of the same sentence. Look-alike letters of another script are NOT
- * caught here; that would need a confusables table nobody approved.
- */
-function isCanonicalStatement(statement: string): boolean {
-  return statement === statement.normalize('NFC')
-    && statement === statement.trim()
-    && !statement.includes('  ')
-    && !FOREIGN_SPACE.test(statement)
-    && !INVISIBLE.test(statement);
 }
 
 /**
@@ -271,47 +247,39 @@ export function buildInterpretiveClaimGraph(draft: unknown, context: ClaimGraphC
     featureSet: rederived.featureSet,
     methodProfileRef,
   };
-  // A theme's `factIds` are its entire evidence, at both levels of the brief.
-  const themeFactIds = new Map<string, ReadonlySet<string>>(
-    [...brief.primaryThemes, ...brief.candidateThemes].map((theme) => [theme.id, new Set(theme.factIds)]),
+  // Themes of both levels of the brief. A themeRef must name one; it is
+  // supplementary structure and need not share a cited fact (PO 2026-09-19).
+  const briefThemeIds = new Set(
+    [...brief.primaryThemes, ...brief.candidateThemes].map((theme) => theme.id),
   );
 
   const acceptedIdByHandle = new Map<string, string>();
-  const handleByStatement = new Map<string, string>();
+  const handleByAcceptedId = new Map<string, string>();
   for (const claim of drafts) {
     if (acceptedIdByHandle.has(claim.claimId)) {
       throw new ClaimGraphError('CLAIM_GRAPH_DUPLICATE_CLAIM_ID', `two claims share the id "${claim.claimId}"; a relation to it would be ambiguous`);
     }
     const cited = validateInterpretiveClaim(claim, validation);
 
-    if (!isCanonicalStatement(claim.statement)) {
-      throw new ClaimGraphError(
-        'CLAIM_GRAPH_STATEMENT_NOT_CANONICAL',
-        `the statement of claim "${claim.claimId}" is not in canonical form (NFC, U+0020 as the only white space, single and not at the ends, no invisible characters)`,
-      );
-    }
     refuseRepeated(claim.claimId, 'fact', claim.factRefs);
     refuseRepeated(claim.claimId, 'theme', claim.themeRefs);
     refuseRepeated(claim.claimId, 'relation', claim.relations.map(relationKey));
     for (const themeRef of claim.themeRefs) {
-      const evidence = themeFactIds.get(themeRef);
-      if (evidence === undefined) {
+      if (!briefThemeIds.has(themeRef)) {
         throw new ClaimGraphError('CLAIM_GRAPH_UNKNOWN_THEME', `claim "${claim.claimId}" names theme "${themeRef}", which the bound brief does not contain`);
-      }
-      if (!claim.factRefs.some((factRef) => evidence.has(factRef))) {
-        throw new ClaimGraphError('CLAIM_GRAPH_THEME_NOT_GROUNDED', `claim "${claim.claimId}" names theme "${themeRef}" but cites none of that theme's facts; a theme is a grouping of evidence, not a label to borrow`);
       }
     }
 
-    const twin = handleByStatement.get(claim.statement);
+    const acceptedId = deriveClaimId(claim, cited, methodProfileRef);
+    const twin = handleByAcceptedId.get(acceptedId);
     if (twin !== undefined) {
       throw new ClaimGraphError(
         'CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT',
-        `claims "${twin}" and "${claim.claimId}" make the same statement; submitting an interpretation twice does not make it two claims, whatever label was changed`,
+        `claims "${twin}" and "${claim.claimId}" have the same semantic identity; submitting an interpretation twice does not make it two claims`,
       );
     }
-    handleByStatement.set(claim.statement, claim.claimId);
-    acceptedIdByHandle.set(claim.claimId, deriveClaimId(claim, cited, methodProfileRef));
+    handleByAcceptedId.set(acceptedId, claim.claimId);
+    acceptedIdByHandle.set(claim.claimId, acceptedId);
   }
 
   // Every claim above is ACCEPTED, so resolving a target here means resolving it

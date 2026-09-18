@@ -50,6 +50,23 @@ function claim(overrides: Partial<InterpretiveClaim> = {}): InterpretiveClaim {
   };
 }
 
+/** PD-5 refused a claim that the claim contract itself accepts. */
+function expectInsufficientSignals(candidate: InterpretiveClaim, context = KNOWN): ClaimError {
+  expect(() => validateInterpretiveClaim(candidate, context)).not.toThrow();
+  try {
+    assertCentralClaimSignals(candidate, context);
+  } catch (error) {
+    expect(error).toBeInstanceOf(ClaimError);
+    expect((error as ClaimError).code, (error as ClaimError).message).toBe('CLAIM_INSUFFICIENT_SIGNALS');
+    return error as ClaimError;
+  }
+  return expect.unreachable('expected PD-5 to refuse the claim as central');
+}
+
+function factKinds(candidate: InterpretiveClaim, context = KNOWN): number {
+  return new Set(validateInterpretiveClaim(candidate, context).map((fact) => fact.kind)).size;
+}
+
 function expectRefusal(code: ClaimErrorCode, candidate: InterpretiveClaim, context = KNOWN): void {
   try {
     validateInterpretiveClaim(candidate, context);
@@ -205,8 +222,31 @@ describe('ETBZ-34 M3: unknown birth time — PD-10 exclusion and F-1 Wu-Xing gua
 });
 
 describe('ETBZ-34 M4: PD-5 — a shared single primitive must not carry a thesis', () => {
-  it('accepts a central claim with >=2 fact kinds and >=2 methods', () => {
+  it('accepts a central claim with >=2 fact kinds and >=2 non-modifier methods — with or without the modifier alongside', () => {
     expect(() => assertCentralClaimSignals(claim(), KNOWN)).not.toThrow();
+    const withoutModifier = claim({ methodRefs: ['ten_gods', 'fact_relations'] });
+    expect(factKinds(withoutModifier)).toBeGreaterThanOrEqual(2);
+    expect(() => assertCentralClaimSignals(withoutModifier, KNOWN)).not.toThrow();
+  });
+
+  it('does not count the modifier: two fact kinds under one method plus positional_context are refused (PO 2026-09-19)', () => {
+    // Method Profile 63012866, section 3: `modifier=true` qualifies a claim and
+    // never counts towards the contribution floor.
+    const qualified = claim({ methodRefs: ['ten_gods', 'positional_context'] });
+    expect(factKinds(qualified)).toBeGreaterThanOrEqual(2);
+    expectInsufficientSignals(qualified);
+    // Counterfactual: the same claim with a second READING method instead of the modifier passes.
+    expect(() => assertCentralClaimSignals(claim({ methodRefs: ['ten_gods', 'fact_relations'] }), KNOWN)).not.toThrow();
+  });
+
+  it('counts contributions, not methodRefs: two named methods of which one is a non-modifier are one contribution', () => {
+    // The released registry has exactly one modifier; with duplicates refused,
+    // ">= 2 methodRefs, one non-modifier" has exactly this shape. A second
+    // modifier in a later profile must add its own case here.
+    expect(BAZI_METHOD_REGISTRY_V1.methods.filter((method) => method.modifier).map((method) => method.methodId)).toEqual(['positional_context']);
+    const twoNamed = claim({ methodRefs: ['positional_context', 'ten_gods'] });
+    expect(twoNamed.methodRefs).toHaveLength(2);
+    expect(expectInsufficientSignals(twoNamed).message).toContain('1 non-modifier method contribution');
   });
 
   it('refuses a thesis resting on the Day Master alone', () => {

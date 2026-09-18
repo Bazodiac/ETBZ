@@ -70,7 +70,9 @@ const MUTANTS = [
   ['RAW: stored hash is the original hash', I + 'interpretation-input.ts', "storedPayloadSha256: structuralHash(payload),", "storedPayloadSha256: structuralHash(raw.payload),", [T.raw]],
   ['RAW: a raw path accepted as factRef', I + 'interpretive-claim.ts', "    if (fact === undefined) {\n      throw new ClaimError('CLAIM_UNKNOWN_FACT'", "    if (fact === undefined) {\n      continue;\n      throw new ClaimError('CLAIM_UNKNOWN_FACT'", [T.claim]],
   // --- method profile ------------------------------------------------------------------
-  ['PD-5: floor weakened to OR', I + 'interpretive-claim.ts', "if (kinds.size >= 2 && claim.methodRefs.length >= 2) {", "if (kinds.size >= 2 || claim.methodRefs.length >= 2) {", [T.claim]],
+  ['PD-5: floor weakened to OR', I + 'interpretive-claim.ts', "if (kinds.size >= 2 && contributions.length >= 2) {", "if (kinds.size >= 2 || contributions.length >= 2) {", [T.claim]],
+  ['PD-5: a modifier counts as a method contribution', I + 'interpretive-claim.ts', "methodsById.get(methodRef)?.modifier === false);", "methodsById.get(methodRef) !== undefined);", [T.claim]],
+  ['PD-5: methodRefs counted instead of non-modifier contributions', I + 'interpretive-claim.ts', "if (kinds.size >= 2 && contributions.length >= 2) {", "if (kinds.size >= 2 && claim.methodRefs.length >= 2) {", [T.claim]],
   ['PD-6: deferred methodRef accepted', I + 'interpretive-claim.ts', "    if (!isApprovedStatus(method.status)) {\n      throw", "    if (!isApprovedStatus(method.status) && method.methodId === '') {\n      throw", [T.claim]],
   ['SEASON: MARK_SEASON re-added', I + 'method-registry.ts', "['NAME_BRANCH', 'HAND_OFF_TO_HIDDEN_STEMS']", "['NAME_BRANCH', 'HAND_OFF_TO_HIDDEN_STEMS', 'MARK_SEASON']", [T.registry]],
   ['SEASON: mapping requirement off', I + 'method-registry.ts', "if (mapping !== null && !registry.approvedDeterministicMappings.includes(mapping)) {", "if (mapping !== null && mapping === '') {", [T.registry]],

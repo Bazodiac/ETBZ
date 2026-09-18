@@ -1,7 +1,9 @@
 /**
- * ETBZ-30A — the draft-level refusals of the InterpretiveClaimGraph. The
- * binding, consistency-check and central-claim refusals are in the unit suite
- * (G3, G5).
+ * ETBZ-30A — the draft-level refusals of the InterpretiveClaimGraph, and the
+ * controls that pin what the graph deliberately does NOT refuse (a statement's
+ * typography, a supplementary theme, a repeated statement text under another
+ * semantic identity — PO clarification 2026-09-19). The binding,
+ * consistency-check and central-claim refusals are in the unit suite (G3, G5).
  *
  * Pattern: the baseline is proven green first, then each test changes as little
  * of it as the refusal needs. A refusal that comes from the claim contract must surface as
@@ -19,9 +21,10 @@ import type {
   ClaimGraphErrorCode,
   InterpretiveClaimGraphDraft,
 } from '../../src/application/interpretation/interpretive-claim-graph.js';
-import { ClaimError } from '../../src/application/interpretation/interpretive-claim.js';
+import { deriveInterpretationFeatureSet } from '../../src/application/interpretation/feature-set.js';
+import { ClaimError, validateInterpretiveClaim } from '../../src/application/interpretation/interpretive-claim.js';
 import type { ClaimErrorCode, InterpretiveClaim } from '../../src/application/interpretation/interpretive-claim.js';
-import { BAZI_METHOD_REGISTRY_V1, MethodRegistryError } from '../../src/application/interpretation/method-registry.js';
+import { BAZI_METHOD_REGISTRY_V1, METHOD_PROFILE_REF, MethodRegistryError } from '../../src/application/interpretation/method-registry.js';
 import type { MethodRegistry } from '../../src/application/interpretation/method-registry.js';
 import {
   DAY_HIDDEN_TEN_GOD,
@@ -130,15 +133,31 @@ describe('ETBZ-30A N1: grounding — one ungrounded claim blocks the whole graph
     expectDraftRefusal('CLAIM_GRAPH_UNKNOWN_THEME', withRecurrence({ themeRefs: ['theme.tenGod.Invented'] }));
   });
 
-  it('refuses a themeRef to a real theme none of whose facts the claim cites', () => {
-    // A theme's factIds are its entire evidence. Filing a claim under a theme it
-    // shares no fact with would borrow that theme's standing — under an unknown
-    // birth time, a certain claim filed under a provisional theme.
+  it('accepts a themeRef of the bound brief that shares no cited fact: supplementary structure, never grounding (PO 2026-09-19)', () => {
+    const expectDisjoint = (context: ClaimGraphContext, themeId: string, claim: InterpretiveClaim): void => {
+      const theme = [...context.brief.primaryThemes, ...context.brief.candidateThemes].find((candidate) => candidate.id === themeId);
+      expect(theme, themeId).toBeDefined();
+      expect(theme?.factIds.some((factId) => claim.factRefs.includes(factId)), themeId).toBe(false);
+    };
+    // Under an unknown birth time: a certain claim filed under a provisional theme.
+    const underProvisional = recurrenceClaim({ themeRefs: ['theme.wuXing.Feuer'] });
+    expectDisjoint(UNKNOWN, 'theme.wuXing.Feuer', underProvisional);
     expect(UNKNOWN.brief.candidateThemes.find((theme) => theme.id === 'theme.wuXing.Feuer')?.containsProvisionalFacts).toBe(true);
-    expectDraftRefusal('CLAIM_GRAPH_THEME_NOT_GROUNDED', [recurrenceClaim({ themeRefs: ['theme.wuXing.Feuer'] })], UNKNOWN);
-    expectDraftRefusal('CLAIM_GRAPH_THEME_NOT_GROUNDED', withRecurrence({ themeRefs: ['theme.pillar.month', 'primary.elemental_profile'] }));
-    // Control: the themes that do contain a cited fact are accepted.
-    expect(buildInterpretiveClaimGraph(draftOf(withRecurrence({ themeRefs: ['theme.pillar.month', 'primary.self_role'] })), KNOWN).claims).toHaveLength(4);
+    const graph = buildInterpretiveClaimGraph(draftOf([underProvisional], UNKNOWN), UNKNOWN);
+    // The theme is carried, and moves nothing: the claim's certainty is its own facts'.
+    expect(graph.claims[0]?.themeRefs).toEqual(['theme.wuXing.Feuer']);
+    expect(graph.claims[0]?.epistemicClass).toBe('SUPPORTED_INTERPRETATION');
+    expect(graph.claims[0]?.provisionalFactRefs).toEqual([]);
+    // A primary theme without overlap next to one with overlap.
+    const mixed = recurrenceClaim({ themeRefs: ['theme.pillar.month', 'primary.elemental_profile'] });
+    expectDisjoint(KNOWN, 'primary.elemental_profile', mixed);
+    expect(buildInterpretiveClaimGraph(draftOf([mixed, relationClaim(), dayMasterClaim(), dominantClaim()]), KNOWN).claims).toHaveLength(4);
+  });
+
+  it('keeps direct facts mandatory: a theme of the bound brief never stands in for a factRef', () => {
+    for (const themeRef of ['theme.pillar.month', 'primary.elemental_profile']) {
+      expectClaimRefusal('CLAIM_UNGROUNDED', withRecurrence({ factRefs: [], themeRefs: [themeRef] }));
+    }
   });
 });
 
@@ -249,7 +268,7 @@ describe('ETBZ-30A N5: duplication and order never become importance', () => {
     ]);
   });
 
-  it('refuses the same meaning submitted twice under two handles — reordered refs do not disguise it', () => {
+  it('refuses the same full semantic identity submitted twice under two handles — reordered refs do not disguise it', () => {
     const twin = recurrenceClaim({
       claimId: 'draft.recurrenceAgain',
       factRefs: [DAY_HIDDEN_TEN_GOD, MONTH_TEN_GOD],
@@ -268,55 +287,69 @@ describe('ETBZ-30A N5: duplication and order never become importance', () => {
     expect(buildInterpretiveClaimGraph(draftOf([...baselineClaims(), alternative]), KNOWN).claims).toHaveLength(5);
   });
 
-  it('refuses one statement made twice, whatever label was changed to tell the two apart', () => {
-    const relabelled: Partial<InterpretiveClaim>[] = [
-      { epistemicClass: 'TENTATIVE_INTERPRETATION' },
-      { themeRefs: ['theme.pillar.month'] },
-      { methodRefs: ['ten_gods', 'fact_relations'] },
-      { factRefs: [MONTH_TEN_GOD, 'chart.natal.pillar.year.tenGod'], methodRefs: ['ten_gods', 'positional_context'] },
+  it('accepts one statement made twice when the semantic identity differs: the statement text alone decides nothing (PO 2026-09-19)', () => {
+    const differentIdentity: [string, Partial<InterpretiveClaim>][] = [
+      ['other grounding', { factRefs: [MONTH_TEN_GOD, 'chart.natal.pillar.year.tenGod'], methodRefs: ['ten_gods', 'positional_context'] }],
+      ['other method set', { methodRefs: ['ten_gods', 'fact_relations'] }],
+      ['other epistemic class', { epistemicClass: 'TENTATIVE_INTERPRETATION' }],
+      ['other themes', { themeRefs: ['theme.pillar.month'] }],
     ];
-    for (const overrides of relabelled) {
+    for (const [what, overrides] of differentIdentity) {
       const again = recurrenceClaim({ claimId: 'draft.again', ...overrides });
-      // Control: on its own the relabelled claim is a perfectly valid claim.
-      expect(buildInterpretiveClaimGraph(draftOf([again]), KNOWN).claims).toHaveLength(1);
-      expectDraftRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT', [...baselineClaims(), again]);
+      const graph = buildInterpretiveClaimGraph(draftOf([...baselineClaims(), again]), KNOWN);
+      expect(graph.claims, what).toHaveLength(5);
+      const sameText = graph.claims.filter((claim) => claim.statement === again.statement);
+      expect(sameText, what).toHaveLength(2);
+      expect(new Set(sameText.map((claim) => claim.claimId)).size, what).toBe(2);
     }
   });
 
-  it('refuses a statement that is not in canonical form: one spelling, one kind of space, nothing invisible', () => {
+  it('adds no statement rule of its own: the claim validator decides about a statement, and the graph stores it byte for byte', () => {
     const statement = recurrenceClaim().statement;
-    const nonCanonical: [string, string][] = [
+    const validation = { registry: KNOWN.registry, featureSet: deriveInterpretationFeatureSet(KNOWN.model), methodProfileRef: METHOD_PROFILE_REF };
+    // Otherwise valid statements that differ only in presentation. ETBZ-30A has
+    // no Unicode / typography policy (PO 2026-09-19): none is refused, none is rewritten.
+    const presentational: [string, string][] = [
+      ['no-break space', statement.replace(' ', '\u00a0')],
+      ['zero-width joiner', statement.replace('month', 'mo\u200dnth')],
+      ['emoji ZWJ sequence', `${statement} \u{1F469}\u200d\u{1F4BB}`],
+      ['NFD instead of NFC', 'Re\u0301sume\u0301 of the month pillar.'],
+      ['NFC', 'R\u00e9sum\u00e9 of the month pillar — \u6708.'],
+      ['doubled space', statement.replace(' ', '  ')],
       ['trailing space', `${statement} `],
       ['leading space', ` ${statement}`],
-      ['doubled space', statement.replace(' ', '  ')],
       ['line feed', statement.replace(' ', '\n')],
       ['tab', statement.replace(' ', '\t')],
-      ['no-break space', statement.replace(' ', '\u00a0')],
       ['thin space', statement.replace(' ', '\u2009')],
       ['ideographic space', statement.replace(' ', '\u3000')],
       ['line separator', statement.replace(' ', '\u2028')],
       ['zero-width space appended', `${statement}\u200b`],
-      ['zero-width space only', '\u200b'],
-      ['combining grapheme joiner appended', `${statement}\u034f`],
       ['variation selector appended', `${statement}\ufe0f`],
-      ['hangul filler only', '\u3164'],
-      ['braille blank only', '\u2800'],
-      ['NFD instead of NFC', 'Re\u0301sume\u0301 of the month pillar.'],
     ];
-    for (const [what, variant] of nonCanonical) {
-      const caught = refusalOf(() => buildInterpretiveClaimGraph(draftOf(withRecurrence({ statement: variant })), KNOWN));
-      expect(caught, what).toBeInstanceOf(ClaimGraphError);
-      expect((caught as ClaimGraphError).code, what).toBe('CLAIM_GRAPH_STATEMENT_NOT_CANONICAL');
+    for (const [what, variant] of presentational) {
+      expect(refusalOf(() => validateInterpretiveClaim(recurrenceClaim({ statement: variant }), validation)), what).toBeUndefined();
+      const graph = buildInterpretiveClaimGraph(draftOf(withRecurrence({ statement: variant })), KNOWN);
+      expect(graph.claims.map((claim) => claim.statement), what).toContain(variant);
     }
-    // The twin this closes: the same sentence with ONE no-break space, "supporting" its original.
-    const twin = recurrenceClaim({
-      claimId: 'draft.again',
-      statement: statement.replace(' ', '\u00a0'),
-      relations: [{ type: 'SUPPORTS', targetClaimId: H.recurrence }],
-    });
-    expectDraftRefusal('CLAIM_GRAPH_STATEMENT_NOT_CANONICAL', [...baselineClaims(), twin]);
-    // Control: the same sentence in NFC, and non-ASCII text as such, are fine.
-    expect(buildInterpretiveClaimGraph(draftOf(withRecurrence({ statement: 'R\u00e9sum\u00e9 of the month pillar — 月.' })), KNOWN).claims).toHaveLength(4);
+    // No silent normalisation: the sentence with ONE no-break space is another string,
+    // hence another identity, and both are kept exactly as written.
+    const nbsp = recurrenceClaim({ claimId: 'draft.nbsp', statement: statement.replace(' ', '\u00a0') });
+    const both = buildInterpretiveClaimGraph(draftOf([...baselineClaims(), nbsp]), KNOWN);
+    expect(both.claims).toHaveLength(5);
+    expect(both.claims.map((claim) => claim.statement)).toEqual(expect.arrayContaining([statement, nbsp.statement]));
+    // A blank statement stays refused — by the claim validator, whose refusal the graph surfaces unchanged.
+    for (const blank of ['   ', '\u00a0', '\n\t']) {
+      expectClaimRefusal('CLAIM_UNGROUNDED', withRecurrence({ statement: blank }));
+    }
+    // Invisible-only statements: whatever the claim validator decides is the graph's decision.
+    for (const invisible of ['\u200b', '\u3164', '\u2800']) {
+      const byValidator = refusalOf(() => validateInterpretiveClaim(recurrenceClaim({ statement: invisible }), validation));
+      const byGraph = refusalOf(() => buildInterpretiveClaimGraph(draftOf(withRecurrence({ statement: invisible })), KNOWN));
+      expect(byGraph === undefined, JSON.stringify(invisible)).toBe(byValidator === undefined);
+      if (byValidator !== undefined) {
+        expect((byGraph as ClaimError).code).toBe((byValidator as ClaimError).code);
+      }
+    }
   });
 
   it('refuses a repeated factRef, themeRef or relation instead of counting it', () => {

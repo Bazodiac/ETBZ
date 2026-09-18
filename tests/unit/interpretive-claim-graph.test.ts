@@ -66,13 +66,18 @@ const FIRE_WEIGHT = 'chart.wuxing.weight.Feuer';
 
 const baseline = (): InterpretiveClaimGraph => buildInterpretiveClaimGraph(draftOf(baselineClaims()), KNOWN);
 
-/** The accepted claim a draft became, found by its statement (unique inside a graph). */
+/**
+ * The accepted claim a draft became, found by its statement. A statement is not
+ * unique inside a graph in general (identity is semantic, not textual); every
+ * graph this suite looks up in holds it once, and this refuses to guess otherwise.
+ */
 function acceptedFor(graph: InterpretiveClaimGraph, draft: InterpretiveClaim): AcceptedInterpretiveClaim {
-  const found = graph.claims.find((claim) => claim.statement === draft.statement);
-  if (found === undefined) {
-    throw new Error(`fixture: no accepted claim carries the statement of "${draft.claimId}"`);
+  const found = graph.claims.filter((claim) => claim.statement === draft.statement);
+  const [only] = found;
+  if (found.length !== 1 || only === undefined) {
+    throw new Error(`fixture: ${String(found.length)} accepted claims carry the statement of "${draft.claimId}", expected exactly one`);
   }
-  return found;
+  return only;
 }
 
 function expectGraphRefusal(code: ClaimGraphErrorCode, run: () => unknown): void {
@@ -494,7 +499,7 @@ describe('ETBZ-30A G4: provisional lineage passes through the graph unchanged', 
 });
 
 describe('ETBZ-30A G5: PD-5 is composed, not re-implemented, for a claim that becomes central', () => {
-  it('accepts a central claim with >= 2 fact kinds and >= 2 method contributions', () => {
+  it('accepts a central claim with >= 2 fact kinds and >= 2 non-modifier method contributions', () => {
     const graph = baseline();
     expect(() => { assertCentralGraphClaim(graph, acceptedFor(graph, recurrenceClaim()).claimId, KNOWN); }).not.toThrow();
     expect(() => { assertCentralGraphClaim(graph, acceptedFor(graph, relationClaim()).claimId, KNOWN); }).not.toThrow();
@@ -525,6 +530,19 @@ describe('ETBZ-30A G5: PD-5 is composed, not re-implemented, for a claim that be
       const claimId = acceptedFor(graph, draft).claimId;
       expectClaimRefusal('CLAIM_INSUFFICIENT_SIGNALS', () => { assertCentralGraphClaim(graph, claimId, KNOWN); });
     }
+  });
+
+  it('does not count the modifier as a contribution: two kinds under one method plus positional_context stay refused (PO 2026-09-19)', () => {
+    const qualified = recurrenceClaim({ methodRefs: ['ten_gods', 'positional_context'] });
+    // The claim itself is valid and accepted into the graph; it only cannot be central.
+    const graph = buildInterpretiveClaimGraph(draftOf([qualified]), KNOWN);
+    const accepted = acceptedFor(graph, qualified);
+    expect(accepted.methodRefs).toEqual(['positional_context', 'ten_gods']);
+    expectClaimRefusal('CLAIM_INSUFFICIENT_SIGNALS', () => { assertCentralGraphClaim(graph, accepted.claimId, KNOWN); });
+    // Counterfactual: a second reading method next to the modifier makes it central.
+    const read = recurrenceClaim();
+    const readGraph = buildInterpretiveClaimGraph(draftOf([read]), KNOWN);
+    expect(() => { assertCentralGraphClaim(readGraph, acceptedFor(readGraph, read).claimId, KNOWN); }).not.toThrow();
   });
 
   it('has no caller-controlled bypass: three parameters, and a fourth argument changes nothing', () => {
