@@ -116,8 +116,6 @@ export interface RawProducerEvidence {
 }
 
 export const RAW_EVIDENCE_REDACTED = 'REDACTED_PII' as const;
-/** Request-echo keys that are customer PII, not producer facts. */
-const ECHO_PII_KEYS: readonly string[] = ['lat', 'lon', 'latitude', 'longitude'];
 
 export interface BazodiacInterpretationInput {
   readonly schemaVersion: typeof INTERPRETATION_INPUT_SCHEMA_VERSION;
@@ -259,26 +257,44 @@ function assertWuxing(model: HoroscopeModel): void {
   }
 }
 
-function redactEcho(payload: ProducerJson): Readonly<{ payload: ProducerJson; redactions: readonly string[] }> {
-  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
-    return { payload, redactions: [] };
-  }
-  const body = payload as { readonly [key: string]: ProducerJson };
-  const echo = body['input'];
-  if (echo === undefined || echo === null || typeof echo !== 'object' || Array.isArray(echo)) {
-    return { payload, redactions: [] };
-  }
+/**
+ * Redacts the producer's ECHO of ETBZ's own request coordinates — and nothing
+ * else. A value is redacted only if BOTH hold:
+ *   - its key is a coordinate key (`lat`, `lon`, `latitude`, `longitude`, with
+ *     an optional `_deg`), anywhere in the body (FuFirE echoes the request under
+ *     `input` and, in traces, under keys such as `longitude_deg`);
+ *   - its value IS this chart's own request latitude or longitude.
+ * A symbolic response fact (`solar_longitude_deg`, a vector weight that happens
+ * to equal a coordinate) matches neither the key rule nor survives both.
+ */
+const COORDINATE_KEY = /^(?:lat|lon|latitude|longitude)(?:_deg)?$/u;
+
+function redactEcho(
+  payload: ProducerJson,
+  location: Readonly<{ lat: number; lon: number }>,
+): Readonly<{ payload: ProducerJson; redactions: readonly string[] }> {
   const redactions: string[] = [];
-  const cleaned: Record<string, ProducerJson> = {};
-  for (const [key, value] of Object.entries(echo as { readonly [key: string]: ProducerJson })) {
-    if (ECHO_PII_KEYS.includes(key)) {
-      cleaned[key] = RAW_EVIDENCE_REDACTED;
-      redactions.push(`input.${key}`);
-    } else {
-      cleaned[key] = value;
+  const walk = (value: ProducerJson, path: string): ProducerJson => {
+    if (Array.isArray(value)) {
+      return (value as readonly ProducerJson[]).map((entry, index) => walk(entry, `${path}[${String(index)}]`));
     }
-  }
-  return { payload: { ...body, input: cleaned }, redactions: redactions.sort() };
+    if (value === null || typeof value !== 'object') {
+      return value;
+    }
+    const out: Record<string, ProducerJson> = {};
+    for (const [key, entry] of Object.entries(value as { readonly [key: string]: ProducerJson })) {
+      const here = path === '' ? key : `${path}.${key}`;
+      if (COORDINATE_KEY.test(key) && typeof entry === 'number' && (entry === location.lat || entry === location.lon)) {
+        out[key] = RAW_EVIDENCE_REDACTED;
+        redactions.push(here);
+      } else {
+        out[key] = walk(entry, here);
+      }
+    }
+    return out;
+  };
+  const cleaned = walk(payload, '');
+  return { payload: redactions.length === 0 ? payload : cleaned, redactions: redactions.sort() };
 }
 
 function withoutRaw<T extends { readonly raw?: ProducerRawResponse }>(snapshot: T): Omit<T, 'raw'> {
@@ -301,6 +317,7 @@ function rawEvidenceOf<T extends { readonly raw?: ProducerRawResponse }>(
   what: string,
   snapshot: T,
   map: (payload: unknown) => T,
+  location: Readonly<{ lat: number; lon: number }>,
 ): RawProducerEvidence {
   const raw = snapshot.raw;
   if (raw === undefined || raw.payload === null || typeof raw.payload !== 'object' || Array.isArray(raw.payload)) {
@@ -324,7 +341,7 @@ function rawEvidenceOf<T extends { readonly raw?: ProducerRawResponse }>(
       `the ${what} raw evidence maps to different facts than the accepted ${what} snapshot; it is not the body this chart was validated from`,
     );
   }
-  const { payload, redactions } = redactEcho(raw.payload);
+  const { payload, redactions } = redactEcho(raw.payload, location);
   return {
     endpoint: raw.endpoint,
     claimBearing: false,
@@ -419,9 +436,9 @@ export function buildBazodiacInterpretationInput(
   assertReleasedRegistry(registry);
   assertWuxing(model);
   assertSnapshotsBuiltThisModel(model, source);
-  const baziRaw = rawEvidenceOf('BaZi', source.bazi, (payload) => options.mapper.mapBazi(payload));
-  const wuxingRaw = rawEvidenceOf('BaZi/WuXing', source.wuxing, (payload) => options.mapper.mapWuxing(payload));
-  const natalRaw = rawEvidenceOf('Natal', source.natal, (payload) => options.mapper.mapNatal(payload));
+  const baziRaw = rawEvidenceOf('BaZi', source.bazi, (payload) => options.mapper.mapBazi(payload), model.birth.location);
+  const wuxingRaw = rawEvidenceOf('BaZi/WuXing', source.wuxing, (payload) => options.mapper.mapWuxing(payload), model.birth.location);
+  const natalRaw = rawEvidenceOf('Natal', source.natal, (payload) => options.mapper.mapNatal(payload), model.birth.location);
   if (model.precision.birthTimeKnown !== model.birth.birthTimeKnown || model.natal.precision.birthTimeKnown !== model.birth.birthTimeKnown) {
     throw new InterpretationInputError(
       'INTERPRETATION_INPUT_PRECISION_CONTRADICTION',

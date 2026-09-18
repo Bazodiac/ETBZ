@@ -114,7 +114,8 @@ describe('ETBZ-34 raw-evidence redaction (PO decision, MVP v1)', () => {
   });
 
   it('reports identical hashes and an empty manifest where nothing was redacted', () => {
-    for (const evidence of [input.fufire.baziRaw, input.fufire.natalRaw]) {
+    expect(input.fufire.baziRaw.redactions).toEqual(['input.lat', 'input.lon']);
+    for (const evidence of [input.fufire.natalRaw]) {
       expect(evidence.redactions).toEqual([]);
       expect(evidence.storedPayloadSha256).toBe(evidence.originalPayloadSha256);
     }
@@ -130,5 +131,25 @@ describe('ETBZ-34 raw-evidence redaction (PO decision, MVP v1)', () => {
     const { raw: _raw, ...accepted } = chart.source.wuxing;
     void _raw;
     expect(fufireResponseMapper.mapWuxing(stored)).toEqual(accepted);
+  });
+
+  it('redacts an echoed coordinate wherever it is nested, and never a symbolic value that merely equals it', () => {
+    const source = structuredClone(chart.source) as ProducerSnapshots;
+    const body = source.bazi.raw?.payload as Record<string, unknown>;
+    body['derivation_trace'] = { longitude_deg: 13.405, solar_longitude_deg: 13.405, steps: [{ lat: 52.52, weight: 52.52 }] };
+    const stored = buildBazodiacInterpretationInput(chart.model, source, MAPPER).fufire.baziRaw;
+    expect(stored.redactions).toEqual(['derivation_trace.longitude_deg', 'derivation_trace.steps[0].lat', 'input.lat', 'input.lon']);
+    const trace = (stored.payload as Record<string, unknown>)['derivation_trace'] as Record<string, unknown>;
+    expect(trace['solar_longitude_deg']).toBe(13.405);
+    expect((trace['steps'] as Record<string, unknown>[])[0]?.['weight']).toBe(52.52);
+    expect(JSON.stringify(stored.payload)).not.toMatch(/"(?:lat|lon|longitude_deg)":\s*\d/u);
+  });
+
+  it('does not redact a coordinate-named key that carries another value', () => {
+    const source = structuredClone(chart.source) as ProducerSnapshots;
+    (source.bazi.raw?.payload as Record<string, unknown>)['reference'] = { lon: 116.4 };
+    const stored = buildBazodiacInterpretationInput(chart.model, source, MAPPER).fufire.baziRaw;
+    expect(stored.redactions).toEqual(['input.lat', 'input.lon']);
+    expect(((stored.payload as Record<string, unknown>)['reference'] as Record<string, unknown>)['lon']).toBe(116.4);
   });
 });

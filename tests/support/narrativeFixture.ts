@@ -170,7 +170,10 @@ function baziWireBody(snapshot: FufireBaziSnapshot): ProducerJson {
     tier: snapshot.pillars[name].tierDe,
     element: snapshot.pillars[name].elementDe,
   });
+  const known = snapshot.precision.birthTimeKnown;
   return {
+    // FuFirE echoes the request (ADR-1 "zero snapshot churn"), coordinates included.
+    input: { date: known ? '1990-06-15T14:30:00' : '1985-11-03', tz: 'Europe/Berlin', lon: 13.405, lat: 52.52, standard: 'CIVIL', boundary: 'midnight', birth_time_known: known },
     pillars: { year: pillar('year'), month: pillar('month'), day: pillar('day'), hour: pillar('hour') },
     chinese: { day_master: snapshot.dayMaster },
     dates: {

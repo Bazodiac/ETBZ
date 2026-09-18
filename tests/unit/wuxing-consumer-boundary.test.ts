@@ -84,6 +84,11 @@ describe('ETBZ-34 AC 1: Wu-Xing source pillars must be the BaZi pillars', () => 
   });
 
   it('ties the Wu-Xing precision statement to the same question', () => {
+    // birth_time_known alone contradicts (the hour marking is consistent with a known time).
+    expectModelRefusal('HOROSCOPE_WUXING_PRECISION_CONTRADICTION', {
+      ...WUXING_SNAPSHOT,
+      precision: { birthTimeKnown: false, provisionalFields: [] },
+    });
     expectModelRefusal('HOROSCOPE_WUXING_PRECISION_CONTRADICTION', WUXING_UNKNOWN_SNAPSHOT);
     expect(() =>
       buildHoroscopeModel(

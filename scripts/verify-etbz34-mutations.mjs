@@ -21,6 +21,7 @@ const PROBE = 'src/adapters/fufire/runtime-attestation.ts';
 const T = {
   boundary: 'tests/unit/wuxing-consumer-boundary.test.ts',
   raw: 'tests/unit/raw-evidence-binding.test.ts',
+  e2e: 'tests/integration/interpretation-handoff.test.ts',
   input: 'tests/unit/interpretation-input.test.ts',
   attest: 'tests/unit/runtime-attestation.test.ts',
   claim: 'tests/unit/interpretive-claim.test.ts',
@@ -33,7 +34,7 @@ const T = {
 /** [name, file, find, replace, tests] — `find` must occur exactly once. */
 const MUTANTS = [
   // --- AC 1–4 at the model -------------------------------------------------------
-  ['AC1 model: source-pillar mismatch tolerated', MODEL, "source === undefined || source.stem !== accepted.stem || source.branch !== accepted.branch", "source === undefined", [T.boundary]],
+  ['AC1 model: source-pillar mismatch tolerated', MODEL, "source === undefined || source.stem !== accepted.stem || source.branch !== accepted.branch", "source === undefined", [T.boundary, T.e2e]],
   ['AC1 model: branch not compared', MODEL, "source.stem !== accepted.stem || source.branch !== accepted.branch", "source.stem !== accepted.stem", [T.boundary]],
   ['AC1 model: wu-xing precision not tied to the input', MODEL, "if (wuxing.precision.birthTimeKnown !== input.birthTimeKnown) {", "if (wuxing.precision.birthTimeKnown !== input.birthTimeKnown && PILLAR_ORDER.length === 0) {", [T.boundary]],
   ['AC2 model: non-max dominant tolerated', MODEL, "] !== maximum) {", "] !== maximum && maximum < 0) {", [T.boundary]],
@@ -63,7 +64,9 @@ const MUTANTS = [
   ['RAW: a body that fails the producer contract is accepted', I + 'interpretation-input.ts', "    remapped = map(structuredClone(raw.payload));\n  } catch (error) {\n    throw", "    remapped = map(structuredClone(raw.payload));\n  } catch (error) {\n    return { endpoint: raw.endpoint, claimBearing: false, originalPayloadSha256: '', storedPayloadSha256: '', redactions: [], payload: raw.payload };\n    throw", [T.raw]],
   ['RAW: missing evidence tolerated', I + 'interpretation-input.ts', "  const raw = snapshot.raw;\n  if (raw === undefined ||", "  const raw = snapshot.raw ?? { endpoint: what, payload: {} };\n  if (raw.endpoint === what) {\n    return { endpoint: what, claimBearing: false, originalPayloadSha256: '', storedPayloadSha256: '', redactions: [], payload: {} };\n  }\n  if (raw === undefined ||", [T.input]],
   ['RAW: snapshots of another chart accepted', I + 'interpretation-input.ts', "  if (fromModel !== fromSource) {", "  if (fromModel === '') {", [T.input]],
-  ['RAW: coordinates not redacted', I + 'interpretation-input.ts', "    if (ECHO_PII_KEYS.includes(key)) {", "    if (ECHO_PII_KEYS.includes(key) && key === '') {", [T.input, T.raw]],
+  ['RAW: coordinates not redacted', I + 'interpretation-input.ts', "if (COORDINATE_KEY.test(key) && typeof entry === 'number' &&", "if (COORDINATE_KEY.test(key) && key === '' && typeof entry === 'number' &&", [T.input, T.raw]],
+  ['RAW: a symbolic value redacted because it equals a coordinate', I + 'interpretation-input.ts', "if (COORDINATE_KEY.test(key) && typeof entry === 'number' &&", "if (typeof entry === 'number' &&", [T.raw]],
+  ['RAW: a coordinate-named key redacted whatever its value', I + 'interpretation-input.ts', " && (entry === location.lat || entry === location.lon)) {", ") {", [T.raw]],
   ['RAW: stored hash is the original hash', I + 'interpretation-input.ts', "storedPayloadSha256: structuralHash(payload),", "storedPayloadSha256: structuralHash(raw.payload),", [T.raw]],
   ['RAW: a raw path accepted as factRef', I + 'interpretive-claim.ts', "    if (fact === undefined) {\n      throw new ClaimError('CLAIM_UNKNOWN_FACT'", "    if (fact === undefined) {\n      continue;\n      throw new ClaimError('CLAIM_UNKNOWN_FACT'", [T.claim]],
   // --- method profile ------------------------------------------------------------------

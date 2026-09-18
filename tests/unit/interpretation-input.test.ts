@@ -196,9 +196,9 @@ describe('ETBZ-34 N5: raw producer evidence (finding A)', () => {
     expect(input.fufire.baziRaw.endpoint).toBe('/v1/calculate/bazi');
     expect(input.fufire.wuxingRaw.endpoint).toBe('/v1/calculate/bazi/wuxing');
     expect(input.fufire.natalRaw.endpoint).toBe('/v1/calculate/bazi/natal');
-    expect(input.fufire.baziRaw.payload).toEqual(chart.source.bazi.raw?.payload);
     expect(input.fufire.natalRaw.payload).toEqual(chart.source.natal.raw?.payload);
-    expect(input.fufire.baziRaw.redactions).toEqual([]);
+    expect(input.fufire.baziRaw.redactions).toEqual(['input.lat', 'input.lon']);
+    expect(input.fufire.natalRaw.redactions).toEqual([]);
     expect(input.fufire.baziRaw.originalPayloadSha256).toMatch(/^sha256:[0-9a-f]{64}$/u);
   });
 

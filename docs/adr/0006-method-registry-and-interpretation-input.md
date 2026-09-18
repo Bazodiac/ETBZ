@@ -73,8 +73,12 @@ becomes a confident sentence.
 Raw-evidence binding is now proven, not declared: each raw body is re-mapped by
 the adapter's own `ProducerResponseMapper` and must equal the accepted snapshot
 (`INTERPRETATION_INPUT_RAW_EVIDENCE_MISMATCH`), and the snapshots must be the
-ones the model was built from. Redaction (PO decision, MVP v1): echoed request
-coordinates may be redacted from the STORED copy; `originalPayloadSha256`,
+ones the model was built from. The use case returns those snapshots as
+`source`, so the hand-off is built from the normal production path
+(`tests/integration/interpretation-handoff.test.ts`). Redaction (PO decision,
+MVP v1): echoed request coordinates — a coordinate-named key whose value IS the
+chart's own request latitude/longitude, wherever it is nested — may be redacted
+from the STORED copy; `originalPayloadSha256`,
 `storedPayloadSha256` and the `redactions` manifest are kept. The stored copy is
 not byte-verbatim when the manifest is non-empty.
 

@@ -252,6 +252,18 @@ describe('ETBZ-34 AC 14: only an attestation PASS for THIS runtime lifts the pro
       .toThrow(expect.objectContaining({ code: 'INTERPRETATION_INPUT_ATTESTATION_FOREIGN' }) as InterpretationInputError);
   });
 
+  it('a typed-in PASS whose own observation lacks the immutable identity is refused', () => {
+    // OpenAPI matches this chart — only the source identity is missing. `status`
+    // says PASS; the evidence inside the same object does not.
+    const forged = { ...pass(FULL_SHA), observation: { ...pass(FULL_SHA).observation, sourceIdentity: { status: 'NOT_OBSERVED' as const, httpStatus: 200, reason: 'absent' } } };
+    expect(forged.status).toBe('PASS');
+    expect(() => buildBazodiacInterpretationInput(attestedModel, chart.source, { ...MAPPER, attestation: forged }))
+      .toThrow(expect.objectContaining({ code: 'INTERPRETATION_INPUT_ATTESTATION_FOREIGN' }) as InterpretationInputError);
+    const wrongRevision = { ...pass(FULL_SHA), expectation: { openapiSha256: FULL_SHA, sourceRevision: OTHER_REVISION } };
+    expect(() => buildBazodiacInterpretationInput(attestedModel, chart.source, { ...MAPPER, attestation: wrongRevision }))
+      .toThrow(expect.objectContaining({ code: 'INTERPRETATION_INPUT_ATTESTATION_FOREIGN' }) as InterpretationInputError);
+  });
+
   it('never makes an unknown-time input eligible, PASS or not (FUF-163/164/165 not delivered)', () => {
     const unknown = unknownTimeChart();
     const model = { ...unknown.model, provenance: { ...unknown.model.provenance, openapiSha256: FULL_SHA } };
