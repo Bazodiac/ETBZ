@@ -8,6 +8,9 @@
  * Every snapshot field is traceable to a live FuFirE response field, verified
  * against the pinned runtime (fufire-lunar, engine 1.0.0-rc1-20260220,
  * OpenAPI SHA-256 6c1db672…8da). No field is inferred or computed locally.
+ * ETBZ-34: the Wu-Xing `pillars` and `precision` fields were read from the
+ * producer source accepted for that slice (`Bazodiac/FUFIRE_API_lunar@c914d567`,
+ * `routers/bazi.py`), which is also where the request echo under `input` is defined.
  */
 
 import type { NormalizedBirthInput } from '../../domain/birth-input.js';
