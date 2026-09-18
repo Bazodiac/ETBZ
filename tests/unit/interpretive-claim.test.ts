@@ -322,3 +322,13 @@ describe('ETBZ-34 M6: a visible + hidden element pair is an observation, never r
     }));
   });
 });
+
+describe('ETBZ-34 M7: a claim is validated against a RELEASED profile only', () => {
+  it('blocks validation against a registry edited under the released version', () => {
+    const edited = structuredClone(BAZI_METHOD_REGISTRY_V1) as unknown as { methods: { methodId: string; operations: string[] }[] };
+    edited.methods.find((method) => method.methodId === 'ten_gods')?.operations.push('RANK_BY_IMPORTANCE');
+    const context = { ...KNOWN, registry: edited as unknown as typeof BAZI_METHOD_REGISTRY_V1 };
+    expect(() => validateInterpretiveClaim(claim(), context)).toThrow(expect.objectContaining({ code: 'REGISTRY_NOT_RELEASED' }) as Error);
+    expect(() => validateInterpretiveClaim(claim(), KNOWN)).not.toThrow();
+  });
+});

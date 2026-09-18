@@ -81,6 +81,7 @@ const MUTANTS = [
   ['IDENTITY: elements compared without the released bridge', I + 'method-registry.ts', "  if (fact.kind !== 'hidden_stem_element') {\n    return fact.value;\n  }", "  if (fact.kind !== 'hidden_stem_element' || fact.value.length > 0) {\n    return fact.value;\n  }", [T.registry]],
   ['IDENTITY: every element pairs with every element', I + 'method-registry.ts', "  return leftValue !== null && leftValue === identityValue(right);", "  return leftValue !== null && (leftValue === identityValue(right) || domain === 'stem_element');", [T.registry]],
   ['DRIFT: an unreleased registry authorises a hand-off', I + 'method-registry.ts', "if (released === undefined || released !== actual) {", "if (released === undefined) {", [T.registry]],
+  ['DRIFT: a claim validated against an unreleased registry', I + 'interpretive-claim.ts', "  assertReleasedRegistry(registry);\n", "", [T.claim]],
   // --- provisionality / unknown time -----------------------------------------------------
   ['PROV: hour-only provisionality', I + 'feature-set.ts', "(pillar !== null && provisional.has(pillar)) || assumedTimeDerived", "(pillar === 'hour' && provisional.has(pillar)) || assumedTimeDerived", [T.prov]],
   ['PROV: wu-xing statement ignored', I + 'feature-set.ts', "    ['wuxing.precision.provisionalFields', model.wuxing.precision.provisionalFields],\n", "", [T.prov]],

@@ -27,6 +27,7 @@ import { structuralHash } from '../../domain/structural-hash.js';
 import type { ChartFact, InterpretationFeatureSet } from './feature-set.js';
 import {
   METHOD_PROFILE_ID,
+  assertReleasedRegistry,
   isApprovedStatus,
   isIdentityPair,
   resolveMethodEnablement,
@@ -139,6 +140,9 @@ export function validateInterpretiveClaim(
   context: ClaimValidationContext,
 ): readonly ChartFact[] {
   const { registry, featureSet } = context;
+  // Only a RELEASED profile may authorise a claim: a registry edited under the
+  // same version is a CONTRADICTION with the approved Method Profile, not a variant.
+  assertReleasedRegistry(registry);
   const expectedRef = `${METHOD_PROFILE_ID}@${registry.profileVersion}`;
   if (context.methodProfileRef !== expectedRef) {
     throw new ClaimError(
