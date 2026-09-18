@@ -79,7 +79,10 @@ describe('ETBZ-34 AC 5–7: the verdict', () => {
     ['expected revision is a version string', { ...EXPECTED, sourceRevision: '1.0.0-rc1-20260220' }, OBSERVED, 'BLOCKED', 'EXPECTED_SOURCE_REVISION_NOT_IMMUTABLE'],
     ['expected revision is an abbreviated SHA', { ...EXPECTED, sourceRevision: 'c914d567' }, OBSERVED, 'BLOCKED', 'EXPECTED_SOURCE_REVISION_NOT_IMMUTABLE'],
     ['runtime exposes no source identity', EXPECTED, { ...OBSERVED, sourceIdentity: { status: 'NOT_OBSERVED', httpStatus: 200, reason: 'absent' } }, 'CAPABILITY_MISSING', 'SOURCE_IDENTITY_NOT_OBSERVED'],
-    ['runtime identity is a mutable version string', EXPECTED, { ...OBSERVED, sourceIdentity: { status: 'OBSERVED', field: 'railway_commit_sha', value: '1.0.0-rc1-20260220', httpStatus: 200 } }, 'CAPABILITY_MISSING', 'SOURCE_IDENTITY_NOT_IMMUTABLE'],
+    ['runtime identity is a mutable version string', EXPECTED, { ...OBSERVED, sourceIdentity: { status: 'OBSERVED', field: 'source_revision', value: '1.0.0-rc1-20260220', httpStatus: 200 } }, 'BLOCKED', 'SOURCE_IDENTITY_NOT_IMMUTABLE'],
+    ['runtime identity is an abbreviated SHA', EXPECTED, { ...OBSERVED, sourceIdentity: { status: 'OBSERVED', field: 'source_revision', value: 'c914d567', httpStatus: 200 } }, 'BLOCKED', 'SOURCE_IDENTITY_NOT_IMMUTABLE'],
+    ['runtime identity is a branch name', EXPECTED, { ...OBSERVED, sourceIdentity: { status: 'OBSERVED', field: 'source_revision', value: 'main', httpStatus: 200 } }, 'BLOCKED', 'SOURCE_IDENTITY_NOT_IMMUTABLE'],
+    ['runtime identity is FuFirE\'s own provider name', EXPECTED, { ...OBSERVED, sourceIdentity: { status: 'OBSERVED', field: 'source_revision_provider', value: 'northflank', httpStatus: 200 } }, 'BLOCKED', 'SOURCE_IDENTITY_NOT_IMMUTABLE'],
     ['OpenAPI not readable', EXPECTED, { ...OBSERVED, openapi: { status: 'NOT_OBSERVED', httpStatus: 404, reason: 'no 200' } }, 'CAPABILITY_MISSING', 'OPENAPI_NOT_OBSERVED'],
   ] as const)('never passes: %s', (_name, expectation, observation, status, code) => {
     const verdict = evaluateRuntimeAttestation(expectation, observation);
@@ -186,6 +189,105 @@ describe('ETBZ-34 AC 5–6: the read-only probe', () => {
   });
 });
 
+describe('ETBZ-34 AC 6: the provider-neutral source identity FuFirE publishes', () => {
+  const base = { baseUrl: 'https://fufire.test', timeoutMs: 1000 };
+
+  /** The exact `/v1/build` shape FuFirE serves once it resolves a revision. */
+  const build = (fields: Record<string, unknown>): Record<string, unknown> => ({
+    version: '1.0.0-rc1-20260220',
+    source_revision: null,
+    source_revision_provider: null,
+    source_revision_kind: null,
+    source_revision_status: 'unavailable',
+    ...fields,
+  });
+  const northflank = (revision: string): Record<string, unknown> =>
+    build({
+      source_revision: revision,
+      source_revision_provider: 'northflank',
+      source_revision_kind: 'deployment_git_sha',
+      source_revision_status: 'available',
+    });
+  const observe = async (body: Record<string, unknown>): Promise<AttestationObservation> =>
+    observeFufireRuntime({ ...base, transport: transportOf({ ...HEALTHY, '/v1/build': () => Response.json(body) }) });
+
+  it('MATCH: a Northflank deployment on the expected revision attests, with no configuration', async () => {
+    const observation = await observe(northflank(REVISION));
+    expect(observation.sourceIdentity).toEqual({ status: 'OBSERVED', field: 'source_revision', value: REVISION, httpStatus: 200 });
+    expect(evaluateRuntimeAttestation(EXPECTED, observation).status).toBe('PASS');
+  });
+
+  it('MISMATCH: a Northflank deployment on another revision is BLOCKED', async () => {
+    const observation = await observe(northflank(OTHER_REVISION));
+    const verdict = evaluateRuntimeAttestation(EXPECTED, observation);
+    expect(verdict.status).toBe('BLOCKED');
+    expect(codes(verdict)).toContain('SOURCE_REVISION_MISMATCH');
+  });
+
+  it('MISSING: FuFirE reporting a null revision is CAPABILITY_MISSING, never a pass', async () => {
+    const observation = await observe(build({}));
+    expect(observation.sourceIdentity.status).toBe('NOT_OBSERVED');
+    const verdict = evaluateRuntimeAttestation(EXPECTED, observation);
+    expect(verdict.status).toBe('CAPABILITY_MISSING');
+    expect(codes(verdict)).toContain('SOURCE_IDENTITY_NOT_OBSERVED');
+  });
+
+  it.each(['main', 'c914d567', `${REVISION}a`, REVISION.slice(0, 39), REVISION.toUpperCase(), '1.0.0-rc1-20260220'])(
+    'MALFORMED: a runtime answering %s is BLOCKED, not excused as a missing capability',
+    async (malformed) => {
+      const observation = await observe(northflank(malformed));
+      const verdict = evaluateRuntimeAttestation(EXPECTED, observation);
+      expect(verdict.status).toBe('BLOCKED');
+      expect(codes(verdict)).toContain('SOURCE_IDENTITY_NOT_IMMUTABLE');
+      expect(attestationExitCode(verdict.status)).toBe(2);
+    },
+  );
+
+  it('VERSION-ONLY: a build document with a version and no revision never passes', async () => {
+    for (const body of [{ version: '1.0.0-rc1-20260220' }, build({ source_revision_status: 'unavailable' })]) {
+      const observation = await observe(body);
+      const verdict = evaluateRuntimeAttestation(EXPECTED, observation);
+      expect(verdict.status).not.toBe('PASS');
+      // ...and the version string is never smuggled in as the observed revision.
+      expect(JSON.stringify(observation.sourceIdentity)).not.toContain('1.0.0-rc1-20260220');
+    }
+  });
+
+  it('FuFirE\'s own account of the revision is not evidence: provider/kind/status cannot carry it', async () => {
+    const lying = build({
+      source_revision_provider: REVISION,
+      source_revision_kind: REVISION,
+      source_revision_status: REVISION,
+    });
+    const observation = await observe(lying);
+    expect(observation.sourceIdentity.status).toBe('NOT_OBSERVED');
+    expect(evaluateRuntimeAttestation(EXPECTED, observation).status).toBe('CAPABILITY_MISSING');
+  });
+
+  it('CONJUNCTION: the right revision on the wrong OpenAPI document is still BLOCKED', async () => {
+    const transport = transportOf({
+      '/openapi.json': () => new Response(Buffer.from('{"openapi":"3.1.0"}\n', 'utf8'), { status: 200 }),
+      '/v1/build': () => Response.json(northflank(REVISION)),
+    });
+    const observation = await observeFufireRuntime({ ...base, transport });
+    expect(observation.sourceIdentity).toEqual({ status: 'OBSERVED', field: 'source_revision', value: REVISION, httpStatus: 200 });
+    const verdict = evaluateRuntimeAttestation(EXPECTED, observation);
+    expect(verdict.status).toBe('BLOCKED');
+    expect(codes(verdict)).toContain('OPENAPI_SHA256_MISMATCH');
+  });
+
+  it('REGRESSION: a Railway deployment that predates source_revision still attests', async () => {
+    const observation = await observe({ version: '1.0.0-rc1-20260220', railway_commit_sha: REVISION });
+    expect(observation.sourceIdentity).toEqual({ status: 'OBSERVED', field: 'railway_commit_sha', value: REVISION, httpStatus: 200 });
+    expect(evaluateRuntimeAttestation(EXPECTED, observation).status).toBe('PASS');
+  });
+
+  it('prefers the provider-neutral field when a runtime carries both', async () => {
+    const observation = await observe({ ...northflank(REVISION), railway_commit_sha: OTHER_REVISION });
+    expect(observation.sourceIdentity).toEqual({ status: 'OBSERVED', field: 'source_revision', value: REVISION, httpStatus: 200 });
+  });
+});
+
 describe('ETBZ-34 AC 7: the command exits 0 only for PASS', () => {
   it('exits 0 for a fully attested runtime', async () => {
     const result = await runFufireAttestation(ENV, transportOf(HEALTHY));
@@ -199,6 +301,7 @@ describe('ETBZ-34 AC 7: the command exits 0 only for PASS', () => {
     ['wrong expected OpenAPI SHA', { ...ENV, ETBZ_FUFIRE_EXPECTED_OPENAPI_SHA256: 'f'.repeat(64) }, HEALTHY, 2],
     ['wrong expected source revision', { ...ENV, ETBZ_FUFIRE_EXPECTED_SOURCE_REVISION: OTHER_REVISION }, HEALTHY, 2],
     ['runtime without immutable identity', ENV, { ...HEALTHY, '/v1/build': () => Response.json({ version: '1.0.0' }) }, 3],
+    ['runtime answers with a malformed source revision', ENV, { ...HEALTHY, '/v1/build': () => Response.json({ version: '1.0.0', source_revision: 'main' }) }, 2],
     ['runtime unreachable', ENV, {}, 3],
     ['no base URL', { ...ENV, ETBZ_FUFIRE_BASE_URL: undefined }, HEALTHY, 64],
     ['base URL is not an origin', { ...ENV, ETBZ_FUFIRE_BASE_URL: 'fufire' }, HEALTHY, 64],

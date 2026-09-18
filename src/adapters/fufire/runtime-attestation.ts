@@ -7,11 +7,24 @@
  * ETBZ's formatting instead of FuFirE's contract.
  *
  * Source identity is read from an EXISTING FuFirE surface: `GET /v1/build`
- * (`routers/info.py`), which exposes `railway_commit_sha` when the deployment
- * sets `EXPOSE_BUILD_METADATA`. ETBZ invents no endpoint. Its `version` field
- * is a mutable version string and is never offered as identity. If a deployment
- * later exposes its commit under another field, that is a configuration change
- * (`identityFields`), not a code change.
+ * (`routers/info.py`). ETBZ invents no endpoint. Two fields are read, in order:
+ *
+ *   `source_revision`     the provider-neutral identity FuFirE reports for the
+ *                         build that is answering, taken from the variable the
+ *                         DEPLOYMENT PLATFORM injects (`NF_DEPLOYMENT_SHA` on
+ *                         Northflank, `RAILWAY_GIT_COMMIT_SHA` on Railway);
+ *   `railway_commit_sha`  the older Railway-only field, kept so a Railway
+ *                         deployment that has not been rebuilt still attests.
+ *
+ * Provider-neutral first: whichever platform runs FuFirE, ETBZ reads one field
+ * and never has to be told which cloud it is talking to. The companion fields
+ * `source_revision_provider` / `_kind` / `_status` are FuFirE's own account of
+ * where the value came from; ETBZ does not trust them as identity and never
+ * reads them — only the revision itself is compared, against an expectation
+ * ETBZ holds separately. FuFirE's `version` field is a mutable version string
+ * and is never offered as identity. If a deployment exposes its commit under
+ * yet another field, that stays a configuration change (`identityFields`), not
+ * a code change.
  */
 import { createHash } from 'node:crypto';
 import type {
@@ -22,7 +35,7 @@ import type {
 
 export const DEFAULT_OPENAPI_PATH = '/openapi.json';
 export const DEFAULT_BUILD_PATH = '/v1/build';
-export const DEFAULT_IDENTITY_FIELDS: readonly string[] = ['railway_commit_sha'];
+export const DEFAULT_IDENTITY_FIELDS: readonly string[] = ['source_revision', 'railway_commit_sha'];
 /** Fields that are version strings by contract; refused even if configured. */
 export const MUTABLE_IDENTITY_FIELDS: readonly string[] = ['version', 'engine_version', 'build_version'];
 

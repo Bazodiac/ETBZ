@@ -10,9 +10,18 @@
  *   PASS                only when BOTH the OpenAPI bytes and an immutable source
  *                       identity were observed AND both equal an explicit
  *                       expectation;
- *   BLOCKED             an expectation is missing or malformed, or an observed
- *                       value contradicts it;
- *   CAPABILITY_MISSING  the runtime did not let us observe what acceptance needs.
+ *   BLOCKED             an expectation is missing or malformed, an observed
+ *                       value contradicts it, or the runtime DID answer with a
+ *                       source identity and that value is not an immutable
+ *                       revision;
+ *   CAPABILITY_MISSING  the runtime did not let us observe what acceptance needs
+ *                       at all — it carried no source identity, or the OpenAPI
+ *                       document could not be read.
+ *
+ * The line between the last two is "did the runtime answer": silence is a
+ * capability gap the producer still has to close; an answer that is not a
+ * revision is a contradiction between what the runtime claims to publish and
+ * what it published, and a consumer must not soften that to "could not look".
  *
  * There is no path from "could not look" to PASS, and a mutable version string
  * is never an identity: `1.0.0-rc1` names many builds.
@@ -114,7 +123,10 @@ export function evaluateRuntimeAttestation(
   if (observation.sourceIdentity.status !== 'OBSERVED') {
     missing('SOURCE_IDENTITY_NOT_OBSERVED', `the runtime exposed no source identity (HTTP ${String(observation.sourceIdentity.httpStatus)}): ${observation.sourceIdentity.reason}`);
   } else if (!isImmutableRevision(observation.sourceIdentity.value)) {
-    missing('SOURCE_IDENTITY_NOT_IMMUTABLE', `runtime field "${observation.sourceIdentity.field}" is not an immutable revision; a mutable version string is not accepted as identity`);
+    // The runtime ANSWERED with a source identity and the answer is not a
+    // revision. That is a contradiction, not an absence, so it blocks rather
+    // than reporting a capability the runtime claims to have.
+    blocked('SOURCE_IDENTITY_NOT_IMMUTABLE', `runtime field "${observation.sourceIdentity.field}" is not an immutable revision; a mutable version string is not accepted as identity`);
   } else if (
     expectedRevision !== null &&
     isImmutableRevision(expectedRevision) &&
