@@ -404,6 +404,30 @@ describe('ETBZ-30A G5: PD-5 is composed, not re-implemented, for a claim that be
     }
   });
 
+  it('requires BOTH halves of the floor: two methods over one fact kind, or two kinds under one method, stay refused', () => {
+    const oneKindTwoMethods: InterpretiveClaim = {
+      claimId: 'draft.oneKind',
+      statement: 'The same hidden voice sits inside the year branch and inside the month branch.',
+      factRefs: ['chart.natal.pillar.year.hiddenStem.0.tenGod', 'chart.natal.pillar.month.hiddenStem.0.tenGod'],
+      themeRefs: [],
+      methodRefs: ['ten_gods', 'fact_relations'],
+      epistemicClass: 'SUPPORTED_INTERPRETATION',
+      provisionalFactRefs: [],
+      relations: [],
+    };
+    const twoKindsOneMethod = relationClaim({ claimId: 'draft.oneMethod', methodRefs: ['ten_gods'], relations: [] });
+    for (const draft of [oneKindTwoMethods, twoKindsOneMethod]) {
+      const graph = buildInterpretiveClaimGraph(draftOf([draft]), KNOWN);
+      try {
+        assertCentralGraphClaim(graph, acceptedFor(graph, draft).claimId, KNOWN);
+        expect.unreachable(`"${draft.claimId}" satisfies only one half of PD-5`);
+      } catch (error) {
+        expect(error).toBeInstanceOf(ClaimError);
+        expect((error as ClaimError).code).toBe('CLAIM_INSUFFICIENT_SIGNALS');
+      }
+    }
+  });
+
   it('has no caller-controlled bypass and refuses a claim the graph does not contain', () => {
     expect(assertCentralGraphClaim.length).toBe(3);
     expectGraphRefusal('CLAIM_GRAPH_UNKNOWN_CLAIM', () => { assertCentralGraphClaim(baseline(), H.recurrence, KNOWN); });
