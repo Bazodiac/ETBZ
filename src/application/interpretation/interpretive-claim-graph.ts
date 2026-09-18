@@ -20,14 +20,22 @@
  * Identity. A draft's `claimId` is a handle: unique inside the draft, the thing
  * `relations[].targetClaimId` points at, and nothing more. The accepted
  * `claimId` is derived from the claim's semantic content — the profile
- * reference, statement, factRefs, themeRefs, methodRefs, epistemic class and
- * provisional lineage — so the same meaning has the same identity whoever
- * drafted it, under whatever handle, in whatever order. Relations are not part
- * of that identity (two claims may contrast with each other; an identity that
- * contained its own targets could not be computed for a cycle); they are inside
- * each claim's I6 hash and therefore inside the graph hash. Identity is
- * STRUCTURAL: two differently worded statements are two claims. Judging
- * paraphrase is not this slice's business.
+ * reference, the statement, every cited fact WITH ITS VALUE, themeRefs,
+ * methodRefs, epistemic class and provisional lineage — so the same meaning has
+ * the same identity whoever drafted it, under whatever handle, in whatever
+ * order, and a claim about a fact that changed is not the same claim. Relations
+ * are not part of that identity (two claims may contrast with each other; an
+ * identity that contained its own targets could not be computed for a cycle);
+ * they are inside each claim's I6 hash and therefore inside the graph hash.
+ *
+ * One statement, one claim. Inside a graph a statement may occur once: the same
+ * sentence under a second handle is the same interpretation again, whatever
+ * label — epistemic class, theme, method set, grounding — was changed to tell
+ * the two apart. For that to mean anything a statement must be in canonical
+ * form (NFC, trimmed, single spaces, no control or format characters); one that
+ * is not is refused, never repaired. Identity stays STRUCTURAL beyond that: two
+ * differently worded statements are two claims — `ALTERNATIVE_READING` needs
+ * exactly that — and judging paraphrase is not this slice's business.
  *
  * Nothing here is a number. There is no salience, rank, weight, count,
  * confidence or score on the graph, on a claim or on a relation, and an input
@@ -38,7 +46,9 @@
 import { z } from 'zod';
 import { structuralHash } from '../../domain/structural-hash.js';
 import type { HoroscopeModel } from '../horoscope-model.js';
+import type { ChartFact } from './feature-set.js';
 import {
+  ClaimError,
   assertCentralClaimSignals,
   interpretiveClaimStructuralHash,
   validateInterpretiveClaim,
@@ -93,8 +103,10 @@ export type ClaimGraphErrorCode =
   | 'CLAIM_GRAPH_BRIEF_HASH_MISMATCH'
   | 'CLAIM_GRAPH_EMPTY'
   | 'CLAIM_GRAPH_DUPLICATE_CLAIM_ID'
+  | 'CLAIM_GRAPH_STATEMENT_NOT_CANONICAL'
   | 'CLAIM_GRAPH_DUPLICATE_REF'
   | 'CLAIM_GRAPH_UNKNOWN_THEME'
+  | 'CLAIM_GRAPH_THEME_NOT_GROUNDED'
   | 'CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT'
   | 'CLAIM_GRAPH_DANGLING_RELATION'
   | 'CLAIM_GRAPH_SELF_RELATION'
@@ -111,25 +123,32 @@ export class ClaimGraphError extends Error {
 }
 
 /**
+ * An id-like string. Bounded, because refusals further down NAME the offending
+ * id — the identifier is the finding — and an unbounded one would turn an error
+ * message into a channel for untrusted bulk.
+ */
+const idLike = z.string().min(1).max(256);
+
+/**
  * The closed SHAPE of a draft. `strictObject` throughout: a field this contract
  * does not name — a salience, a confidence, a provider or run id — is a refusal,
  * not something to drop quietly. Vocabulary (`epistemicClass`, relation `type`)
  * is deliberately left to the claim validator, which owns those refusals.
  */
 const claimGraphDraftSchema = z.strictObject({
-  sourceBriefStructuralHash: z.string().min(1),
-  methodProfileRef: z.string().min(1),
+  sourceBriefStructuralHash: idLike,
+  methodProfileRef: idLike,
   claims: z.array(z.strictObject({
-    claimId: z.string().min(1),
+    claimId: idLike,
     statement: z.string(),
-    factRefs: z.array(z.string().min(1)),
-    themeRefs: z.array(z.string().min(1)),
-    methodRefs: z.array(z.string().min(1)),
-    epistemicClass: z.string(),
-    provisionalFactRefs: z.array(z.string().min(1)),
+    factRefs: z.array(idLike),
+    themeRefs: z.array(idLike),
+    methodRefs: z.array(idLike),
+    epistemicClass: idLike,
+    provisionalFactRefs: z.array(idLike),
     relations: z.array(z.strictObject({
-      type: z.string(),
-      targetClaimId: z.string().min(1),
+      type: idLike,
+      targetClaimId: idLike,
     })),
   })),
 });
@@ -155,12 +174,29 @@ function refuseRepeated(claimId: string, what: string, values: readonly string[]
   }
 }
 
-/** The semantic identity of a claim. No handle, no relation, no order. */
-function deriveClaimId(claim: InterpretiveClaim, methodProfileRef: string): string {
+/** Control and format characters: line breaks, tabs, zero-width and other invisible marks. */
+const INVISIBLE = /[\p{Cc}\p{Cf}]/u;
+
+/** One sentence, one spelling: otherwise a trailing space would make a second claim. */
+function isCanonicalStatement(statement: string): boolean {
+  return statement === statement.normalize('NFC')
+    && statement === statement.trim()
+    && !statement.includes('  ')
+    && !INVISIBLE.test(statement);
+}
+
+/**
+ * The semantic identity of a claim. No handle, no relation, no order — and the
+ * VALUE of every cited fact, so that the same words about a fact that changed
+ * are a different claim. The value is hashed, never published.
+ */
+function deriveClaimId(claim: InterpretiveClaim, cited: readonly ChartFact[], methodProfileRef: string): string {
   return `claim.${structuralHash({
     methodProfileRef,
     statement: claim.statement,
-    factRefs: sorted(claim.factRefs),
+    citedFacts: cited
+      .map((fact) => ({ id: fact.id, value: fact.value }))
+      .sort((left, right) => (left.id < right.id ? -1 : 1)),
     themeRefs: sorted(claim.themeRefs),
     methodRefs: sorted(claim.methodRefs),
     epistemicClass: claim.epistemicClass,
@@ -177,7 +213,7 @@ export function buildInterpretiveClaimGraph(draft: unknown, context: ClaimGraphC
   // The chain is RE-DERIVED from the model. The supplied brief is only ever
   // compared against this one; it is never the authority.
   const rederived = buildNarrativeChain(context.model);
-  if (context.brief.structuralHash !== rederived.brief.structuralHash) {
+  if (structuralHash(context.brief) !== structuralHash(rederived.brief)) {
     throw new ClaimGraphError(
       'CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL',
       'the supplied brief is not the brief this HoroscopeModel produces; claims are never accepted against an unverified brief',
@@ -210,35 +246,47 @@ export function buildInterpretiveClaimGraph(draft: unknown, context: ClaimGraphC
     featureSet: rederived.featureSet,
     methodProfileRef,
   };
-  const themeIds = new Set([...brief.constraints.narratableThemeIds, ...brief.constraints.candidateThemeIds]);
+  // A theme's `factIds` are its entire evidence, at both levels of the brief.
+  const themeFactIds = new Map<string, ReadonlySet<string>>(
+    [...brief.primaryThemes, ...brief.candidateThemes].map((theme) => [theme.id, new Set(theme.factIds)]),
+  );
 
   const acceptedIdByHandle = new Map<string, string>();
-  const handleByAcceptedId = new Map<string, string>();
+  const handleByStatement = new Map<string, string>();
   for (const claim of drafts) {
     if (acceptedIdByHandle.has(claim.claimId)) {
       throw new ClaimGraphError('CLAIM_GRAPH_DUPLICATE_CLAIM_ID', `two claims share the id "${claim.claimId}"; a relation to it would be ambiguous`);
     }
-    validateInterpretiveClaim(claim, validation);
+    const cited = validateInterpretiveClaim(claim, validation);
 
+    if (!isCanonicalStatement(claim.statement)) {
+      throw new ClaimGraphError(
+        'CLAIM_GRAPH_STATEMENT_NOT_CANONICAL',
+        `the statement of claim "${claim.claimId}" is not in canonical form (NFC, trimmed, single spaces, no control or format characters)`,
+      );
+    }
     refuseRepeated(claim.claimId, 'fact', claim.factRefs);
     refuseRepeated(claim.claimId, 'theme', claim.themeRefs);
     refuseRepeated(claim.claimId, 'relation', claim.relations.map(relationKey));
     for (const themeRef of claim.themeRefs) {
-      if (!themeIds.has(themeRef)) {
+      const evidence = themeFactIds.get(themeRef);
+      if (evidence === undefined) {
         throw new ClaimGraphError('CLAIM_GRAPH_UNKNOWN_THEME', `claim "${claim.claimId}" names theme "${themeRef}", which the bound brief does not contain`);
+      }
+      if (!claim.factRefs.some((factRef) => evidence.has(factRef))) {
+        throw new ClaimGraphError('CLAIM_GRAPH_THEME_NOT_GROUNDED', `claim "${claim.claimId}" names theme "${themeRef}" but cites none of that theme's facts; a theme is a grouping of evidence, not a label to borrow`);
       }
     }
 
-    const acceptedId = deriveClaimId(claim, methodProfileRef);
-    const twin = handleByAcceptedId.get(acceptedId);
+    const twin = handleByStatement.get(claim.statement);
     if (twin !== undefined) {
       throw new ClaimGraphError(
         'CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT',
-        `claims "${twin}" and "${claim.claimId}" are the same interpretation of the same facts by the same methods; submitting it twice does not make it two claims`,
+        `claims "${twin}" and "${claim.claimId}" make the same statement; submitting an interpretation twice does not make it two claims, whatever label was changed`,
       );
     }
-    acceptedIdByHandle.set(claim.claimId, acceptedId);
-    handleByAcceptedId.set(acceptedId, claim.claimId);
+    handleByStatement.set(claim.statement, claim.claimId);
+    acceptedIdByHandle.set(claim.claimId, deriveClaimId(claim, cited, methodProfileRef));
   }
 
   // Every claim above is ACCEPTED, so resolving a target here means resolving it
@@ -284,32 +332,59 @@ export function buildInterpretiveClaimGraph(draft: unknown, context: ClaimGraphC
 }
 
 /**
- * Proves that `graph` is, byte for byte, what this chart, this brief and this
- * released profile accept — by building it again from its own claims. A graph
- * edited after acceptance, or presented for another chart, is refused.
+ * The draft a graph is the acceptance of: its bindings and its claims, without
+ * anything the builder computes. Building it again yields the same graph.
+ */
+export function claimGraphDraftOf(graph: InterpretiveClaimGraph): InterpretiveClaimGraphDraft {
+  return {
+    sourceBriefStructuralHash: graph.sourceBriefStructuralHash,
+    methodProfileRef: graph.methodProfileRef,
+    claims: graph.claims.map((claim) => ({
+      claimId: claim.claimId,
+      statement: claim.statement,
+      factRefs: claim.factRefs,
+      themeRefs: claim.themeRefs,
+      methodRefs: claim.methodRefs,
+      epistemicClass: claim.epistemicClass,
+      provisionalFactRefs: claim.provisionalFactRefs,
+      relations: claim.relations,
+    })),
+  };
+}
+
+/**
+ * Proves that `graph` is, byte for byte, the graph the builder produces from
+ * the graph's own claims for this chart, this brief and this released profile.
+ * Anything else — an edited claim, an added field, another chart — is refused.
+ *
+ * This is a consistency proof, not tamper evidence: the hashes are plain
+ * SHA-256, so whoever can edit a graph can re-hash it, and an edit that is
+ * itself acceptable yields an intact, DIFFERENT graph. Whoever needs to know
+ * that a graph is still the one they accepted pins its `structuralHash`.
+ *
+ * A wrong context is not a damaged graph: an unreleased registry and a brief
+ * that does not belong to the model surface as what they are.
  */
 export function assertInterpretiveClaimGraphIntact(graph: InterpretiveClaimGraph, context: ClaimGraphContext): void {
+  let presented: string;
+  try {
+    presented = structuralHash(graph);
+  } catch {
+    throw new ClaimGraphError('CLAIM_GRAPH_NOT_INTACT', 'the graph carries a value no accepted graph can carry');
+  }
   let rebuilt: InterpretiveClaimGraph;
   try {
-    rebuilt = buildInterpretiveClaimGraph({
-      sourceBriefStructuralHash: graph.sourceBriefStructuralHash,
-      methodProfileRef: graph.methodProfileRef,
-      claims: graph.claims.map((claim) => ({
-        claimId: claim.claimId,
-        statement: claim.statement,
-        factRefs: claim.factRefs,
-        themeRefs: claim.themeRefs,
-        methodRefs: claim.methodRefs,
-        epistemicClass: claim.epistemicClass,
-        provisionalFactRefs: claim.provisionalFactRefs,
-        relations: claim.relations,
-      })),
-    }, context);
+    rebuilt = buildInterpretiveClaimGraph(claimGraphDraftOf(graph), context);
   } catch (error) {
-    throw new ClaimGraphError('CLAIM_GRAPH_NOT_INTACT', `the graph is not acceptable for this chart (${error instanceof Error ? error.message : 'unknown refusal'})`);
+    const refusedClaims = error instanceof ClaimError
+      || (error instanceof ClaimGraphError && error.code !== 'CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL');
+    if (!refusedClaims) {
+      throw error;
+    }
+    throw new ClaimGraphError('CLAIM_GRAPH_NOT_INTACT', `the graph is not acceptable for this chart (${error.message})`);
   }
-  if (structuralHash(graph) !== structuralHash(rebuilt)) {
-    throw new ClaimGraphError('CLAIM_GRAPH_NOT_INTACT', 'the graph differs from the graph its own claims produce; it was changed after acceptance');
+  if (presented !== structuralHash(rebuilt)) {
+    throw new ClaimGraphError('CLAIM_GRAPH_NOT_INTACT', 'the graph differs from the graph its own claims produce for this chart');
   }
 }
 

@@ -16,9 +16,11 @@ import {
   assertCentralGraphClaim,
   assertInterpretiveClaimGraphIntact,
   buildInterpretiveClaimGraph,
+  claimGraphDraftOf,
 } from '../../src/application/interpretation/interpretive-claim-graph.js';
 import type {
   AcceptedInterpretiveClaim,
+  ClaimGraphContext,
   ClaimGraphErrorCode,
   InterpretiveClaimGraph,
 } from '../../src/application/interpretation/interpretive-claim-graph.js';
@@ -28,15 +30,18 @@ import {
   interpretiveClaimStructuralHash,
   validateInterpretiveClaim,
 } from '../../src/application/interpretation/interpretive-claim.js';
-import type { InterpretiveClaim } from '../../src/application/interpretation/interpretive-claim.js';
+import type { ClaimErrorCode, InterpretiveClaim } from '../../src/application/interpretation/interpretive-claim.js';
 import { deriveInterpretationFeatureSet } from '../../src/application/interpretation/feature-set.js';
 import {
   BAZI_METHOD_REGISTRY_V1,
   METHOD_PROFILE_REF,
   METHOD_PROFILE_VERSION,
+  MethodRegistryError,
   methodRegistryStructuralHash,
 } from '../../src/application/interpretation/method-registry.js';
+import type { MethodRegistry } from '../../src/application/interpretation/method-registry.js';
 import {
+  DAY_HIDDEN_TEN_GOD,
   DOMINANT,
   H,
   KNOWN,
@@ -54,9 +59,13 @@ import {
 import { knownTimeModel } from '../support/narrativeFixture.js';
 import { ALTERNATE_TEN_GOD_ROW } from '../support/natalFixture.js';
 
+/** Themes of the fixture chart that contain the month Ten God, i.e. a fact the recurrence claim cites. */
+const MONTH_THEMES = ['theme.pillar.month', 'theme.tenGod.HurtingOfficer', 'primary.self_role'] as const;
+const FIRE_WEIGHT = 'chart.wuxing.weight.Feuer';
+
 const baseline = (): InterpretiveClaimGraph => buildInterpretiveClaimGraph(draftOf(baselineClaims()), KNOWN);
 
-/** The accepted claim a draft handle became, found by its (unique) statement. */
+/** The accepted claim a draft became, found by its statement (unique inside a graph). */
 function acceptedFor(graph: InterpretiveClaimGraph, draft: InterpretiveClaim): AcceptedInterpretiveClaim {
   const found = graph.claims.find((claim) => claim.statement === draft.statement);
   if (found === undefined) {
@@ -65,28 +74,26 @@ function acceptedFor(graph: InterpretiveClaimGraph, draft: InterpretiveClaim): A
   return found;
 }
 
-function withoutHash(claim: AcceptedInterpretiveClaim): InterpretiveClaim {
-  return {
-    claimId: claim.claimId,
-    statement: claim.statement,
-    factRefs: claim.factRefs,
-    themeRefs: claim.themeRefs,
-    methodRefs: claim.methodRefs,
-    epistemicClass: claim.epistemicClass,
-    provisionalFactRefs: claim.provisionalFactRefs,
-    relations: claim.relations,
-  };
-}
-
 function expectGraphRefusal(code: ClaimGraphErrorCode, run: () => unknown): void {
+  let caught: unknown;
   try {
     run();
   } catch (error) {
-    expect(error).toBeInstanceOf(ClaimGraphError);
-    expect((error as ClaimGraphError).code, (error as ClaimGraphError).message).toBe(code);
-    return;
+    caught = error;
   }
-  expect.unreachable(`expected the graph to be refused with ${code}`);
+  expect(caught, `expected the graph to be refused with ${code}`).toBeInstanceOf(ClaimGraphError);
+  expect((caught as ClaimGraphError).code, (caught as ClaimGraphError).message).toBe(code);
+}
+
+function expectClaimRefusal(code: ClaimErrorCode, run: () => unknown): void {
+  let caught: unknown;
+  try {
+    run();
+  } catch (error) {
+    caught = error;
+  }
+  expect(caught, `expected a claim refusal with ${code}`).toBeInstanceOf(ClaimError);
+  expect((caught as ClaimError).code, (caught as ClaimError).message).toBe(code);
 }
 
 function collectNumbers(value: unknown, path: string, found: string[]): void {
@@ -99,6 +106,17 @@ function collectNumbers(value: unknown, path: string, found: string[]): void {
       collectNumbers(entry, `${path}.${key}`, found);
     }
   }
+}
+
+function driftedRegistry(): MethodRegistry {
+  // A VALID edit under the released version: still a contradiction with the profile.
+  const drifted = structuredClone(BAZI_METHOD_REGISTRY_V1) as unknown as { methods: { methodId: string; operations: string[] }[] };
+  const tenGods = drifted.methods.find((method) => method.methodId === 'ten_gods');
+  if (tenGods === undefined) {
+    throw new Error('fixture: the registry has no ten_gods method');
+  }
+  tenGods.operations.push('RANK_BY_IMPORTANCE');
+  return drifted as unknown as MethodRegistry;
 }
 
 describe('ETBZ-30A G1: a valid graph is versioned and bound to its brief and its method profile', () => {
@@ -129,22 +147,32 @@ describe('ETBZ-30A G1: a valid graph is versioned and bound to its brief and its
   it('keeps every accepted claim an InterpretiveClaim, plus the I6 hash the graph stores', () => {
     const graph = baseline();
     expect(graph.claims).toHaveLength(baselineClaims().length);
-    for (const claim of graph.claims) {
+    const drafts = claimGraphDraftOf(graph).claims;
+    graph.claims.forEach((claim, index) => {
       expect(Object.keys(claim).sort()).toEqual([
         'claimId', 'epistemicClass', 'factRefs', 'methodRefs', 'provisionalFactRefs', 'relations', 'statement', 'structuralHash', 'themeRefs',
       ]);
-      expect(claim.structuralHash).toBe(interpretiveClaimStructuralHash(withoutHash(claim), METHOD_PROFILE_REF));
-    }
+      const draft = drafts[index];
+      if (draft === undefined) {
+        throw new Error('fixture: the draft projection lost a claim');
+      }
+      expect(Object.keys(draft).sort()).toEqual([
+        'claimId', 'epistemicClass', 'factRefs', 'methodRefs', 'provisionalFactRefs', 'relations', 'statement', 'themeRefs',
+      ]);
+      expect(claim.structuralHash).toBe(interpretiveClaimStructuralHash(draft, METHOD_PROFILE_REF));
+    });
   });
 
-  it('accepts only claims the current claim validator accepts — and they still pass it as accepted', () => {
+  it('holds only claims that still pass the current claim validator as accepted', () => {
     const context = {
       registry: KNOWN.registry,
       featureSet: deriveInterpretationFeatureSet(KNOWN.model),
       methodProfileRef: METHOD_PROFILE_REF,
     };
-    for (const claim of baseline().claims) {
-      expect(() => validateInterpretiveClaim(withoutHash(claim), context)).not.toThrow();
+    const drafts = claimGraphDraftOf(baseline()).claims;
+    expect(drafts).toHaveLength(4);
+    for (const claim of drafts) {
+      expect(() => validateInterpretiveClaim(claim, context)).not.toThrow();
     }
   });
 
@@ -161,8 +189,10 @@ describe('ETBZ-30A G1: a valid graph is versioned and bound to its brief and its
     expect(found).toEqual([]);
   });
 
-  it('accepts every relation of the closed vocabulary, and a cycle between two claims', () => {
-    for (const type of CLAIM_RELATION_TYPES) {
+  it('knows exactly the seven relations of the Long-Form contract, accepts each, and accepts a cycle', () => {
+    const vocabulary = ['SUPPORTS', 'QUALIFIES', 'CONTRASTS_WITH', 'CONTEXTUALIZES', 'DEVELOPS', 'INTEGRATES', 'ALTERNATIVE_READING'] as const;
+    expect([...CLAIM_RELATION_TYPES]).toEqual([...vocabulary]);
+    for (const type of vocabulary) {
       const graph = buildInterpretiveClaimGraph(draftOf([
         recurrenceClaim({ relations: [{ type, targetClaimId: H.relation }] }),
         relationClaim(),
@@ -174,26 +204,29 @@ describe('ETBZ-30A G1: a valid graph is versioned and bound to its brief and its
     }
   });
 
-  it('accepts a theme of the bound brief as supplementary structure', () => {
-    const themeId = KNOWN.brief.constraints.candidateThemeIds[0];
-    const primaryId = KNOWN.brief.constraints.narratableThemeIds[0];
-    if (themeId === undefined || primaryId === undefined) {
-      throw new Error('fixture: the known-time brief has no themes');
-    }
-    const graph = buildInterpretiveClaimGraph(draftOf([recurrenceClaim({ themeRefs: [themeId, primaryId] })]), KNOWN);
-    expect(graph.claims[0]?.themeRefs).toEqual([themeId, primaryId].sort());
+  it('accepts themes of the bound brief that contain a fact the claim cites, as supplementary structure', () => {
+    const graph = buildInterpretiveClaimGraph(draftOf([recurrenceClaim({ themeRefs: [...MONTH_THEMES] })]), KNOWN);
+    expect(graph.claims[0]?.themeRefs).toEqual([...MONTH_THEMES].sort());
   });
 });
 
 describe('ETBZ-30A G2: claim identity is semantic, and the graph is a pure function of meaning', () => {
-  it('derives each claimId from the claim content, re-derivable from outside', () => {
+  it('derives each claimId from the claim content and the cited fact VALUES, re-derivable from outside', () => {
     const graph = baseline();
     const draft = recurrenceClaim();
     const accepted = acceptedFor(graph, draft);
+    const citedFacts = [...draft.factRefs].sort().map((id) => {
+      const fact = KNOWN.brief.facts.find((candidate) => candidate.id === id);
+      if (fact === undefined) {
+        throw new Error(`fixture: fact ${id} is not in the brief`);
+      }
+      return { id, value: fact.value };
+    });
+    expect(citedFacts.map((fact) => fact.value)).toEqual(['HurtingOfficer', 'HurtingOfficer']);
     expect(accepted.claimId).toBe(`claim.${structuralHash({
       methodProfileRef: METHOD_PROFILE_REF,
       statement: draft.statement,
-      factRefs: [...draft.factRefs].sort(),
+      citedFacts,
       themeRefs: [],
       methodRefs: [...draft.methodRefs].sort(),
       epistemicClass: draft.epistemicClass,
@@ -231,12 +264,10 @@ describe('ETBZ-30A G2: claim identity is semantic, and the graph is a pure funct
     expect(canonicalJson(buildInterpretiveClaimGraph(draftOf(rotated), KNOWN))).toBe(canonicalJson(baseline()));
   });
 
-  it('does not let factRef, themeRef, methodRef, lineage or relation order create a difference', () => {
-    const themes = KNOWN.brief.constraints.candidateThemeIds.slice(0, 2);
-    expect(themes).toHaveLength(2);
+  it('does not let factRef, themeRef, methodRef or relation order create a difference, and stores one canonical order', () => {
     const forward = [
       recurrenceClaim({
-        themeRefs: themes,
+        themeRefs: [...MONTH_THEMES],
         relations: [{ type: 'DEVELOPS', targetClaimId: H.relation }, { type: 'CONTEXTUALIZES', targetClaimId: H.dayMaster }],
       }),
       relationClaim(),
@@ -253,21 +284,32 @@ describe('ETBZ-30A G2: claim identity is semantic, and the graph is a pure funct
     const right = buildInterpretiveClaimGraph(draftOf(backward), KNOWN);
     expect(right.claims.map((claim) => claim.claimId)).toEqual(left.claims.map((claim) => claim.claimId));
     expect(canonicalJson(right)).toBe(canonicalJson(left));
-  });
 
-  it('stores claims, refs and relations in one canonical order', () => {
-    const graph = baseline();
-    const ids = graph.claims.map((claim) => claim.claimId);
+    const ids = right.claims.map((claim) => claim.claimId);
     expect(ids).toEqual([...ids].sort());
-    for (const claim of graph.claims) {
-      expect(claim.factRefs).toEqual([...claim.factRefs].sort());
-      expect(claim.methodRefs).toEqual([...claim.methodRefs].sort());
-    }
+    const recurrence = acceptedFor(right, recurrenceClaim());
+    expect(recurrence.factRefs).toEqual([DAY_HIDDEN_TEN_GOD, MONTH_TEN_GOD]);
+    expect(recurrence.themeRefs).toEqual([...MONTH_THEMES].sort());
+    expect(recurrence.methodRefs).toEqual(['fact_relations', 'positional_context', 'ten_gods']);
+    expect(recurrence.relations.map((relation) => relation.type)).toEqual(['CONTEXTUALIZES', 'DEVELOPS']);
   });
 
-  it('is idempotent: its own accepted claims, fed back as a draft, rebuild the same graph', () => {
+  it('does not let the order of provisional lineage create a difference', () => {
+    const lineage = (provisionalFactRefs: string[]): InterpretiveClaim => tentativeDominantClaim({
+      factRefs: [DOMINANT, FIRE_WEIGHT],
+      provisionalFactRefs,
+      relations: [],
+    });
+    const left = buildInterpretiveClaimGraph(draftOf([lineage([DOMINANT, FIRE_WEIGHT])], UNKNOWN), UNKNOWN);
+    const right = buildInterpretiveClaimGraph(draftOf([lineage([FIRE_WEIGHT, DOMINANT])], UNKNOWN), UNKNOWN);
+    expect(left.claims[0]?.provisionalFactRefs).toEqual([DOMINANT, FIRE_WEIGHT]);
+    expect(right.claims[0]?.claimId).toBe(left.claims[0]?.claimId);
+    expect(canonicalJson(right)).toBe(canonicalJson(left));
+  });
+
+  it('is idempotent on the draft projection of its own output', () => {
     const graph = baseline();
-    const again = buildInterpretiveClaimGraph(draftOf(graph.claims.map(withoutHash)), KNOWN);
+    const again = buildInterpretiveClaimGraph(claimGraphDraftOf(graph), KNOWN);
     expect(canonicalJson(again)).toBe(canonicalJson(graph));
     expect(() => { assertInterpretiveClaimGraphIntact(graph, KNOWN); }).not.toThrow();
   });
@@ -278,16 +320,17 @@ describe('ETBZ-30A G2: claim identity is semantic, and the graph is a pure funct
       recurrenceClaim({ statement: 'The same two facts, read as a different interpretation.' }),
       recurrenceClaim({ methodRefs: ['ten_gods', 'fact_relations'] }),
       recurrenceClaim({ epistemicClass: 'TENTATIVE_INTERPRETATION' }),
+      recurrenceClaim({ themeRefs: ['theme.pillar.month'] }),
       recurrenceClaim({ factRefs: [MONTH_TEN_GOD, 'chart.natal.pillar.year.tenGod'], methodRefs: ['ten_gods', 'positional_context'] }),
     ];
     const seen = new Set([base]);
     for (const variant of variants) {
-      const graph = buildInterpretiveClaimGraph(draftOf([variant]), KNOWN);
-      const id = graph.claims[0]?.claimId;
+      const id = buildInterpretiveClaimGraph(draftOf([variant]), KNOWN).claims[0]?.claimId;
       expect(id).toBeDefined();
       expect(seen.has(id ?? '')).toBe(false);
       seen.add(id ?? '');
     }
+    expect(seen.size).toBe(variants.length + 1);
   });
 
   it('moves the graph hash when a relation is added or removed, without moving any claim identity', () => {
@@ -311,29 +354,27 @@ describe('ETBZ-30A G3: counterfactual and ablation — the graph depends on the 
     expectGraphRefusal('CLAIM_GRAPH_BRIEF_HASH_MISMATCH', () => buildInterpretiveClaimGraph(draftOf(baselineClaims(), KNOWN), hourChanged));
   });
 
-  it('binds the same claims to a different chart as a different graph', () => {
+  it('binds claims that do not touch the changed fact to a different chart as a different graph with the same claims', () => {
     const other = buildInterpretiveClaimGraph(draftOf(baselineClaims(), hourChanged), hourChanged);
     expect(other.claims.map((claim) => claim.claimId)).toEqual(baseline().claims.map((claim) => claim.claimId));
     expect(other.sourceBriefStructuralHash).not.toBe(baseline().sourceBriefStructuralHash);
     expect(other.structuralHash).not.toBe(baseline().structuralHash);
   });
 
-  it('loses the dependent claim when the fact it rests on materially changes', () => {
+  it('loses the dependent claim when the identity it rests on is gone', () => {
     // The month Ten God no longer equals the day's hidden one: the recurrence the
     // claim states is gone, so the claim is refused instead of surviving as prose.
-    try {
-      buildInterpretiveClaimGraph(draftOf(baselineClaims(), monthChanged), monthChanged);
-      expect.unreachable('the recurrence claim must not survive the changed month Ten God');
-    } catch (error) {
-      expect(error).toBeInstanceOf(ClaimError);
-      expect((error as ClaimError).code).toBe('CLAIM_METHOD_WITHOUT_EVIDENCE');
-      expect((error as ClaimError).message).toContain(H.recurrence);
-    }
-    // Control: the claims that never depended on that identity still build.
-    const independent = buildInterpretiveClaimGraph(draftOf([
-      dayMasterClaim({ relations: [] }), dominantClaim(),
-    ], monthChanged), monthChanged);
-    expect(independent.claims).toHaveLength(2);
+    expectClaimRefusal('CLAIM_METHOD_WITHOUT_EVIDENCE', () => buildInterpretiveClaimGraph(draftOf(baselineClaims(), monthChanged), monthChanged));
+  });
+
+  it('changes the identity of a claim whose cited fact VALUE changed, and of no other claim', () => {
+    const survivors = [relationClaim({ relations: [] }), dayMasterClaim({ relations: [] }), dominantClaim()];
+    const before = buildInterpretiveClaimGraph(draftOf(survivors, KNOWN), KNOWN);
+    const after = buildInterpretiveClaimGraph(draftOf(survivors, monthChanged), monthChanged);
+    // Same draft, same fact ids — but the month Ten God is now a different fact.
+    expect(acceptedFor(after, relationClaim()).claimId).not.toBe(acceptedFor(before, relationClaim()).claimId);
+    expect(acceptedFor(after, dayMasterClaim()).claimId).toBe(acceptedFor(before, dayMasterClaim()).claimId);
+    expect(acceptedFor(after, dominantClaim()).claimId).toBe(acceptedFor(before, dominantClaim()).claimId);
   });
 
   it('refuses a brief that is not the brief this model produces', () => {
@@ -341,17 +382,56 @@ describe('ETBZ-30A G3: counterfactual and ablation — the graph depends on the 
       draftOf(baselineClaims(), hourChanged),
       { ...KNOWN, brief: hourChanged.brief },
     ));
+    // The draft names the RIGHT brief; only the supplied brief object is foreign.
+    expectGraphRefusal('CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL', () => buildInterpretiveClaimGraph(
+      draftOf(baselineClaims(), KNOWN),
+      { ...KNOWN, brief: hourChanged.brief },
+    ));
   });
 
-  it('detects an accepted graph that was edited after acceptance', () => {
+  it('compares the whole brief, not the hash it prints on itself', () => {
+    const forged = { ...KNOWN.brief, facts: KNOWN.brief.facts.slice(1) };
+    expect(forged.structuralHash).toBe(KNOWN.brief.structuralHash);
+    expectGraphRefusal('CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL', () => buildInterpretiveClaimGraph(draftOf(baselineClaims()), { ...KNOWN, brief: forged }));
+  });
+
+  it('refuses a graph that is not exactly what its own claims produce for this chart', () => {
     const graph = baseline();
-    const edited: InterpretiveClaimGraph = {
-      ...graph,
-      claims: graph.claims.map((claim, index) => (index === 0 ? { ...claim, epistemicClass: 'TENTATIVE_INTERPRETATION' as const } : claim)),
-    };
-    expectGraphRefusal('CLAIM_GRAPH_NOT_INTACT', () => { assertInterpretiveClaimGraphIntact(edited, KNOWN); });
-    expectGraphRefusal('CLAIM_GRAPH_NOT_INTACT', () => { assertInterpretiveClaimGraphIntact({ ...graph, structuralHash: `${graph.structuralHash}0` }, KNOWN); });
-    expectGraphRefusal('CLAIM_GRAPH_NOT_INTACT', () => { assertInterpretiveClaimGraphIntact(graph, hourChanged); });
+    const first = graph.claims[0];
+    if (first === undefined) {
+      throw new Error('fixture: the baseline graph has no claim');
+    }
+    const forgeries: [string, InterpretiveClaimGraph, ClaimGraphContext][] = [
+      ['an edited claim', { ...graph, claims: [{ ...first, epistemicClass: 'TENTATIVE_INTERPRETATION' }, ...graph.claims.slice(1)] }, KNOWN],
+      ['an edited graph hash', { ...graph, structuralHash: `${graph.structuralHash}0` }, KNOWN],
+      ['another chart', graph, hourChanged],
+      ['a number smuggled onto a claim', { ...graph, claims: [{ ...first, salience: 0.9 } as AcceptedInterpretiveClaim, ...graph.claims.slice(1)] }, KNOWN],
+      ['a number smuggled onto the graph', { ...graph, rank: 1 } as InterpretiveClaimGraph, KNOWN],
+      ['a value that cannot be canonicalised', { ...graph, weight: 10n } as unknown as InterpretiveClaimGraph, KNOWN],
+      ['claims out of canonical order', { ...graph, claims: [...graph.claims].reverse() }, KNOWN],
+    ];
+    for (const [what, forged, context] of forgeries) {
+      let caught: unknown;
+      try {
+        assertInterpretiveClaimGraphIntact(forged, context);
+      } catch (error) {
+        caught = error;
+      }
+      expect(caught, what).toBeInstanceOf(ClaimGraphError);
+      expect((caught as ClaimGraphError).code, what).toBe('CLAIM_GRAPH_NOT_INTACT');
+    }
+  });
+
+  it('does not re-label a contradiction with the released profile as a damaged graph', () => {
+    let caught: unknown;
+    try {
+      assertInterpretiveClaimGraphIntact(baseline(), { ...KNOWN, registry: driftedRegistry() });
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(MethodRegistryError);
+    expect((caught as MethodRegistryError).code).toBe('REGISTRY_NOT_RELEASED');
+    expectGraphRefusal('CLAIM_GRAPH_BRIEF_NOT_DERIVED_FROM_MODEL', () => { assertInterpretiveClaimGraphIntact(baseline(), { ...KNOWN, brief: hourChanged.brief }); });
   });
 });
 
@@ -374,13 +454,15 @@ describe('ETBZ-30A G4: provisional lineage passes through the graph unchanged', 
     expect(known.claims[0]?.provisionalFactRefs).toEqual([]);
   });
 
-  it('lets no relation upgrade certainty: relating a supported claim to a tentative one changes neither', () => {
+  it('lets no relation move certainty in either direction: source and target both stay what their own facts make them', () => {
     const graph = buildInterpretiveClaimGraph(draftOf([
       recurrenceClaim({ relations: [{ type: 'INTEGRATES', targetClaimId: H.dominant }, { type: 'SUPPORTS', targetClaimId: H.dominant }] }),
       tentativeDominantClaim({ relations: [] }),
     ], UNKNOWN), UNKNOWN);
     expect(acceptedFor(graph, dominantClaim()).epistemicClass).toBe('TENTATIVE_INTERPRETATION');
     expect(acceptedFor(graph, dominantClaim()).provisionalFactRefs).toEqual([DOMINANT]);
+    expect(acceptedFor(graph, recurrenceClaim()).epistemicClass).toBe('SUPPORTED_INTERPRETATION');
+    expect(acceptedFor(graph, recurrenceClaim()).provisionalFactRefs).toEqual([]);
   });
 });
 
@@ -394,13 +476,8 @@ describe('ETBZ-30A G5: PD-5 is composed, not re-implemented, for a claim that be
   it('refuses a central claim below the floor — also when it is tentative and merely qualifies', () => {
     for (const draft of [dayMasterClaim(), dayMasterClaim({ epistemicClass: 'TENTATIVE_INTERPRETATION', relations: [{ type: 'ALTERNATIVE_READING', targetClaimId: H.recurrence }] })]) {
       const graph = buildInterpretiveClaimGraph(draftOf([recurrenceClaim(), draft]), KNOWN);
-      try {
-        assertCentralGraphClaim(graph, acceptedFor(graph, draft).claimId, KNOWN);
-        expect.unreachable('a single shared primitive must not carry a thesis');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ClaimError);
-        expect((error as ClaimError).code).toBe('CLAIM_INSUFFICIENT_SIGNALS');
-      }
+      const claimId = acceptedFor(graph, draft).claimId;
+      expectClaimRefusal('CLAIM_INSUFFICIENT_SIGNALS', () => { assertCentralGraphClaim(graph, claimId, KNOWN); });
     }
   });
 
@@ -418,18 +495,20 @@ describe('ETBZ-30A G5: PD-5 is composed, not re-implemented, for a claim that be
     const twoKindsOneMethod = relationClaim({ claimId: 'draft.oneMethod', methodRefs: ['ten_gods'], relations: [] });
     for (const draft of [oneKindTwoMethods, twoKindsOneMethod]) {
       const graph = buildInterpretiveClaimGraph(draftOf([draft]), KNOWN);
-      try {
-        assertCentralGraphClaim(graph, acceptedFor(graph, draft).claimId, KNOWN);
-        expect.unreachable(`"${draft.claimId}" satisfies only one half of PD-5`);
-      } catch (error) {
-        expect(error).toBeInstanceOf(ClaimError);
-        expect((error as ClaimError).code).toBe('CLAIM_INSUFFICIENT_SIGNALS');
-      }
+      const claimId = acceptedFor(graph, draft).claimId;
+      expectClaimRefusal('CLAIM_INSUFFICIENT_SIGNALS', () => { assertCentralGraphClaim(graph, claimId, KNOWN); });
     }
   });
 
-  it('has no caller-controlled bypass and refuses a claim the graph does not contain', () => {
+  it('has no caller-controlled bypass: three parameters, and a fourth argument changes nothing', () => {
     expect(assertCentralGraphClaim.length).toBe(3);
+    const graph = buildInterpretiveClaimGraph(draftOf([recurrenceClaim(), dayMasterClaim()]), KNOWN);
+    const claimId = acceptedFor(graph, dayMasterClaim()).claimId;
+    const withFlag = assertCentralGraphClaim as (...args: unknown[]) => void;
+    expectClaimRefusal('CLAIM_INSUFFICIENT_SIGNALS', () => { withFlag(graph, claimId, KNOWN, { declaredDistinctiveSingleConfiguration: true }); });
+  });
+
+  it('refuses a claim the graph does not contain — a draft handle is not an accepted claim', () => {
     expectGraphRefusal('CLAIM_GRAPH_UNKNOWN_CLAIM', () => { assertCentralGraphClaim(baseline(), H.recurrence, KNOWN); });
   });
 

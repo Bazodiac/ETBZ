@@ -15,6 +15,7 @@ import {
 import type {
   ClaimGraphContext,
   ClaimGraphErrorCode,
+  InterpretiveClaimGraphDraft,
 } from '../../src/application/interpretation/interpretive-claim-graph.js';
 import { ClaimError } from '../../src/application/interpretation/interpretive-claim.js';
 import type { ClaimErrorCode, InterpretiveClaim } from '../../src/application/interpretation/interpretive-claim.js';
@@ -37,26 +38,30 @@ import {
   tentativeDominantClaim,
 } from '../support/claimGraphFixture.js';
 
-function expectClaimRefusal(code: ClaimErrorCode, claims: readonly InterpretiveClaim[], context: ClaimGraphContext = KNOWN): void {
-  try {
-    buildInterpretiveClaimGraph(draftOf(claims, context), context);
-  } catch (error) {
-    expect(error).toBeInstanceOf(ClaimError);
-    expect((error as ClaimError).code, (error as ClaimError).message).toBe(code);
-    return;
-  }
-  expect.unreachable(`expected the graph to be refused with ${code}`);
-}
-
-function expectGraphRefusal(code: ClaimGraphErrorCode, run: () => unknown): ClaimGraphError {
+function refusalOf(run: () => unknown): unknown {
   try {
     run();
   } catch (error) {
-    expect(error).toBeInstanceOf(ClaimGraphError);
-    expect((error as ClaimGraphError).code, (error as ClaimGraphError).message).toBe(code);
-    return error as ClaimGraphError;
+    return error;
   }
-  return expect.unreachable(`expected the graph to be refused with ${code}`);
+  return undefined;
+}
+
+function expectClaimRefusal(code: ClaimErrorCode, claims: readonly InterpretiveClaim[], context: ClaimGraphContext = KNOWN, draft: Partial<InterpretiveClaimGraphDraft> = {}): void {
+  const caught = refusalOf(() => buildInterpretiveClaimGraph(draftOf(claims, context, draft), context));
+  expect(caught, `expected the graph to be refused with ${code}`).toBeInstanceOf(ClaimError);
+  expect((caught as ClaimError).code, (caught as ClaimError).message).toBe(code);
+}
+
+function expectGraphRefusal(code: ClaimGraphErrorCode, run: () => unknown): ClaimGraphError {
+  const caught = refusalOf(run);
+  expect(caught, `expected the graph to be refused with ${code}`).toBeInstanceOf(ClaimGraphError);
+  expect((caught as ClaimGraphError).code, (caught as ClaimGraphError).message).toBe(code);
+  return caught as ClaimGraphError;
+}
+
+function expectDraftRefusal(code: ClaimGraphErrorCode, claims: readonly InterpretiveClaim[], context: ClaimGraphContext = KNOWN): void {
+  expectGraphRefusal(code, () => buildInterpretiveClaimGraph(draftOf(claims, context), context));
 }
 
 /** The baseline with ONE claim replaced — every other claim stays valid. */
@@ -120,7 +125,18 @@ describe('ETBZ-30A N1: grounding — one ungrounded claim blocks the whole graph
   });
 
   it('refuses a themeRef the bound brief does not contain', () => {
-    expectGraphRefusal('CLAIM_GRAPH_UNKNOWN_THEME', () => buildInterpretiveClaimGraph(draftOf(withRecurrence({ themeRefs: ['theme.tenGod.Invented'] })), KNOWN));
+    expectDraftRefusal('CLAIM_GRAPH_UNKNOWN_THEME', withRecurrence({ themeRefs: ['theme.tenGod.Invented'] }));
+  });
+
+  it('refuses a themeRef to a real theme none of whose facts the claim cites', () => {
+    // A theme's factIds are its entire evidence. Filing a claim under a theme it
+    // shares no fact with would borrow that theme's standing — under an unknown
+    // birth time, a certain claim filed under a provisional theme.
+    expect(UNKNOWN.brief.candidateThemes.find((theme) => theme.id === 'theme.wuXing.Feuer')?.containsProvisionalFacts).toBe(true);
+    expectDraftRefusal('CLAIM_GRAPH_THEME_NOT_GROUNDED', [recurrenceClaim({ themeRefs: ['theme.wuXing.Feuer'] })], UNKNOWN);
+    expectDraftRefusal('CLAIM_GRAPH_THEME_NOT_GROUNDED', withRecurrence({ themeRefs: ['theme.pillar.month', 'primary.elemental_profile'] }));
+    // Control: the themes that do contain a cited fact are accepted.
+    expect(buildInterpretiveClaimGraph(draftOf(withRecurrence({ themeRefs: ['theme.pillar.month', 'primary.self_role'] })), KNOWN).claims).toHaveLength(4);
   });
 });
 
@@ -143,6 +159,8 @@ describe('ETBZ-30A N2: method attribution (PD-6, I1–I5) stays fail-closed insi
   });
 
   it('refuses a fact no non-modifier method covers', () => {
+    // The modifier `positional_context` may read this pillar fact; no reading method does.
+    expectClaimRefusal('CLAIM_ORPHAN_FACT', withRecurrence({ factRefs: [MONTH_TEN_GOD, DAY_HIDDEN_TEN_GOD, 'chart.pillar.year.stem'] }));
     expectClaimRefusal('CLAIM_ORPHAN_FACT', withRecurrence({ factRefs: [MONTH_TEN_GOD, DAY_HIDDEN_TEN_GOD, DOMINANT] }));
   });
 
@@ -151,13 +169,7 @@ describe('ETBZ-30A N2: method attribution (PD-6, I1–I5) stays fail-closed insi
   });
 
   it('refuses a draft bound to another profile version', () => {
-    try {
-      buildInterpretiveClaimGraph(draftOf(baselineClaims(), KNOWN, { methodProfileRef: 'bazi-method-profile@0.9.0' }), KNOWN);
-      expect.unreachable('a draft bound to another profile version must be refused');
-    } catch (error) {
-      expect(error).toBeInstanceOf(ClaimError);
-      expect((error as ClaimError).code).toBe('CLAIM_PROFILE_MISMATCH');
-    }
+    expectClaimRefusal('CLAIM_PROFILE_MISMATCH', baselineClaims(), KNOWN, { methodProfileRef: 'bazi-method-profile@0.9.0' });
   });
 
   it('refuses a registry that is not the released one', () => {
@@ -168,13 +180,9 @@ describe('ETBZ-30A N2: method attribution (PD-6, I1–I5) stays fail-closed insi
       throw new Error('fixture: the registry has no ten_gods method');
     }
     tenGods.operations.push('RANK_BY_IMPORTANCE');
-    try {
-      buildInterpretiveClaimGraph(draftOf(baselineClaims()), { ...KNOWN, registry: drifted as unknown as MethodRegistry });
-      expect.unreachable('an unreleased registry must not authorise a graph');
-    } catch (error) {
-      expect(error).toBeInstanceOf(MethodRegistryError);
-      expect((error as MethodRegistryError).code).toBe('REGISTRY_NOT_RELEASED');
-    }
+    const caught = refusalOf(() => buildInterpretiveClaimGraph(draftOf(baselineClaims()), { ...KNOWN, registry: drifted as unknown as MethodRegistry }));
+    expect(caught, 'an unreleased registry must not authorise a graph').toBeInstanceOf(MethodRegistryError);
+    expect((caught as MethodRegistryError).code).toBe('REGISTRY_NOT_RELEASED');
   });
 });
 
@@ -229,11 +237,14 @@ describe('ETBZ-30A N4: relations are closed and resolve inside the graph', () =>
 });
 
 describe('ETBZ-30A N5: duplication and order never become importance', () => {
-  it('refuses two claims under one handle', () => {
-    expectGraphRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_ID', () => buildInterpretiveClaimGraph(draftOf([...baselineClaims(), recurrenceClaim()]), KNOWN));
-    expectGraphRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_ID', () => buildInterpretiveClaimGraph(draftOf([
-      ...baselineClaims(), dayMasterClaim({ claimId: H.recurrence, relations: [] }),
-    ]), KNOWN));
+  it('refuses two claims under one handle — also when they say different things', () => {
+    expectDraftRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_ID', [...baselineClaims(), recurrenceClaim()]);
+    // Without this refusal the second claim would take over the handle, and every
+    // relation to it would silently point at a claim its author never meant.
+    expectDraftRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_ID', [
+      ...baselineClaims(),
+      dayMasterClaim({ claimId: H.recurrence, statement: 'A reading nobody else in this draft makes.', relations: [] }),
+    ]);
   });
 
   it('refuses the same meaning submitted twice under two handles — reordered refs do not disguise it', () => {
@@ -241,9 +252,11 @@ describe('ETBZ-30A N5: duplication and order never become importance', () => {
       claimId: 'draft.recurrenceAgain',
       factRefs: [DAY_HIDDEN_TEN_GOD, MONTH_TEN_GOD],
       methodRefs: ['positional_context', 'fact_relations', 'ten_gods'],
-      relations: [{ type: 'SUPPORTS', targetClaimId: H.recurrence }],
+      relations: [],
     });
-    expectGraphRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT', () => buildInterpretiveClaimGraph(draftOf([...baselineClaims(), twin]), KNOWN));
+    expectDraftRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT', [...baselineClaims(), twin]);
+    // ...and neither does a twin that "supports" the original.
+    expectDraftRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT', [...baselineClaims(), { ...twin, relations: [{ type: 'SUPPORTS', targetClaimId: H.recurrence }] }]);
     // Control: a genuinely different reading of the same facts is a second claim.
     const alternative = recurrenceClaim({
       claimId: 'draft.alternative',
@@ -253,18 +266,47 @@ describe('ETBZ-30A N5: duplication and order never become importance', () => {
     expect(buildInterpretiveClaimGraph(draftOf([...baselineClaims(), alternative]), KNOWN).claims).toHaveLength(5);
   });
 
-  it('refuses a repeated factRef, themeRef or relation instead of counting it', () => {
-    const themeId = KNOWN.brief.constraints.candidateThemeIds[0];
-    if (themeId === undefined) {
-      throw new Error('fixture: the known-time brief has no candidate theme');
+  it('refuses one statement made twice, whatever label was changed to tell the two apart', () => {
+    const relabelled: Partial<InterpretiveClaim>[] = [
+      { epistemicClass: 'TENTATIVE_INTERPRETATION' },
+      { themeRefs: ['theme.pillar.month'] },
+      { methodRefs: ['ten_gods', 'fact_relations'] },
+      { factRefs: [MONTH_TEN_GOD, 'chart.natal.pillar.year.tenGod'], methodRefs: ['ten_gods', 'positional_context'] },
+    ];
+    for (const overrides of relabelled) {
+      const again = recurrenceClaim({ claimId: 'draft.again', ...overrides });
+      // Control: on its own the relabelled claim is a perfectly valid claim.
+      expect(buildInterpretiveClaimGraph(draftOf([again]), KNOWN).claims).toHaveLength(1);
+      expectDraftRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT', [...baselineClaims(), again]);
     }
+  });
+
+  it('refuses a statement that is not in canonical form, so one sentence cannot be submitted as two', () => {
+    const statement = recurrenceClaim().statement;
+    const nonCanonical = [
+      `${statement} `,
+      ` ${statement}`,
+      statement.replace(' ', '  '),
+      statement.replace(' ', '\n'),
+      `${statement}\u200b`,
+      '\u200b',
+      'Re\u0301sume\u0301 of the month pillar.', // NFD: e + combining acute
+    ];
+    for (const variant of nonCanonical) {
+      expectDraftRefusal('CLAIM_GRAPH_STATEMENT_NOT_CANONICAL', withRecurrence({ statement: variant }));
+    }
+    // Control: the same sentence in NFC, and non-ASCII text as such, are fine.
+    expect(buildInterpretiveClaimGraph(draftOf(withRecurrence({ statement: 'R\u00e9sum\u00e9 of the month pillar — 月.' })), KNOWN).claims).toHaveLength(4);
+  });
+
+  it('refuses a repeated factRef, themeRef or relation instead of counting it', () => {
     const repeated: Partial<InterpretiveClaim>[] = [
       { factRefs: [MONTH_TEN_GOD, DAY_HIDDEN_TEN_GOD, MONTH_TEN_GOD] },
-      { themeRefs: [themeId, themeId] },
+      { themeRefs: ['theme.pillar.month', 'theme.pillar.month'] },
       { relations: [{ type: 'DEVELOPS', targetClaimId: H.relation }, { type: 'DEVELOPS', targetClaimId: H.relation }] },
     ];
     for (const overrides of repeated) {
-      expectGraphRefusal('CLAIM_GRAPH_DUPLICATE_REF', () => buildInterpretiveClaimGraph(draftOf(withRecurrence(overrides)), KNOWN));
+      expectDraftRefusal('CLAIM_GRAPH_DUPLICATE_REF', withRecurrence(overrides));
     }
     expectClaimRefusal('CLAIM_DUPLICATE_METHOD_REF', withRecurrence({ methodRefs: ['ten_gods', 'fact_relations', 'ten_gods'] }));
   });
@@ -302,6 +344,11 @@ describe('ETBZ-30A N6: the draft is untrusted input with a closed shape', () => 
       { ...valid(), claims: [{ ...recurrenceClaim(), claimId: '' }] },
       { ...valid(), claims: [{ ...recurrenceClaim(), relations: [{ type: 'SUPPORTS', targetClaimId: H.relation, weight: marker }] }] },
       { ...valid(), sourceBriefStructuralHash: undefined },
+      { ...valid(), [marker]: 'x' },
+      { ...valid(), claims: [{ ...recurrenceClaim(), [marker]: 1 }] },
+      { ...valid(), claims: [{ ...recurrenceClaim(), themeRefs: [marker.repeat(40)] }] },
+      { ...valid(), claims: [{ ...recurrenceClaim(), claimId: marker.repeat(40) }] },
+      { ...valid(), claims: [{ ...recurrenceClaim(), relations: [{ type: 'SUPPORTS', targetClaimId: marker.repeat(40) }] }] },
     ];
     for (const draft of malformed) {
       const error = expectGraphRefusal('CLAIM_GRAPH_SCHEMA_INVALID', () => buildInterpretiveClaimGraph(draft, KNOWN));
