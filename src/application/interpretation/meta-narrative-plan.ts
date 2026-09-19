@@ -21,7 +21,9 @@
  *     primary motif. Every such claim passes PD-5 through
  *     `assertCentralGraphClaim` — composed, not re-implemented — and the plan
  *     rests on at least three distinct central claims (Method Profile v1.0.0,
- *     section 11: a floor, no maximum, and no padding);
+ *     section 11: a floor, no maximum, and no padding). An accepted claim is
+ *     the core of at most one primary motif: recombining the same claims does
+ *     not make more motifs;
  *   - tensions the graph already states: a tension names two accepted claims
  *     the graph relates by `CONTRASTS_WITH`. The plan never creates a relation,
  *     and it may not flatten one either: a contrast between two claims the
@@ -29,9 +31,13 @@
  *   - the chapter sequence, each chapter with one narrative operation of the
  *     Long-Form contract (section 7), and the canonical motif lifecycle walked
  *     along it: forward only, skipping allowed, no primary motif silently
- *     forgotten;
+ *     forgotten. A chapter moves a motif, opens or closes a thread only where
+ *     it names one of that element's claims — bookkeeping without meaning is
+ *     not development;
  *   - open threads, each opened by one chapter and either closed by a later
- *     one or explicitly left open;
+ *     one or explicitly left open. A thread is a set of accepted claims; it is
+ *     central when it names a core claim of a primary motif, and only such a
+ *     thread, left open, leaves that motif explicitly open;
  *   - a coverage statement over claims, facts and themes, and the constraints
  *     whoever renders the plan is held to.
  *
@@ -81,8 +87,9 @@ export type ThreadResolution = (typeof THREAD_RESOLUTIONS)[number];
  * no version, no identity exists to bind. The plan therefore says so, as data,
  * instead of carrying an invented reference or nothing at all. ETBZ-30B may be
  * implemented in this state; final ETBZ-30B merge authorisation and ETBZ-30
- * closeout require the versioned lexicon binding (Jira ETBZ-30, DRS), and
- * binding it is a new plan version, not an edit of this one.
+ * closeout require the versioned lexicon binding (Jira ETBZ-30, DRS). Binding
+ * it changes this contract and every plan hash — a versioned change of the
+ * plan contract, never an edit of an accepted plan.
  */
 export const TERMINOLOGY_LEXICON_BINDING = { dependency: 'ETBZ-36', status: 'UNRESOLVED' } as const;
 
@@ -113,9 +120,9 @@ export interface PlanTension {
 }
 
 export interface PlanOpenThread {
+  /** `thread.<hash of its claims>` — the fate is not identity. */
   readonly threadId: string;
-  /** The accepted id of the primary motif the thread belongs to. */
-  readonly motifRef: string;
+  /** The accepted claims the thread keeps in view. Naming a motif-core claim makes it central to that motif. */
   readonly claimRefs: readonly string[];
   readonly resolution: ThreadResolution;
 }
@@ -199,7 +206,6 @@ export interface MetaNarrativePlanDraft {
   readonly tensions: readonly Readonly<{ claimRefs: readonly string[] }>[];
   readonly openThreads: readonly Readonly<{
     threadId: string;
-    motifRef: string;
     claimRefs: readonly string[];
     resolution: ThreadResolution;
   }>[];
@@ -228,10 +234,12 @@ export type MetaNarrativePlanErrorCode =
   | 'PLAN_DUPLICATE_REF'
   | 'PLAN_DUPLICATE_CONTENT'
   | 'PLAN_MOTIF_COUNT_OUT_OF_RANGE'
+  | 'PLAN_MOTIF_CORES_OVERLAP'
   | 'PLAN_INSUFFICIENT_CENTRAL_CLAIMS'
   | 'PLAN_TENSION_NOT_IN_GRAPH'
   | 'PLAN_TENSION_UNDECLARED'
   | 'PLAN_ILLEGAL_MOTIF_TRANSITION'
+  | 'PLAN_MOVEMENT_UNGROUNDED'
   | 'PLAN_MOTIF_SILENTLY_DROPPED'
   | 'PLAN_THREAD_LIFECYCLE_INVALID'
   | 'PLAN_NOT_INTACT';
@@ -266,7 +274,6 @@ const planDraftSchema = z.strictObject({
   tensions: z.array(z.strictObject({ claimRefs: z.array(idLike).length(2) })),
   openThreads: z.array(z.strictObject({
     threadId: idLike,
-    motifRef: idLike,
     claimRefs: z.array(idLike),
     resolution: z.enum(THREAD_RESOLUTIONS),
   })),
@@ -398,13 +405,29 @@ export function buildMetaNarrativePlan(draft: unknown, context: MetaNarrativePla
   const motifIds = motifCores.map((core) => `motif.${structuralHash({ coreClaimRefs: core })}`);
   const motifByHandle = handleIndex('primary motif', plan.primaryMotifs.map((motif) => motif.motifId), motifIds);
   refuseDuplicateContent('primary motif', motifIds);
+  // One accepted meaning carries at most one primary motif: recombining the
+  // same claims into more cores would make the motif count a function of
+  // repetition, not of what the chart carries.
+  const coreOwner = new Map<string, string>();
+  plan.primaryMotifs.forEach((motif, position) => {
+    for (const claimId of motifCores[position] ?? []) {
+      const owner = coreOwner.get(claimId);
+      if (owner !== undefined) {
+        throw new MetaNarrativePlanError(
+          'PLAN_MOTIF_CORES_OVERLAP',
+          `claim "${claimId}" is in the core of primary motifs "${owner}" and "${motif.motifId}"; recombining the same claims does not make more motifs`,
+        );
+      }
+      coreOwner.set(claimId, motif.motifId);
+    }
+  });
 
   // ---- central claims: the PD-5 floor per claim, and the floor on their number -------------
   const centralClaims = sorted([...new Set([...reportThesis.claimRefs, ...motifCores.flat()])]);
   if (centralClaims.length < MIN_CENTRAL_CLAIMS) {
     throw new MetaNarrativePlanError(
       'PLAN_INSUFFICIENT_CENTRAL_CLAIMS',
-      `the thesis and the primary motifs rest on ${String(centralClaims.length)} distinct accepted claim(s); a reading needs at least ${String(MIN_CENTRAL_CLAIMS)} central claims — stop and escalate, do not pad`,
+      `the thesis and the primary motifs rest on ${String(centralClaims.length)} distinct accepted claim(s); a reading rests on at least ${String(MIN_CENTRAL_CLAIMS)} central claims (Method Profile v1.0.0, section 11). Where the graph holds more claims that pass PD-5, the plan may name them; where the chart grounds fewer, stop and escalate — never pad`,
     );
   }
   for (const claimId of centralClaims) {
@@ -429,14 +452,14 @@ export function buildMetaNarrativePlan(draft: unknown, context: MetaNarrativePla
 
   // ---- open threads --------------------------------------------------------------------------
   const threads = plan.openThreads.map((thread): PlanOpenThread => {
-    const where = `thread "${thread.threadId}"`;
-    const motifRef = resolveHandle(motifByHandle, where, 'primary motif', thread.motifRef);
-    const refs = claimRefs(where, thread.claimRefs);
+    const refs = claimRefs(`thread "${thread.threadId}"`, thread.claimRefs);
     // Resolution is not identity: the same thread declared twice with two fates is one thread twice.
-    return { threadId: `thread.${structuralHash({ motifRef, claimRefs: refs })}`, motifRef, claimRefs: refs, resolution: thread.resolution };
+    return { threadId: `thread.${structuralHash({ claimRefs: refs })}`, claimRefs: refs, resolution: thread.resolution };
   });
   const threadByHandle = handleIndex('thread', plan.openThreads.map((thread) => thread.threadId), threads.map((thread) => thread.threadId));
   refuseDuplicateContent('thread', threads.map((thread) => thread.threadId));
+  const threadById = new Map(threads.map((thread) => [thread.threadId, thread]));
+  const coreOf = new Map(motifIds.map((motifId, position) => [motifId, motifCores[position] ?? []]));
 
   // ---- chapters (in reading order) ------------------------------------------------------------
   const chapterPlan = plan.chapterPlan.map((chapter, position): PlanChapter => {
@@ -453,7 +476,29 @@ export function buildMetaNarrativePlan(draft: unknown, context: MetaNarrativePla
       .sort(byKey((transition) => transition.motifRef));
     const opensThreadRefs = sorted(chapter.opensThreadRefs.map((ref) => resolveHandle(threadByHandle, where, 'thread', ref)));
     const closesThreadRefs = sorted(chapter.closesThreadRefs.map((ref) => resolveHandle(threadByHandle, where, 'thread', ref)));
-    const content = { narrativeOperation: chapter.narrativeOperation, claimRefs: refs, motifTransitions, opensThreadRefs, closesThreadRefs };
+    // A chapter moves a motif, opens or closes a thread only where it names one
+    // of that element's claims: a lifecycle is development, not bookkeeping.
+    const named = new Set(refs);
+    const carries = (claims: readonly string[]): boolean => claims.some((claimId) => named.has(claimId));
+    for (const transition of motifTransitions) {
+      if (!carries(coreOf.get(transition.motifRef) ?? [])) {
+        throw new MetaNarrativePlanError(
+          'PLAN_MOVEMENT_UNGROUNDED',
+          `${where} moves motif "${transition.motifRef}" to ${transition.toState} without naming any claim of its core; a motif moves only where its meaning is written`,
+        );
+      }
+    }
+    for (const [verb, threadIds] of [['opens', opensThreadRefs], ['closes', closesThreadRefs]] as const) {
+      for (const threadId of threadIds) {
+        if (!carries(threadById.get(threadId)?.claimRefs ?? [])) {
+          throw new MetaNarrativePlanError(
+            'PLAN_MOVEMENT_UNGROUNDED',
+            `${where} ${verb} thread "${threadId}" without naming any of its claims; a thread moves only where its meaning is written`,
+          );
+        }
+      }
+    }
+    const content ={ narrativeOperation: chapter.narrativeOperation, claimRefs: refs, motifTransitions, opensThreadRefs, closesThreadRefs };
     return { chapterId: `chapter.${structuralHash(content)}`, ...content };
   });
   refuseDuplicateContent('chapter', chapterPlan.map((chapter) => chapter.chapterId));
@@ -462,7 +507,6 @@ export function buildMetaNarrativePlan(draft: unknown, context: MetaNarrativePla
   const rank = new Map<MotifState, number>(MOTIF_LIFECYCLE.map((state, index) => [state, index]));
   const stateOf = new Map<string, MotifState>(motifIds.map((motifId) => [motifId, 'UNSEEN']));
   const stepsOf = new Map<string, PlanMotifStep[]>(motifIds.map((motifId) => [motifId, []]));
-  const threadById = new Map(threads.map((thread) => [thread.threadId, thread]));
   const openedAt = new Map<string, number>();
   const closed = new Set<string>();
   chapterPlan.forEach((chapter, position) => {
@@ -506,16 +550,19 @@ export function buildMetaNarrativePlan(draft: unknown, context: MetaNarrativePla
       throw new MetaNarrativePlanError('PLAN_THREAD_LIFECYCLE_INVALID', `thread "${thread.threadId}" is opened, declared to close, and never closed; a thread is not silently lost`);
     }
   }
-  const leftOpen = new Set(threads.filter((thread) => thread.resolution === 'LEAVE_OPEN').map((thread) => thread.motifRef));
+  // Only a thread that names one of a motif's core claims can leave that motif
+  // explicitly open: a thread about something else says nothing about it.
+  const leftOpenClaims = new Set(threads.filter((thread) => thread.resolution === 'LEAVE_OPEN').flatMap((thread) => thread.claimRefs));
   const primaryMotifs = motifIds.map((motifId, position): PlanPrimaryMotif => {
     const finalState = stateOf.get(motifId) ?? 'UNSEEN';
     const resolved = finalState === 'INTEGRATED' || finalState === 'CLOSED';
-    if (!resolved && (finalState === 'UNSEEN' || !leftOpen.has(motifId))) {
+    const leftOpen = (motifCores[position] ?? []).some((claimId) => leftOpenClaims.has(claimId));
+    if (!resolved && (finalState === 'UNSEEN' || !leftOpen)) {
       throw new MetaNarrativePlanError(
         'PLAN_MOTIF_SILENTLY_DROPPED',
         finalState === 'UNSEEN'
           ? `primary motif "${motifId}" is never opened by any chapter; a central motif the reading never develops is forgotten before it starts`
-          : `primary motif "${motifId}" is opened and ends ${finalState}: neither integrated nor closed, and no thread leaves it explicitly open`,
+          : `primary motif "${motifId}" is opened and ends ${finalState}: neither integrated nor closed, and no thread naming one of its core claims is left open`,
       );
     }
     return { motifId, coreClaimRefs: motifCores[position] ?? [], lifecycle: stepsOf.get(motifId) ?? [], finalState };
@@ -594,7 +641,6 @@ export function metaNarrativePlanDraftOf(plan: MetaNarrativePlan): MetaNarrative
     tensions: plan.tensions.map((tension) => ({ claimRefs: tension.claimRefs })),
     openThreads: plan.openThreads.map((thread) => ({
       threadId: thread.threadId,
-      motifRef: thread.motifRef,
       claimRefs: thread.claimRefs,
       resolution: thread.resolution,
     })),
@@ -608,20 +654,19 @@ export function metaNarrativePlanDraftOf(plan: MetaNarrativePlan): MetaNarrative
   };
 }
 
-/** Refusals that say "this plan belongs to another brief or graph" — true of the plan, not a damage to it. */
-const BINDING_CODES: ReadonlySet<MetaNarrativePlanErrorCode> = new Set(['PLAN_BRIEF_HASH_MISMATCH', 'PLAN_CLAIM_GRAPH_HASH_MISMATCH']);
-
 /**
  * Proves that `plan` is, byte for byte, the plan the builder produces from the
  * plan's own choices for this chart, brief, released profile and accepted
  * graph. Anything else — an edited motif, a rewritten lifecycle, a lexicon
- * marked bound, an added field — is refused (`PLAN_NOT_INTACT`).
+ * marked bound, an added field, a binding hash that is not this brief's or
+ * this graph's — is refused (`PLAN_NOT_INTACT`, the cause in the message), as
+ * the claim graph does for a graph of another chart. A caller that wants the
+ * specific binding refusal re-builds the plan's draft (`metaNarrativePlanDraftOf`).
  *
  * A consistency proof, not tamper evidence (plain SHA-256, as for the graph):
  * whoever needs to know a plan is still the one they accepted pins its
- * `structuralHash`. A plan that belongs to another brief or graph surfaces as
- * that binding refusal; a context that is not an intact graph of this chart,
- * or an unreleased registry, surfaces as what it is.
+ * `structuralHash`. A context that is not an intact graph of this chart, or an
+ * unreleased registry, is not a damaged plan and surfaces as what it is.
  */
 export function assertMetaNarrativePlanIntact(plan: MetaNarrativePlan, context: MetaNarrativePlanContext): void {
   let presented: string;
@@ -637,7 +682,7 @@ export function assertMetaNarrativePlanIntact(plan: MetaNarrativePlan, context: 
     rebuilt = buildMetaNarrativePlan(draft, context);
   } catch (error) {
     const refusedPlan = error instanceof ClaimError
-      || (error instanceof MetaNarrativePlanError && !BINDING_CODES.has(error.code));
+      || error instanceof MetaNarrativePlanError;
     if (!refusedPlan) {
       throw error;
     }

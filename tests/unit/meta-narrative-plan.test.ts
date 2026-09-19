@@ -8,7 +8,7 @@
  * live in `tests/negative/meta-narrative-plan.negative.test.ts`.
  */
 import { createHash } from 'node:crypto';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { canonicalJson } from '../../src/domain/canonical-json.js';
 import { structuralHash } from '../../src/domain/structural-hash.js';
 import {
@@ -68,6 +68,7 @@ const baseline = (): MetaNarrativePlan => buildMetaNarrativePlan(validPlanDraft(
  * loudly on time instead of reporting a half-run test.
  */
 const MANY_BUILDS = 60_000;
+vi.setConfig({ testTimeout: MANY_BUILDS });
 const C = claimIds();
 
 function refusalOf(run: () => unknown): unknown {
@@ -169,7 +170,7 @@ describe('ETBZ-30B P1: a valid plan is versioned and bound to its brief, its gra
       expect(Object.keys(tension).sort()).toEqual(['claimRefs', 'tensionId']);
     }
     for (const thread of plan.openThreads) {
-      expect(Object.keys(thread).sort()).toEqual(['claimRefs', 'motifRef', 'resolution', 'threadId']);
+      expect(Object.keys(thread).sort()).toEqual(['claimRefs', 'resolution', 'threadId']);
     }
     for (const entry of plan.chapterPlan) {
       expect(Object.keys(entry).sort()).toEqual(['chapterId', 'claimRefs', 'closesThreadRefs', 'motifTransitions', 'narrativeOperation', 'opensThreadRefs']);
@@ -254,7 +255,7 @@ describe('ETBZ-30B P2: identity is content-derived, and the plan is a pure funct
       expect(tension.tensionId).toBe(`tension.${structuralHash({ claimRefs: tension.claimRefs })}`);
     }
     for (const thread of plan.openThreads) {
-      expect(thread.threadId).toBe(`thread.${structuralHash({ motifRef: thread.motifRef, claimRefs: thread.claimRefs })}`);
+      expect(thread.threadId).toBe(`thread.${structuralHash({ claimRefs: thread.claimRefs })}`);
     }
     for (const entry of plan.chapterPlan) {
       const { chapterId, ...content } = entry;
@@ -268,7 +269,6 @@ describe('ETBZ-30B P2: identity is content-derived, and the plan is a pure funct
       for (const motif of draft.primaryMotifs) motif.motifId = rename(motif.motifId);
       for (const thread of draft.openThreads) {
         thread.threadId = rename(thread.threadId);
-        thread.motifRef = rename(thread.motifRef);
       }
       for (const entry of draft.chapterPlan) {
         for (const transition of entry.motifTransitions) transition.motifRef = rename(transition.motifRef);
@@ -300,9 +300,10 @@ describe('ETBZ-30B P2: identity is content-derived, and the plan is a pure funct
     expect(canonicalJson(plan)).toBe(canonicalJson(baseline()));
   });
 
-  it('does not let the order of threads opened or closed in one chapter create a difference', () => {
+  it('does not let the order of threads opened in one chapter create a difference', () => {
     const bothIn = (order: readonly string[]): MetaNarrativePlan => buildMetaNarrativePlan(planWith((draft) => {
-      // Both threads open in the CONTRAST chapter and close — well, one of them — later.
+      // Both threads open in the CONTRAST chapter, which therefore names a claim of each.
+      chapter(draft, 2).claimRefs = [C.pressure, C.recurrence, C.resource];
       chapter(draft, 2).opensThreadRefs = [...order];
       chapter(draft, 3).opensThreadRefs = [];
     }), PLAN_KNOWN);
@@ -312,6 +313,24 @@ describe('ETBZ-30B P2: identity is content-derived, and the plan is a pure funct
     const opened = forward.chapterPlan[2]?.opensThreadRefs ?? [];
     expect(opened).toHaveLength(2);
     expect(opened).toEqual([...opened].sort());
+  });
+
+  it('does not let the order of threads closed in one chapter create a difference', () => {
+    const bothClosedIn = (order: readonly string[]): MetaNarrativePlan => buildMetaNarrativePlan(planWith((draft) => {
+      const resource = draft.openThreads.find((candidate) => candidate.threadId === T.resource);
+      if (resource === undefined) throw new Error('fixture: no resource thread');
+      resource.resolution = 'CLOSE';
+      const last = chapter(draft, 6);
+      last.claimRefs = [C.pressure, C.recurrence, C.relation, C.resource];
+      last.motifTransitions.push({ motifRef: M.resource, toState: 'INTEGRATED' });
+      last.closesThreadRefs = [...order];
+    }), PLAN_KNOWN);
+    const forward = bothClosedIn([T.pressure, T.resource]);
+    const backward = bothClosedIn([T.resource, T.pressure]);
+    expect(backward.structuralHash).toBe(forward.structuralHash);
+    const closedThreads = forward.chapterPlan[6]?.closesThreadRefs ?? [];
+    expect(closedThreads).toHaveLength(2);
+    expect(closedThreads).toEqual([...closedThreads].sort());
   });
 
   it('stores one canonical order for every set-like list', () => {
@@ -357,12 +376,13 @@ describe('ETBZ-30B P2: identity is content-derived, and the plan is a pure funct
     expect(() => { assertMetaNarrativePlanIntact(plan, PLAN_KNOWN); }).not.toThrow();
   });
 
-  it('moves the plan hash when a choice changes: thesis, motif core, thread fate, chapter content', () => {
+  it('moves the plan hash when a choice changes: thesis, motif core, chapter operation, chapter content', () => {
     const base = baseline().structuralHash;
     const variants = [
       planWith((draft) => { draft.reportThesis.claimRefs.push(C.resource); }),
       planWith((draft) => {
         draft.primaryMotifs[0] = { motifId: M.expression, coreClaimRefs: [C.recurrence] };
+        chapter(draft, 1).claimRefs = [C.recurrence, C.relation];
       }),
       planWith((draft) => { chapter(draft, 4).narrativeOperation = 'CONTEXTUALIZE'; }),
       planWith((draft) => { chapter(draft, 4).claimRefs = [C.dayMaster]; }),
@@ -378,7 +398,7 @@ describe('ETBZ-30B P2: identity is content-derived, and the plan is a pure funct
 });
 
 describe('ETBZ-30B P3: PD-5 is composed for every central claim, and the plan rests on at least three', () => {
-  it('passes every thesis and every motif-core claim through assertCentralGraphClaim', () => {
+  it('positive control: every thesis and motif-core claim of the baseline is one PD-5 accepts (the refusals are negative N2)', () => {
     const plan = baseline();
     const central = new Set([...plan.reportThesis.claimRefs, ...plan.primaryMotifs.flatMap((motif) => motif.coreClaimRefs)]);
     expect([...central].sort()).toEqual([C.pressure, C.recurrence, C.relation, C.resource].sort());
@@ -391,6 +411,7 @@ describe('ETBZ-30B P3: PD-5 is composed for every central claim, and the plan re
     const plan = buildMetaNarrativePlan(planWith((draft) => {
       draft.reportThesis.claimRefs = [C.recurrence, C.pressure];
       draft.primaryMotifs[0] = { motifId: M.expression, coreClaimRefs: [C.recurrence] };
+      chapter(draft, 1).claimRefs = [C.recurrence, C.relation];
     }), PLAN_KNOWN);
     const slots = [...plan.reportThesis.claimRefs, ...plan.primaryMotifs.flatMap((motif) => motif.coreClaimRefs)];
     expect(slots).toHaveLength(5);
@@ -466,7 +487,9 @@ describe('ETBZ-30B P4: the motif lifecycle is walked along the reading, forward 
     const plan = baseline();
     const resource = motifFor(plan, [C.resource]);
     const leftOpen = plan.openThreads.filter((thread) => thread.resolution === 'LEAVE_OPEN');
-    expect(leftOpen.map((thread) => thread.motifRef)).toEqual([resource.motifId]);
+    // The thread is central to the resource motif because it names that motif's core claim.
+    expect(resource.coreClaimRefs).toEqual([C.resource]);
+    expect(leftOpen.flatMap((thread) => thread.claimRefs)).toEqual([C.resource]);
     // Counterfactual: the same plan whose resource thread CLOSES leaves the motif silently dropped.
     expectPlanRefusal('PLAN_MOTIF_SILENTLY_DROPPED', () => buildMetaNarrativePlan(planWith((draft) => {
       const thread = draft.openThreads.find((candidate) => candidate.threadId === T.resource);
@@ -476,7 +499,7 @@ describe('ETBZ-30B P4: the motif lifecycle is walked along the reading, forward 
     }), PLAN_KNOWN));
   });
 
-  it('opens each thread in exactly one chapter and closes a CLOSE thread in exactly one later chapter', () => {
+  it('positive control: the baseline opens its CLOSE thread in one chapter and closes it in one later chapter (the refusals are negative N8)', () => {
     const plan = baseline();
     const pressureThread = plan.openThreads.find((thread) => thread.resolution === 'CLOSE');
     expect(pressureThread).toBeDefined();
@@ -487,8 +510,23 @@ describe('ETBZ-30B P4: the motif lifecycle is walked along the reading, forward 
   });
 });
 
+describe('ETBZ-30B P4b: threads are claims kept in view — central when they name a motif core', () => {
+  it('accepts a thread that belongs to no primary motif, and it leaves no motif open', () => {
+    const plan = buildMetaNarrativePlan(planWith((draft) => {
+      draft.openThreads.push({ threadId: 'thread.contrast', claimRefs: [C.dayMaster, C.dominant], resolution: 'LEAVE_OPEN' });
+      chapter(draft, 4).opensThreadRefs = ['thread.contrast'];
+    }), PLAN_KNOWN);
+    expect(plan.openThreads).toHaveLength(3);
+    const cores = new Set(plan.primaryMotifs.flatMap((motif) => motif.coreClaimRefs));
+    const nonCentral = plan.openThreads.find((thread) => thread.claimRefs.every((claimId) => !cores.has(claimId)));
+    expect(nonCentral?.claimRefs).toEqual([C.dayMaster, C.dominant].sort());
+    // It is still the resource thread — which names the resource core — that leaves the resource motif open.
+    expect(motifFor(plan, [C.resource]).finalState).toBe('DEVELOPED');
+  });
+});
+
 describe('ETBZ-30B P5: tensions, coverage and constraints are what the graph and the plan state', () => {
-  it('carries exactly the three CONTRASTS_WITH relations the graph states between planned claims', () => {
+  it('positive control: the baseline carries exactly the three CONTRASTS_WITH relations the graph states between its planned claims (the refusals are negative N9)', () => {
     const plan = baseline();
     expect(plan.tensions.map((tension) => tension.claimRefs.join('|')).sort()).toEqual([
       [C.pressure, C.recurrence].sort().join('|'),
@@ -539,6 +577,21 @@ describe('ETBZ-30B P5: tensions, coverage and constraints are what the graph and
     expect(inChapters.has(threadOnly)).toBe(false);
     expect(plan.coverage.plannedClaimRefs).toEqual(expect.arrayContaining([c.relation, threadOnly]));
     expect(plan.constraints.allowedClaimRefs).toEqual(expect.arrayContaining([c.relation, threadOnly]));
+    expect(plan.coverage.unplannedClaimRefs).toEqual([]);
+  });
+
+  it('plans a claim named only by a declared tension: what the plan names, the rendering may express', () => {
+    const plan = buildMetaNarrativePlan(planWith((draft) => {
+      // Day master and dominant leave every chapter; their declared tension stays.
+      chapter(draft, 0).claimRefs = [C.recurrence];
+      chapter(draft, 3).claimRefs = [C.resource];
+      draft.chapterPlan.splice(4, 1);
+    }), PLAN_KNOWN);
+    const inChapters = new Set(plan.chapterPlan.flatMap((entry) => entry.claimRefs));
+    expect(inChapters.has(C.dayMaster) || inChapters.has(C.dominant)).toBe(false);
+    expect(plan.tensions.map((tension) => tension.claimRefs.join('|'))).toContain([C.dayMaster, C.dominant].sort().join('|'));
+    expect(plan.coverage.plannedClaimRefs).toEqual(expect.arrayContaining([C.dayMaster, C.dominant]));
+    expect(plan.constraints.allowedClaimRefs).toEqual(expect.arrayContaining([C.dayMaster, C.dominant]));
     expect(plan.coverage.unplannedClaimRefs).toEqual([]);
   });
 
@@ -646,6 +699,8 @@ describe('ETBZ-30B P6: the accepted plan is plain data that survives serialisati
       ['a salience smuggled onto a motif', { ...plan, primaryMotifs: [{ ...firstMotif, salience: 0.9 }, ...plan.primaryMotifs.slice(1)] }],
       ['a rank smuggled onto the plan', { ...plan, rank: 1 }],
       ['a profile ref edited', { ...plan, methodProfileRef: 'bazi-method-profile@0.9.0' }],
+      ['its graph binding edited', { ...plan, claimGraphStructuralHash: 'sha256:0' }],
+      ['its brief binding edited', { ...plan, sourceBriefStructuralHash: 'sha256:0' }],
       ['a value that cannot be canonicalised', { ...plan, weight: 10n }],
       ['motifs out of canonical order', { ...plan, primaryMotifs: [...plan.primaryMotifs].reverse() }],
       ['no chapters at all', { ...plan, chapterPlan: null }],
@@ -671,8 +726,10 @@ describe('ETBZ-30B P7: the plan depends on the brief and the graph it is bound t
     }
     // A plan drafted for the known chart is refused against the other chart and its graph...
     expectPlanRefusal('PLAN_BRIEF_HASH_MISMATCH', () => buildMetaNarrativePlan(validPlanDraft(), other));
-    // ...and an accepted plan of the known chart is no plan of the other chart.
-    expectPlanRefusal('PLAN_BRIEF_HASH_MISMATCH', () => { assertMetaNarrativePlanIntact(baseline(), other); });
+    // ...and an accepted plan of the known chart is no plan of the other chart (as a graph of
+    // another chart is not intact, ADR 0007), with the cause named.
+    expectPlanRefusal('PLAN_NOT_INTACT', () => { assertMetaNarrativePlanIntact(baseline(), other); });
+    expect((refusalOf(() => { assertMetaNarrativePlanIntact(baseline(), other); }) as Error).message).toContain('different brief');
   });
 
   it('invalidates a plan when the graph identity changes, even when every claim it names survives', () => {
@@ -682,7 +739,8 @@ describe('ETBZ-30B P7: the plan depends on the brief and the graph it is bound t
     expect(moved.claims.map((claim) => claim.claimId)).toEqual(PLAN_KNOWN.graph.claims.map((claim) => claim.claimId));
     const context = planContextFor(KNOWN, moved);
     expectPlanRefusal('PLAN_CLAIM_GRAPH_HASH_MISMATCH', () => buildMetaNarrativePlan(validPlanDraft(), context));
-    expectPlanRefusal('PLAN_CLAIM_GRAPH_HASH_MISMATCH', () => { assertMetaNarrativePlanIntact(baseline(), context); });
+    expectPlanRefusal('PLAN_NOT_INTACT', () => { assertMetaNarrativePlanIntact(baseline(), context); });
+    expect((refusalOf(() => { assertMetaNarrativePlanIntact(baseline(), context); }) as Error).message).toContain('different claim graph');
     // The plan re-drafted for the new graph is accepted, and is another plan.
     const redrafted = buildMetaNarrativePlan(validPlanDraft(context), context);
     expect(redrafted.claimGraphStructuralHash).toBe(moved.structuralHash);

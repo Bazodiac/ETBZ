@@ -9,10 +9,17 @@
  * otherwise "red" proves nothing. Every file is restored byte-for-byte
  * afterwards, and the run fails if the working tree is not clean at the end.
  *
+ * RED means an ASSERTION failed. A mutant that only makes a test time out, or
+ * that breaks loading or collection of the file, proves nothing about the
+ * guard and is reported as an error, never as a kill; each kill names the
+ * first test that caught it.
+ *
  *   npm run guards:etbz30b
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const PLAN = 'src/application/interpretation/meta-narrative-plan.ts';
 
@@ -68,7 +75,7 @@ const MUTANTS = [
   ['TENSION: any relation counts as a tension', PLAN, "    .some((relation) => relation.type === 'CONTRASTS_WITH' && relation.targetClaimId === to);", "    .some((relation) => relation.targetClaimId === to);", [T.negative]],
   ['TENSION: a stated contrast among planned claims may be flattened', PLAN, "      if (relation.type === 'CONTRASTS_WITH' && plannedSet.has(relation.targetClaimId)\n", "      if (relation.type === 'CONTRASTS_WITH' && plannedSet.has(relation.targetClaimId) && planned.length < 0\n", [T.negative]],
   // --- threads -------------------------------------------------------------------------------------
-  ['THREAD: the fate enters thread identity', PLAN, "threadId: `thread.${structuralHash({ motifRef, claimRefs: refs })}`", "threadId: `thread.${structuralHash({ motifRef, claimRefs: refs, resolution: thread.resolution })}`", [T.negative]],
+  ['THREAD: the fate enters thread identity', PLAN, "threadId: `thread.${structuralHash({ claimRefs: refs })}`", "threadId: `thread.${structuralHash({ claimRefs: refs, resolution: thread.resolution })}`", [T.negative]],
   ['THREAD: a declared thread no chapter opens', PLAN, "    if (!openedAt.has(thread.threadId)) {", "    if (!openedAt.has(thread.threadId) && threads.length < 0) {", [T.negative]],
   ['THREAD: a thread declared to close is silently lost', PLAN, "    if (thread.resolution === 'CLOSE' && !closed.has(thread.threadId)) {", "    if (thread.resolution === 'CLOSE' && !closed.has(thread.threadId) && threads.length < 0) {", [T.negative]],
   ['THREAD: a thread opened in two chapters', PLAN, "      if (openedAt.has(threadId)) {", "      if (openedAt.has(threadId) && position < 0) {", [T.negative]],
@@ -79,12 +86,19 @@ const MUTANTS = [
   ['LIFECYCLE: a step in place is a transition', PLAN, "      if ((rank.get(transition.toState) ?? 0) <= (rank.get(current) ?? 0)) {", "      if ((rank.get(transition.toState) ?? 0) < (rank.get(current) ?? 0)) {", [T.negative]],
   ['LIFECYCLE: any step is allowed', PLAN, "      if ((rank.get(transition.toState) ?? 0) <= (rank.get(current) ?? 0)) {", "      if ((rank.get(transition.toState) ?? 0) < 0) {", [T.negative]],
   ['LIFECYCLE: the walk is not recorded on the motif', PLAN, "      stepsOf.get(transition.motifRef)?.push({ chapterId: chapter.chapterId, state: transition.toState });\n", "", [T.unit]],
-  ['DROP: a motif opened and left unfinished is accepted', PLAN, "    if (!resolved && (finalState === 'UNSEEN' || !leftOpen.has(motifId))) {", "    if (!resolved && finalState === 'UNSEEN') {", [T.negative]],
-  ['DROP: a motif never opened is accepted when a thread names it', PLAN, "    if (!resolved && (finalState === 'UNSEEN' || !leftOpen.has(motifId))) {", "    if (!resolved && !leftOpen.has(motifId)) {", [T.negative]],
-  ['DROP: a thread that closes counts as leaving its motif open', PLAN, "threads.filter((thread) => thread.resolution === 'LEAVE_OPEN').map(", "threads.map(", [T.negative]],
+  ['DROP: a motif opened and left unfinished is accepted', PLAN, "    if (!resolved && (finalState === 'UNSEEN' || !leftOpen)) {", "    if (!resolved && finalState === 'UNSEEN') {", [T.negative]],
+  ['DROP: a motif never opened is accepted when a thread names it', PLAN, "    if (!resolved && (finalState === 'UNSEEN' || !leftOpen)) {", "    if (!resolved && !leftOpen) {", [T.negative]],
+  ['DROP: a thread that closes counts as leaving its motif open', PLAN, "threads.filter((thread) => thread.resolution === 'LEAVE_OPEN').flatMap(", "threads.flatMap(", [T.negative]],
+  ['DROP: a left-open thread about other claims leaves any motif open', PLAN, "    const leftOpen = (motifCores[position] ?? []).some((claimId) => leftOpenClaims.has(claimId));", "    const leftOpen = leftOpenClaims.size > 0;", [T.negative]],
+  // --- grounding of movement and disjoint cores --------------------------------------------------
+  ['GROUND: a motif moves in a chapter that names none of its core claims', PLAN, "      if (!carries(coreOf.get(transition.motifRef) ?? [])) {", "      if (!carries(coreOf.get(transition.motifRef) ?? []) && position < 0) {", [T.negative]],
+  ['GROUND: a thread moves in a chapter that names none of its claims', PLAN, "        if (!carries(threadById.get(threadId)?.claimRefs ?? [])) {", "        if (!carries(threadById.get(threadId)?.claimRefs ?? []) && position < 0) {", [T.negative]],
+  ['GROUND: only the opening of a thread is grounded', PLAN, "of [['opens', opensThreadRefs], ['closes', closesThreadRefs]] as const) {", "of [['opens', opensThreadRefs]] as const) {", [T.negative]],
+  ['GROUND: only the closing of a thread is grounded', PLAN, "of [['opens', opensThreadRefs], ['closes', closesThreadRefs]] as const) {", "of [['closes', closesThreadRefs]] as const) {", [T.negative]],
+  ['OVERLAP: recombined claims become more primary motifs', PLAN, "      if (owner !== undefined) {", "      if (owner !== undefined && position < 0) {", [T.negative]],
   // --- identity and order ----------------------------------------------------------------------------
   ['IDENTITY: the motif handle enters motif identity', PLAN, "  const motifIds = motifCores.map((core) => `motif.${structuralHash({ coreClaimRefs: core })}`);", "  const motifIds = motifCores.map((core, index) => `motif.${structuralHash({ coreClaimRefs: core, handle: plan.primaryMotifs[index]?.motifId })}`);", [T.unit]],
-  ['IDENTITY: the thread handle enters thread identity', PLAN, "threadId: `thread.${structuralHash({ motifRef, claimRefs: refs })}`", "threadId: `thread.${structuralHash({ motifRef, claimRefs: refs, handle: thread.threadId })}`", [T.unit]],
+  ['IDENTITY: the thread handle enters thread identity', PLAN, "threadId: `thread.${structuralHash({ claimRefs: refs })}`", "threadId: `thread.${structuralHash({ claimRefs: refs, handle: thread.threadId })}`", [T.unit]],
   ['IDENTITY: the chapter position enters chapter identity', PLAN, "    return { chapterId: `chapter.${structuralHash(content)}`, ...content };", "    return { chapterId: `chapter.${structuralHash({ ...content, position })}`, ...content };", [T.unit]],
   ['ORDER: reference input order survives into the plan', PLAN, "    return sorted(refs);\n  };", "    return [...refs];\n  };", [T.unit]],
   ['ORDER: motif input order survives into the plan', PLAN, "    primaryMotifs: primaryMotifs.sort(byKey((motif) => motif.motifId)),", "    primaryMotifs,", [T.unit]],
@@ -92,11 +106,13 @@ const MUTANTS = [
   ['ORDER: thread input order survives into the plan', PLAN, "    openThreads: threads.sort(byKey((thread) => thread.threadId)),", "    openThreads: threads,", [T.unit]],
   ['ORDER: transition input order survives into the plan', PLAN, "      .sort(byKey((transition) => transition.motifRef));", ";", [T.unit]],
   ['ORDER: opened-thread input order survives into the plan', PLAN, "    const opensThreadRefs = sorted(chapter.opensThreadRefs.map(", "    const opensThreadRefs = (chapter.opensThreadRefs.map(", [T.unit]],
+  ['ORDER: closed-thread input order survives into the plan', PLAN, "    const closesThreadRefs = sorted(chapter.closesThreadRefs.map(", "    const closesThreadRefs = (chapter.closesThreadRefs.map(", [T.unit]],
   ['ORDER: the reading order is sorted away', PLAN, "    chapterPlan,\n    coverage,", "    chapterPlan: [...chapterPlan].sort(byKey((entry) => entry.chapterId)),\n    coverage,", [T.unit]],
   // --- coverage and constraints -------------------------------------------------------------------------
   ['COVERAGE: excluded (assumed-time) facts are offered as uncovered', PLAN, "  const interpretable = context.brief.facts.filter((fact) => fact.interpretable).map(", "  const interpretable = context.brief.facts.map(", [T.unit]],
   ['COVERAGE: a claim named only by a motif core is not planned', PLAN, "    ...centralClaims,\n", "", [T.unit]],
   ['COVERAGE: a claim named only by a thread is not planned', PLAN, "    ...threads.flatMap((thread) => thread.claimRefs),\n", "", [T.unit]],
+  ['COVERAGE: a claim named only by a tension is not planned', PLAN, "    ...tensions.flatMap((tension) => tension.claimRefs),\n", "", [T.unit]],
   ['CONSTRAINT: every graph claim may be rendered', PLAN, "      allowedClaimRefs: planned,", "      allowedClaimRefs: graph.claims.map((claim) => claim.claimId),", [T.unit]],
   ['CONSTRAINT: new claims are no longer forbidden', PLAN, "      newClaimsForbidden: true as const,", "      newClaimsForbidden: false as unknown as true,", [T.unit]],
   ['NUMBER: a count is published', PLAN, "    plannedClaimRefs: planned,\n", "    plannedClaimRefs: planned,\n    plannedClaimCount: planned.length,\n", [T.unit]],
@@ -115,23 +131,41 @@ const MUTANTS = [
   // --- integrity ------------------------------------------------------------------------------------------------
   ['INTACT: an edited plan passes', PLAN, "  if (presented !== structuralHash(rebuilt)) {", "  if (presented === '') {", [T.unit]],
   ['INTACT: only the printed hash is compared, so an added field passes', PLAN, "  if (presented !== structuralHash(rebuilt)) {", "  if (plan.structuralHash !== rebuilt.structuralHash) {", [T.unit]],
-  ['INTACT: a PD-5 refusal escapes as a raw ClaimError', PLAN, "    const refusedPlan = error instanceof ClaimError\n      || (", "    const refusedPlan = (", [T.unit]],
+  ['INTACT: a PD-5 refusal escapes as a raw ClaimError', PLAN, "    const refusedPlan = error instanceof ClaimError\n      || error instanceof MetaNarrativePlanError;", "    const refusedPlan = error instanceof MetaNarrativePlanError;", [T.unit]],
   ['INTACT: a value that is not plan-shaped escapes as a raw TypeError', PLAN, "  } catch {\n    throw new MetaNarrativePlanError('PLAN_NOT_INTACT', 'the value does not have the shape of an accepted plan');", "  } catch (shapeError) {\n    throw shapeError;", [T.unit]],
-  ['INTACT: a plan of another brief or graph is reported as damaged', PLAN, "      || (error instanceof MetaNarrativePlanError && !BINDING_CODES.has(error.code));", "      || error instanceof MetaNarrativePlanError;", [T.unit]],
+  ['INTACT: a plan of another brief or graph escapes as a raw binding refusal', PLAN, "      || error instanceof MetaNarrativePlanError;", "      || (error instanceof MetaNarrativePlanError && !error.code.endsWith('_HASH_MISMATCH'));", [T.unit]],
   ['INTACT: a wrong context is reported as a damaged plan', PLAN, "    if (!refusedPlan) {\n      throw error;\n    }\n", "", [T.unit]],
 ];
 
-/** Exit status of the named suites. A run that did not END (signal, spawn failure) is an error, never "red". */
+const REPORT_DIR = mkdtempSync(join(tmpdir(), 'etbz30b-mutants-'));
+const REPORT = join(REPORT_DIR, 'vitest.json');
+
+/**
+ * Runs the named suites and classifies the run. Only an ASSERTION failure is
+ * RED: a run that did not end, a report that is missing, a suite that failed
+ * without a failing assertion (load / collect error) or a test that timed out
+ * is an error, never "red".
+ */
 function run(tests) {
-  const result = spawnSync('npx', ['vitest', 'run', ...tests], { encoding: 'utf8' });
-  if (result.status === null || result.error !== undefined) {
-    return 'DID_NOT_FINISH';
+  rmSync(REPORT, { force: true });
+  const result = spawnSync('npx', ['vitest', 'run', ...tests, '--reporter=json', `--outputFile=${REPORT}`], { encoding: 'utf8' });
+  if (result.status === null || result.error !== undefined) return { outcome: 'DID_NOT_FINISH' };
+  if (result.status === 0) return { outcome: 'GREEN' };
+  let report;
+  try {
+    report = JSON.parse(readFileSync(REPORT, 'utf8'));
+  } catch {
+    return { outcome: 'NO_REPORT' };
   }
-  return result.status;
+  const failed = (report.testResults ?? []).flatMap((file) => (file.assertionResults ?? []).filter((test) => test.status === 'failed'));
+  if (failed.length === 0) return { outcome: 'NO_ASSERTION_FAILED' };
+  if (failed.some((test) => (test.failureMessages ?? []).some((message) => /timed out/iu.test(message)))) return { outcome: 'TIMEOUT' };
+  return { outcome: 'RED', first: failed[0].fullName };
 }
 
-if (run([T.unit, T.negative]) !== 0) {
-  process.stdout.write('BASELINE_NOT_GREEN: the unmutated suites fail, so a red mutant would prove nothing\n');
+const baseline = run([T.unit, T.negative]);
+if (baseline.outcome !== 'GREEN') {
+  process.stdout.write(`BASELINE_NOT_GREEN (${baseline.outcome}): the unmutated suites fail, so a red mutant would prove nothing\n`);
   process.exit(1);
 }
 process.stdout.write('BASELINE GREEN (unmutated)\n');
@@ -145,21 +179,22 @@ for (const [name, file, find, replace, tests] of MUTANTS) {
     continue;
   }
   writeFileSync(file, original.replace(find, replace));
-  let status;
+  let verdict;
   try {
-    status = run(tests);
+    verdict = run(tests);
   } finally {
     writeFileSync(file, original);
   }
-  results.push([name, status === 'DID_NOT_FINISH'
-    ? 'RUN_ERROR (vitest did not finish)'
-    : status !== 0 ? 'RED (guard holds)' : 'STAYED GREEN — guard is decoration']);
+  results.push([name, verdict.outcome === 'RED'
+    ? `RED (guard holds) <- ${verdict.first}`
+    : verdict.outcome === 'GREEN' ? 'STAYED GREEN — guard is decoration' : `RUN_ERROR (${verdict.outcome}) — not a proof`]);
 }
+rmSync(REPORT_DIR, { recursive: true, force: true });
 
 let killed = 0;
 for (const [name, outcome] of results) {
   if (outcome.startsWith('RED')) killed += 1;
-  process.stdout.write(`${outcome.padEnd(36)} :: ${name}\n`);
+  process.stdout.write(`${name}\n    ${outcome}\n`);
 }
 const dirty = execFileSync('git', ['status', '--porcelain', '--', 'src', 'tests'], { encoding: 'utf8' }).trim();
 if (dirty.length > 0) {

@@ -76,6 +76,40 @@ export function resourceClaim(overrides: Partial<InterpretiveClaim> = {}): Inter
   };
 }
 
+/**
+ * A fifth claim above the PD-5 floor — the year and the month branch are the
+ * same branch (identity pair) — used only where a test needs five disjoint
+ * motif cores. Not part of the plan graph.
+ */
+export function branchClaim(overrides: Partial<InterpretiveClaim> = {}): InterpretiveClaim {
+  return {
+    claimId: 'draft.branch',
+    statement: 'The same branch stands under the year and under the month.',
+    factRefs: ['chart.pillar.year.branch', 'chart.pillar.month.branch', 'chart.pillar.year.tier'],
+    themeRefs: [],
+    methodRefs: ['earthly_branches', 'fact_relations'],
+    epistemicClass: 'SUPPORTED_INTERPRETATION',
+    provisionalFactRefs: [],
+    relations: [],
+    ...overrides,
+  };
+}
+
+/** A sixth claim above the PD-5 floor — year and day stem share the stem element Metall. Not part of the plan graph. */
+export function stemElementClaim(overrides: Partial<InterpretiveClaim> = {}): InterpretiveClaim {
+  return {
+    claimId: 'draft.stemElement',
+    statement: 'The year stem and the day stem are of one element.',
+    factRefs: ['chart.pillar.year.stemElement', 'chart.pillar.day.stemElement', 'chart.pillar.year.stem'],
+    themeRefs: [],
+    methodRefs: ['heavenly_stems', 'fact_relations'],
+    epistemicClass: 'SUPPORTED_INTERPRETATION',
+    provisionalFactRefs: [],
+    relations: [],
+    ...overrides,
+  };
+}
+
 export function planClaims(context: ClaimGraphContext = KNOWN): InterpretiveClaim[] {
   return [
     recurrenceClaim(),
@@ -130,9 +164,11 @@ type Mutable<T> = { -readonly [K in keyof T]: T[K] extends readonly (infer U)[] 
 export type MutablePlanDraft = Mutable<MetaNarrativePlanDraft>;
 
 /**
- * The baseline draft: three primary motifs over four central claims, the three
- * tensions the graph states among the claims the plan uses, one thread that
- * closes and one deliberately left open, and seven chapters in reading order.
+ * The baseline draft: three primary motifs over four central claims (disjoint
+ * cores), the three tensions the graph states among the claims the plan uses,
+ * one thread that closes and one deliberately left open, and seven chapters in
+ * reading order. Every chapter that moves a motif or a thread names one of its
+ * claims.
  *
  *   1 ESTABLISH      expression -> SEEDED
  *   2 REINFORCE      expression -> DEVELOPED
@@ -161,8 +197,8 @@ export function validPlanDraft(context: MetaNarrativePlanContext = PLAN_KNOWN): 
       { claimRefs: [c.dominant, c.dayMaster] },
     ],
     openThreads: [
-      { threadId: T.pressure, motifRef: M.pressure, claimRefs: [c.pressure, c.recurrence], resolution: 'CLOSE' },
-      { threadId: T.resource, motifRef: M.resource, claimRefs: [c.resource], resolution: 'LEAVE_OPEN' },
+      { threadId: T.pressure, claimRefs: [c.pressure, c.recurrence], resolution: 'CLOSE' },
+      { threadId: T.resource, claimRefs: [c.resource], resolution: 'LEAVE_OPEN' },
     ],
     chapterPlan: [
       {

@@ -1,6 +1,6 @@
 # ADR 0008 — MetaNarrativePlan (ETBZ-30B)
 
-- **Status:** Proposed — PR open. Merge requires explicit Product Owner
+- **Status:** Proposed — not merged. Merge requires explicit Product Owner
   authorisation **and** the versioned ETBZ-36 lexicon binding (Jira ETBZ-30,
   "DRS — ETBZ-30B MetaNarrativePlan", R4M), which does not exist yet.
 - **Date:** 2026-09-19
@@ -49,18 +49,20 @@ Only plan-level refusals are `MetaNarrativePlanError`:
 
 | Concern | Rule | Refusal |
 |---|---|---|
-| Binding | The draft names the brief and the accepted graph it was written for; both are compared, never trusted. The plan carries `sourceBriefStructuralHash`, `claimGraphStructuralHash` and — copied from the re-proven graph — `methodProfileRef`, `methodProfileVersion`, `methodRegistryStructuralHash`. | `PLAN_BRIEF_HASH_MISMATCH`, `PLAN_CLAIM_GRAPH_HASH_MISMATCH` |
+| Binding | The draft names the brief and the accepted graph it was written for; both are compared, never trusted. The plan carries `sourceBriefStructuralHash` (the Long-Form contract's `sourceBriefHash`, named as in the claim graph), `claimGraphStructuralHash` and — copied from the re-proven graph — `methodProfileRef`, `methodProfileVersion`, `methodRegistryStructuralHash`. | `PLAN_BRIEF_HASH_MISMATCH`, `PLAN_CLAIM_GRAPH_HASH_MISMATCH` |
 | References | Every claim reference in thesis, motif cores, tensions, threads and chapters is an ACCEPTED claim id of the bound graph — not a draft handle, not a fact id, not a claim of another graph. Motif and thread references resolve to elements the plan declares. | `PLAN_UNKNOWN_CLAIM`, `PLAN_DANGLING_REFERENCE` |
 | Grounding | A thesis, a motif core, a thread and a chapter each name at least one accepted claim. | `PLAN_UNGROUNDED` |
 | Central claims | The thesis claims and every motif-core claim are central: each passes PD-5 (composed), and the plan rests on **at least three distinct** central claims (Method Profile section 11: "fewer than three central claims — stop and escalate, do not pad"). A claim that is both thesis and core counts once. | `CLAIM_INSUFFICIENT_SIGNALS`, `PLAN_INSUFFICIENT_CENTRAL_CLAIMS` |
 | Motif count | One to five primary motifs (Long-Form section 8: "three to five … where the chart supports them"). Five is a ceiling; three is not a hard floor, because a chart that carries fewer motifs must not be padded — the central-claim floor is what stops a thin chart. | `PLAN_MOTIF_COUNT_OUT_OF_RANGE` |
+| Disjoint cores | An accepted claim is the core of at most one primary motif. Otherwise three claims recombine into five "motifs" and one claim sits in most of them — repetition manufacturing narrative priority. The thesis may rest on core claims: it interprets the motifs, it is not one. | `PLAN_MOTIF_CORES_OVERLAP` |
 | Tensions | A tension names two accepted claims the graph relates by `CONTRASTS_WITH` (either direction). The plan never creates a relation. A `CONTRASTS_WITH` the graph states between two claims the plan uses must be declared (see "Interpretations" below). | `PLAN_TENSION_NOT_IN_GRAPH`, `PLAN_TENSION_UNDECLARED` |
 | Lifecycle | Chapters move motifs along `UNSEEN -> SEEDED -> DEVELOPED -> COMPLICATED -> INTEGRATED -> CLOSED`: strictly forward, skipping allowed, never back, never in place, never to `UNSEEN`. | `PLAN_ILLEGAL_MOTIF_TRANSITION` |
-| No forgotten motif | A primary motif ends `INTEGRATED` or `CLOSED`, or — having been opened — is explicitly left open by a `LEAVE_OPEN` thread of that motif. A primary motif no chapter opens is forgotten before it starts. | `PLAN_MOTIF_SILENTLY_DROPPED` |
-| Threads | Each thread belongs to one primary motif, names accepted claims, is opened by exactly one chapter, and is either closed by exactly one LATER chapter (`CLOSE`) or never closed (`LEAVE_OPEN`). | `PLAN_THREAD_LIFECYCLE_INVALID` |
+| Grounded movement | A chapter moves a motif only if it names one of that motif's core claims, and opens or closes a thread only if it names one of that thread's claims. Otherwise a motif is "developed" or "integrated" on paper while its meaning is never written — requirement 8 satisfied by a label. | `PLAN_MOVEMENT_UNGROUNDED` |
+| No forgotten motif | A primary motif ends `INTEGRATED` or `CLOSED`, or — having been opened — is explicitly left open by a `LEAVE_OPEN` thread that names one of its core claims. A primary motif no chapter opens is forgotten before it starts. | `PLAN_MOTIF_SILENTLY_DROPPED` |
+| Threads | A thread is a non-empty set of accepted claims, opened by exactly one chapter, and either closed by exactly one LATER chapter (`CLOSE`) or never closed (`LEAVE_OPEN`). It is not bound to a motif; it is *central* to a motif when it names one of that motif's core claims (Long-Form AC16: "central opened threads"). | `PLAN_THREAD_LIFECYCLE_INVALID` |
 | Duplication | Refused, never merged, never counted: a repeated reference in any list; two motifs or threads under one handle; two motifs, tensions, threads or chapters with the same content. | `PLAN_DUPLICATE_REF`, `PLAN_DUPLICATE_HANDLE`, `PLAN_DUPLICATE_CONTENT` |
 | Shape | `z.strictObject` throughout. A salience, weight, confidence, rank, priority or personality score; a fact, a claim, a method, a statement, a label, prose; a provider, model or run id; any derived field (version, lexicon, coverage, constraints, lifecycle, ids) — each is a refusal, not something dropped. Schema refusals name path and code, never the value. | `PLAN_SCHEMA_INVALID` |
-| Consistency | A presented plan must be, byte for byte, what the builder produces from its own choices for this chart, brief, profile and graph. | `PLAN_NOT_INTACT` |
+| Consistency | A presented plan must be, byte for byte, what the builder produces from its own choices for this chart, brief, profile and graph — including a plan presented against another brief or graph, or with an edited binding hash (the cause is in the message; as ADR 0007 treats a graph of another chart). | `PLAN_NOT_INTACT` |
 
 ### Identity and order
 
@@ -71,7 +73,7 @@ neither the drafter's list order nor its handles can become priority:
 ```
 motif.<structuralHash({ coreClaimRefs })>
 tension.<structuralHash({ claimRefs })>                 // the sorted pair
-thread.<structuralHash({ motifRef, claimRefs })>        // the fate is NOT identity
+thread.<structuralHash({ claimRefs })>                  // the fate is NOT identity
 chapter.<structuralHash({ narrativeOperation, claimRefs, motifTransitions,
                           opensThreadRefs, closesThreadRefs })>   // no position
 ```
@@ -87,9 +89,9 @@ SHA-256 of the canonical JSON of every other field; the unit suite re-derives it
 with `node:crypto`. Like the graph's, the consistency check
 (`assertMetaNarrativePlanIntact`) is a consistency proof, not tamper evidence:
 whoever needs to know a plan is still the one they accepted pins its hash. A
-plan presented against another brief or graph surfaces as the binding refusal;
-a wrong context (unreleased registry, foreign brief, damaged graph) surfaces as
-what it is.
+wrong context (unreleased registry, a brief not derived from the model, a
+graph that is not intact) is not a damaged plan and surfaces as what it is; the
+specific binding refusals come from re-building the plan's draft.
 
 ### Coverage and constraints
 
@@ -128,26 +130,51 @@ terminologyLexicon: { dependency: 'ETBZ-36', status: 'UNRESOLVED' }
 No version, page id or wording rule is invented; a drafter cannot supply a
 lexicon (schema refusal); an accepted plan whose binding is edited is
 `PLAN_NOT_INTACT`. The plan itself carries no customer wording at all — no
-thesis statement, no motif label. Binding the released lexicon is a new
-`planVersion`, not an edit of this one.
+thesis statement, no motif label. Binding the released lexicon changes this
+contract and every plan hash; whether that lands as a revision of this
+candidate before merge or as a later `planVersion` is decided when ETBZ-36
+exists — it is never an edit of an accepted plan.
 
 ## Interpretations the Product Owner may want to confirm
 
-Each is a reading of the canonical text, not a new product rule, and each is
-pinned by a test and a source mutant so that changing it is a visible decision:
+Each is a reading of the canonical text, not a PO decision, and each rule is
+pinned by a test and a dedicated source mutant, so that changing it is a
+visible decision. Where the reading is stricter than the text, it fails closed
+and can be withdrawn by removing one check.
 
-1. **Motif count 1–5**, not 3–5 (see the table). The donor's hard minimum of
-   three is kept as a *killed* mutant.
-2. **Tension completeness** — a `CONTRASTS_WITH` the graph states between two
-   claims the plan uses must be declared as a tension. Read from section 8
-   ("known tensions / counter-motifs"), section 2 (ambivalence is preserved,
-   not flattened) and section 12 (tension is explicit). Withdrawing it is one
-   check (`PLAN_TENSION_UNDECLARED`).
-3. **Tension = `CONTRASTS_WITH` only.** `QUALIFIES` (limitation) and
+1. **Motif count 1–5**, not a hard 3–5 (see the table). The donor's hard
+   minimum of three is kept as a *killed* mutant.
+2. **Disjoint motif cores** (`PLAN_MOTIF_CORES_OVERLAP`) — stricter than the
+   text; read from requirement 7 (duplicate input cannot manufacture narrative
+   priority), section 8 ("where the chart supports them") and the Method
+   Profile's "do not pad". Found by the adversarial review: without it three
+   claims make five motifs.
+3. **Grounded movement** (`PLAN_MOVEMENT_UNGROUNDED`) — stricter than the text;
+   read from section 8 ("a central motif may not be opened and then silently
+   forgotten") and requirement 8: a transition in a chapter that names none of
+   the motif's core claims would satisfy the rule on paper only.
+4. **Threads are sets of claims, not motif children.** A thread is central to a
+   motif when it names one of its core claims (AC16 "central opened threads"),
+   and only such a thread, left open, leaves that motif explicitly open.
+5. **Tension completeness** (`PLAN_TENSION_UNDECLARED`) — a `CONTRASTS_WITH` the
+   graph states between two claims the plan uses must be declared. Read from
+   section 8 ("known tensions / counter-motifs"), section 2 (ambivalence is
+   preserved, not flattened) and section 12 (tension is explicit).
+6. **Tension = `CONTRASTS_WITH` only.** `QUALIFIES` (limitation) and
    `ALTERNATIVE_READING` are not tensions in section 12's sense; the donor
    counted both.
-4. **One motif per thread**, and a thread names at least one claim.
-5. **Central-claim floor applies to the plan** (as ADR 0007 deferred it).
+7. **Central-claim floor counts the plan's selection** (as ADR 0007 deferred
+   it). The refusal says so: where the graph holds more claims that pass PD-5
+   the plan may name them; where the chart grounds fewer, stop and escalate.
+8. **The thesis is its `claimRefs` only.** No thesis statement is persisted;
+   rendering it is writing the referenced accepted claims together, held to
+   `newClaimsForbidden` (ETBZ-38). If the PO wants the thesis synthesis
+   persisted, it becomes an accepted claim of the graph (e.g. one that
+   `INTEGRATES` the others) — a graph change, not a plan field.
+9. **Not modelled here:** the narrative fate of a tension (resolved / left open,
+   and in which chapter) and motif-level counter-motif links. A thread naming
+   both claims of a tension can carry it; nothing forces one. Judging whether a
+   written reading resolves a tension is chapter/QA work (ETBZ-31/32).
 
 ## Donor (PR #4) — what was and was not reused
 
@@ -173,7 +200,7 @@ chapter with two claims and two motifs; mandatory coverage of every graph claim;
 `QUALIFIES` / `ALTERNATIVE_READING` as tensions; the donor graph API
 (`sourceBriefHash`, graph-level `relations`, `hashInterpretiveClaimGraph`); no
 PD-5 at all. The version literal `etbz-30.meta-narrative-plan.v1` equals the
-donor's for a different, never-merged shape; it first enters `main` here.
+donor's for a different, never-merged shape; nothing of that shape is on `main`.
 
 ## Acceptance mapping (ETBZ-30B)
 
@@ -181,13 +208,13 @@ donor's for a different, never-merged shape; it first enters `main` here.
 |---|---|
 | Plan version, brief + graph bindings explicit and hashed | `META_NARRATIVE_PLAN_VERSION`, bindings; unit P1, P2 |
 | Only accepted graph claims / declared structure referenced | negative N1, N10; unit P1 |
-| PD-5 for thesis and motif cores; three central claims | negative N2; unit P3, P7 |
-| Canonical lifecycle; no silently forgotten central motif | negative N6, N7, N8; unit P4 |
+| PD-5 for thesis and motif cores; three central claims | negative N2; unit P7 |
+| Canonical lifecycle; no silently forgotten central motif | negative N6, N7, N8, N12; unit P4 (derivation) |
 | Brief / graph change invalidates the plan | negative N3; unit P7 |
-| Order / duplicates cannot manufacture salience | negative N4, N2; unit P2 |
+| Order / duplicates cannot manufacture salience | negative N2, N4, N5b; unit P2 |
 | No numeric score, no new fact / claim / method | negative N11; unit P1, P6 |
 | Plain serialisable data, rebuild detects mutation | unit P6 |
-| Guards are not decoration | `npm run guards:etbz30b` — source mutants, baseline proven green first |
+| Guards are not decoration | `npm run guards:etbz30b` — source mutants, baseline proven green first; a kill must be an assertion failure (a timeout or a load error is reported as an error) and names the test that caught it |
 
 ## What this change deliberately does NOT do
 
@@ -207,7 +234,7 @@ donor's for a different, never-merged shape; it first enters `main` here.
   the plan's `structuralHash`.
 - ETBZ-38 can hand the Skill `BazodiacInterpretationInput v1` + graph + plan as
   plain JSON; `constraints` states what the Skill may render.
-- Before ETBZ-30B merge: a released ETBZ-36 lexicon, a new plan version that
-  binds it, and PO authorisation.
+- Before ETBZ-30B merge: a released ETBZ-36 lexicon, the plan contract change
+  that binds it, and PO authorisation.
 - Rollback is a revert of the ETBZ-30B commits; no data migration or runtime
   mutation is involved.

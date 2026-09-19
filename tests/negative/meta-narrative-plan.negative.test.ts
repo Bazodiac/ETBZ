@@ -9,7 +9,7 @@
  * every case nothing partial is returned. Binding, consistency-check and
  * counterfactual refusals of an ACCEPTED plan are in the unit suite (P6, P7).
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { structuralHash } from '../../src/domain/structural-hash.js';
 import { ClaimGraphError, buildInterpretiveClaimGraph } from '../../src/application/interpretation/interpretive-claim-graph.js';
 import type { InterpretiveClaimGraph } from '../../src/application/interpretation/interpretive-claim-graph.js';
@@ -38,12 +38,16 @@ import {
   PLAN_KNOWN,
   PLAN_UNKNOWN,
   T,
+  branchClaim,
   chapter,
   claimIds,
   graphFor,
+  idOf,
+  planClaims,
   planContextFor,
   planWith,
   pressureClaim,
+  stemElementClaim,
   validPlanDraft,
 } from '../support/metaNarrativePlanFixture.js';
 import type { MutablePlanDraft } from '../support/metaNarrativePlanFixture.js';
@@ -53,6 +57,7 @@ import { ALTERNATE_TEN_GOD_ROW } from '../support/natalFixture.js';
 const C = claimIds();
 /** See the unit suite: a build re-proves the graph and PD-5 (~0.2 s); loops get an explicit budget. */
 const MANY_BUILDS = 60_000;
+vi.setConfig({ testTimeout: MANY_BUILDS });
 
 function refusalOf(run: () => unknown): unknown {
   try {
@@ -85,22 +90,24 @@ function thread(draft: MutablePlanDraft, threadId: string): MutablePlanDraft['op
 }
 
 /**
- * A plan over the given motif cores: one chapter seeds every motif, one closes
- * them all, and the two tensions the graph states among the four PD-5 claims
- * are declared. Used where the NUMBER of motifs is the only thing under test.
+ * A plan over the given motif cores: one chapter seeds every motif and one
+ * closes them all, each naming every core claim, and the two tensions the graph
+ * states among the PD-5 claims are declared. Used where the NUMBER or the
+ * SHAPE of the motif cores is the only thing under test.
  */
-function motifsPlan(cores: readonly (readonly string[])[]): MutablePlanDraft {
+function motifsPlan(cores: readonly (readonly string[])[], context: MetaNarrativePlanContext = PLAN_KNOWN): MutablePlanDraft {
   const handles = cores.map((_, index) => `motif.${String(index)}`);
+  const coreClaims = [...new Set(cores.flat())];
   return {
-    sourceBriefStructuralHash: KNOWN.brief.structuralHash,
-    claimGraphStructuralHash: PLAN_KNOWN.graph.structuralHash,
+    sourceBriefStructuralHash: context.brief.structuralHash,
+    claimGraphStructuralHash: context.graph.structuralHash,
     reportThesis: { claimRefs: [C.recurrence, C.pressure] },
     primaryMotifs: cores.map((core, index) => ({ motifId: handles[index] ?? '', coreClaimRefs: [...core] })),
     tensions: [{ claimRefs: [C.pressure, C.recurrence] }, { claimRefs: [C.pressure, C.resource] }],
     openThreads: [],
     chapterPlan: [
-      { narrativeOperation: 'ESTABLISH', claimRefs: [C.recurrence, C.relation], motifTransitions: handles.map((motifRef) => ({ motifRef, toState: 'SEEDED' as const })), opensThreadRefs: [], closesThreadRefs: [] },
-      { narrativeOperation: 'INTEGRATE', claimRefs: [C.pressure, C.recurrence, C.resource], motifTransitions: handles.map((motifRef) => ({ motifRef, toState: 'CLOSED' as const })), opensThreadRefs: [], closesThreadRefs: [] },
+      { narrativeOperation: 'ESTABLISH', claimRefs: [...new Set([...coreClaims, C.recurrence])], motifTransitions: handles.map((motifRef) => ({ motifRef, toState: 'SEEDED' as const })), opensThreadRefs: [], closesThreadRefs: [] },
+      { narrativeOperation: 'INTEGRATE', claimRefs: [...new Set([...coreClaims, C.pressure, C.recurrence, C.resource])], motifTransitions: handles.map((motifRef) => ({ motifRef, toState: 'CLOSED' as const })), opensThreadRefs: [], closesThreadRefs: [] },
     ],
   };
 }
@@ -147,9 +154,8 @@ describe('ETBZ-30B N1: every semantic reference resolves to an accepted claim of
     expectPlanRefusal('PLAN_UNKNOWN_CLAIM', planWith((draft) => { draft.claimGraphStructuralHash = ablated.structuralHash; }), context);
   });
 
-  it('refuses a transition, a thread or a chapter naming a motif or thread the plan does not declare', () => {
+  it('refuses a transition or a chapter naming a motif or thread the plan does not declare', () => {
     expectPlanRefusal('PLAN_DANGLING_REFERENCE', planWith((draft) => { chapter(draft, 1).motifTransitions = [{ motifRef: 'motif.never-declared', toState: 'DEVELOPED' }]; }));
-    expectPlanRefusal('PLAN_DANGLING_REFERENCE', planWith((draft) => { thread(draft, T.pressure).motifRef = 'motif.never-declared'; }));
     expectPlanRefusal('PLAN_DANGLING_REFERENCE', planWith((draft) => { chapter(draft, 4).opensThreadRefs = ['thread.never-declared']; }));
     expectPlanRefusal('PLAN_DANGLING_REFERENCE', planWith((draft) => { chapter(draft, 6).closesThreadRefs = ['thread.never-declared']; }));
   }, MANY_BUILDS);
@@ -170,15 +176,18 @@ describe('ETBZ-30B N2: PD-5 for thesis and motif cores, and the floor of three c
     expectClaimRefusal('CLAIM_INSUFFICIENT_SIGNALS', planWith((draft) => { draft.primaryMotifs[2] = { motifId: M.resource, coreClaimRefs: [u.dominant] }; }, PLAN_UNKNOWN), PLAN_UNKNOWN);
   });
 
-  it('refuses a plan resting on fewer than three distinct central claims — however many motifs name them', () => {
-    // Two distinct claims, three motifs: {recurrence}, {relation}, {recurrence, relation}.
-    const threeMotifsTwoClaims = motifsPlan([[C.recurrence], [C.relation], [C.recurrence, C.relation]]);
-    threeMotifsTwoClaims.reportThesis.claimRefs = [C.recurrence];
-    expectPlanRefusal('PLAN_INSUFFICIENT_CENTRAL_CLAIMS', threeMotifsTwoClaims);
+  it('refuses a plan resting on fewer than three distinct central claims — and says what to do about it', () => {
+    // Two distinct claims, two motifs, a thesis on one of them.
+    const twoClaims = motifsPlan([[C.recurrence], [C.relation]]);
+    twoClaims.reportThesis.claimRefs = [C.recurrence];
+    const error = expectPlanRefusal('PLAN_INSUFFICIENT_CENTRAL_CLAIMS', twoClaims);
+    // The bound graph holds more PD-5 claims; the refusal must not read as "the chart is too thin".
+    expect(error.message).toContain('the plan may name them');
+    expect(error.message).toContain('never pad');
     // Control: the same plan with a third distinct central claim meets the floor.
-    const withThird = motifsPlan([[C.recurrence], [C.relation], [C.recurrence, C.relation]]);
+    const withThird = motifsPlan([[C.recurrence], [C.relation]]);
     withThird.reportThesis.claimRefs = [C.pressure];
-    expect(buildMetaNarrativePlan(withThird, PLAN_KNOWN).primaryMotifs).toHaveLength(3);
+    expect(buildMetaNarrativePlan(withThird, PLAN_KNOWN).primaryMotifs).toHaveLength(2);
   });
 
   it('does not let repetition reach the floor: a thesis naming one claim three times is refused, not counted', () => {
@@ -275,7 +284,7 @@ describe('ETBZ-30B N4: duplication never becomes narrative importance', () => {
     expectPlanRefusal('PLAN_DUPLICATE_CONTENT', planWith((draft) => { draft.tensions.push({ claimRefs: [C.recurrence, C.pressure] }); }));
     // The same thread with the other fate is still the same thread, declared twice.
     expectPlanRefusal('PLAN_DUPLICATE_CONTENT', planWith((draft) => {
-      draft.openThreads.push({ threadId: 'thread.pressure-again', motifRef: M.pressure, claimRefs: [C.recurrence, C.pressure], resolution: 'LEAVE_OPEN' });
+      draft.openThreads.push({ threadId: 'thread.pressure-again', claimRefs: [C.recurrence, C.pressure], resolution: 'LEAVE_OPEN' });
     }));
     expectPlanRefusal('PLAN_DUPLICATE_CONTENT', planWith((draft) => {
       draft.chapterPlan.push(structuredClone(chapter(draft, 4)));
@@ -291,17 +300,38 @@ describe('ETBZ-30B N4: duplication never becomes narrative importance', () => {
 });
 
 describe('ETBZ-30B N5: a reading has one to five primary motifs — never padded, never more', () => {
-  it('refuses a plan without a primary motif and a plan with six', () => {
+  // A graph with six claims above the PD-5 floor, so that six DISJOINT cores exist.
+  const wide = planContextFor(KNOWN, graphFor(KNOWN, [...planClaims(), branchClaim(), stemElementClaim()]));
+  const branch = idOf(branchClaim(), wide.graph);
+  const stemElement = idOf(stemElementClaim(), wide.graph);
+
+  it('refuses a plan without a primary motif and a plan with six — six disjoint, individually valid cores', () => {
     expectPlanRefusal('PLAN_MOTIF_COUNT_OUT_OF_RANGE', planWith((draft) => { draft.primaryMotifs = []; }));
-    // Six distinct cores over the four PD-5 claims: every one of them valid, still one too many.
     expectPlanRefusal('PLAN_MOTIF_COUNT_OUT_OF_RANGE', motifsPlan([
-      [C.recurrence], [C.relation], [C.pressure], [C.resource], [C.recurrence, C.relation], [C.pressure, C.resource],
-    ]));
+      [C.recurrence], [C.relation], [C.pressure], [C.resource], [branch], [stemElement],
+    ], wide), wide);
   });
 
-  it('accepts five', () => {
-    const plan = buildMetaNarrativePlan(motifsPlan([[C.recurrence], [C.relation], [C.pressure], [C.resource], [C.recurrence, C.relation]]), PLAN_KNOWN);
+  it('accepts five disjoint cores', () => {
+    const plan = buildMetaNarrativePlan(motifsPlan([[C.recurrence], [C.relation], [C.pressure], [C.resource], [branch]], wide), wide);
     expect(plan.primaryMotifs).toHaveLength(5);
+  });
+});
+
+describe('ETBZ-30B N5b: one accepted meaning carries at most one primary motif', () => {
+  it('refuses recombined cores — five "motifs" over three claims are not five motifs', () => {
+    const recombined = motifsPlan([[C.recurrence], [C.relation], [C.pressure], [C.recurrence, C.relation], [C.recurrence, C.pressure]]);
+    const error = expectPlanRefusal('PLAN_MOTIF_CORES_OVERLAP', recombined);
+    expect(error.message).toContain('recombining');
+    expectPlanRefusal('PLAN_MOTIF_CORES_OVERLAP', motifsPlan([[C.recurrence], [C.relation], [C.recurrence, C.relation]]));
+    // A partial overlap in the baseline: the resource motif borrowing the relation claim.
+    expectPlanRefusal('PLAN_MOTIF_CORES_OVERLAP', planWith((draft) => { draft.primaryMotifs[2] = { motifId: M.resource, coreClaimRefs: [C.resource, C.relation] }; }));
+  });
+
+  it('lets the thesis rest on motif-core claims: the thesis interprets the motifs, it is not a motif', () => {
+    const plan = buildMetaNarrativePlan(validPlanDraft(), PLAN_KNOWN);
+    const cores = new Set(plan.primaryMotifs.flatMap((motif) => motif.coreClaimRefs));
+    expect(plan.reportThesis.claimRefs.every((claimId) => cores.has(claimId))).toBe(true);
   });
 });
 
@@ -342,7 +372,10 @@ describe('ETBZ-30B N7: a central motif is never silently forgotten', () => {
         chapter(draft, 3).opensThreadRefs = [];
       }],
       ['expression never integrated', (draft) => { chapter(draft, 6).motifTransitions = [{ motifRef: M.pressure, toState: 'INTEGRATED' }]; }],
-      ['a left-open thread of ANOTHER motif does not rescue it', (draft) => { thread(draft, T.resource).motifRef = M.expression; }],
+      ['a left-open thread naming none of its core claims does not rescue it', (draft) => {
+        thread(draft, T.resource).claimRefs = [C.dayMaster];
+        chapter(draft, 3).claimRefs = [C.dayMaster, C.dominant, C.resource];
+      }],
       ['a thread that closes does not leave the motif open', (draft) => {
         thread(draft, T.resource).resolution = 'CLOSE';
         chapter(draft, 5).closesThreadRefs = [T.resource];
@@ -366,11 +399,11 @@ describe('ETBZ-30B N8: threads are opened once and closed later, or explicitly l
   it('refuses every broken thread lifecycle', () => {
     const broken: [string, (draft: MutablePlanDraft) => void][] = [
       ['declared, never opened', (draft) => { chapter(draft, 3).opensThreadRefs = []; }],
-      ['opened in two chapters', (draft) => { chapter(draft, 4).opensThreadRefs = [T.pressure]; }],
-      ['closed before it is opened', (draft) => { chapter(draft, 1).closesThreadRefs = [T.pressure]; chapter(draft, 6).closesThreadRefs = []; }],
+      ['opened in two chapters', (draft) => { chapter(draft, 5).opensThreadRefs = [T.pressure]; }],
+      ['closed before it is opened', (draft) => { chapter(draft, 0).closesThreadRefs = [T.pressure]; chapter(draft, 6).closesThreadRefs = []; }],
       ['opened and closed in one chapter', (draft) => { chapter(draft, 2).closesThreadRefs = [T.pressure]; chapter(draft, 6).closesThreadRefs = []; }],
       ['closed in two chapters', (draft) => { chapter(draft, 5).closesThreadRefs = [T.pressure]; }],
-      ['declared left open, then closed', (draft) => { chapter(draft, 6).closesThreadRefs = [T.pressure, T.resource]; }],
+      ['declared left open, then closed', (draft) => { chapter(draft, 5).closesThreadRefs = [T.resource]; }],
       ['declared to close, never closed', (draft) => { chapter(draft, 6).closesThreadRefs = []; }],
     ];
     for (const [what, edit] of broken) {
@@ -418,6 +451,39 @@ describe('ETBZ-30B N10: every plan element names accepted meaning', () => {
       expect(error.message, what).toContain('names no accepted claim');
     }
   }, MANY_BUILDS);
+});
+
+describe('ETBZ-30B N12: a motif or thread moves only in a chapter that names its meaning', () => {
+  it('refuses a motif moved by a chapter that names none of its core claims', () => {
+    // The INTEGRATE chapter keeps only the pressure claim: the expression motif would be "integrated" on paper.
+    const onPaper = expectPlanRefusal('PLAN_MOVEMENT_UNGROUNDED', planWith((draft) => { chapter(draft, 6).claimRefs = [C.pressure]; }));
+    expect(onPaper.message).toContain('INTEGRATED');
+    // The resource motif seeded and developed by chapters that never name the resource claim.
+    expectPlanRefusal('PLAN_MOVEMENT_UNGROUNDED', planWith((draft) => {
+      chapter(draft, 3).claimRefs = [C.dominant];
+      chapter(draft, 5).claimRefs = [C.pressure];
+    }));
+  });
+
+  it('refuses a thread opened or closed by a chapter that names none of its claims', () => {
+    const opened = expectPlanRefusal('PLAN_MOVEMENT_UNGROUNDED', planWith((draft) => {
+      chapter(draft, 2).opensThreadRefs = [T.pressure, T.resource];
+      chapter(draft, 3).opensThreadRefs = [];
+    }));
+    expect(opened.message).toContain('opens thread');
+    const closed = expectPlanRefusal('PLAN_MOVEMENT_UNGROUNDED', planWith((draft) => {
+      draft.openThreads.push({ threadId: 'thread.dayMaster', claimRefs: [C.dayMaster], resolution: 'CLOSE' });
+      chapter(draft, 4).opensThreadRefs = ['thread.dayMaster'];
+      chapter(draft, 6).closesThreadRefs = [T.pressure, 'thread.dayMaster'];
+    }));
+    expect(closed.message).toContain('closes thread');
+    // Control: the same thread closed where the day master is named is accepted.
+    expect(buildMetaNarrativePlan(planWith((draft) => {
+      draft.openThreads.push({ threadId: 'thread.dayMaster', claimRefs: [C.dayMaster], resolution: 'CLOSE' });
+      chapter(draft, 0).opensThreadRefs = ['thread.dayMaster'];
+      chapter(draft, 4).closesThreadRefs = ['thread.dayMaster'];
+    }), PLAN_KNOWN).openThreads).toHaveLength(3);
+  });
 });
 
 describe('ETBZ-30B N11: the draft is untrusted input with a closed shape', () => {
