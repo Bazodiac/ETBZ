@@ -1,6 +1,7 @@
 # ADR 0007 — InterpretiveClaimGraph (ETBZ-30A)
 
-- **Status:** Proposed (PR open; merge requires explicit PO authorisation)
+- **Status:** Accepted — merged via PR #7; canonical on `main` at merge commit
+  `b29279c20a4f19a36ba2a73b6bff7e26554d881e`
 - **Date:** 2026-09-19
 - **Slice:** ETBZ-30A — the first of two increments of ETBZ-30. `MetaNarrativePlan`
   is ETBZ-30B and is **not** part of this change.
@@ -243,7 +244,7 @@ the graph hash (see "Identity and normalisation").
 
 - ETBZ-30B binds its plan to `graph.structuralHash` and refers to claims by the
   derived `claimId`.
-- Rollback is a revert of this change: one new module, two new suites and their
-  fixture, one script, one `package.json` line, this ADR, and the PD-5 count in
-  one existing source file (`interpretive-claim.ts`, with its tests and the
-  matching ETBZ-34 mutants). No data and no runtime are touched.
+- Rollback is a revert of PR #7 / merge commit
+  `b29279c20a4f19a36ba2a73b6bff7e26554d881e`, together with any later commit
+  that edits the files it introduced (such as this ADR's post-merge status
+  update); no data migration or runtime mutation is involved.
