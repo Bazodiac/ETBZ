@@ -21,9 +21,11 @@
  *     primary motif. Every such claim passes PD-5 through
  *     `assertCentralGraphClaim` — composed, not re-implemented — and the plan
  *     rests on at least three distinct central claims (Method Profile v1.0.0,
- *     section 11: a floor, no maximum, and no padding). An accepted claim is
- *     the core of at most one primary motif: recombining the same claims does
- *     not make more motifs;
+ *     section 11: a floor, no maximum, and no padding). There are three to
+ *     five primary motifs (Long-Form contract, section 8), and an accepted
+ *     claim is the core of at most one of them: recombining the same claims
+ *     does not make more motifs, and a chart that does not carry three is
+ *     refused, never padded;
  *   - tensions the graph already states: a tension names two accepted claims
  *     the graph relates by `CONTRASTS_WITH`. The plan never creates a relation,
  *     and it may not flatten one either: a contrast between two claims the
@@ -253,7 +255,8 @@ export class MetaNarrativePlanError extends Error {
   }
 }
 
-/** Long-Form contract, section 8: "three to five primaryMotifs where the chart supports them". */
+/** Long-Form contract, section 8: "three to five primaryMotifs where the chart supports them" (PO decision, ADR 0008). */
+const MIN_PRIMARY_MOTIFS = 3;
 const MAX_PRIMARY_MOTIFS = 5;
 /** Method Profile v1.0.0, section 11: fewer than three central claims stops the reading. */
 const MIN_CENTRAL_CLAIMS = 3;
@@ -395,12 +398,6 @@ export function buildMetaNarrativePlan(draft: unknown, context: MetaNarrativePla
   const reportThesis: PlanReportThesis = { claimRefs: claimRefs('the report thesis', plan.reportThesis.claimRefs) };
 
   // ---- primary motifs --------------------------------------------------------------------
-  if (plan.primaryMotifs.length === 0 || plan.primaryMotifs.length > MAX_PRIMARY_MOTIFS) {
-    throw new MetaNarrativePlanError(
-      'PLAN_MOTIF_COUNT_OUT_OF_RANGE',
-      `the plan declares ${String(plan.primaryMotifs.length)} primary motifs; a reading has at least one and at most ${String(MAX_PRIMARY_MOTIFS)} (fewer where the chart does not carry more, never padded)`,
-    );
-  }
   const motifCores = plan.primaryMotifs.map((motif) => claimRefs(`primary motif "${motif.motifId}"`, motif.coreClaimRefs));
   const motifIds = motifCores.map((core) => `motif.${structuralHash({ coreClaimRefs: core })}`);
   const motifByHandle = handleIndex('primary motif', plan.primaryMotifs.map((motif) => motif.motifId), motifIds);
@@ -432,6 +429,17 @@ export function buildMetaNarrativePlan(draft: unknown, context: MetaNarrativePla
   }
   for (const claimId of centralClaims) {
     assertCentralGraphClaim(graph, claimId, context);
+  }
+
+  // ---- motif count: three to five, where the chart supports them ------------------------------
+  // After the floor, which it would otherwise make unreachable: three disjoint
+  // cores always rest on three claims. A chart grounding fewer central claims
+  // gets the floor's refusal; too few motifs over enough claims get this one.
+  if (plan.primaryMotifs.length < MIN_PRIMARY_MOTIFS || plan.primaryMotifs.length > MAX_PRIMARY_MOTIFS) {
+    throw new MetaNarrativePlanError(
+      'PLAN_MOTIF_COUNT_OUT_OF_RANGE',
+      `the plan declares ${String(plan.primaryMotifs.length)} primary motifs; a reading has ${String(MIN_PRIMARY_MOTIFS)} to ${String(MAX_PRIMARY_MOTIFS)}, each on its own accepted claims (Long-Form contract, section 8). Where the accepted claims do not carry three genuine motifs, stop and escalate — never pad`,
+    );
   }
 
   // ---- tensions ------------------------------------------------------------------------------

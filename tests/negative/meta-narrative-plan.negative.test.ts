@@ -184,10 +184,14 @@ describe('ETBZ-30B N2: PD-5 for thesis and motif cores, and the floor of three c
     // The bound graph holds more PD-5 claims; the refusal must not read as "the chart is too thin".
     expect(error.message).toContain('the plan may name them');
     expect(error.message).toContain('never pad');
-    // Control: the same plan with a third distinct central claim meets the floor.
+    // Control: the same plan with a third distinct central claim meets the floor — two motifs are
+    // then refused by the motif count (N5), not by the floor; a third genuine motif makes it a reading.
     const withThird = motifsPlan([[C.recurrence], [C.relation]]);
     withThird.reportThesis.claimRefs = [C.pressure];
-    expect(buildMetaNarrativePlan(withThird, PLAN_KNOWN).primaryMotifs).toHaveLength(2);
+    expectPlanRefusal('PLAN_MOTIF_COUNT_OUT_OF_RANGE', withThird);
+    const thirdMotif = motifsPlan([[C.recurrence], [C.relation], [C.pressure]]);
+    thirdMotif.reportThesis.claimRefs = [C.recurrence];
+    expect(buildMetaNarrativePlan(thirdMotif, PLAN_KNOWN).primaryMotifs).toHaveLength(3);
   });
 
   it('does not let repetition reach the floor: a thesis naming one claim three times is refused, not counted', () => {
@@ -299,23 +303,68 @@ describe('ETBZ-30B N4: duplication never becomes narrative importance', () => {
   });
 });
 
-describe('ETBZ-30B N5: a reading has one to five primary motifs — never padded, never more', () => {
+describe('ETBZ-30B N5: a reading has three to five primary motifs where the chart supports them — never padded, never more', () => {
   // A graph with six claims above the PD-5 floor, so that six DISJOINT cores exist.
   const wide = planContextFor(KNOWN, graphFor(KNOWN, [...planClaims(), branchClaim(), stemElementClaim()]));
   const branch = idOf(branchClaim(), wide.graph);
   const stemElement = idOf(stemElementClaim(), wide.graph);
+  const disjointCores = [[C.recurrence], [C.relation], [C.pressure], [C.resource], [branch], [stemElement]];
+  /**
+   * `count` disjoint single-claim motifs under a thesis on three PD-5 claims:
+   * the central-claim floor is met whatever the count, so the count is the
+   * only rule under test.
+   */
+  function motifs(count: number): MutablePlanDraft {
+    const draft = motifsPlan(disjointCores.slice(0, count), wide);
+    draft.reportThesis.claimRefs = [C.recurrence, C.pressure, C.resource];
+    return draft;
+  }
 
-  it('refuses a plan without a primary motif and a plan with six — six disjoint, individually valid cores', () => {
-    expectPlanRefusal('PLAN_MOTIF_COUNT_OUT_OF_RANGE', planWith((draft) => { draft.primaryMotifs = []; }));
-    expectPlanRefusal('PLAN_MOTIF_COUNT_OUT_OF_RANGE', motifsPlan([
-      [C.recurrence], [C.relation], [C.pressure], [C.resource], [branch], [stemElement],
-    ], wide), wide);
+  it('refuses zero primary motifs, although the plan rests on three central claims', () => {
+    expectPlanRefusal('PLAN_MOTIF_COUNT_OUT_OF_RANGE', motifs(0), wide);
+  });
+
+  it('refuses one primary motif, although the plan rests on three central claims', () => {
+    expectPlanRefusal('PLAN_MOTIF_COUNT_OUT_OF_RANGE', motifs(1), wide);
+  });
+
+  it('refuses two primary motifs, although the plan rests on three central claims — and says to stop, not to pad', () => {
+    const error = expectPlanRefusal('PLAN_MOTIF_COUNT_OUT_OF_RANGE', motifs(2), wide);
+    expect(error.message).toContain('never pad');
+  });
+
+  // A refusal here must FAIL AN ASSERTION, not crash the test: the mutation
+  // harness requires the named test to assert (scripts/verify-etbz30b-mutations.mjs).
+  it('accepts three disjoint cores', () => {
+    expect(() => buildMetaNarrativePlan(motifs(3), wide)).not.toThrow();
+    expect(buildMetaNarrativePlan(motifs(3), wide).primaryMotifs).toHaveLength(3);
+  });
+
+  it('accepts four disjoint cores', () => {
+    expect(() => buildMetaNarrativePlan(motifs(4), wide)).not.toThrow();
+    expect(buildMetaNarrativePlan(motifs(4), wide).primaryMotifs).toHaveLength(4);
   });
 
   it('accepts five disjoint cores', () => {
-    const plan = buildMetaNarrativePlan(motifsPlan([[C.recurrence], [C.relation], [C.pressure], [C.resource], [branch]], wide), wide);
-    expect(plan.primaryMotifs).toHaveLength(5);
+    expect(() => buildMetaNarrativePlan(motifs(5), wide)).not.toThrow();
+    expect(buildMetaNarrativePlan(motifs(5), wide).primaryMotifs).toHaveLength(5);
   });
+
+  it('refuses six primary motifs — six disjoint, individually valid cores', () => {
+    expectPlanRefusal('PLAN_MOTIF_COUNT_OUT_OF_RANGE', motifs(6), wide);
+  });
+
+  it('grants no priority by order: every order of three motifs, and five motifs reversed, give one plan', () => {
+    const three = validPlanDraft();
+    const [a, b, c] = three.primaryMotifs;
+    if (a === undefined || b === undefined || c === undefined) throw new Error('fixture: the baseline has three motifs');
+    const orders = [[a, b, c], [a, c, b], [b, a, c], [b, c, a], [c, a, b], [c, b, a]];
+    const hashes = new Set(orders.map((primaryMotifs) => buildMetaNarrativePlan({ ...three, primaryMotifs }, PLAN_KNOWN).structuralHash));
+    expect(hashes).toEqual(new Set([buildMetaNarrativePlan(three, PLAN_KNOWN).structuralHash]));
+    const five = motifs(5);
+    expect(buildMetaNarrativePlan({ ...five, primaryMotifs: [...five.primaryMotifs].reverse() }, wide).structuralHash)
+      .toBe(buildMetaNarrativePlan(five, wide).structuralHash);
+  }, MANY_BUILDS);
 });
 
 describe('ETBZ-30B N5b: one accepted meaning carries at most one primary motif', () => {
@@ -327,6 +376,23 @@ describe('ETBZ-30B N5b: one accepted meaning carries at most one primary motif',
     // A partial overlap in the baseline: the resource motif borrowing the relation claim.
     expectPlanRefusal('PLAN_MOTIF_CORES_OVERLAP', planWith((draft) => { draft.primaryMotifs[2] = { motifId: M.resource, coreClaimRefs: [C.resource, C.relation] }; }));
   });
+
+  it('refuses every way of padding two genuine motifs up to three: recombined, duplicated, below PD-5, invented or weighted', () => {
+    const padded = (third: object): MutablePlanDraft => {
+      const draft = motifsPlan([[C.recurrence], [C.relation]]);
+      draft.primaryMotifs.push({ motifId: 'motif.padded', coreClaimRefs: [], ...third });
+      return draft;
+    };
+    expectPlanRefusal('PLAN_MOTIF_CORES_OVERLAP', padded({ coreClaimRefs: [C.recurrence, C.relation] }));
+    expectPlanRefusal('PLAN_DUPLICATE_CONTENT', padded({ coreClaimRefs: [C.relation] }));
+    expectPlanRefusal('PLAN_DUPLICATE_REF', padded({ coreClaimRefs: [C.relation, C.relation] }));
+    expectClaimRefusal('CLAIM_INSUFFICIENT_SIGNALS', padded({ coreClaimRefs: [C.dominant] }));
+    expectPlanRefusal('PLAN_UNKNOWN_CLAIM', padded({ coreClaimRefs: ['claim.invented'] }));
+    expectPlanRefusal('PLAN_UNKNOWN_CLAIM', padded({ coreClaimRefs: [MONTH_TEN_GOD] }));
+    expectPlanRefusal('PLAN_SCHEMA_INVALID', padded({ coreClaimRefs: [C.pressure], salience: 1 }));
+    // Control: a third motif on an accepted claim of its own is a reading, not padding.
+    expect(buildMetaNarrativePlan(motifsPlan([[C.recurrence], [C.relation], [C.pressure]]), PLAN_KNOWN).primaryMotifs).toHaveLength(3);
+  }, MANY_BUILDS);
 
   it('lets the thesis rest on motif-core claims: the thesis interprets the motifs, it is not a motif', () => {
     const plan = buildMetaNarrativePlan(validPlanDraft(), PLAN_KNOWN);

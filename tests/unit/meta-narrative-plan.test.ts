@@ -418,8 +418,8 @@ describe('ETBZ-30B P3: PD-5 is composed for every central claim, and the plan re
     expect(new Set(slots)).toEqual(new Set([C.recurrence, C.pressure, C.resource]));
   });
 
-  it('accepts a single primary motif when the chart carries it on three central claims — fewer motifs, never padded ones', () => {
-    const single = buildMetaNarrativePlan({
+  it('refuses a single primary motif even on three central claims: the floor is met, the motif count is not (the count refusals are negative N5)', () => {
+    expectPlanRefusal('PLAN_MOTIF_COUNT_OUT_OF_RANGE', () => buildMetaNarrativePlan({
       sourceBriefStructuralHash: KNOWN.brief.structuralHash,
       claimGraphStructuralHash: PLAN_KNOWN.graph.structuralHash,
       reportThesis: { claimRefs: [C.recurrence] },
@@ -430,9 +430,7 @@ describe('ETBZ-30B P3: PD-5 is composed for every central claim, and the plan re
         { narrativeOperation: 'ESTABLISH', claimRefs: [C.recurrence, C.relation], motifTransitions: [{ motifRef: 'only', toState: 'SEEDED' }], opensThreadRefs: [], closesThreadRefs: [] },
         { narrativeOperation: 'INTEGRATE', claimRefs: [C.pressure, C.recurrence], motifTransitions: [{ motifRef: 'only', toState: 'CLOSED' }], opensThreadRefs: [], closesThreadRefs: [] },
       ],
-    }, PLAN_KNOWN);
-    expect(single.primaryMotifs).toHaveLength(1);
-    expect(single.primaryMotifs[0]?.finalState).toBe('CLOSED');
+    }, PLAN_KNOWN));
   });
 
   it('keeps TENTATIVE claims tentative: the plan names claims and never touches their epistemic class', () => {

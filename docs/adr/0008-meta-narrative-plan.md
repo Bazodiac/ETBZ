@@ -53,7 +53,7 @@ Only plan-level refusals are `MetaNarrativePlanError`:
 | References | Every claim reference in thesis, motif cores, tensions, threads and chapters is an ACCEPTED claim id of the bound graph — not a draft handle, not a fact id, not a claim of another graph. Motif and thread references resolve to elements the plan declares. | `PLAN_UNKNOWN_CLAIM`, `PLAN_DANGLING_REFERENCE` |
 | Grounding | A thesis, a motif core, a thread and a chapter each name at least one accepted claim. | `PLAN_UNGROUNDED` |
 | Central claims | The thesis claims and every motif-core claim are central: each passes PD-5 (composed), and the plan rests on **at least three distinct** central claims (Method Profile section 11: "fewer than three central claims — stop and escalate, do not pad"). A claim that is both thesis and core counts once. | `CLAIM_INSUFFICIENT_SIGNALS`, `PLAN_INSUFFICIENT_CENTRAL_CLAIMS` |
-| Motif count | One to five primary motifs (Long-Form section 8: "three to five … where the chart supports them"). Five is a ceiling; three is not a hard floor, because a chart that carries fewer motifs must not be padded — the central-claim floor is what stops a thin chart. | `PLAN_MOTIF_COUNT_OUT_OF_RANGE` |
+| Motif count | Three to five primary motifs (Long-Form section 8: "three to five primaryMotifs where the chart supports them"; Product Owner decision, see "Interpretations"). Where the accepted claims do not carry three genuine, non-duplicative motifs, the plan is refused — never padded: recombined or overlapping cores, a repeated motif, a claim below PD-5, an invented claim and a drafted salience are each refused by their own rule. "Non-duplicative" is the claim graph's identity (ADR 0007): two differently worded claims over the same facts are two accepted claims, and detecting paraphrase is left to ETBZ-37. The count is checked after the central-claim floor: three disjoint cores always rest on three claims, so a chart that grounds fewer central claims gets the Method Profile's stop-and-escalate refusal, and too few motifs over enough claims get this one. | `PLAN_MOTIF_COUNT_OUT_OF_RANGE` |
 | Disjoint cores | An accepted claim is the core of at most one primary motif. Otherwise three claims recombine into five "motifs" and one claim sits in most of them — repetition manufacturing narrative priority. The thesis may rest on core claims: it interprets the motifs, it is not one. | `PLAN_MOTIF_CORES_OVERLAP` |
 | Tensions | A tension names two accepted claims the graph relates by `CONTRASTS_WITH` (either direction). The plan never creates a relation. A `CONTRASTS_WITH` the graph states between two claims the plan uses must be declared (see "Interpretations" below). | `PLAN_TENSION_NOT_IN_GRAPH`, `PLAN_TENSION_UNDECLARED` |
 | Lifecycle | Chapters move motifs along `UNSEEN -> SEEDED -> DEVELOPED -> COMPLICATED -> INTEGRATED -> CLOSED`: strictly forward, skipping allowed, never back, never in place, never to `UNSEEN`. | `PLAN_ILLEGAL_MOTIF_TRANSITION` |
@@ -135,15 +135,24 @@ contract and every plan hash; whether that lands as a revision of this
 candidate before merge or as a later `planVersion` is decided when ETBZ-36
 exists — it is never an edit of an accepted plan.
 
-## Interpretations the Product Owner may want to confirm
+## Interpretations — Product Owner review
 
-Each is a reading of the canonical text, not a PO decision, and each rule is
-pinned by a test and a dedicated source mutant, so that changing it is a
-visible decision. Where the reading is stricter than the text, it fails closed
-and can be withdrawn by removing one check.
+Each began as a reading of the canonical text, and each rule is pinned by a
+test and a dedicated source mutant, so that changing it is a visible decision.
+Where the reading is stricter than the text, it fails closed and can be
+withdrawn by removing one check. The Product Owner reviewed all nine; the
+decision reached this ADR through the ETBZ-30B repair brief of 2026-09-19 and
+is not yet recorded in Jira ETBZ-30 or Confluence: 2–9 are accepted unchanged;
+1 was not, and is replaced by the Product Owner's rule.
 
-1. **Motif count 1–5**, not a hard 3–5 (see the table). The donor's hard
-   minimum of three is kept as a *killed* mutant.
+1. **Motif count 3–5 — Product Owner decision.** The first reading here (1–5:
+   five a ceiling, three not a floor) was not accepted. The v1 rule is three
+   to five chart-supported primary motifs (Long-Form section 8), next to the
+   Method Profile's "fewer than three central claims — stop and escalate, do
+   not pad": a chart that cannot carry three genuine, disjoint motifs is
+   refused, never padded (see the table). Each bound, the former 1–5 rule and
+   a count checked before the floor are source mutants that must each be
+   killed by their own named test.
 2. **Disjoint motif cores** (`PLAN_MOTIF_CORES_OVERLAP`) — stricter than the
    text; read from requirement 7 (duplicate input cannot manufacture narrative
    priority), section 8 ("where the chart supports them") and the Method
@@ -190,11 +199,13 @@ Profile v1.0.0:
 - chapter order as the one semantic order; forward-only lifecycle with skips;
   terminal = `INTEGRATED` / `CLOSED` or explicitly left open;
 - refusal of duplicate chapter content; strict draft schema; number-free
-  output; permutation / rename / idempotence / independent-hash tests.
+  output; permutation / rename / idempotence / independent-hash tests;
+- a hard range of three to five primary motifs (first rejected here for 1–5,
+  reinstated by the Product Owner decision; see "Interpretations").
 
 Rejected as obsolete or unsupported by the current contracts: a thesis and
 motif `statement` (prose in the plan) with its uncited-symbol / number / method
-scanners; a thesis floor of two claims; a hard floor of three motifs; a single
+scanners; a thesis floor of two claims; a single
 "anchor" claim per motif; thread narrative roles; a mandatory `INTEGRATE`
 chapter with two claims and two motifs; mandatory coverage of every graph claim;
 `QUALIFIES` / `ALTERNATIVE_READING` as tensions; the donor graph API
@@ -209,6 +220,7 @@ donor's for a different, never-merged shape; nothing of that shape is on `main`.
 | Plan version, brief + graph bindings explicit and hashed | `META_NARRATIVE_PLAN_VERSION`, bindings; unit P1, P2 |
 | Only accepted graph claims / declared structure referenced | negative N1, N10; unit P1 |
 | PD-5 for thesis and motif cores; three central claims | negative N2; unit P7 |
+| Three to five primary motifs where the chart supports them, never padded | negative N5, N5b; unit P3 |
 | Canonical lifecycle; no silently forgotten central motif | negative N6, N7, N8, N12; unit P4 (derivation) |
 | Brief / graph change invalidates the plan | negative N3; unit P7 |
 | Order / duplicates cannot manufacture salience | negative N2, N4, N5b; unit P2 |

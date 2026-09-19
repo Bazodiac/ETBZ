@@ -9,10 +9,12 @@
  * otherwise "red" proves nothing. Every file is restored byte-for-byte
  * afterwards, and the run fails if the working tree is not clean at the end.
  *
- * RED means an ASSERTION failed. A mutant that only makes a test time out, or
- * that breaks loading or collection of the file, proves nothing about the
- * guard and is reported as an error, never as a kill; each kill names the
- * first test that caught it.
+ * RED means a TEST failed: an assertion failed, or the test body threw. A
+ * mutant that only makes a test time out, or that breaks loading or collection
+ * of the file, proves nothing about the guard and is reported as an error,
+ * never as a kill; each kill names the test that caught it. A mutant may name
+ * the test that must catch it: that test must then fail an ASSERTION — a throw
+ * in its body is not enough — and a kill by any other test alone is an error.
  *
  *   npm run guards:etbz30b
  */
@@ -28,7 +30,10 @@ const T = {
   negative: 'tests/negative/meta-narrative-plan.negative.test.ts',
 };
 
-/** [name, file, find, replace, tests] — `find` must occur exactly once. */
+/**
+ * [name, file, find, replace, tests, killer?] — `find` must occur exactly once;
+ * `killer`, where given, is part of the name of the test that must fail.
+ */
 const MUTANTS = [
   // --- bindings ---------------------------------------------------------------------------
   ['BIND: the context graph is not re-proven', PLAN, "  assertInterpretiveClaimGraphIntact(graph, context);\n", "", [T.negative]],
@@ -59,12 +64,16 @@ const MUTANTS = [
   ['DUP: duplicate tensions are not looked at', PLAN, "  refuseDuplicateContent('tension', tensions.map((tension) => tension.tensionId));\n", "", [T.negative]],
   ['DUP: duplicate threads are not looked at', PLAN, "  refuseDuplicateContent('thread', threads.map((thread) => thread.threadId));\n", "", [T.negative]],
   ['DUP: duplicate chapters are not looked at', PLAN, "  refuseDuplicateContent('chapter', chapterPlan.map((chapter) => chapter.chapterId));\n", "", [T.negative]],
-  // --- motif count and the central-claim floor ---------------------------------------------------
-  ['COUNT: more than five primary motifs', PLAN, "plan.primaryMotifs.length > MAX_PRIMARY_MOTIFS) {", "plan.primaryMotifs.length > MAX_PRIMARY_MOTIFS + 1) {", [T.negative]],
-  ['COUNT: a plan without a primary motif', PLAN, "  if (plan.primaryMotifs.length === 0 ||", "  if (plan.primaryMotifs.length < 0 ||", [T.negative]],
-  ['COUNT: a hard minimum of three motifs pads the reading (donor rule, rejected)', PLAN, "  if (plan.primaryMotifs.length === 0 ||", "  if (plan.primaryMotifs.length < 3 ||", [T.unit]],
-  ['FLOOR: fewer than three central claims', PLAN, "  if (centralClaims.length < MIN_CENTRAL_CLAIMS) {", "  if (centralClaims.length < 2) {", [T.negative]],
-  ['FLOOR: repetition is counted towards the floor', PLAN, "  const centralClaims = sorted([...new Set([...reportThesis.claimRefs, ...motifCores.flat()])]);", "  const centralClaims = sorted([...reportThesis.claimRefs, ...motifCores.flat()]);", [T.negative]],
+  // --- motif count (three to five, PO decision) and the central-claim floor -------------------------
+  ['COUNT: six primary motifs are accepted', PLAN, "plan.primaryMotifs.length > MAX_PRIMARY_MOTIFS) {", "plan.primaryMotifs.length > MAX_PRIMARY_MOTIFS + 1) {", [T.negative], 'refuses six primary motifs'],
+  ['COUNT: exactly five primary motifs are refused', PLAN, "plan.primaryMotifs.length > MAX_PRIMARY_MOTIFS) {", "plan.primaryMotifs.length >= MAX_PRIMARY_MOTIFS) {", [T.negative], 'accepts five disjoint cores'],
+  ['COUNT: the minimum is removed — a plan without a primary motif is accepted', PLAN, "plan.primaryMotifs.length < MIN_PRIMARY_MOTIFS || ", "", [T.negative], 'refuses zero primary motifs'],
+  ['COUNT: the former 1–5 rule — one primary motif is accepted', PLAN, "const MIN_PRIMARY_MOTIFS = 3;", "const MIN_PRIMARY_MOTIFS = 1;", [T.negative], 'refuses one primary motif'],
+  ['COUNT: two primary motifs are accepted', PLAN, "plan.primaryMotifs.length < MIN_PRIMARY_MOTIFS ||", "plan.primaryMotifs.length < MIN_PRIMARY_MOTIFS - 1 ||", [T.negative], 'refuses two primary motifs'],
+  ['COUNT: exactly three primary motifs are refused', PLAN, "plan.primaryMotifs.length < MIN_PRIMARY_MOTIFS ||", "plan.primaryMotifs.length <= MIN_PRIMARY_MOTIFS ||", [T.negative], 'accepts three disjoint cores'],
+  ['COUNT: counted before the central-claim floor, which it makes unreachable', PLAN, "  const motifCores = plan.primaryMotifs.map(", "  if (plan.primaryMotifs.length < MIN_PRIMARY_MOTIFS) {\n    throw new MetaNarrativePlanError('PLAN_MOTIF_COUNT_OUT_OF_RANGE', 'counted before the floor');\n  }\n  const motifCores = plan.primaryMotifs.map(", [T.negative], 'refuses a plan resting on fewer than three distinct central claims'],
+  ['FLOOR: fewer than three central claims', PLAN, "  if (centralClaims.length < MIN_CENTRAL_CLAIMS) {", "  if (centralClaims.length < 2) {", [T.negative], 'refuses a plan resting on fewer than three distinct central claims'],
+  ['FLOOR: repetition is counted towards the floor', PLAN, "  const centralClaims = sorted([...new Set([...reportThesis.claimRefs, ...motifCores.flat()])]);", "  const centralClaims = sorted([...reportThesis.claimRefs, ...motifCores.flat()]);", [T.negative], 'does not let repetition reach the floor'],
   // --- PD-5 --------------------------------------------------------------------------------------
   ['PD-5: the floor is not composed', PLAN, "    assertCentralGraphClaim(graph, claimId, context);\n", "", [T.negative]],
   ['PD-5: the thesis is not central', PLAN, "  const centralClaims = sorted([...new Set([...reportThesis.claimRefs, ...motifCores.flat()])]);", "  const centralClaims = sorted([...new Set([...motifCores.flat()])]);", [T.negative]],
@@ -160,7 +169,29 @@ function run(tests) {
   const failed = (report.testResults ?? []).flatMap((file) => (file.assertionResults ?? []).filter((test) => test.status === 'failed'));
   if (failed.length === 0) return { outcome: 'NO_ASSERTION_FAILED' };
   if (failed.some((test) => (test.failureMessages ?? []).some((message) => /timed out/iu.test(message)))) return { outcome: 'TIMEOUT' };
-  return { outcome: 'RED', first: failed[0].fullName };
+  return {
+    outcome: 'RED',
+    failed: failed.map((test) => ({
+      fullName: test.fullName,
+      asserted: (test.failureMessages ?? []).some((message) => message.startsWith('AssertionError')),
+    })),
+  };
+}
+
+/**
+ * A kill is a failed test — never a timeout, a load or a collection error. A
+ * mutant that names its test is killed only by that test failing an assertion.
+ */
+function verdictOf(verdict, killer) {
+  if (verdict.outcome === 'GREEN') return 'STAYED GREEN — guard is decoration';
+  if (verdict.outcome !== 'RED') return `RUN_ERROR (${verdict.outcome}) — not a proof`;
+  if (killer === undefined) return `RED (guard holds) <- ${verdict.failed[0].fullName}`;
+  const named = verdict.failed.filter((test) => test.fullName.includes(killer));
+  const by = named.find((test) => test.asserted);
+  if (by !== undefined) return `RED (guard holds) <- ${by.fullName}`;
+  return named.length > 0
+    ? `RUN_ERROR (KILLER_DID_NOT_ASSERT: "${named[0].fullName}" threw instead of failing an assertion) — not a proof`
+    : `RUN_ERROR (KILLED_BY_OTHER_TEST: "${verdict.failed[0].fullName}", expected "${killer}") — not a proof`;
 }
 
 const baseline = run([T.unit, T.negative]);
@@ -171,7 +202,7 @@ if (baseline.outcome !== 'GREEN') {
 process.stdout.write('BASELINE GREEN (unmutated)\n');
 
 const results = [];
-for (const [name, file, find, replace, tests] of MUTANTS) {
+for (const [name, file, find, replace, tests, killer] of MUTANTS) {
   const original = readFileSync(file, 'utf8');
   const occurrences = original.split(find).length - 1;
   if (occurrences !== 1) {
@@ -185,9 +216,7 @@ for (const [name, file, find, replace, tests] of MUTANTS) {
   } finally {
     writeFileSync(file, original);
   }
-  results.push([name, verdict.outcome === 'RED'
-    ? `RED (guard holds) <- ${verdict.first}`
-    : verdict.outcome === 'GREEN' ? 'STAYED GREEN — guard is decoration' : `RUN_ERROR (${verdict.outcome}) — not a proof`]);
+  results.push([name, verdictOf(verdict, killer)]);
 }
 rmSync(REPORT_DIR, { recursive: true, force: true });
 
