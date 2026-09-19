@@ -1,6 +1,7 @@
 # ADR 0006 — Method Registry v1.0.0, addressable facts and the interpretation hand-off
 
-- **Status:** Proposed (PR open; merge requires explicit PO authorisation)
+- **Status:** Accepted — ETBZ-34 merged via PR #5; canonical on `main` at merge
+  commit `bebb0411401fd61c93351795fde090cb88f7ebc5`
 - **Date:** 2026-09-17
 - **Slice:** ETBZ-34 (amended scope), prerequisite for ETBZ-30
 - **Canonical product text:** Confluence ETBZ — *ETBZ — BaZi Method Profile v1* (version 1.0.0)
