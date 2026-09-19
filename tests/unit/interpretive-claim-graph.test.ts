@@ -233,7 +233,6 @@ describe('ETBZ-30A G2: claim identity is semantic, and the graph is a pure funct
       methodProfileRef: METHOD_PROFILE_REF,
       statement: draft.statement,
       citedFacts,
-      themeRefs: [],
       methodRefs: [...draft.methodRefs].sort(),
       epistemicClass: draft.epistemicClass,
       provisionalFactRefs: [],
@@ -345,7 +344,6 @@ describe('ETBZ-30A G2: claim identity is semantic, and the graph is a pure funct
       recurrenceClaim({ statement: 'The same two facts, read as a different interpretation.' }),
       recurrenceClaim({ methodRefs: ['ten_gods', 'fact_relations'] }),
       recurrenceClaim({ epistemicClass: 'TENTATIVE_INTERPRETATION' }),
-      recurrenceClaim({ themeRefs: ['theme.pillar.month'] }),
       recurrenceClaim({ factRefs: [MONTH_TEN_GOD, 'chart.natal.pillar.year.tenGod'], methodRefs: ['ten_gods', 'positional_context'] }),
     ];
     const seen = new Set([base]);
@@ -356,6 +354,32 @@ describe('ETBZ-30A G2: claim identity is semantic, and the graph is a pure funct
       seen.add(id ?? '');
     }
     expect(seen.size).toBe(variants.length + 1);
+  });
+
+  it('keeps a supplementary theme out of semantic identity and inside the structural hashes (PO 2026-09-19)', () => {
+    const build = (themeRefs: string[]): InterpretiveClaimGraph => buildInterpretiveClaimGraph(draftOf([recurrenceClaim({ themeRefs })]), KNOWN);
+    const bare = build([]);
+    const underMonth = build(['theme.pillar.month']);
+    const underRole = build(['theme.tenGod.HurtingOfficer', 'primary.self_role']);
+    const none = acceptedFor(bare, recurrenceClaim());
+    const month = acceptedFor(underMonth, recurrenceClaim());
+    const role = acceptedFor(underRole, recurrenceClaim());
+    // One interpretation: an annotation does not multiply meaning.
+    expect(month.claimId).toBe(none.claimId);
+    expect(role.claimId).toBe(none.claimId);
+    // ...and it stays auditable: on the accepted claim, inside its I6 hash, inside the graph hash.
+    expect(none.themeRefs).toEqual([]);
+    expect(month.themeRefs).toEqual(['theme.pillar.month']);
+    expect(role.themeRefs).toEqual(['primary.self_role', 'theme.tenGod.HurtingOfficer']);
+    expect(new Set([none.structuralHash, month.structuralHash, role.structuralHash]).size).toBe(3);
+    expect(new Set([bare.structuralHash, underMonth.structuralHash, underRole.structuralHash]).size).toBe(3);
+    // Each is an intact graph of its own; the id does not move with a theme, so the
+    // hashes are what sees a theme swapped on an accepted graph.
+    expect(() => { assertInterpretiveClaimGraphIntact(underMonth, KNOWN); }).not.toThrow();
+    expect(() => { assertInterpretiveClaimGraphIntact(underRole, KNOWN); }).not.toThrow();
+    expectGraphRefusal('CLAIM_GRAPH_NOT_INTACT', () => {
+      assertInterpretiveClaimGraphIntact({ ...underMonth, claims: [{ ...month, themeRefs: role.themeRefs }] }, KNOWN);
+    });
   });
 
   it('moves the graph hash when a relation is added or removed, without moving any claim identity', () => {

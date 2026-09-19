@@ -292,10 +292,6 @@ describe('ETBZ-30A N5: duplication and order never become importance', () => {
       ['other grounding', { factRefs: [MONTH_TEN_GOD, 'chart.natal.pillar.year.tenGod'], methodRefs: ['ten_gods', 'positional_context'] }],
       ['other method set', { methodRefs: ['ten_gods', 'fact_relations'] }],
       ['other epistemic class', { epistemicClass: 'TENTATIVE_INTERPRETATION' }],
-      // themeRefs are inside the derived identity, so this is another claim. Whether a
-      // supplementary theme alone is a material difference is open with the PO (ADR 0007);
-      // this pins the current behaviour so that a decision either way is visible.
-      ['other themes', { themeRefs: ['theme.pillar.month'] }],
     ];
     for (const [what, overrides] of differentIdentity) {
       const again = recurrenceClaim({ claimId: 'draft.again', ...overrides });
@@ -305,6 +301,23 @@ describe('ETBZ-30A N5: duplication and order never become importance', () => {
       expect(sameText, what).toHaveLength(2);
       expect(new Set(sameText.map((claim) => claim.claimId)).size, what).toBe(2);
     }
+  });
+
+  it('refuses two drafts that differ only in their themeRefs: a supplementary theme is annotation, never a second interpretation (PO 2026-09-19)', () => {
+    const themed = (claimId: string, themeRefs: string[]): InterpretiveClaim => recurrenceClaim({ claimId, themeRefs });
+    // Next to the baseline's own recurrence claim, which names no theme...
+    expectDraftRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT', [...baselineClaims(), themed('draft.again', ['theme.pillar.month'])]);
+    // ...and next to each other, under two different valid theme assignments.
+    expectDraftRefusal('CLAIM_GRAPH_DUPLICATE_CLAIM_CONTENT', [
+      themed('draft.month', ['theme.pillar.month']),
+      themed('draft.role', ['primary.self_role']),
+    ]);
+    // Control: each is acceptable on its own, and each resolves to the identity of the claim without a theme.
+    const idOf = (claim: InterpretiveClaim): string | undefined => buildInterpretiveClaimGraph(draftOf([claim]), KNOWN).claims[0]?.claimId;
+    const base = idOf(recurrenceClaim());
+    expect(base).toBeDefined();
+    expect(idOf(themed('draft.month', ['theme.pillar.month']))).toBe(base);
+    expect(idOf(themed('draft.role', ['primary.self_role']))).toBe(base);
   });
 
   it('adds no statement rule of its own: the claim validator decides about a statement, and the graph stores it byte for byte', () => {

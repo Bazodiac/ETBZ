@@ -20,13 +20,15 @@
  * Identity. A draft's `claimId` is a handle: unique inside the draft, the thing
  * `relations[].targetClaimId` points at, and nothing more. The accepted
  * `claimId` is derived from the claim's semantic content — the profile
- * reference, the statement, every cited fact WITH ITS VALUE, themeRefs,
- * methodRefs, epistemic class and provisional lineage — so the same meaning has
- * the same identity whoever drafted it, under whatever handle, in whatever
- * order, and a claim about a fact that changed is not the same claim. Relations
- * are not part of that identity (two claims may contrast with each other; an
- * identity that contained its own targets could not be computed for a cycle);
- * they are inside each claim's I6 hash and therefore inside the graph hash.
+ * reference, the statement, every cited fact WITH ITS VALUE, methodRefs,
+ * epistemic class and provisional lineage — so the same meaning has the same
+ * identity whoever drafted it, under whatever handle, in whatever order, and a
+ * claim about a fact that changed is not the same claim. Relations are not part
+ * of that identity (two claims may contrast with each other; an identity that
+ * contained its own targets could not be computed for a cycle), and neither are
+ * `themeRefs` (PO 2026-09-19: a theme is annotation, not a second
+ * interpretation). Both are inside each claim's I6 hash and therefore inside
+ * the graph hash.
  *
  * Duplicate CONTENT is decided by that identity and by nothing else (a repeated
  * handle or ref is refused on its own). Two drafts with the same accepted
@@ -41,7 +43,9 @@
  *
  * Themes are supplementary structure. A `themeRef` must name a theme of the
  * bound brief; it never grounds a claim (the claim validator demands direct
- * `factRefs`) and it need not share a cited fact.
+ * `factRefs`), it need not share a cited fact, and it never makes a second
+ * claim: two drafts that differ only in their themes are one interpretation
+ * submitted twice, and are refused as such.
  *
  * Nothing here is a number. There is no salience, rank, weight, count,
  * confidence or score on the graph, on a claim or on a relation, and an input
@@ -181,9 +185,11 @@ function refuseRepeated(claimId: string, what: string, values: readonly string[]
 }
 
 /**
- * The semantic identity of a claim. No handle, no relation, no order — and the
- * VALUE of every cited fact, so that the same words about a fact that changed
- * are a different claim. The value is hashed, never published.
+ * The semantic identity of a claim. No handle, no relation, no theme, no order —
+ * and the VALUE of every cited fact, so that the same words about a fact that
+ * changed are a different claim. The value is hashed, never published.
+ * `themeRefs` are annotation (PO 2026-09-19): they stay on the accepted claim
+ * and inside its I6 hash, and are deliberately absent here.
  */
 function deriveClaimId(claim: InterpretiveClaim, cited: readonly ChartFact[], methodProfileRef: string): string {
   return `claim.${structuralHash({
@@ -192,7 +198,6 @@ function deriveClaimId(claim: InterpretiveClaim, cited: readonly ChartFact[], me
     citedFacts: cited
       .map((fact) => ({ id: fact.id, value: fact.value }))
       .sort((left, right) => (left.id < right.id ? -1 : 1)),
-    themeRefs: sorted(claim.themeRefs),
     methodRefs: sorted(claim.methodRefs),
     epistemicClass: claim.epistemicClass,
     provisionalFactRefs: sorted(claim.provisionalFactRefs),

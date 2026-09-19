@@ -18,7 +18,7 @@ becomes a confident sentence.
 |---|---|
 | PD-3 | Recurrence of grounded occurrences may be described. No strength / salience / personality score. |
 | PD-4 | Positional context may qualify a reading. No literal father / mother / spouse / child claims. |
-| PD-5 | A report thesis or primary motif needs >= 2 distinct fact kinds AND >= 2 approved method contributions. MVP v1 has **no exception** and no caller-controlled option. |
+| PD-5 | A report thesis or primary motif needs >= 2 distinct fact kinds AND >= 2 approved, enabled, claim-bearing **non-modifier** method contributions: a method with `modifier=true` (`positional_context`) may qualify a central claim but never counts towards the floor (PO clarification 2026-09-19, implemented in `assertCentralClaimSignals`; see ADR 0007). MVP v1 has **no exception** and no caller-controlled option. |
 | PD-6 | `InterpretiveClaim.methodRefs`, validated fail-closed. |
 | PD-7 | FuFirE Ten-God labels are evidence; customer wording belongs to the Terminology & Wording Lexicon v1. |
 | PD-9 | Canonical day boundary is `midnight`, sent explicitly — never the producer default. |
