@@ -250,10 +250,13 @@ export function validateInterpretiveClaim(
  * PD-5 — the multi-signal floor for a claim that carries the report thesis or
  * the core of a primary motif.
  *
- * MVP v1, WITHOUT EXCEPTION: >= 2 distinct fact kinds AND >= 2 approved method
- * contributions. There is no "distinctive single configuration" escape and no
- * caller-controlled option of any kind: a flag the caller sets is not evidence.
- * The signature takes the claim and its validation context and nothing else.
+ * MVP v1, WITHOUT EXCEPTION: >= 2 distinct fact kinds AND >= 2 approved,
+ * enabled, claim-bearing NON-MODIFIER method contributions. A modifier
+ * (`positional_context`) may qualify the claim but is not a contribution: it
+ * never supplies the second method (Method Profile section 3, PO 2026-09-19).
+ * There is no "distinctive single configuration" escape and no caller-controlled
+ * option of any kind: a flag the caller sets is not evidence. The signature
+ * takes the claim and its validation context and nothing else.
  *
  * This is a structural grounding floor. It is not, and must never be turned
  * into, a confidence or salience score.
@@ -265,13 +268,17 @@ export function assertCentralClaimSignals(
   const cited = validateInterpretiveClaim(claim, context);
   const kinds = new Set(cited.map((fact) => fact.kind));
   // `methodRefs` is already proven duplicate-free, approved, claim-bearing,
-  // enabled and evidence-backed (I1, I2, I4) by the validation above.
-  if (kinds.size >= 2 && claim.methodRefs.length >= 2) {
+  // enabled and evidence-backed (I1, I2, I4) by the validation above, which
+  // throws otherwise; what is left to decide is modifier or not. A ref without
+  // a definition cannot reach this line, and would not be counted if it did.
+  const methodsById = new Map(context.registry.methods.map((method) => [method.methodId, method]));
+  const contributions = claim.methodRefs.filter((methodRef) => methodsById.get(methodRef)?.modifier === false);
+  if (kinds.size >= 2 && contributions.length >= 2) {
     return;
   }
   throw new ClaimError(
     'CLAIM_INSUFFICIENT_SIGNALS',
-    `claim "${claim.claimId}" would carry a thesis or primary motif on ${String(kinds.size)} fact kind(s) and ${String(claim.methodRefs.length)} method(s); a shared single primitive must not decide a reading`,
+    `claim "${claim.claimId}" would carry a thesis or primary motif on ${String(kinds.size)} fact kind(s) and ${String(contributions.length)} non-modifier method contribution(s); a shared single primitive must not decide a reading, and a modifier qualifies a reading without being one`,
   );
 }
 

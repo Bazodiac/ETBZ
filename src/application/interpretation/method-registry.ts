@@ -15,7 +15,8 @@
  * Product decisions locked for MVP v1 (Product Owner, 2026-09-17):
  *   PD-3  recurrence of grounded occurrences may be described; no salience score
  *   PD-4  positional context may qualify a reading; no literal-kin claims
- *   PD-5  central thesis / primary motif: >=2 fact kinds, >=2 method contributions
+ *   PD-5  central thesis / primary motif: >=2 fact kinds, >=2 approved/enabled/
+ *         claim-bearing non-modifier method contributions (PO 2026-09-19)
  *   PD-6  InterpretiveClaim.methodRefs, fail-closed (see interpretive-claim.ts)
  *   PD-7  FuFirE Ten-God labels are evidence; customer wording is the Lexicon's
  *   PD-9  day boundary = midnight, sent explicitly
