@@ -19,6 +19,7 @@ import {
 import type { InterpretiveClaimGraph } from '../../src/application/interpretation/interpretive-claim-graph.js';
 import { ClaimError } from '../../src/application/interpretation/interpretive-claim.js';
 import {
+  INTERPRETATION_LENS_BINDING,
   META_NARRATIVE_PLAN_VERSION,
   MOTIF_LIFECYCLE,
   MetaNarrativePlanError,
@@ -150,6 +151,7 @@ describe('ETBZ-30B P1: a valid plan is versioned and bound to its brief, its gra
       'claimGraphStructuralHash',
       'constraints',
       'coverage',
+      'interpretationLens',
       'methodProfileRef',
       'methodProfileVersion',
       'methodRegistryStructuralHash',
@@ -192,15 +194,47 @@ describe('ETBZ-30B P1: a valid plan is versioned and bound to its brief, its gra
     expect(plan.methodRegistryStructuralHash).toBe(methodRegistryStructuralHash(BAZI_METHOD_REGISTRY_V1));
   });
 
-  it('states the ETBZ-36 lexicon as UNRESOLVED instead of inventing a version or leaving the binding out', () => {
-    expect(TERMINOLOGY_LEXICON_BINDING).toEqual({ dependency: 'ETBZ-36', status: 'UNRESOLVED' });
+  it('binds both released contracts exactly as Confluence released them: identity, page and page version', () => {
+    // The two released contracts of Jira ETBZ-30, "Terminology & Wording
+    // Lexicon v1 binding — 2026-09-21". Neither value is derived from the
+    // other or from the draft, so each is stated here in full.
+    expect(TERMINOLOGY_LEXICON_BINDING).toEqual({
+      contractRef: 'terminology-wording-lexicon@1.0.0',
+      confluencePageId: '67600385',
+      confluencePageVersion: '1',
+    });
+    expect(INTERPRETATION_LENS_BINDING).toEqual({
+      contractRef: 'grounded-reflective-synthesis-lens@1.0.0',
+      confluencePageId: '67371029',
+      confluencePageVersion: '1',
+    });
     const plan = baseline();
-    expect(plan.terminologyLexicon).toEqual({ dependency: 'ETBZ-36', status: 'UNRESOLVED' });
-    // No version, page id or wording rule is carried anywhere in the plan.
+    expect(plan.terminologyLexicon).toEqual(TERMINOLOGY_LEXICON_BINDING);
+    expect(plan.interpretationLens).toEqual(INTERPRETATION_LENS_BINDING);
+    for (const binding of [plan.terminologyLexicon, plan.interpretationLens]) {
+      expect(Object.keys(binding).sort()).toEqual(['confluencePageId', 'confluencePageVersion', 'contractRef']);
+    }
+    // The plan records WHICH contracts a rendering is held to. It carries no
+    // wording, no phrase and no customer prose of its own — the Lexicon is a
+    // semantic constraint, never a phrase bank (Confluence 67600385, s. 14).
     const keys = new Set<string>();
     collectKeys(plan, keys);
-    for (const key of ['lexiconVersion', 'lexiconRef', 'lexiconPageId', 'wording', 'label', 'statement', 'text', 'prose']) {
+    for (const key of ['wording', 'phrase', 'vocabulary', 'lexicon', 'lens', 'label', 'statement', 'text', 'prose']) {
       expect(keys.has(key), key).toBe(false);
+    }
+  });
+
+  it('puts every field of both released bindings into the plan identity', () => {
+    const plan = baseline();
+    const { structuralHash: published, ...core } = plan;
+    expect(published).toBe(structuralHash(core));
+    // Re-pointing either binding at another contract, another page or another
+    // page version is a different plan — not an edit of this one.
+    for (const field of ['terminologyLexicon', 'interpretationLens'] as const) {
+      for (const key of ['contractRef', 'confluencePageId', 'confluencePageVersion'] as const) {
+        const repointed = { ...core, [field]: { ...core[field], [key]: `${core[field][key]}-elsewhere` } };
+        expect(structuralHash(repointed), `${field}.${key}`).not.toBe(published);
+      }
     }
   });
 
@@ -692,8 +726,15 @@ describe('ETBZ-30B P6: the accepted plan is plain data that survives serialisati
       ['coverage edited', { ...plan, coverage: { ...plan.coverage, unplannedClaimRefs: [C.dayMaster] } }],
       ['a constraint widened', { ...plan, constraints: { ...plan.constraints, allowedClaimRefs: [] } }],
       ['a constraint switched off', { ...plan, constraints: { ...plan.constraints, newClaimsForbidden: false } }],
-      ['the lexicon marked bound', { ...plan, terminologyLexicon: { dependency: 'ETBZ-36', status: 'BOUND' } }],
-      ['a lexicon version invented', { ...plan, terminologyLexicon: { ...plan.terminologyLexicon, lexiconRef: 'terminology-lexicon@1.0.0' } }],
+      ['the lexicon re-pointed at an unreleased identity', { ...plan, terminologyLexicon: { ...plan.terminologyLexicon, contractRef: 'terminology-wording-lexicon@2.0.0' } }],
+      ['the lexicon re-pointed at a later page version', { ...plan, terminologyLexicon: { ...plan.terminologyLexicon, confluencePageVersion: '2' } }],
+      ['the lexicon re-pointed at another page', { ...plan, terminologyLexicon: { ...plan.terminologyLexicon, confluencePageId: '62128133' } }],
+      ['a wording rule smuggled onto the lexicon', { ...plan, terminologyLexicon: { ...plan.terminologyLexicon, wording: 'You are a born leader.' } }],
+      ['the lexicon binding dropped', Object.fromEntries(Object.entries(plan).filter(([key]) => key !== 'terminologyLexicon'))],
+      ['the lens re-pointed at an unreleased identity', { ...plan, interpretationLens: { ...plan.interpretationLens, contractRef: 'grounded-reflective-synthesis-lens@2.0.0' } }],
+      ['the lens re-pointed at a later page version', { ...plan, interpretationLens: { ...plan.interpretationLens, confluencePageVersion: '2' } }],
+      ['the lens re-pointed at the lexicon page', { ...plan, interpretationLens: { ...plan.interpretationLens, confluencePageId: '67600385' } }],
+      ['the lens binding dropped', Object.fromEntries(Object.entries(plan).filter(([key]) => key !== 'interpretationLens'))],
       ['a salience smuggled onto a motif', { ...plan, primaryMotifs: [{ ...firstMotif, salience: 0.9 }, ...plan.primaryMotifs.slice(1)] }],
       ['a rank smuggled onto the plan', { ...plan, rank: 1 }],
       ['a profile ref edited', { ...plan, methodProfileRef: 'bazi-method-profile@0.9.0' }],

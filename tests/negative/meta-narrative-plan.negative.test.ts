@@ -598,11 +598,17 @@ describe('ETBZ-30B N11: the draft is untrusted input with a closed shape', () =>
     }
   }, MANY_BUILDS);
 
-  it('refuses derived fields supplied by the drafter: version, bindings it cannot own, lexicon, coverage, constraints, lifecycle, ids', () => {
+  it('refuses derived fields supplied by the drafter: version, bindings it cannot own, lexicon, lens, coverage, constraints, lifecycle, ids', () => {
     const supplied: [string, string, unknown][] = [
       ['root', 'planVersion', 'etbz-30.meta-narrative-plan.v1'],
       ['root', 'structuralHash', 'sha256:0'],
-      ['root', 'terminologyLexicon', { dependency: 'ETBZ-36', status: 'BOUND', lexiconRef: 'terminology-lexicon@1.0.0' }],
+      // The released contracts are system-owned. A draft may not supply one —
+      // not a re-pointed one, and not even the correct released value: the
+      // binding comes from the released contract, never from the drafter.
+      ['root', 'terminologyLexicon', { contractRef: 'terminology-wording-lexicon@1.0.0', confluencePageId: '67600385', confluencePageVersion: '1' }],
+      ['root', 'terminologyLexicon', { contractRef: 'terminology-wording-lexicon@2.0.0', confluencePageId: '99999999', confluencePageVersion: '7' }],
+      ['root', 'interpretationLens', { contractRef: 'grounded-reflective-synthesis-lens@1.0.0', confluencePageId: '67371029', confluencePageVersion: '1' }],
+      ['root', 'interpretationLens', { contractRef: 'grounded-reflective-synthesis-lens@2.0.0', confluencePageId: '99999999', confluencePageVersion: '7' }],
       ['root', 'coverage', {}],
       ['root', 'constraints', { allowedClaimRefs: [] }],
       ['root', 'methodProfileRef', 'bazi-method-profile@1.0.0'],

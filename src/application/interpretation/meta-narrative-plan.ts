@@ -17,6 +17,11 @@
  *   - the binding to the exact brief and the exact accepted graph (and, through
  *     the graph, the released method profile). A plan whose brief or graph has
  *     changed is refused, never re-targeted;
+ *   - the two released product contracts the plan will be rendered under: the
+ *     Terminology & Wording Lexicon and the Grounded Reflective Synthesis
+ *     Interpretation Lens. Both are system-owned: the builder takes them from
+ *     the released contract, a drafter cannot supply or override either, and
+ *     both are part of the plan's structural identity;
  *   - which accepted claims carry the report thesis and the core of each
  *     primary motif. Every such claim passes PD-5 through
  *     `assertCentralGraphClaim` — composed, not re-implemented — and the plan
@@ -83,17 +88,70 @@ export const THREAD_RESOLUTIONS = ['CLOSE', 'LEAVE_OPEN'] as const;
 export type ThreadResolution = (typeof THREAD_RESOLUTIONS)[number];
 
 /**
- * The customer-wording contract the plan will be rendered under.
+ * A released product contract this plan is rendered under: its released
+ * identity, the Confluence page that IS that contract, and the page version at
+ * release. Pinning the page version too is what makes the binding evidence: a
+ * later revision of the page is a different document, and re-binding to it is
+ * an explicit decision, never something a run picks up silently.
  *
- * `Terminology & Wording Lexicon v1` (Jira ETBZ-36) is not released: no page,
- * no version, no identity exists to bind. The plan therefore says so, as data,
- * instead of carrying an invented reference or nothing at all. ETBZ-30B may be
- * implemented in this state; final ETBZ-30B merge authorisation and ETBZ-30
- * closeout require the versioned lexicon binding (Jira ETBZ-30, DRS). Binding
- * it changes this contract and every plan hash — a versioned change of the
- * plan contract, never an edit of an accepted plan.
+ * `confluencePageVersion` is a string because the plan publishes no number at
+ * all (see the header): a page version identifies a revision, it never counts
+ * or weighs anything, and nothing here does arithmetic on it. Keeping the
+ * "nothing is a number" guard absolute is worth more than a numeric type.
  */
-export const TERMINOLOGY_LEXICON_BINDING = { dependency: 'ETBZ-36', status: 'UNRESOLVED' } as const;
+export interface ReleasedContractBinding {
+  /** The released contract identity, `<name>@<semver>`. */
+  readonly contractRef: string;
+  /** The Confluence page that carries the contract. */
+  readonly confluencePageId: string;
+  /** The page version at release. A later revision requires explicit re-binding. */
+  readonly confluencePageVersion: string;
+}
+
+/**
+ * The customer-wording contract the plan will be rendered under: `ETBZ —
+ * Terminology & Wording Lexicon v1`, released 2026-09-21 (Jira ETBZ-36; the
+ * binding recorded in Jira ETBZ-30, "Terminology & Wording Lexicon v1 binding
+ * — 2026-09-21"). It owns customer terminology and wording only: it adds no
+ * method, no fact and no claim, so nothing here reads it — the plan records
+ * WHICH contract a rendering is held to, and ETBZ-38 hands it on.
+ *
+ * Section 15 of that page ("Consumer binding contract") lists FIVE things a
+ * consuming run's evidence must record: the released identity; this page id
+ * and its current released page version; `bazi-method-profile@1.0.0`;
+ * `grounded-reflective-synthesis-lens@1.0.0`; and the relevant Long-Form /
+ * ClaimGraph / Skill versions.
+ *
+ * The plan carries the first four — the profile from the re-proven graph, the
+ * lens below. It does not carry the fifth as version strings, and that is not
+ * an omission: it pins the exact graph by `claimGraphStructuralHash`, which is
+ * stronger than a version; the Long-Form Meta-Narrative Contract has no
+ * released `@version` identity to bind (the lexicon's own dependency list
+ * gives it as a page, unlike the profile and the lens); and the Skill version
+ * belongs to ETBZ-38. Section 15 addresses that split itself — "ETBZ-30,
+ * ETBZ-38 and ETBZ-33 must bind to this same released identity" — so a run's
+ * evidence is assembled across those three, never by one plan alone.
+ */
+export const TERMINOLOGY_LEXICON_BINDING = {
+  contractRef: 'terminology-wording-lexicon@1.0.0',
+  confluencePageId: '67600385',
+  confluencePageVersion: '1',
+} as const satisfies ReleasedContractBinding;
+
+/**
+ * The interpretation lens the plan will be rendered under: `ETBZ — Grounded
+ * Reflective Synthesis Interpretation Lens v1`, released 2026-09-21. It owns
+ * how accepted meaning may be turned into reflective, non-diagnostic prose —
+ * the epistemic levels, the depth operators, the anti-Barnum boundary. Like
+ * the lexicon it enables no method and creates no claim (section 20: the
+ * ClaimGraph / MetaNarrativePlan is "the main software home for lens
+ * semantics"), so the plan binds it and does not interpret it.
+ */
+export const INTERPRETATION_LENS_BINDING = {
+  contractRef: 'grounded-reflective-synthesis-lens@1.0.0',
+  confluencePageId: '67371029',
+  confluencePageVersion: '1',
+} as const satisfies ReleasedContractBinding;
 
 export interface PlanReportThesis {
   /** The accepted claims the thesis is an interpretation OF. Each passes PD-5. */
@@ -182,7 +240,10 @@ export interface MetaNarrativePlan {
   readonly methodProfileRef: string;
   readonly methodProfileVersion: string;
   readonly methodRegistryStructuralHash: string;
+  /** The released customer-wording contract. System-owned; never drafted. */
   readonly terminologyLexicon: typeof TERMINOLOGY_LEXICON_BINDING;
+  /** The released interpretation lens. System-owned; never drafted. */
+  readonly interpretationLens: typeof INTERPRETATION_LENS_BINDING;
   readonly reportThesis: PlanReportThesis;
   /** Sorted by `motifId`. */
   readonly primaryMotifs: readonly PlanPrimaryMotif[];
@@ -267,7 +328,9 @@ const idLike = z.string().min(1).max(256);
 /**
  * The closed SHAPE of a draft. `strictObject` throughout: a field this contract
  * does not name — a salience, a weight, a label, a fact, a statement, a
- * provider or run id, a lexicon — is a refusal, not something dropped quietly.
+ * provider or run id, a lexicon, a lens — is a refusal, not something dropped
+ * quietly. The released contract bindings are system-owned and appear nowhere
+ * here, so a drafter can neither supply nor override one.
  */
 const planDraftSchema = z.strictObject({
   sourceBriefStructuralHash: idLike,
@@ -619,6 +682,7 @@ export function buildMetaNarrativePlan(draft: unknown, context: MetaNarrativePla
     methodProfileVersion: graph.methodProfileVersion,
     methodRegistryStructuralHash: graph.methodRegistryStructuralHash,
     terminologyLexicon: { ...TERMINOLOGY_LEXICON_BINDING },
+    interpretationLens: { ...INTERPRETATION_LENS_BINDING },
     reportThesis,
     primaryMotifs: primaryMotifs.sort(byKey((motif) => motif.motifId)),
     tensions: tensions.sort(byKey((tension) => tension.tensionId)),
@@ -665,8 +729,9 @@ export function metaNarrativePlanDraftOf(plan: MetaNarrativePlan): MetaNarrative
 /**
  * Proves that `plan` is, byte for byte, the plan the builder produces from the
  * plan's own choices for this chart, brief, released profile and accepted
- * graph. Anything else — an edited motif, a rewritten lifecycle, a lexicon
- * marked bound, an added field, a binding hash that is not this brief's or
+ * graph. Anything else — an edited motif, a rewritten lifecycle, a lexicon or
+ * lens re-pointed at another contract, identity or page version, an added
+ * field, a binding hash that is not this brief's or
  * this graph's — is refused (`PLAN_NOT_INTACT`, the cause in the message), as
  * the claim graph does for a graph of another chart. A caller that wants the
  * specific binding refusal re-builds the plan's draft (`metaNarrativePlanDraftOf`).

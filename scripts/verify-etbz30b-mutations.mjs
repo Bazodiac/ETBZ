@@ -44,10 +44,18 @@ const MUTANTS = [
   ['BIND: the plan does not name its graph', PLAN, "    claimGraphStructuralHash: graph.structuralHash,\n", "    claimGraphStructuralHash: '',\n", [T.unit]],
   ['BIND: the plan does not carry the released registry hash', PLAN, "    methodRegistryStructuralHash: graph.methodRegistryStructuralHash,\n", "", [T.unit]],
   ['BIND: the plan does not carry methodProfileVersion', PLAN, "    methodProfileVersion: graph.methodProfileVersion,\n", "", [T.unit]],
-  // --- ETBZ-36: the lexicon is not invented ------------------------------------------------
-  ['LEXICON: the unreleased lexicon is declared bound', PLAN, "{ dependency: 'ETBZ-36', status: 'UNRESOLVED' } as const;", "{ dependency: 'ETBZ-36', status: 'BOUND' } as const;", [T.unit]],
-  ['LEXICON: the binding is left out instead of stated', PLAN, "    terminologyLexicon: { ...TERMINOLOGY_LEXICON_BINDING },\n", "", [T.unit]],
-  ['LEXICON: a lexicon version is invented', PLAN, "    terminologyLexicon: { ...TERMINOLOGY_LEXICON_BINDING },\n", "    terminologyLexicon: { ...TERMINOLOGY_LEXICON_BINDING, lexiconRef: 'terminology-lexicon@1.0.0' },\n", [T.unit]],
+  // --- the released contracts: bound exactly as released, never drafted --------------------
+  ['CONTRACT: the lexicon is re-pointed at an unreleased identity', PLAN, "  contractRef: 'terminology-wording-lexicon@1.0.0',", "  contractRef: 'terminology-wording-lexicon@2.0.0',", [T.unit], 'binds both released contracts'],
+  ['CONTRACT: the lexicon page is not the released one', PLAN, "  confluencePageId: '67600385',", "  confluencePageId: '62128133',", [T.unit], 'binds both released contracts'],
+  ['CONTRACT: the lexicon page version is not pinned to the release', PLAN, "  confluencePageId: '67600385',\n  confluencePageVersion: '1',", "  confluencePageId: '67600385',\n  confluencePageVersion: '2',", [T.unit], 'binds both released contracts'],
+  ['CONTRACT: the lens is re-pointed at an unreleased identity', PLAN, "  contractRef: 'grounded-reflective-synthesis-lens@1.0.0',", "  contractRef: 'grounded-reflective-synthesis-lens@2.0.0',", [T.unit], 'binds both released contracts'],
+  ['CONTRACT: the lens page is not the released one', PLAN, "  confluencePageId: '67371029',", "  confluencePageId: '62128133',", [T.unit], 'binds both released contracts'],
+  ['CONTRACT: the lens page version is not pinned to the release', PLAN, "  confluencePageId: '67371029',\n  confluencePageVersion: '1',", "  confluencePageId: '67371029',\n  confluencePageVersion: '2',", [T.unit], 'binds both released contracts'],
+  ['CONTRACT: the lexicon binding is left out of the plan', PLAN, "    terminologyLexicon: { ...TERMINOLOGY_LEXICON_BINDING },\n", "", [T.unit], 'carries exactly the contract fields'],
+  ['CONTRACT: the lens binding is left out of the plan', PLAN, "    interpretationLens: { ...INTERPRETATION_LENS_BINDING },\n", "", [T.unit], 'carries exactly the contract fields'],
+  ['CONTRACT: a wording rule is invented onto the lexicon binding', PLAN, "    terminologyLexicon: { ...TERMINOLOGY_LEXICON_BINDING },\n", "    terminologyLexicon: { ...TERMINOLOGY_LEXICON_BINDING, wording: 'You are a born leader.' },\n", [T.unit], 'binds both released contracts'],
+  ['CONTRACT: both released bindings stay out of the plan hash', PLAN, "  return { ...core, structuralHash: structuralHash(core) };", "  const { terminologyLexicon: _lexicon, interpretationLens: _lens, ...hashed } = core;\n  return { ...core, structuralHash: structuralHash(hashed) };", [T.unit], 'publishes a plan hash anyone can re-derive'],
+  ['NUMBER: the pinned lexicon page version is published as a number', PLAN, "  confluencePageId: '67600385',\n  confluencePageVersion: '1',", "  confluencePageId: '67600385',\n  confluencePageVersion: 1 as unknown as string,", [T.unit], 'exposes no number anywhere'],
   // --- references resolve to ACCEPTED claims ------------------------------------------------
   ['REF: an unknown claim is accepted', PLAN, "      if (!claimsById.has(ref)) {", "      if (!claimsById.has(ref) && refs.length < 0) {", [T.negative]],
   ['REF: an empty element is accepted', PLAN, "    if (refs.length === 0) {", "    if (refs.length < 0) {", [T.negative]],
