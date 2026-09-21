@@ -192,10 +192,23 @@ contract made before any plan was accepted — never an edit of an accepted plan
 Each began as a reading of the canonical text, and each rule is pinned by a
 test and a dedicated source mutant, so that changing it is a visible decision.
 Where the reading is stricter than the text, it fails closed and can be
-withdrawn by removing one check. The Product Owner reviewed all nine; the
-decision reached this ADR through the ETBZ-30B repair brief of 2026-09-19 and
-is not yet recorded in Jira ETBZ-30 or Confluence: 2–9 are accepted unchanged;
-1 was not, and is replaced by the Product Owner's rule.
+withdrawn by removing one check. The Product Owner reviewed all nine: 2–9 are
+accepted unchanged; 1 was not, and is replaced by the Product Owner's rule.
+
+**The decision is recorded in the canonical sources**, not only in this ADR:
+
+- Jira ETBZ-30, section "ETBZ-30B Product Owner Decision — Motif Floor —
+  2026-09-19";
+- Confluence *Bazodiac Interpretation Model & Skill-driven Concierge MVP
+  Rebaseline v1* (`62128133`), section 15 "ETBZ-30B Product Owner decision —
+  motif floor — 2026-09-19", which locks the 3–5 motif floor and enumerates the
+  accepted ETBZ-30B semantics. That section landed in page version 7
+  ("Record ETBZ-30B motif-floor PO decision", 2026-09-19); the page is at
+  version 9 at the time of this revision.
+
+Section 16 of the same page ("Terminology & Wording Lexicon v1 released —
+2026-09-21") records the released lexicon identity this plan binds, and states
+that earlier text on that page calling ETBZ-36 unresolved is superseded.
 
 1. **Motif count 3–5 — Product Owner decision.** The first reading here (1–5:
    five a ceiling, three not a floor) was not accepted. The v1 rule is three
