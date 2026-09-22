@@ -1,0 +1,67 @@
+{
+ "pageId": "wu-xing-distribution",
+ "surface": "customer",
+ "pageNumber": 8,
+ "family": "chart-foundation",
+ "donors": {
+  "primary": "V2 agent_x_ETBZ-4.png",
+  "secondary": [
+   "V4 palette/spacing",
+   "V6 presentation transform",
+   "V5 zero-is-zero copy rule"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "wuXing.vector",
+   "consumedFactKinds": [
+    "wu_xing_vector"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1",
+   "presentationTransform": "pt.linear-max-v1",
+   "derives": []
+  }
+ ],
+ "glyphRefs": [
+  {
+   "ch": "木",
+   "slug": "mu",
+   "sha256": "sha256:0f5f3325ad1f9088e4760832f0552cc000fc453036d1d460be78943552eaa81a"
+  },
+  {
+   "ch": "火",
+   "slug": "huo",
+   "sha256": "sha256:db8b4804bffefdbbbdd077ca870061ef0bd521bbf21a37b94bea91353bcbe5be"
+  },
+  {
+   "ch": "土",
+   "slug": "tu",
+   "sha256": "sha256:3bcf2f8468cd7781c8bf1afbd35f6d8d80066c0cbbe82985ace736ca22e1ed2c"
+  },
+  {
+   "ch": "金",
+   "slug": "jin",
+   "sha256": "sha256:af5788f1b3fa82240669155aec605733c71b94adfe3da8641cb77ce401c7e186"
+  },
+  {
+   "ch": "水",
+   "slug": "shui",
+   "sha256": "sha256:333a92d44c63a9c67dc3a1bd6e4b979d9525850ed6b4744f387c159d6ab63471"
+  }
+ ],
+ "components": [
+  {
+   "id": "wuXing.ring",
+   "kind": "fivePhaseRing",
+   "transform": "pt.linear-max-v1",
+   "allFiveVisible": true,
+   "values": {
+    "wood": 1.8,
+    "fire": 2.5,
+    "earth": 2.0,
+    "metal": 2.0,
+    "water": 2.0
+   }
+  }
+ ]
+}

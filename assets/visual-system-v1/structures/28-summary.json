@@ -1,0 +1,40 @@
+{
+ "pageId": "summary",
+ "surface": "customer",
+ "pageNumber": 28,
+ "family": "reflection-closure",
+ "donors": {
+  "primary": "V3 closing page summary column",
+  "secondary": [
+   "V4 shell",
+   "V6 fact bindings"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "summary.facts",
+   "consumedFactKinds": [
+    "day_master_stem",
+    "pillar_stem",
+    "pillar_branch",
+    "wu_xing_vector",
+    "chart_parameters"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  }
+ ],
+ "glyphRefs": [
+  {
+   "ch": "辛",
+   "slug": "xin",
+   "sha256": "sha256:46d14e22373f228e5e1581d6880db61ca2731221f4d4e08ca7da2c24f4f82327"
+  }
+ ],
+ "components": [
+  {
+   "id": "summary.table",
+   "kind": "factsTable",
+   "rows": 9
+  }
+ ]
+}

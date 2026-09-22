@@ -1,0 +1,31 @@
+{
+ "pageId": "closing",
+ "surface": "customer",
+ "pageNumber": 29,
+ "family": "reflection-closure",
+ "donors": {
+  "primary": "V3 closing reflection (contact sheet, page 28) — sense of resolution",
+  "secondary": [
+   "V4 cover atmosphere (light, not full black)",
+   "V6 static wordmark"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "closing.name",
+   "consumedFactKinds": [
+    "customer_display_name"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  }
+ ],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "closing.statement",
+   "kind": "quietStatement",
+   "predictive": false,
+   "fullPageBlack": false
+  }
+ ]
+}

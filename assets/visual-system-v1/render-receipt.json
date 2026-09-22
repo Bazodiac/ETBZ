@@ -1,0 +1,377 @@
+{
+  "receiptVersion": "bazodiac-final-render-receipt@1.0.0",
+  "generatedAt": "2026-09-21T00:51:39+00:00",
+  "designTokensSha256": "sha256:e8c6818de4cdf27c5f16b143d019e55346f8019922d35d588ad11745b4b4d190",
+  "glyphManifestSha256": "sha256:54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
+  "wordmarkSha256": "sha256:c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1",
+  "geometryCentipoints": {
+    "pageW": 59528,
+    "pageH": 84189,
+    "marginTop": 6236,
+    "marginSide": 5669,
+    "marginBottom": 5669,
+    "contentW": 48189,
+    "contentH": 72283,
+    "baseline": 1417,
+    "gutter": 1701,
+    "bodySizeCp": 1050,
+    "bodyLeadingCp": 1417,
+    "textFloorCp": 900,
+    "linesPerPage": 51
+  },
+  "pinnedFaces": [
+    {
+      "label": "regular",
+      "file": "Inter-Regular.ttf",
+      "sha256": "sha256:40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82"
+    },
+    {
+      "label": "medium",
+      "file": "Inter-Medium.ttf",
+      "sha256": "sha256:97ad806f526e41546d46365bb3a393145f75b7b1568913db74549ad8b8dba872"
+    },
+    {
+      "label": "display-light",
+      "file": "InterDisplay-Light.ttf",
+      "sha256": "sha256:1d6072bc7807fa7bf08a6d273368f04ac68e77438258f32975057a61c8772811"
+    },
+    {
+      "label": "informational-cjk",
+      "file": "NotoSansCJK-Regular.ttc (system)",
+      "sha256": "sha256:b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a"
+    }
+  ],
+  "harness": {
+    "renderer": "Chromium (Playwright) — proof tooling, not a production contract",
+    "deviceScaleFactor": 2
+  },
+  "pages": [
+    {
+      "surface": "customer",
+      "pageId": "01-cover",
+      "pageNumber": 1,
+      "structuralSha256": "sha256:e880b07dc6183efedf0b968cb4629232fe13fc4451d15bb193c8c0d9cef7dd4b",
+      "pngSha256": "sha256:b78dcdc55414180405c378adf72492f025d2eb934cf620372363060545e7bd1c",
+      "pdfSha256": "sha256:0c8f5863af3008160c6b0f986e364b20a54108c0005d3dc10db17fac43058701",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 1
+    },
+    {
+      "surface": "customer",
+      "pageId": "02-identity",
+      "pageNumber": 2,
+      "structuralSha256": "sha256:3664205076564e6e2ea3bc0cd430b3c46bf103520f2c9852ce444c28dd83c106",
+      "pngSha256": "sha256:c28ca4d30a3390ae704c64ba0daf6ea5a47bc6888fa49c91c0e09d9151c3519b",
+      "pdfSha256": "sha256:243853478de6f980af11684f3ec159389ccbbb34d360f48248dbf0e36d2b5ea6",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "customer",
+      "pageId": "03-contents",
+      "pageNumber": 3,
+      "structuralSha256": "sha256:c492f49a7f96a7d15699dc401865814b387b054eb554d26d60ad5372a0c881be",
+      "pngSha256": "sha256:0394dbcc423d3848bae8699c3d5f2f418512d543e6b2066e0c9ef34da0cdada4",
+      "pdfSha256": "sha256:191e52b77d72e9511e496aa592308e464add4088b45583feb7925bbd39062e2f",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "customer",
+      "pageId": "04-glance",
+      "pageNumber": 4,
+      "structuralSha256": "sha256:967a9798c7db44e489fd17efe1af1008ce347230d6b3004ee65d473559892bc3",
+      "pngSha256": "sha256:99a408ecd7ac15eb111703a0812e3b83a97f59e2c99ac23fbad993227becda26",
+      "pdfSha256": "sha256:06aa25710a9bcc30f3323c036687fcc34bc5935e811f5e30a3c36d432d3e7f3a",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 14
+    },
+    {
+      "surface": "customer",
+      "pageId": "05-four-pillars",
+      "pageNumber": 5,
+      "structuralSha256": "sha256:8956aff80b7d1afff9a3374dfc13b533c36265ebf659518b2c82835c2c5799dc",
+      "pngSha256": "sha256:c6284494ab679897486e385004b22d5dd93d40fa7e206095a10829712891c1c2",
+      "pdfSha256": "sha256:d1b5e1efe9f36b79c5df258fe2ae5967c2ac0a6f692e612238b82f8e11ad3518",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 17
+    },
+    {
+      "surface": "customer",
+      "pageId": "06-foundation",
+      "pageNumber": 6,
+      "structuralSha256": "sha256:ed90c7798b2e3b716e21d9ed691366a57288e9915da6ad403775e93238faf680",
+      "pngSha256": "sha256:3a4482aa9e5c141a38bd6bfc3292c500a8024c06d083ded0f54858963f7f9262",
+      "pdfSha256": "sha256:32c86320badcd3d944d3683e878824b36d61098edd9d7b24bf4c419ffd0a8aa9",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 8
+    },
+    {
+      "surface": "customer",
+      "pageId": "07-day-master",
+      "pageNumber": 7,
+      "structuralSha256": "sha256:afdca232dd280395ffbc58fd1afa0bbc623411d00eea6f71fd13d2a8c7dd0b14",
+      "pngSha256": "sha256:0a5e019f6574c94b56c141e2e40e344b9e6c6c34750a51ec9f549b9185af8f93",
+      "pdfSha256": "sha256:3fa9d868c902edc4ce3ad1a74de5070020512821ebeccca477b2f263494ea1d8",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 1
+    },
+    {
+      "surface": "customer",
+      "pageId": "08-wu-xing",
+      "pageNumber": 8,
+      "structuralSha256": "sha256:7aa0236d57fc730ffab0d717578e26891262e93733a1d121fe2032b0266dda99",
+      "pngSha256": "sha256:09fbe87a16c0363f26bd19ab7469d3b5035c44807ec19c1e29d7ae6315676130",
+      "pdfSha256": "sha256:f387e93d44a7145db7091d845fa641bfb4780998b246bc3f35d131af52448388",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 5
+    },
+    {
+      "surface": "customer",
+      "pageId": "09-five-phases",
+      "pageNumber": 9,
+      "structuralSha256": "sha256:36feb93d6d16fc7616dbc85cefa400bb00c492f3411c25bab27416494af68d3f",
+      "pngSha256": "sha256:a983fbdb29697f74c06ca2a76e93919b845929ecb5cfa1933a0e0a9ba1cdff9f",
+      "pdfSha256": "sha256:d8c6b9ffed8c7014d6f9970fd6e8a9f5c95f22826620ec3d1e9401de097721a4",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 5
+    },
+    {
+      "surface": "customer",
+      "pageId": "10-ten-gods",
+      "pageNumber": 10,
+      "structuralSha256": "sha256:34042e9ba3d187da37e6d15b9a80459a6930e516c97a38fbabec5ad3357fc9b2",
+      "pngSha256": "sha256:b2ccb40eaf071a526426e9f9843ccc70862c8de9c8cc99d87e3fca3fba972050",
+      "pdfSha256": "sha256:dd12c371a93245d1a2e8f2a6f44b350eecc3a25dce7cffb9318e5139a34eca81",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "customer",
+      "pageId": "11-hidden-stems",
+      "pageNumber": 11,
+      "structuralSha256": "sha256:3ab6e1de09aa4cad52cf6d9f83eb26c1313b3eea8a10dcee52eaca7690fd5f30",
+      "pngSha256": "sha256:f1b5563d79fc3a2f4e3a5b88f95a0ba1f551338fd24b71ab96522ecbb75d19ac",
+      "pdfSha256": "sha256:a52a6c31bb859c723db0c95ebe2eda5957c6781cf747642eb3db76c4cd4742b4",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 13
+    },
+    {
+      "surface": "customer",
+      "pageId": "12-longform-p1",
+      "pageNumber": 12,
+      "structuralSha256": "sha256:a8e8e1df0669c167e313d36e77aa9e068bc45b7ac20df4a1eb4d06807ebfb80b",
+      "pngSha256": "sha256:0538f1b042e9dad749d8eb8a8cccb30733f71c7d0fc9d717377ce8edcad5a599",
+      "pdfSha256": "sha256:0c38de9b283e5f59d15b7fee9e44fbc3707b8e6f410d0ac3fab5318db2eba4c6",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "customer",
+      "pageId": "13-longform-p2",
+      "pageNumber": 13,
+      "structuralSha256": "sha256:97890b48aeef625e67c88bc0b43e2e46c2d51bc30456d4d822503b9ddefdb799",
+      "pngSha256": "sha256:2f66a2f2a873e0bf98841e04b745b2b842ee761c5f73abe74d98cddebe648e7c",
+      "pdfSha256": "sha256:d18ee0ccc81a943f29ef45d576217524d5dfa993138e3d62944267ebc3b68d56",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 1
+    },
+    {
+      "surface": "customer",
+      "pageId": "14-longform-p3",
+      "pageNumber": 14,
+      "structuralSha256": "sha256:675ae80a56c4c6deae22ae966fe066f4767f9c05c11c5c711229ae8d4faf64b3",
+      "pngSha256": "sha256:c86f4bac4f5d4050ac6f112fbf978d504debf6a169a7c7671423ae1b5d6514a1",
+      "pdfSha256": "sha256:bc3192dcc4437e43ce733d307897c2ef9761c00828b994c272d762011fc62491",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 1
+    },
+    {
+      "surface": "customer",
+      "pageId": "27-reflection",
+      "pageNumber": 27,
+      "structuralSha256": "sha256:faf66174d8572086eee3e114afcb4de37e80a380d3867107833da1e589e269b2",
+      "pngSha256": "sha256:1ee4ca7d8f0c1c24d2001cf984a4d943fd2c9a320b3abe055ea15d970c5e1c70",
+      "pdfSha256": "sha256:7d7de3935acffc2b260a1a3e0d33c1607fbf09a0976179ef19abab5a650da393",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 8
+    },
+    {
+      "surface": "customer",
+      "pageId": "28-summary",
+      "pageNumber": 28,
+      "structuralSha256": "sha256:e121f6ad3cbcde404f1c564ec036659a50e1b0d1e3a33900177559ae866f4a98",
+      "pngSha256": "sha256:cd18f5f9b1ada2378c36afcbee87a4840759cb4227eb6fc4b2cc26f8e2eac9b1",
+      "pdfSha256": "sha256:d5c255c894f6e694452264019c8a5e0a3ff0f6ad5c068800243259997dd22d2c",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 1
+    },
+    {
+      "surface": "customer",
+      "pageId": "29-closing",
+      "pageNumber": 29,
+      "structuralSha256": "sha256:eb6618f0ee450cb6a02db49d263318627a8147419cf04ff4bd9b782c77e0e03f",
+      "pngSha256": "sha256:552edbbaa1fcf4f4f89314b73ec3b155f244d0df53ad0e0460df4284e765b2d1",
+      "pdfSha256": "sha256:77fdca4f75c4fda89476d9d305f7b67ee09664b175a96f9bff2955613675083e",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "customer",
+      "pageId": "30-method-note",
+      "pageNumber": 30,
+      "structuralSha256": "sha256:357c153d59d7a610d79cacdb3467426456afca2abc6b2a3007066d732ded6f48",
+      "pngSha256": "sha256:07454e9657439b2e57560a5fb58b9689e1bffe0703df55154abfa06b9a0c6709",
+      "pdfSha256": "sha256:d08a0926594c02539f1ce7c287674f577a39b26251713755a9d5ce1c60dc5293",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "developer",
+      "pageId": "dev-v6-01-longform-p1",
+      "pageNumber": 1,
+      "structuralSha256": "sha256:0ac3b29ca9c0845041c7c3175888f7c59bc6a9c134c40ab7ce27f5c9f3839717",
+      "pngSha256": "sha256:8526859b2171dedcb6429a926d97b571efe38704f3da8fe5cd0185b34a34373f",
+      "pdfSha256": "sha256:44026e59515f4787793929476446c35cae9f5df32ec4ed24cd9e91b0cbc0cf9b",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "developer",
+      "pageId": "dev-v6-02-longform-p2",
+      "pageNumber": 2,
+      "structuralSha256": "sha256:be652a17106792ddadd5c26a022cbfcaeeeb28e315ceddb342def64ecca9a5ce",
+      "pngSha256": "sha256:e7e233823bad9b5cf213b8c61d01e001eb669a4daa9264298a9db0aaca40ec8e",
+      "pdfSha256": "sha256:492a68bd785e0a0923da2d2f67a1c2eb433960d0f445ffa42f24df51986a43b4",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "developer",
+      "pageId": "dev-wu-xing-zero",
+      "pageNumber": 8,
+      "structuralSha256": "sha256:655339abc6b86bf8d68eea42ed6d576991d6d250226de02f42212a0c5eb72a33",
+      "pngSha256": "sha256:20bd87603023bff55b1fb0bd33bc2385f074b53fc7910d2ffb9561bd2119c2ae",
+      "pdfSha256": "sha256:dee6f66c3106d895fa010ebb03a4975111c1bb28b2c65782644753ae8547fe21",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 5
+    },
+    {
+      "surface": "developer",
+      "pageId": "D01-glyph-proof",
+      "pageNumber": 1,
+      "structuralSha256": "sha256:18b58fabfe0fd31bb356ee88e3297fa0c144b5b55432b4aaaf15f14a64aeb2ce",
+      "pngSha256": "sha256:9c1d16b62bf7bb14bc6dd0e3cee23427a2f2ab5de2a6ed1362a8df74f60af61b",
+      "pdfSha256": "sha256:6ff9a2f28083873ddc869bdf7a837d847761eb72bb21b242495977bdc338af3e",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 27
+    },
+    {
+      "surface": "developer",
+      "pageId": "D02-glyph-style",
+      "pageNumber": 2,
+      "structuralSha256": "sha256:2776984ee5569d8a9315c2ee87e092f32486a99adf6e9d57fc50893d86864581",
+      "pngSha256": "sha256:6519b2d0dedd888fb8d34ffc1573adeaa9f460f2a6a63203f7315a029ffd4b14",
+      "pdfSha256": "sha256:d9c5d59410651cac751014ea853daf824b1fa91c14a5ef3aace954011c3ec5d5",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 4
+    },
+    {
+      "surface": "developer",
+      "pageId": "D03-wordmark",
+      "pageNumber": 3,
+      "structuralSha256": "sha256:8737bb0274106000ebbd6a8a9ce66d81d471096782d24fef666fd79882072929",
+      "pngSha256": "sha256:4a5023136ba155cef0436fcc21c2f5f540b6d3a4dd2da75ef5a24e4a2869899c",
+      "pdfSha256": "sha256:27c94ef7e730b4e1d89a6212ec6e054579352cbd22f68647d21003c29b773a2e",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 1
+    },
+    {
+      "surface": "developer",
+      "pageId": "D04-bindings",
+      "pageNumber": 4,
+      "structuralSha256": "sha256:67569b970c51e0ffe5dd20f1aefaec9cefeb26d7fce6022c9af3ddce19acc2dd",
+      "pngSha256": "sha256:95a4ec072027f7d3639292018254601a3558c7e86bb28af3bd4937a8da0f3552",
+      "pdfSha256": "sha256:d3d04fe401f70eb3d8da82424f4c80302b06998f88a79c367853f3cecd853847",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "developer",
+      "pageId": "D05-negative",
+      "pageNumber": 5,
+      "structuralSha256": "sha256:f532adee8eb861f120893ab8b25670a3423a273d8be421b7197599bb061232b9",
+      "pngSha256": "sha256:809ce1e398285440ba09521638c8ff2465f5b508d0a9d8cebc9d5b2a4066b895",
+      "pdfSha256": "sha256:1304f4c972503f018d5b26114bccaa98ac8024ca363b97fad7c33c745d6e97bd",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "developer",
+      "pageId": "D06-layout",
+      "pageNumber": 6,
+      "structuralSha256": "sha256:7e096a1e1a730bbae0a2651a52839a5e45f6a5a558edafcd886f97de6df1996d",
+      "pngSha256": "sha256:7b891fd0bd25b060ab207c9f65129d7ee5108d9398a83fade29b178a3d4f92a6",
+      "pdfSha256": "sha256:6d4c4651adf641f65b27c346421baaad912923bd0b7e3dd0eb72d499e7a0b362",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "developer",
+      "pageId": "D07-layout",
+      "pageNumber": 7,
+      "structuralSha256": "sha256:5734b80645dd9acd0ff3f5318a94f8d2ec78a185f721f58d4d91ae4fec1e29f7",
+      "pngSha256": "sha256:e2424228927b05ab87bf075a555d16f7eb990b947eff32f78c6a33756830b242",
+      "pdfSha256": "sha256:b4861814c280d4a035a62fe67ae2c522fcc2f6761475f1cf165c360e9c14e488",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    },
+    {
+      "surface": "developer",
+      "pageId": "D08-receipts",
+      "pageNumber": 8,
+      "structuralSha256": "sha256:ebe9757223c13846bfbe6ff7f5741204a04858107aed58f56ed2912bdafb6069",
+      "pngSha256": "sha256:59a1239b22e2a377e6daa56d4b98d7fa0f887df7867fe2c54eb5c0c025e59e7c",
+      "pdfSha256": "sha256:0589c8c730f3a9d57bba1b90c53b9b0ddebad1c1ff9c67a08cdf2e9ef775696b",
+      "domFindings": 0,
+      "dom": [],
+      "glyphRefs": 0
+    }
+  ],
+  "artifacts": {
+    "customer-sample.pdf": "2d9f1b42876ae08d61129c990a86c8db27a603499df3cbc53927e7f4f480e475",
+    "final-contact-sheet.png": "5c134ae003a8839627626286f32c8b94457577ad0064320ab914963185695bef",
+    "glyphs/manifest.json": "54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
+    "tokens.json": "e8c6818de4cdf27c5f16b143d019e55346f8019922d35d588ad11745b4b4d190",
+    "assets/wordmark.svg": "c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1",
+    "developer-proof.pdf": "b9f459a87935cbb892c04e8f7a2c5e5d8f2c58435d040ded9ad02053c144a7cc"
+  }
+}

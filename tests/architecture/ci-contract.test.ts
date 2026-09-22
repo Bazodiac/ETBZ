@@ -96,6 +96,14 @@ describe('AC8: the verification contract still contains every mandatory gate', (
     ['tests', /vitest run/],
     ['build', /npm run --silent build|run_build/],
     ['guard mutation proofs', /verify-guards\.sh/],
+    // ETBZ-49. The pattern matches the `etbz_step` REGISTRATION, not the script
+    // name: `run_etbz49_visual_guard` is also DEFINED a few lines above, so a
+    // name-only pattern stays green while the step that actually executes it is
+    // deleted - which is exactly the decoration this row exists to prevent.
+    [
+      'ETBZ-49 visual-system guard',
+      /etbz_step\s+"guards :: ETBZ-49[^"]*"\s+run_etbz49_visual_guard/,
+    ],
     ['secret scan', /secret-scan\.sh/],
     ['dependency risk scan', /npm audit/],
     ['container build dry run', /build-dry-run\.sh/],

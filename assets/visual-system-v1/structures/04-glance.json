@@ -1,0 +1,155 @@
+{
+ "pageId": "glance",
+ "surface": "customer",
+ "pageNumber": 4,
+ "family": "chart-foundation",
+ "donors": {
+  "primary": "V3 Chart at a Glance (contact sheet, page 04)",
+  "secondary": [
+   "V4 colour/glyph system",
+   "V6 fact bindings"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "glance.dayMaster",
+   "consumedFactKinds": [
+    "day_master_stem",
+    "stem_phase",
+    "stem_polarity"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  },
+  {
+   "slotId": "glance.pillars",
+   "consumedFactKinds": [
+    "pillar_stem",
+    "pillar_branch"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  },
+  {
+   "slotId": "glance.wuXing",
+   "consumedFactKinds": [
+    "wu_xing_vector"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1",
+   "presentationTransform": null
+  }
+ ],
+ "glyphRefs": [
+  {
+   "ch": "庚",
+   "slug": "geng",
+   "sha256": "sha256:080c23dd91cdec84393a66552638dd337d20c9f365b9ee0cc9b6ae3b52f7119a"
+  },
+  {
+   "ch": "午",
+   "slug": "wu-branch",
+   "sha256": "sha256:65b89a5671886182bc6abf6757d98706de3d5c04cd74e4adf035b75de6c9ec60"
+  },
+  {
+   "ch": "壬",
+   "slug": "ren",
+   "sha256": "sha256:dada5e5110375a51efd295e3806fa9b8d01abefd8e34de6e36bef5d7a5cc315d"
+  },
+  {
+   "ch": "午",
+   "slug": "wu-branch",
+   "sha256": "sha256:65b89a5671886182bc6abf6757d98706de3d5c04cd74e4adf035b75de6c9ec60"
+  },
+  {
+   "ch": "辛",
+   "slug": "xin",
+   "sha256": "sha256:46d14e22373f228e5e1581d6880db61ca2731221f4d4e08ca7da2c24f4f82327"
+  },
+  {
+   "ch": "亥",
+   "slug": "hai",
+   "sha256": "sha256:738105f443e5b05edc66824121672e9268046a6474dc845255249ae9636caaab"
+  },
+  {
+   "ch": "乙",
+   "slug": "yi",
+   "sha256": "sha256:d25afb4ee855aff95050603c6c136b2b577e84065ae27b2ab488f6ed778f7f72"
+  },
+  {
+   "ch": "未",
+   "slug": "wei",
+   "sha256": "sha256:462310ae6d5938106c6cdbb08dbd180ac30370b526ba0a5db10119790e1f09c2"
+  },
+  {
+   "ch": "木",
+   "slug": "mu",
+   "sha256": "sha256:0f5f3325ad1f9088e4760832f0552cc000fc453036d1d460be78943552eaa81a"
+  },
+  {
+   "ch": "火",
+   "slug": "huo",
+   "sha256": "sha256:db8b4804bffefdbbbdd077ca870061ef0bd521bbf21a37b94bea91353bcbe5be"
+  },
+  {
+   "ch": "土",
+   "slug": "tu",
+   "sha256": "sha256:3bcf2f8468cd7781c8bf1afbd35f6d8d80066c0cbbe82985ace736ca22e1ed2c"
+  },
+  {
+   "ch": "金",
+   "slug": "jin",
+   "sha256": "sha256:af5788f1b3fa82240669155aec605733c71b94adfe3da8641cb77ce401c7e186"
+  },
+  {
+   "ch": "水",
+   "slug": "shui",
+   "sha256": "sha256:333a92d44c63a9c67dc3a1bd6e4b979d9525850ed6b4744f387c159d6ab63471"
+  },
+  {
+   "ch": "辛",
+   "slug": "xin",
+   "sha256": "sha256:46d14e22373f228e5e1581d6880db61ca2731221f4d4e08ca7da2c24f4f82327"
+  }
+ ],
+ "components": [
+  {
+   "id": "glance.dayMasterStage",
+   "kind": "displayGlyph",
+   "ch": "辛",
+   "halo": "phase-metal-field",
+   "region": "stem"
+  },
+  {
+   "id": "glance.pillars",
+   "kind": "pillarStrip",
+   "pillars": [
+    [
+     "庚",
+     "午"
+    ],
+    [
+     "壬",
+     "午"
+    ],
+    [
+     "辛",
+     "亥"
+    ],
+    [
+     "乙",
+     "未"
+    ]
+   ]
+  },
+  {
+   "id": "glance.wuXingTally",
+   "kind": "valueStrip",
+   "values": {
+    "wood": 1.8,
+    "fire": 2.5,
+    "earth": 2.0,
+    "metal": 2.0,
+    "water": 2.0
+   },
+   "transform": null
+  }
+ ]
+}

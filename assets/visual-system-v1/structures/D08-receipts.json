@@ -1,0 +1,19 @@
+{
+ "pageId": "dev-receipts",
+ "surface": "developer",
+ "pageNumber": 8,
+ "family": "developer-proof",
+ "donors": {
+  "primary": "V6 receipts/*.receipt.json",
+  "secondary": []
+ },
+ "factSlotBindings": [],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "dev.receipts",
+   "kind": "receiptTable",
+   "pages": 28
+  }
+ ]
+}

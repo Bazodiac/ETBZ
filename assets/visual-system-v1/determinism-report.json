@@ -1,0 +1,45 @@
+{
+  "determinismReportVersion": "1.0.0",
+  "runs": [
+    "2026-09-21T00:51:11+00:00",
+    "2026-09-21T00:51:39+00:00"
+  ],
+  "pages": 29,
+  "structuralSha256Identical": 29,
+  "pngSha256Identical": 29,
+  "perPagePdfIdentical": 0,
+  "perPagePdfNote": "Chromium writes /CreationDate and a random trailer ID into each per-page PDF; these bytes are non-structural. The merged deliverables are re-serialised by pikepdf with deterministic IDs and are byte-identical.",
+  "mergedArtifacts": {
+    "customer-sample.pdf": {
+      "run1": "2d9f1b42876ae08d61129c990a86c8db27a603499df3cbc53927e7f4f480e475",
+      "run2": "2d9f1b42876ae08d61129c990a86c8db27a603499df3cbc53927e7f4f480e475",
+      "identical": true
+    },
+    "final-contact-sheet.png": {
+      "run1": "5c134ae003a8839627626286f32c8b94457577ad0064320ab914963185695bef",
+      "run2": "5c134ae003a8839627626286f32c8b94457577ad0064320ab914963185695bef",
+      "identical": true
+    },
+    "glyphs/manifest.json": {
+      "run1": "54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
+      "run2": "54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
+      "identical": true
+    },
+    "tokens.json": {
+      "run1": "e8c6818de4cdf27c5f16b143d019e55346f8019922d35d588ad11745b4b4d190",
+      "run2": "e8c6818de4cdf27c5f16b143d019e55346f8019922d35d588ad11745b4b4d190",
+      "identical": true
+    },
+    "assets/wordmark.svg": {
+      "run1": "c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1",
+      "run2": "c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1",
+      "identical": true
+    },
+    "developer-proof.pdf": {
+      "run1": "b9f459a87935cbb892c04e8f7a2c5e5d8f2c58435d040ded9ad02053c144a7cc",
+      "run2": "b9f459a87935cbb892c04e8f7a2c5e5d8f2c58435d040ded9ad02053c144a7cc",
+      "identical": true
+    }
+  },
+  "domFindingsTotal": 0
+}

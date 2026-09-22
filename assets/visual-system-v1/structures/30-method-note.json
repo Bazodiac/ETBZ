@@ -1,0 +1,28 @@
+{
+ "pageId": "method-note",
+ "surface": "customer",
+ "pageNumber": 30,
+ "family": "reflection-closure",
+ "donors": {
+  "primary": "V3 method note / symbol key IA",
+  "secondary": [
+   "V5 customer copy boundary (no internal states)",
+   "V4 shell"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "method.conventions",
+   "consumedFactKinds": [],
+   "derivedNothing": true
+  }
+ ],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "method.glossary",
+   "kind": "glossary",
+   "terms": 8
+  }
+ ]
+}

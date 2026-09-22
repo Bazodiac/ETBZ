@@ -1,0 +1,21 @@
+{
+ "pageId": "dev-bindings",
+ "surface": "developer",
+ "pageNumber": 3,
+ "family": "developer-proof",
+ "donors": {
+  "primary": "V6 factSlotBindings receipts",
+  "secondary": [
+   "V5 customer/evidence boundary"
+  ]
+ },
+ "factSlotBindings": [],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "dev.bindings",
+   "kind": "bindingTable",
+   "pages": 18
+  }
+ ]
+}
