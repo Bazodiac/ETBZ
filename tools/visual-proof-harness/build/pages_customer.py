@@ -1,7 +1,7 @@
 """Customer page family — V4 visual shell, V3 information architecture, V5 tokens, V6 bindings.
 Every page returns (page_id, page_number, html, structure)."""
 from __future__ import annotations
-import json, pathlib
+import json, math, pathlib
 import shell as S
 from shell import glyph, py, esc, head, foot, wrap_page, component, begin, FIX, PHASES, PHASE_INFO, POL, WORDMARK
 
@@ -314,6 +314,27 @@ def day_master():
     return "07-day-master", 7, wrap_page("Your Day Master", inner), st
 
 # ------------------------------------------------------------------ 08 WU XING DISTRIBUTION (donor V2 agent_x_ETBZ-4.png · transform V6)
+# Ring geometry (mm, ring-box coordinates). Discs keep the approved direction (Fire at top, clockwise). Each value/bar
+# block hangs below its disc; the 44 mm medallion sits in the protected region at the visual centre of the five
+# disc+value units, so the Fire block ends above it and the centre label stacks inside the real circle.
+WX_GEOMETRY = {"ringCx": 85, "ringCy": 80, "ringR": 58, "trackR": 21, "medallion": {"cx": 85, "cy": 88, "d": 44},
+               "block": {"w": 36, "dy": 22, "h": 17.8}, "labelLines": [(13, 6.35), (20, 3.88), (30, 3.88)], "labelGap": 1.0}
+
+def wu_xing_positions():
+    g = WX_GEOMETRY
+    return {k: (g["ringCx"] + g["ringR"] * math.cos(math.radians(-90 + i * 72)), g["ringCy"] + g["ringR"] * math.sin(math.radians(-90 + i * 72)))
+            for i, k in enumerate(["fire", "earth", "metal", "water", "wood"])}
+
+def wu_xing_geometry():
+    """Nominal boxes (mm, ring-box coordinates) for the placement wu_xing() renders; checked by guards.wu_xing_centre_clearance."""
+    g = WX_GEOMETRY; m = g["medallion"]; b = g["block"]
+    lines = g["labelLines"]; y = m["cy"] - (sum(h for _, h in lines) + g["labelGap"] * (len(lines) - 1)) / 2
+    label = []
+    for w, h in lines:
+        label.append((m["cx"] - w / 2, y, m["cx"] + w / 2, y + h)); y += h + g["labelGap"]
+    blocks = {k: (x - b["w"] / 2, py_ + b["dy"], x + b["w"] / 2, py_ + b["dy"] + b["h"]) for k, (x, py_) in wu_xing_positions().items()}
+    return {"circle": (m["cx"], m["cy"], m["d"] / 2), "label": label, "blocks": blocks}
+
 def wu_xing(vector=None, page=8, fixture_id=None, surface="customer"):
     vec = vector or FIX["wuXing"]["vector"]
     st = begin("wu-xing-distribution" if surface == "customer" else "wu-xing-distribution-zero-case", surface, page, "chart-foundation",
@@ -324,23 +345,19 @@ def wu_xing(vector=None, page=8, fixture_id=None, surface="customer"):
     # registered deterministic monotonic presentation transform: r = r_min + (r_max - r_min) * v / max ; bar = v / max
     def radius(v): return round(11 + 7 * (v / mx if mx else 0), 2)
     component("wuXing.ring", kind="fivePhaseRing", transform="pt.linear-max-v1", allFiveVisible=True, values=vec)
-    # positions on a ring (mm, centre of page content)
-    cx, cy, R = 85, 80, 58
-    import math
-    pos = {}
-    for i, k in enumerate(["fire", "earth", "metal", "water", "wood"]):
-        a = -90 + i * 72
-        pos[k] = (cx + R * math.cos(math.radians(a)), cy + R * math.sin(math.radians(a)))
+    g = WX_GEOMETRY; md = g["medallion"]; bw, bdy = g["block"]["w"], g["block"]["dy"]; tr = g["trackR"]
+    component("wuXing.centre", kind="protectedMedallion", diameterMm=md["d"], centreMm=[md["cx"], md["cy"]], labelInside=True, blocksClear=True)
+    pos = wu_xing_positions()
     discs = ""
     for k in PHASES:
         x, y = pos[k]; r = radius(vec[k]); pi = PHASE_INFO[k]
         val = f"{vec[k]:.1f}" if isinstance(vec[k], float) else str(vec[k])
-        discs += (f'<div style="position:absolute;left:{x-21:.2f}mm;top:{y-21:.2f}mm;width:42mm;height:42mm;border-radius:50%;border:0.25mm solid var(--rule-200)"></div>'
-                  f'<div style="position:absolute;left:{x-r:.2f}mm;top:{y-r:.2f}mm;width:{2*r:.2f}mm;height:{2*r:.2f}mm;border-radius:50%;background:var(--phase-{k}-field);display:flex;align-items:center;justify-content:center">{glyph(pi["ch"], 13)}</div>'
-                  f'<div style="position:absolute;left:{x-25:.2f}mm;top:{y+20:.2f}mm;width:50mm;text-align:center">'
-                  f'<div style="font-family:var(--font-display);font-weight:300;font-size:20pt;line-height:22pt;font-variant-numeric:tabular-nums">{val}</div>'
-                  f'<div class="pinyin" style="margin-top:0.5mm">{pi["py"]}</div><div class="label">{pi["en"]}</div>'
-                  f'<div style="margin:2mm auto 0;width:26mm;height:0.7mm;background:var(--rule-200);border-radius:1mm"><div style="width:{(vec[k]/mx*100 if mx else 0):.1f}%;height:100%;background:var(--phase-{k}-mark);border-radius:1mm"></div></div></div>')
+        discs += (f'<div data-wx="track" data-phase="{k}" style="position:absolute;left:{x-tr:.2f}mm;top:{y-tr:.2f}mm;width:{2*tr}mm;height:{2*tr}mm;border-radius:50%;border:0.25mm solid var(--rule-200)"></div>'
+                  f'<div id="wx-disc-{k}" data-wx="disc" data-phase="{k}" style="position:absolute;left:{x-r:.2f}mm;top:{y-r:.2f}mm;width:{2*r:.2f}mm;height:{2*r:.2f}mm;border-radius:50%;background:var(--phase-{k}-field);display:flex;align-items:center;justify-content:center">{glyph(pi["ch"], 13)}</div>'
+                  f'<div id="wx-block-{k}" data-wx="phase-block" data-phase="{k}" style="position:absolute;left:{x-bw/2:.2f}mm;top:{y+bdy:.2f}mm;width:{bw}mm;text-align:center">'
+                  f'<div data-wx="value" style="font-family:var(--font-display);font-weight:300;font-size:18pt;line-height:20pt;font-variant-numeric:tabular-nums">{val}</div>'
+                  f'<div class="pinyin" style="margin-top:0.5mm;line-height:11pt">{pi["py"]}</div><div class="label">{pi["en"]}</div>'
+                  f'<div data-wx="bar" style="margin:1.8mm auto 0;width:26mm;height:0.7mm;background:var(--rule-200);border-radius:1mm"><div style="width:{(vec[k]/mx*100 if mx else 0):.1f}%;height:100%;background:var(--phase-{k}-mark);border-radius:1mm"></div></div></div>')
     table = "".join(f'<div style="border-top:0.25mm solid var(--rule-200);padding-top:2.5mm"><div class="body-small" style="color:var(--ink-900)"><span class="cjk">{PHASE_INFO[k]["ch"]}</span> {PHASE_INFO[k]["en"]} · {vec[k]:.1f}</div><div class="caption">in this distribution</div></div>' for k in PHASES)
     zero_note = " A value of 0 is shown as “0 in this distribution” — a tally of zero, never a deficiency." if all(v > 0 for v in vec.values()) else " A value of 0 here is a tally of zero in this distribution. It does not mean a phase is missing, weak or in need of remedy."
     inner = f'''{head(page, "you")}
@@ -349,8 +366,9 @@ def wu_xing(vector=None, page=8, fixture_id=None, surface="customer"):
       <div class="h1" style="margin-top:3mm">Your Wu Xing Distribution</div>
       <div class="standfirst" style="margin-top:4mm;max-width:132mm">How the five phases are tallied across your Four Pillars, as supplied by the chart engine. Values are displayed as supplied; nothing here is a judgement of balance.</div>
       <div style="position:relative;height:168mm;margin-top:4mm">
-        <div style="position:absolute;left:{cx-22:.2f}mm;top:{cy-22:.2f}mm;width:44mm;height:44mm;border-radius:50%;border:0.25mm solid var(--gold-500)"></div>
-        <div style="position:absolute;left:{cx-30:.2f}mm;top:{cy-7:.2f}mm;width:60mm;text-align:center"><div class="cjk term" style="font-size:14pt;letter-spacing:.3em;color:var(--ink-900)">五行</div><div class="label" style="margin-top:2mm;letter-spacing:.24em">wǔ xíng · Five Phases</div></div>
+        <div id="wx-medallion" data-wx="medallion" style="position:absolute;left:{md["cx"]-md["d"]/2:.2f}mm;top:{md["cy"]-md["d"]/2:.2f}mm;width:{md["d"]}mm;height:{md["d"]}mm;border-radius:50%;border:0.25mm solid var(--gold-500);display:flex;align-items:center;justify-content:center">
+          <div id="wx-centre-label" data-wx="centre-label" style="display:flex;flex-direction:column;align-items:center;text-align:center"><div class="cjk term" style="font-size:14pt;line-height:18pt;letter-spacing:.3em;margin-right:-.3em;color:var(--ink-900)">五行</div><div class="label" style="margin-top:{g["labelGap"]}mm;letter-spacing:.16em">wǔ xíng</div><div class="label" style="margin-top:{g["labelGap"]}mm;letter-spacing:.16em">Five Phases</div></div>
+        </div>
         {discs}
       </div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4mm;margin-top:2mm">{table}</div>
