@@ -42,6 +42,53 @@ DOM_SCAN = """
 }
 """
 
+# Wu Xing protected-centre oracle: geometry measured against the rendered medallion circle, not the author's intent.
+WX_GEOMETRY_SCAN = """
+(required) => {
+  const MM = 96 / 25.4, MARGIN = 2 * MM, findings = [], mm = (px) => +(px / MM).toFixed(2);
+  const m = document.querySelector('#wx-medallion[data-wx="medallion"]');
+  if (!m) return required ? [{code: 'WX_MEDALLION_MISSING'}] : [];
+  const mr = m.getBoundingClientRect(), cs = getComputedStyle(m);
+  const cx = mr.left + mr.width / 2, cy = mr.top + mr.height / 2;
+  const rOuter = mr.width / 2, rInner = rOuter - parseFloat(cs.borderTopWidth || '0');
+  if (Math.abs(mr.width - mr.height) > 0.5 || cs.borderTopLeftRadius !== '50%') findings.push({code: 'WX_MEDALLION_NOT_CIRCLE', w: mm(mr.width), h: mm(mr.height), radius: cs.borderTopLeftRadius});
+  if (Math.abs(mr.width - 44 * MM) > 0.5) findings.push({code: 'WX_MEDALLION_DIAMETER', mm: mm(mr.width)});
+  const textRects = (el) => { const out = [], w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n;
+    while ((n = w.nextNode())) { if (!n.textContent.trim()) continue; const rg = document.createRange(); rg.selectNodeContents(n);
+      for (const q of rg.getClientRects()) if (q.width > 0 && q.height > 0) out.push({q, text: n.textContent.trim().slice(0, 30)}); }
+    return out; };
+  const label = m.querySelector('#wx-centre-label[data-wx="centre-label"]');
+  if (!label) findings.push({code: 'WX_CENTRE_LABEL_MISSING'});
+  else {
+    const rects = textRects(label);
+    if (rects.length < 3) findings.push({code: 'WX_CENTRE_LABEL_INCOMPLETE', lines: rects.length});
+    for (const {q, text} of rects) {
+      const far = Math.max(...[[q.left, q.top], [q.right, q.top], [q.left, q.bottom], [q.right, q.bottom]].map(([x, y]) => Math.hypot(x - cx, y - cy)));
+      if (far > rInner - MARGIN) findings.push({code: 'WX_CENTRE_LABEL_OUTSIDE_CIRCLE', text, marginMm: mm(rInner - far)});
+    }
+  }
+  // clearance of a rectangle from the medallion: nearest rect point to the circle centre, minus the rendered outer radius
+  const rectClear = (q) => Math.hypot(Math.max(q.left, Math.min(cx, q.right)) - cx, Math.max(q.top, Math.min(cy, q.bottom)) - cy) - rOuter;
+  const blocks = Array.from(document.querySelectorAll('[data-wx="phase-block"]'));
+  if (blocks.length !== 5 || new Set(blocks.map(b => b.dataset.phase)).size !== 5) findings.push({code: 'WX_PHASE_BLOCK_COUNT', n: blocks.length});
+  for (const b of blocks) {
+    const parts = [{q: b.getBoundingClientRect(), text: 'block'}, ...textRects(b),
+                   ...Array.from(b.querySelectorAll('[data-wx="value"], [data-wx="bar"]')).map(e => ({q: e.getBoundingClientRect(), text: e.dataset.wx}))];
+    if (!b.querySelector('[data-wx="value"]') || !b.querySelector('[data-wx="bar"]')) findings.push({code: 'WX_PHASE_BLOCK_INCOMPLETE', phase: b.dataset.phase});
+    for (const {q, text} of parts) {
+      const c = rectClear(q);
+      if (c < MARGIN) findings.push({code: 'WX_PHASE_BLOCK_INTRUDES', phase: b.dataset.phase, part: text, clearanceMm: mm(c)});
+    }
+  }
+  for (const d of document.querySelectorAll('[data-wx="disc"], [data-wx="track"]')) {
+    const q = d.getBoundingClientRect();
+    const c = Math.hypot(q.left + q.width / 2 - cx, q.top + q.height / 2 - cy) - q.width / 2 - rOuter;
+    if (c < MARGIN) findings.push({code: 'WX_PHASE_DISC_INTRUDES', phase: d.dataset.phase, part: d.dataset.wx, clearanceMm: mm(c)});
+  }
+  return findings;
+}
+"""
+
 def build_pages():
     """Generate every page. Returns dict surface -> list of (page_id, number, html, struct)."""
     cust = [C.cover(), C.identity(), C.contents(), C.glance(), C.four_pillars(), C.foundation(), C.day_master(), C.wu_xing(), C.five_phases(), C.ten_gods(), C.hidden_stems()]
@@ -68,7 +115,7 @@ def render_all(entries, ctx):
         png = e["folder"] / f"{e['pageId']}.png"; pdf = e["folder"] / f"{e['pageId']}.pdf"
         page.screenshot(path=str(png), clip={"x": 0, "y": 0, "width": A4_PX[0], "height": A4_PX[1]})
         page.pdf(path=str(pdf), width="210mm", height="297mm", print_background=True, margin={"top": "0", "right": "0", "bottom": "0", "left": "0"}, prefer_css_page_size=True)
-        e["dom"] = page.evaluate(DOM_SCAN)
+        e["dom"] = page.evaluate(DOM_SCAN) + page.evaluate(WX_GEOMETRY_SCAN, e["struct"]["pageId"].startswith("wu-xing-distribution"))
         e["png"], e["pdf"] = png, pdf
         e["pngSha256"] = sha(png.read_bytes()); e["structuralSha256"] = S.structural_hash(e["struct"])
     page.close()

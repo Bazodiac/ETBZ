@@ -1,6 +1,6 @@
 """Negative-path guards (donor V6). Each guard is executed for real by the developer proof; nothing is asserted by prose."""
 from __future__ import annotations
-import json
+import json, math
 import shell as S
 
 class GuardError(Exception):
@@ -45,6 +45,26 @@ def wu_xing_value(v, mx):
     if v < 0: raise GuardError("NEGATIVE_VALUE")
     return {"value": v, "bar": 0.0 if mx == 0 else v / mx, "label": f"{v:.1f} in this distribution"}
 
+def wu_xing_centre_clearance(geom: dict, margin_mm: float = 2.0):
+    """Protected Wu Xing centre: every centre-label box lies inside the medallion circle with margin, and every
+    phase value/bar block clears the circle by margin. geom = {"circle": (cx, cy, r), "label": [boxes], "blocks": {phase: box}}, mm."""
+    cx, cy, r = geom["circle"]
+    label_margin = min(r - max(math.hypot(x - cx, y - cy) for x in (x0, x1) for y in (y0, y1)) for x0, y0, x1, y1 in geom["label"])
+    if label_margin < margin_mm: raise GuardError("WX_CENTRE_LABEL_OUTSIDE_CIRCLE", f"margin {label_margin:.2f}mm < {margin_mm}mm")
+    def clear(b):
+        x0, y0, x1, y1 = b
+        return math.hypot(min(max(cx, x0), x1) - cx, min(max(cy, y0), y1) - cy) - r
+    nearest = min(geom["blocks"], key=lambda k: clear(geom["blocks"][k])); c = clear(geom["blocks"][nearest])
+    if c < margin_mm: raise GuardError("WX_PHASE_BLOCK_INTRUDES", f"{nearest} clearance {c:.2f}mm < {margin_mm}mm")
+    return {"state": "OK", "labelMm": round(label_margin, 2), "clearMm": round(c, 2), "nearest": nearest}
+
+# The prior defective page-08 shape: centre label on one 60 mm line over a 44 mm circle at (85, 80), and every
+# value block (50 mm wide, y+20 … y+39) below its disc — the Fire block running into the centre.
+def _prior_wu_xing_shape():
+    pos = {k: (85 + 58 * math.cos(math.radians(-90 + i * 72)), 80 + 58 * math.sin(math.radians(-90 + i * 72))) for i, k in enumerate(["fire", "earth", "metal", "water", "wood"])}
+    return {"circle": (85, 80, 22), "label": [(78.6, 73, 91.4, 79.9), (57.5, 81.9, 112.5, 85.8)],
+            "blocks": {k: (x - 25, y + 20, x + 25, y + 39) for k, (x, y) in pos.items()}}
+
 def text_size(pt: float):
     if pt < 9: raise GuardError("BELOW_TEXT_FLOOR", f"{pt}pt < 9pt")
     return pt
@@ -75,6 +95,12 @@ def run_all():
     t("wu xing negative value", lambda: wu_xing_value(-1, 3), "NEGATIVE_VALUE")
     t("text at 9pt floor", lambda: text_size(9))
     t("text below floor (7.5pt)", lambda: text_size(7.5), "BELOW_TEXT_FLOOR")
+    import pages_customer as C
+    t("wu xing centre, shipped geometry", lambda: wu_xing_centre_clearance(C.wu_xing_geometry()))
+    t("wu xing centre, prior shape", lambda: wu_xing_centre_clearance(_prior_wu_xing_shape()), "WX_CENTRE_LABEL_OUTSIDE_CIRCLE")
+    # same prior shape with a correctly stacked label, isolating the Fire block defect
+    prior_fire = {**_prior_wu_xing_shape(), "label": [(78.5, 72, 91.5, 78.35), (75, 79.35, 95, 83.23), (70, 84.23, 100, 88.11)]}
+    t("wu xing prior Fire block over centre", lambda: wu_xing_centre_clearance(prior_fire), "WX_PHASE_BLOCK_INTRUDES")
     return results
 
 if __name__ == "__main__":
