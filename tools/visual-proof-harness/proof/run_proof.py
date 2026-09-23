@@ -134,6 +134,12 @@ def main(argv=None) -> int:
     entries = [B.write(p, B.CUST) for p in cust]
     _fx_v6, v6_layout, v6_pages = lf["v6"]
     _fx_c, lf_layout, _lf_pages = lf["customer"]
+    # The paginator's own findings (widows, orphans, overflow …): build_all.main() only
+    # records them in pagination-report.json; here they fail the proof.
+    pagination = {name: {"words": layout["wordCount"], "pages": len(layout["pages"]), "lines": layout["lineCount"],
+                         "findings": layout["findings"]}
+                  for name, layout in (("customer", lf_layout), ("v6", v6_layout))}
+    failures += [f"pagination: {name} {finding}" for name, info in pagination.items() for finding in info["findings"]]
     v6_entries = [B.write(p, B.DEV) for p in v6_pages]
     zero_entry = B.write(zero, B.DEV)
     with sync_playwright() as p:
@@ -225,6 +231,7 @@ def main(argv=None) -> int:
         "passed": not failures,
         "failures": failures,
         "guards": guard_results,
+        "pagination": pagination,
         "wuXing": wu_xing,
         "counterexample": {"png": "counterexample/08-wu-xing-prior-geometry.png", "pngSha256": sha256(counter_png),
                            "geometry": "medallion centred on the ring (85, 80); value blocks 50 mm wide from y+20",
