@@ -1,0 +1,67 @@
+:root{
+  --paper-000:#FBF9F4;
+  --paper-100:#F4F1EA;
+  --paper-200:#EBE7DD;
+  --ink-900:#16181A;
+  --ink-600:#4A4F52;
+  --ink-400:#6F7477;
+  --rule-200:#DCD7CB;
+  --gold-500:#B2913F;
+  --gold-700:#7D6425;
+  --phase-wood-field:#E7ECE3;
+  --phase-fire-field:#F6E9E6;
+  --phase-earth-field:#F4ECDD;
+  --phase-metal-field:#EDEDEC;
+  --phase-water-field:#E8EDF1;
+  --phase-wood-mark:#5F7D55;
+  --phase-fire-mark:#A8574A;
+  --phase-earth-mark:#96702A;
+  --phase-metal-mark:#6B7376;
+  --phase-water-mark:#45637A;
+  --atmos-wood:#C3CFBC;
+  --atmos-fire:#E4C4BC;
+  --atmos-earth:#E3D2A9;
+  --atmos-metal:#D9D8D2;
+  --atmos-water:#C4D1D9;
+  --geo-pageW:210mm;
+  --geo-pageH:297mm;
+  --geo-marginTop:22mm;
+  --geo-marginSide:20mm;
+  --geo-marginBottom:20mm;
+  --geo-contentW:170mm;
+  --geo-contentH:255mm;
+  --geo-baseline:5mm;
+  --geo-gutter:6mm;
+  --type-display-title-size:30pt; --type-display-title-leading:33pt; --type-display-title-weight:300; --type-display-title-tracking:-0.02em;
+  --type-h1-size:22pt; --type-h1-leading:25pt; --type-h1-weight:300; --type-h1-tracking:-0.015em;
+  --type-h2-size:13pt; --type-h2-leading:17pt; --type-h2-weight:500; --type-h2-tracking:-0.005em;
+  --type-standfirst-size:12.5pt; --type-standfirst-leading:17pt; --type-standfirst-weight:300; --type-standfirst-tracking:0em;
+  --type-body-size:10.5pt; --type-body-leading:14.17pt; --type-body-weight:400; --type-body-tracking:0em;
+  --type-body-small-size:9pt; --type-body-small-leading:12.5pt; --type-body-small-weight:400; --type-body-small-tracking:0em;
+  --type-caption-size:9pt; --type-caption-leading:12pt; --type-caption-weight:400; --type-caption-tracking:0em;
+  --type-kicker-size:9pt; --type-kicker-leading:12pt; --type-kicker-weight:500; --type-kicker-tracking:0.16em;
+  --type-micro-label-size:9pt; --type-micro-label-leading:11pt; --type-micro-label-weight:500; --type-micro-label-tracking:0.12em;
+  --type-pull-quote-size:15pt; --type-pull-quote-leading:20pt; --type-pull-quote-weight:300; --type-pull-quote-tracking:-0.01em;
+  --type-panel-body-size:9.5pt; --type-panel-body-leading:13.5pt; --type-panel-body-weight:400; --type-panel-body-tracking:0em;
+  --type-cjk-informational-size:10.5pt; --type-cjk-informational-leading:14.17pt; --type-cjk-informational-weight:400; --type-cjk-informational-tracking:0.02em;
+  --type-cjk-term-size:12pt; --type-cjk-term-leading:16pt; --type-cjk-term-weight:500; --type-cjk-term-tracking:0.04em;
+  --type-pinyin-size:9pt; --type-pinyin-leading:12pt; --type-pinyin-weight:500; --type-pinyin-tracking:0.02em;
+  --font-sans:"Inter",system-ui,sans-serif; --font-display:"Inter Display","Inter",system-ui,sans-serif; --font-cjk:"Noto Sans CJK SC","Noto Sans SC",sans-serif;
+  --radius-panel:1.5mm; --gutter:6mm;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme=light]){--paper-000:#1A1917;--paper-100:#232220;--paper-200:#2C2A27;--ink-900:#F3EFE6;--ink-600:#C8C2B6;--ink-400:#A09A90;--rule-200:#38352F;--gold-500:#D8B45F;--gold-700:#E0C684;--phase-wood-field:#22271F;--phase-fire-field:#2A2220;--phase-earth-field:#282420;--phase-metal-field:#252526;--phase-water-field:#1F2428;--phase-wood-mark:#9CBD90;--phase-fire-mark:#E0968A;--phase-earth-mark:#D5AB58;--phase-metal-mark:#ADB3B5;--phase-water-mark:#8FB0C6;--atmos-wood:#2E3A2A;--atmos-fire:#4A2E2A;--atmos-earth:#4A3B20;--atmos-metal:#3A3B3C;--atmos-water:#26323A;}}
+:root[data-theme=dark]{--paper-000:#1A1917;--paper-100:#232220;--paper-200:#2C2A27;--ink-900:#F3EFE6;--ink-600:#C8C2B6;--ink-400:#A09A90;--rule-200:#38352F;--gold-500:#D8B45F;--gold-700:#E0C684;--phase-wood-field:#22271F;--phase-fire-field:#2A2220;--phase-earth-field:#282420;--phase-metal-field:#252526;--phase-water-field:#1F2428;--phase-wood-mark:#9CBD90;--phase-fire-mark:#E0968A;--phase-earth-mark:#D5AB58;--phase-metal-mark:#ADB3B5;--phase-water-mark:#8FB0C6;--atmos-wood:#2E3A2A;--atmos-fire:#4A2E2A;--atmos-earth:#4A3B20;--atmos-metal:#3A3B3C;--atmos-water:#26323A;}
+.t-display-title{font-family:var(--font-display);font-size:30pt;line-height:33pt;font-weight:300;letter-spacing:-0.02em;}
+.t-h1{font-family:var(--font-display);font-size:22pt;line-height:25pt;font-weight:300;letter-spacing:-0.015em;}
+.t-h2{font-family:var(--font-sans);font-size:13pt;line-height:17pt;font-weight:500;letter-spacing:-0.005em;}
+.t-standfirst{font-family:var(--font-sans);font-size:12.5pt;line-height:17pt;font-weight:300;letter-spacing:0em;}
+.t-body{font-family:var(--font-sans);font-size:10.5pt;line-height:14.17pt;font-weight:400;letter-spacing:0em;}
+.t-body-small{font-family:var(--font-sans);font-size:9pt;line-height:12.5pt;font-weight:400;letter-spacing:0em;}
+.t-caption{font-family:var(--font-sans);font-size:9pt;line-height:12pt;font-weight:400;letter-spacing:0em;}
+.t-kicker{font-family:var(--font-sans);font-size:9pt;line-height:12pt;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;}
+.t-micro-label{font-family:var(--font-sans);font-size:9pt;line-height:11pt;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;}
+.t-pull-quote{font-family:var(--font-display);font-size:15pt;line-height:20pt;font-weight:300;letter-spacing:-0.01em;}
+.t-panel-body{font-family:var(--font-sans);font-size:9.5pt;line-height:13.5pt;font-weight:400;letter-spacing:0em;}
+.t-cjk-informational{font-family:var(--font-cjk);font-size:10.5pt;line-height:14.17pt;font-weight:400;letter-spacing:0.02em;}
+.t-cjk-term{font-family:var(--font-cjk);font-size:12pt;line-height:16pt;font-weight:500;letter-spacing:0.04em;}
+.t-pinyin{font-family:var(--font-sans);font-size:9pt;line-height:12pt;font-weight:500;letter-spacing:0.02em;}

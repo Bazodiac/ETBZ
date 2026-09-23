@@ -1,0 +1,49 @@
+{
+ "pageId": "cover",
+ "surface": "customer",
+ "pageNumber": 1,
+ "family": "cover",
+ "donors": {
+  "primary": "V4 agent-x-etbz-4.png",
+  "secondary": [
+   "V6 wordmark contract",
+   "V1 whitespace"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "cover.primaryGlyph",
+   "consumedFactKinds": [
+    "day_master_stem"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  }
+ ],
+ "glyphRefs": [
+  {
+   "ch": "辛",
+   "slug": "xin",
+   "sha256": "sha256:46d14e22373f228e5e1581d6880db61ca2731221f4d4e08ca7da2c24f4f82327"
+  }
+ ],
+ "components": [
+  {
+   "id": "cover.atmosphere",
+   "kind": "decorative",
+   "binds": null,
+   "forms": 5
+  },
+  {
+   "id": "cover.primaryGlyph",
+   "kind": "displayGlyph",
+   "ch": "辛",
+   "fullyVisible": true
+  },
+  {
+   "id": "cover.wordmark",
+   "kind": "staticBrand",
+   "asset": "assets/wordmark.svg",
+   "chartIndependent": true
+  }
+ ]
+}

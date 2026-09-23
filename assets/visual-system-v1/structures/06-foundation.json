@@ -1,0 +1,75 @@
+{
+ "pageId": "foundation",
+ "surface": "customer",
+ "pageNumber": 6,
+ "family": "chart-foundation",
+ "donors": {
+  "primary": "V3 page-family architecture (chart foundation)",
+  "secondary": [
+   "V4 shell",
+   "V2 column rhythm"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "foundation.eight",
+   "consumedFactKinds": [
+    "pillar_stem",
+    "pillar_branch",
+    "stem_polarity",
+    "stem_phase",
+    "branch_phase"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  }
+ ],
+ "glyphRefs": [
+  {
+   "ch": "庚",
+   "slug": "geng",
+   "sha256": "sha256:080c23dd91cdec84393a66552638dd337d20c9f365b9ee0cc9b6ae3b52f7119a"
+  },
+  {
+   "ch": "午",
+   "slug": "wu-branch",
+   "sha256": "sha256:65b89a5671886182bc6abf6757d98706de3d5c04cd74e4adf035b75de6c9ec60"
+  },
+  {
+   "ch": "壬",
+   "slug": "ren",
+   "sha256": "sha256:dada5e5110375a51efd295e3806fa9b8d01abefd8e34de6e36bef5d7a5cc315d"
+  },
+  {
+   "ch": "午",
+   "slug": "wu-branch",
+   "sha256": "sha256:65b89a5671886182bc6abf6757d98706de3d5c04cd74e4adf035b75de6c9ec60"
+  },
+  {
+   "ch": "辛",
+   "slug": "xin",
+   "sha256": "sha256:46d14e22373f228e5e1581d6880db61ca2731221f4d4e08ca7da2c24f4f82327"
+  },
+  {
+   "ch": "亥",
+   "slug": "hai",
+   "sha256": "sha256:738105f443e5b05edc66824121672e9268046a6474dc845255249ae9636caaab"
+  },
+  {
+   "ch": "乙",
+   "slug": "yi",
+   "sha256": "sha256:d25afb4ee855aff95050603c6c136b2b577e84065ae27b2ab488f6ed778f7f72"
+  },
+  {
+   "ch": "未",
+   "slug": "wei",
+   "sha256": "sha256:462310ae6d5938106c6cdbb08dbd180ac30370b526ba0a5db10119790e1f09c2"
+  }
+ ],
+ "components": [
+  {
+   "id": "foundation.eightCharacters",
+   "kind": "factList",
+   "count": 8
+  }
+ ]
+}

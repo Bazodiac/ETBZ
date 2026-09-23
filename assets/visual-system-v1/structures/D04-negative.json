@@ -1,0 +1,22 @@
+{
+ "pageId": "dev-negative",
+ "surface": "developer",
+ "pageNumber": 4,
+ "family": "developer-proof",
+ "donors": {
+  "primary": "V6 tests/negative",
+  "secondary": [
+   "V5 70-evidence-and-open-decisions"
+  ]
+ },
+ "factSlotBindings": [],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "dev.negativeTests",
+   "kind": "guardResults",
+   "passed": 18,
+   "total": 18
+  }
+ ]
+}

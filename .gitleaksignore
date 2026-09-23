@@ -7,11 +7,27 @@
 # cannot exempt a different value, a later edit of the same line, or the same
 # string appearing anywhere else. No rule is disabled and no path is excluded.
 #
-# The bar for adding a line: the flagged value must be SYNTHETIC, must exist
-# only to prove a guard works, and must already have been rewritten so that the
-# CURRENT working tree no longer contains it. Entries below therefore exempt
-# history only — `scripts/secret-scan.sh` scans the working tree and the history
-# as two separate gates, and the working-tree gate is green on its own.
+# A line may be added under exactly one of two bars, and nothing else.
+#
+#   A — SYNTHETIC FIXTURE, ALREADY REWRITTEN. The flagged value exists only to
+#       prove a guard works, and has since been rewritten so the CURRENT working
+#       tree no longer contains it. Such an entry exempts history only, and the
+#       working-tree gate stays green without it.
+#
+#   B — RECOVERED ARTEFACT, PINNED BY HASH. The flagged value is a CONTENT HASH
+#       inside a vendored artefact that the repository preserves byte for byte,
+#       and the file's SHA-256 is asserted in
+#       `tests/contract/etbz49-visual-assets.contract.test.ts` via
+#       `assets/visual-system-v1/ASSET-INTEGRITY.json`. This is what makes the
+#       exemption safe in the working tree: the fingerprint pins a line, and the
+#       hash pin means that line cannot change to anything else without a test
+#       turning red first. An entry under bar B without that hash pin is not
+#       permitted.
+#
+# `scripts/secret-scan.sh` scans the working tree and the history as two
+# separate gates. Bar A covers history only; bar B needs one entry per gate,
+# because the working-tree fingerprint carries no commit and the history one
+# does.
 # =============================================================================
 
 # b939b596 — two synthetic, high-entropy test fixtures flagged by the upstream
@@ -28,3 +44,24 @@
 # is published and cannot be rewritten.
 b939b596c05ec23d3895e31adaf47cda4e63245f:tests/architecture/llm-boundary.test.ts:generic-api-key:487
 b939b596c05ec23d3895e31adaf47cda4e63245f:tests/unit/narrative-draft.test.ts:generic-api-key:508
+
+# --- bar B -------------------------------------------------------------------
+# ETBZ-49 — one line of the recovered render receipt: the entry whose key is
+# `"tokens.json"` and whose value is that file's SHA-256, beginning `e8c6818d`.
+# The ETBZ-43 build records it so the receipt names the token file it rendered
+# against. The upstream `generic-api-key` rule fires because a 64-character hex
+# value sits next to a key whose name contains "token" — the shape of an API
+# key, and here a content hash.
+#
+# The hash is deliberately NOT quoted in full anywhere in this file: reproducing
+# a credential-shaped literal in order to explain it makes the explanation the
+# next finding.
+#
+# The value is not rewritten, because `assets/visual-system-v1/` is a
+# byte-preserved copy of the converged build and editing it would forge the
+# provenance record it exists to carry. Instead the file is pinned: its SHA-256
+# is in `ASSET-INTEGRITY.json` and asserted by the ETBZ-49 contract suite, in
+# both directions (every listed file hashes as stated, every file on disk is
+# listed). Line 373 therefore cannot become anything other than this hash
+# without a test failing first.
+assets/visual-system-v1/render-receipt.json:generic-api-key:373

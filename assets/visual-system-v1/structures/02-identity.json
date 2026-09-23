@@ -1,0 +1,30 @@
+{
+ "pageId": "identity",
+ "surface": "customer",
+ "pageNumber": 2,
+ "family": "front-matter",
+ "donors": {
+  "primary": "V3 identity page (contact sheet, page 02)",
+  "secondary": [
+   "V4 shell",
+   "V5 customer copy boundary"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "identity.parameters",
+   "consumedFactKinds": [
+    "chart_parameters"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  }
+ ],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "identity.parameters",
+   "kind": "factsTable",
+   "rows": 8
+  }
+ ]
+}

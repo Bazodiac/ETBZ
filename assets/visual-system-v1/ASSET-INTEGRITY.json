@@ -1,0 +1,433 @@
+{
+  "indexVersion": "etbz49-asset-integrity@1.0.0",
+  "source": "ETBZ-43 converged build, recovered package \"bazodiac-final-design-system\"",
+  "note": "SHA-256 of every file under assets/visual-system-v1/ except ASSET-INTEGRITY.json itself.",
+  "fileCount": 85,
+  "files": [
+    {
+      "path": "FINAL_DESIGN_PROVENANCE.md",
+      "bytes": 11945,
+      "sha256": "sha256:58b46b656e89afa87e923723e0f41af94bc5a16d919bcfcc0adff7e581b66839"
+    },
+    {
+      "path": "brand/wordmark.manifest.json",
+      "bytes": 717,
+      "sha256": "sha256:981df7d5da0f8d545eaeb97f1b2b06da9c536bf376907302e0ead059b866af59"
+    },
+    {
+      "path": "brand/wordmark.svg",
+      "bytes": 2540,
+      "sha256": "sha256:c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1"
+    },
+    {
+      "path": "design-system.json",
+      "bytes": 24349,
+      "sha256": "sha256:703bb950f655551f07da6b1899567474ee0875b28ba10fff92275a4359917dcf"
+    },
+    {
+      "path": "determinism-report.json",
+      "bytes": 1855,
+      "sha256": "sha256:3af398d0b612834498ff41ddf6fa739819a39d7445ecbed93224cf2714686408"
+    },
+    {
+      "path": "fixtures/chart-fixture.json",
+      "bytes": 3555,
+      "sha256": "sha256:87252ee356caad1c5d11804cc83f780694d81f6763dc5856ed0c5297bc090767"
+    },
+    {
+      "path": "fonts/Inter-Medium.ttf",
+      "bytes": 417300,
+      "sha256": "sha256:97ad806f526e41546d46365bb3a393145f75b7b1568913db74549ad8b8dba872"
+    },
+    {
+      "path": "fonts/Inter-Regular.ttf",
+      "bytes": 411640,
+      "sha256": "sha256:40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82"
+    },
+    {
+      "path": "fonts/Inter-SemiBold.ttf",
+      "bytes": 419744,
+      "sha256": "sha256:78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3"
+    },
+    {
+      "path": "fonts/InterDisplay-Light.ttf",
+      "bytes": 413164,
+      "sha256": "sha256:1d6072bc7807fa7bf08a6d273368f04ac68e77438258f32975057a61c8772811"
+    },
+    {
+      "path": "fonts/InterDisplay-Regular.ttf",
+      "bytes": 408972,
+      "sha256": "sha256:99614bda7ff423aaf470990692dd93613a5971ab4446e4a6d5a83b3d74865074"
+    },
+    {
+      "path": "fonts/OFL.txt",
+      "bytes": 4380,
+      "sha256": "sha256:262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
+    {
+      "path": "glyphs/OFL.txt",
+      "bytes": 14712,
+      "sha256": "sha256:849f4ea9c214fa4ac3593b770c699f387534b11ce671264c1b10d85bdcb5997b"
+    },
+    {
+      "path": "glyphs/manifest.json",
+      "bytes": 26854,
+      "sha256": "sha256:a0c63cc99c1a9fb898255a807022a2e7d34eedb743e47d2736dfef86ab145c4c"
+    },
+    {
+      "path": "glyphs/sprite.svg",
+      "bytes": 15031,
+      "sha256": "sha256:6a1851ac6da6d0b15a6ce6f58f938c70a0d1dacd9ed16ce722cf6f74417a4cba"
+    },
+    {
+      "path": "glyphs/u4e01-ding.svg",
+      "bytes": 485,
+      "sha256": "sha256:30053e7c147903d2e59ec2e208987d59374511f5273d62f50d0adc9d9a16b7dd"
+    },
+    {
+      "path": "glyphs/u4e11-chou.svg",
+      "bytes": 606,
+      "sha256": "sha256:c869c01f6f21b6500d6e69135edadb76f5c8b8906a599e094365c20c78dea996"
+    },
+    {
+      "path": "glyphs/u4e19-bing.svg",
+      "bytes": 736,
+      "sha256": "sha256:0f5a106cc34142e09936bdc32f2f4b20849bd40704f7b08ecba99f1722465e21"
+    },
+    {
+      "path": "glyphs/u4e59-yi.svg",
+      "bytes": 571,
+      "sha256": "sha256:479323e84e4b618e28288a3ded9b7d93b909bf0cb2278876182c56c575c8faea"
+    },
+    {
+      "path": "glyphs/u4ea5-hai.svg",
+      "bytes": 832,
+      "sha256": "sha256:40b15fb53ef59585d1ae0491741561aae9df585ee61fe88aae72ae9d4084b027"
+    },
+    {
+      "path": "glyphs/u5348-wu-branch.svg",
+      "bytes": 552,
+      "sha256": "sha256:95b16486771a4b286830f04796746a11c4c0f5100a439c53e461689607aa04b5"
+    },
+    {
+      "path": "glyphs/u536f-mao.svg",
+      "bytes": 779,
+      "sha256": "sha256:10caeebcfc5838a83f4b7f84f5356787cd081756fd9186ea63719b2665714845"
+    },
+    {
+      "path": "glyphs/u571f-tu.svg",
+      "bytes": 442,
+      "sha256": "sha256:02361d17dd52bffc59f1d319b57c86e6de5df22f9d798e789e89f95b48ea6f98"
+    },
+    {
+      "path": "glyphs/u58ec-ren.svg",
+      "bytes": 549,
+      "sha256": "sha256:abe0b8be5c3fe1a9cb40607dc5a2ca1954cd1837abaa19e8bd38a539bed8866a"
+    },
+    {
+      "path": "glyphs/u5b50-zi.svg",
+      "bytes": 615,
+      "sha256": "sha256:6a721ed257885e7f430323398832efab668b8ee1483496a7df0763616c6ce917"
+    },
+    {
+      "path": "glyphs/u5bc5-yin.svg",
+      "bytes": 819,
+      "sha256": "sha256:4c7a816722434fbb7432c0a13a6c9d2280140f7b6d14f6306042f68b798572c9"
+    },
+    {
+      "path": "glyphs/u5df1-ji.svg",
+      "bytes": 572,
+      "sha256": "sha256:248dac4daf6cce0cf8a4f1a457b4f569d8907bbd07e13f92f31860c41855783f"
+    },
+    {
+      "path": "glyphs/u5df3-si.svg",
+      "bytes": 572,
+      "sha256": "sha256:c344ee0266e79c598c01a7fac68cf91a98f096009ca2e04bbd95bdb32e759b70"
+    },
+    {
+      "path": "glyphs/u5e9a-geng.svg",
+      "bytes": 895,
+      "sha256": "sha256:0e955e3bb700b2bde8d6324d1cf7fbc56e56f3b2224f0b532139330d5393eefe"
+    },
+    {
+      "path": "glyphs/u620a-wu.svg",
+      "bytes": 890,
+      "sha256": "sha256:6f4c5c70d764118cf9c38eb5e973894f83e1170d658ac24493ae3bb9ce38a821"
+    },
+    {
+      "path": "glyphs/u620c-xu.svg",
+      "bytes": 908,
+      "sha256": "sha256:12eedfa457a6e4dc7bb59c53dd88b3ab65ca1b5cfe7c8101d65838e31e6c36f7"
+    },
+    {
+      "path": "glyphs/u6728-mu.svg",
+      "bytes": 556,
+      "sha256": "sha256:c169b5a150424aa95b275020e23f879b977effbceb98a54a2eee52d6b562df87"
+    },
+    {
+      "path": "glyphs/u672a-wei.svg",
+      "bytes": 622,
+      "sha256": "sha256:1024eb03a061c96909c7aee100987d016e9a163f4103fd1c76b14053f5059a12"
+    },
+    {
+      "path": "glyphs/u6c34-shui.svg",
+      "bytes": 741,
+      "sha256": "sha256:c6f4b7f328f45ca5fd7f4a8df274091341bdb5723bc7bf920addfaa1a9d13c74"
+    },
+    {
+      "path": "glyphs/u706b-huo.svg",
+      "bytes": 631,
+      "sha256": "sha256:687d8a5fd856a75e39d9e89959fa861604cdf53b273f92d38cb1817acd3ec001"
+    },
+    {
+      "path": "glyphs/u7532-jia.svg",
+      "bytes": 561,
+      "sha256": "sha256:49ba19a638cffacce4ab22ffac6acb91f49870fb674596070713234502427a48"
+    },
+    {
+      "path": "glyphs/u7533-shen.svg",
+      "bytes": 596,
+      "sha256": "sha256:3f86ce039f183334a2a22cfc77a72fa7c3fbd3c87a08afaba9bc473355ac2477"
+    },
+    {
+      "path": "glyphs/u7678-gui.svg",
+      "bytes": 1063,
+      "sha256": "sha256:1b7fca9c0d71a9644a37a6a40540042839834d8db8e227a18e6949f1ca6e1a99"
+    },
+    {
+      "path": "glyphs/u8f9b-xin.svg",
+      "bytes": 716,
+      "sha256": "sha256:28ac686f929b9d7d6df3029237722f76c51e661b6e45ea5e1b146ca1a7377723"
+    },
+    {
+      "path": "glyphs/u8fb0-chen.svg",
+      "bytes": 820,
+      "sha256": "sha256:871ca84869d5c89bb58d05acf1b731fa0b53d5909ddf3aca2a03ef6b09797dac"
+    },
+    {
+      "path": "glyphs/u9149-you.svg",
+      "bytes": 791,
+      "sha256": "sha256:8e1df035f723b5c2f5d1b06ea19ee3d0a082139055b7388be72b1e758cab06d8"
+    },
+    {
+      "path": "glyphs/u91d1-jin.svg",
+      "bytes": 894,
+      "sha256": "sha256:6d62345a24abd861450daa88f4762673509ec96ec84f9ae9514645a5d2a3a7c3"
+    },
+    {
+      "path": "longform/fixture-customer-chapter.json",
+      "bytes": 5647,
+      "sha256": "sha256:1d5b3dfba1374cf3166bc58a01489d2712413897fada98584e784386c72fa339"
+    },
+    {
+      "path": "longform/fixture-v6-677.json",
+      "bytes": 4958,
+      "sha256": "sha256:1a521b2fd954be6fc2ea25c14523e189d4225e20228da80b6cce6b5c5efe120d"
+    },
+    {
+      "path": "longform/pagination-report.json",
+      "bytes": 41416,
+      "sha256": "sha256:8c15ac8e898774c36ef2f562c0d8ec010cc2a6c0adb5d45775bac11c2ad91de1"
+    },
+    {
+      "path": "render-receipt.json",
+      "bytes": 15226,
+      "sha256": "sha256:b7ec03554510aba24a3207531276569daf5cb879f254d75f4c92015d39486587"
+    },
+    {
+      "path": "source-manifest.json",
+      "bytes": 22730,
+      "sha256": "sha256:4fab820a87a63f2790c7b81860c0255084c5023c9db1fe811536c5e9762a54f4"
+    },
+    {
+      "path": "structures/01-cover.json",
+      "bytes": 883,
+      "sha256": "sha256:3b21349c19e87adf795965cb5e8283469f842534fa891a9fffe45b396adfd0b0"
+    },
+    {
+      "path": "structures/01-longform-p1.json",
+      "bytes": 3984,
+      "sha256": "sha256:b429e1c9222108c8ce38c8bf678dcf9d163f8c52a151fdadec103d6cd68f72d7"
+    },
+    {
+      "path": "structures/02-identity.json",
+      "bytes": 536,
+      "sha256": "sha256:8e0749875e4edee2ff410963220cd84b8d7dbc045d2ba79824f86f2b8a1fc9af"
+    },
+    {
+      "path": "structures/02-longform-p2.json",
+      "bytes": 1955,
+      "sha256": "sha256:538fac17c551f0d0ea06fcc8fe314ae20bcdaa41561be66251224f92d90c97c1"
+    },
+    {
+      "path": "structures/03-contents.json",
+      "bytes": 536,
+      "sha256": "sha256:d340c521aca4d4bd43c50a3a220beffb2d13b168bef38b7899249e5c53ed007c"
+    },
+    {
+      "path": "structures/04-glance.json",
+      "bytes": 3244,
+      "sha256": "sha256:3a4c4c58ec7be4c59d0278c654c1e372618803a32c00d203c497473ac9c453d8"
+    },
+    {
+      "path": "structures/05-four-pillars.json",
+      "bytes": 4463,
+      "sha256": "sha256:3c67cdcc7e316e119a1419443fe243240c6bb0a250c582917fce807ad2b387cf"
+    },
+    {
+      "path": "structures/06-foundation.json",
+      "bytes": 1669,
+      "sha256": "sha256:0dbe2adca61d4a77f9e7ded4f0d2e9ff43a40426e1adde67f4cc7ecdfdcfec97"
+    },
+    {
+      "path": "structures/07-day-master.json",
+      "bytes": 1315,
+      "sha256": "sha256:2e1954a0e269bbb2fa0ecb1f9cdfacd4b375fa559c3390ba279ebd4449bd630e"
+    },
+    {
+      "path": "structures/08-wu-xing.json",
+      "bytes": 1434,
+      "sha256": "sha256:8d6f093d83e129afe036fd00420ebb6e6878ed4b641823afd13c5b70af38c787"
+    },
+    {
+      "path": "structures/09-five-phases.json",
+      "bytes": 1300,
+      "sha256": "sha256:dac0931f062027ea7dd4e61eed87c2307b651d18fedac1722507bd5ffc97f7ea"
+    },
+    {
+      "path": "structures/10-ten-gods.json",
+      "bytes": 763,
+      "sha256": "sha256:61d601bb46ca56d461e602ae4997815b79bb8dff18f02bcc2dc399d47cfdfa2c"
+    },
+    {
+      "path": "structures/11-hidden-stems.json",
+      "bytes": 2425,
+      "sha256": "sha256:8f2ce0d980e2262c61b467a7b34f4c7b7982ed6cb82f80a9d82f15aa21c69dc4"
+    },
+    {
+      "path": "structures/12-longform-p1.json",
+      "bytes": 3405,
+      "sha256": "sha256:6c46988398af8b7ce4d90090db324efc0557d82e4d406a9570794e1219c78fd3"
+    },
+    {
+      "path": "structures/13-longform-p2.json",
+      "bytes": 3837,
+      "sha256": "sha256:c313146cd328544fb12de42e3fd550f3fecbbf21c3f674e37bf1a6e9d9c5117d"
+    },
+    {
+      "path": "structures/14-longform-p3.json",
+      "bytes": 1472,
+      "sha256": "sha256:8461902a72b54b71734971de5a55e15a97417abd932b801df3dc8b41ff4835db"
+    },
+    {
+      "path": "structures/27-reflection.json",
+      "bytes": 1605,
+      "sha256": "sha256:8210a8a7d78474ccf3bfe6507b32ea39ec563e880da2ae96c7ae736eb8aaa88a"
+    },
+    {
+      "path": "structures/28-summary.json",
+      "bytes": 726,
+      "sha256": "sha256:ff190c777d182d79c10b65d91200abb827fe425766091e64d39832f73f03f09b"
+    },
+    {
+      "path": "structures/29-closing.json",
+      "bytes": 636,
+      "sha256": "sha256:0a2455d294dcc1e8bee2eadd294af11091f6516c02c44963aadee48b9a9f3394"
+    },
+    {
+      "path": "structures/30-method-note.json",
+      "bytes": 492,
+      "sha256": "sha256:d674cf6dcf372abf9010fddda4ef7ed2101759880a2731eef2b14b6c86c05cd1"
+    },
+    {
+      "path": "structures/D01-glyph-proof.json",
+      "bytes": 4003,
+      "sha256": "sha256:57b10b8bfc8ab7ab48a99ed7caee2f0b18093733940036d89ce2c2f610201619"
+    },
+    {
+      "path": "structures/D02-glyph-style.json",
+      "bytes": 964,
+      "sha256": "sha256:fc2d9a781d98ae285f10e9b1536599627b8eec718fcf191fb154ff3663c90777"
+    },
+    {
+      "path": "structures/D02-wordmark.json",
+      "bytes": 641,
+      "sha256": "sha256:b7d940412b0c2190fe2dbd8ff5a7c6169e7334be084cbdb82837a21a7798dd97"
+    },
+    {
+      "path": "structures/D03-bindings.json",
+      "bytes": 359,
+      "sha256": "sha256:14afad7365af534be25daa2897d20fa626b08c9843bf56a9ff963e85b74199e8"
+    },
+    {
+      "path": "structures/D03-wordmark.json",
+      "bytes": 641,
+      "sha256": "sha256:eab03a444802b4ec48a8ef4d022b927cef79a60c82d5c496e66b1aeeac8bfe08"
+    },
+    {
+      "path": "structures/D04-bindings.json",
+      "bytes": 359,
+      "sha256": "sha256:95725b1c3b1f1002bdc27fd71d1ce6096a5127fd0cf9798f479afb34378fc2bf"
+    },
+    {
+      "path": "structures/D04-negative.json",
+      "bytes": 374,
+      "sha256": "sha256:e9ce2945c7c9cca6710a3561245c7729ce117242f164757b759be00db1317df1"
+    },
+    {
+      "path": "structures/D05-layout.json",
+      "bytes": 416,
+      "sha256": "sha256:78b5dc6e82f7ee73bad8105dfa521562420452302920a52f216252f7dd604f79"
+    },
+    {
+      "path": "structures/D05-negative.json",
+      "bytes": 374,
+      "sha256": "sha256:f2b38c64c98d9522911072472bd08bcde4cb2872c14c04201284646c831489f4"
+    },
+    {
+      "path": "structures/D06-layout.json",
+      "bytes": 416,
+      "sha256": "sha256:42886eec17866e10d9ef6109fa4916254f14a4a9d2b68ef4c522088cf54805db"
+    },
+    {
+      "path": "structures/D07-layout.json",
+      "bytes": 416,
+      "sha256": "sha256:10410422cb0e5f474c766b0ae12d96e874f12b6e733bc1830042ef558197ce76"
+    },
+    {
+      "path": "structures/D07-receipts.json",
+      "bytes": 319,
+      "sha256": "sha256:2e26644eada55c4f4fff4fef61810bce279b2705d6b0fb9566fcb1a79d9e5ae0"
+    },
+    {
+      "path": "structures/D08-receipts.json",
+      "bytes": 319,
+      "sha256": "sha256:5b72fe9ae3dbbf83209e32f2cbee9a48401b5371f7044e13dc5406a58e3291f5"
+    },
+    {
+      "path": "structures/dev-v6-01-longform-p1.json",
+      "bytes": 3984,
+      "sha256": "sha256:b429e1c9222108c8ce38c8bf678dcf9d163f8c52a151fdadec103d6cd68f72d7"
+    },
+    {
+      "path": "structures/dev-v6-02-longform-p2.json",
+      "bytes": 1955,
+      "sha256": "sha256:538fac17c551f0d0ea06fcc8fe314ae20bcdaa41561be66251224f92d90c97c1"
+    },
+    {
+      "path": "structures/dev-wu-xing-zero.json",
+      "bytes": 1446,
+      "sha256": "sha256:6596ac0340580bc3502bcc812e6dca7bad379c99429bdc06f46cdaf162c611bd"
+    },
+    {
+      "path": "tokens.css",
+      "bytes": 5578,
+      "sha256": "sha256:66c737ec031a4a679a4545e44170eef3de054a6ec0690f3e7e0fde0d0b63fe50"
+    },
+    {
+      "path": "tokens.json",
+      "bytes": 12281,
+      "sha256": "sha256:e8c6818de4cdf27c5f16b143d019e55346f8019922d35d588ad11745b4b4d190"
+    }
+  ]
+}
