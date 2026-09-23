@@ -48,3 +48,24 @@ Nothing here runs in `scripts/ci-verify.sh`. What CI verifies is that the
 committed contract still equals the committed assets — see
 `tests/contract/etbz49-visual-assets.contract.test.ts` and
 `scripts/verify-etbz49-visual-system.mjs`.
+
+## Running it as a project-native proof
+
+`proof/run_proof.py` is the declared entrypoint (see the repository-root
+`.agent-proofs.json`). It stages the layout above from committed files only —
+`build/` and `src/base.css` from here, everything else from
+`assets/visual-system-v1/` — runs the guards, renders all 29 pages through the
+harness's own builders, DOM scan and Wu Xing geometry oracle, renders the Wu Xing
+page once more with the prior defective geometry and requires the oracle to reject
+it, and exits non-zero on any finding. `build/build_all.py` on its own exits 0 even
+with findings.
+
+```
+python3 tools/visual-proof-harness/proof/run_proof.py --out .etbz-verify/visual-proof
+```
+
+Output (never tracked, `.etbz-verify/` is ignored): `proof-report.json`, the
+regenerated `final-contact-sheet.png`, every page PNG under `customer/` and
+`developer/`, the counterexample under `counterexample/`, and the merged PDFs.
+The report covers artifact integrity, guards and rendered geometry; whether a page
+looks right is a separate, human or model inspection.
