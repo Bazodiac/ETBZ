@@ -171,6 +171,22 @@ def main(argv=None) -> int:
         B.render_all([rec_entry], ctx)
         B.merge(dev_entries[:5] + [zero_entry] + v6_entries + dev_entries[5:] + [rec_entry], out / "developer-proof.pdf")
         all_entries = entries + v6_entries + [zero_entry] + dev_entries + [rec_entry]
+        receipts.append({"surface": rec_entry["surface"], "pageId": rec_entry["pageId"], "pageNumber": rec_entry["pageNumber"],
+                         "structuralSha256": rec_entry["structuralSha256"], "pngSha256": rec_entry["pngSha256"],
+                         "pdfSha256": B.sha(rec_entry["pdf"].read_bytes()), "domFindings": len(rec_entry["dom"]),
+                         "dom": rec_entry["dom"], "glyphRefs": len(rec_entry["struct"]["glyphRefs"])})
+        art["developer-proof.pdf"] = sha256(out / "developer-proof.pdf")
+        tracked = json.loads((ASSETS / "render-receipt.json").read_text(encoding="utf-8"))
+        tracked["pages"] = receipts
+        tracked["artifacts"] = art
+        tracked_structures = {
+            "08-wu-xing.json": next(e["struct"] for e in all_entries if e["pageId"] == "08-wu-xing"),
+            "D05-negative.json": next(e["struct"] for e in all_entries if e["pageId"] == "D05-negative"),
+        }
+        (out / "tracked-evidence.json").write_text(
+            json.dumps({"renderReceipt": tracked, "structures": tracked_structures}, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
 
         # 3. Measured geometry and font loading on the rendered Wu Xing pages.
         page = ctx.new_page()
