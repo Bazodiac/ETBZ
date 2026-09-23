@@ -17,6 +17,8 @@ DEV_CSS = """
 table.ev{width:100%;border-collapse:collapse}table.ev td,table.ev th{padding:1.2mm 1.2mm;border-top:0.25mm solid var(--rule-200);font-size:8pt;line-height:10.5pt;vertical-align:top;text-align:left;overflow-wrap:anywhere}
 table.ev th{color:var(--ink-400);font-weight:500;letter-spacing:.1em;text-transform:uppercase;border-top:none}
 table.rc td{padding:0.7mm 1mm;white-space:nowrap;overflow:hidden}
+table.d05-guards td,table.d05-guards th{padding:0.45mm 0.75mm;font-size:7.5pt;line-height:8.5pt}
+.d05-panels{gap:3mm!important;margin-top:3mm!important}.d05-panels .panel{padding:2.5mm}
 """
 def dhead(title, right=""):
     return f'<div class="dhead"><div><b>Bazodiac</b> · Developer proof · {esc(title)}</div><div>{esc(right)}</div></div>'
@@ -146,8 +148,8 @@ def negative_page():
       <div class="kicker">Executed, not described</div>
       <div class="h1 small" style="margin-top:2mm">Blocked states</div>
       <div class="body-small" style="margin-top:2mm;max-width:150mm">Each row is a guard function called with the input shown; the observed column is its actual return or raised code.</div>
-      <table class="ev" style="margin-top:4mm"><tr><th style="width:12mm"></th><th style="width:52mm">Test</th><th style="width:38mm">Expected</th><th>Observed</th></tr>{rows}</table>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4mm;margin-top:4mm">
+      <table class="ev d05-guards" style="margin-top:3mm"><tr><th style="width:12mm"></th><th style="width:52mm">Test</th><th style="width:38mm">Expected</th><th>Observed</th></tr>{rows}</table>
+      <div class="d05-panels" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4mm;margin-top:4mm">
         <div class="panel" style="padding:3mm"><div class="label" style="margin-bottom:2mm">Blocked hidden-stem cell</div>
           <div style="display:flex;gap:3mm;align-items:center"><div style="width:14mm;height:14mm;border-radius:50%;background:var(--{blocked["fill"]});border:0.3mm dashed var(--ink-400);display:flex;align-items:center;justify-content:center" class="mono">—</div><div class="caption">Phase not supplied → neutral field, no glyph, no inherited Branch tint. <span class="mono">{blocked["code"]}</span></div></div></div>
         <div class="panel" style="padding:3mm"><div class="label" style="margin-bottom:2mm">Out-of-contract glyph</div>
