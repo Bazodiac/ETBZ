@@ -77,3 +77,13 @@ D01 glyph proof (27 assets, hashes, licence) · D02 ink-pass vs plain outline + 
 * `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` — accept the ink-pass asset set, supply the reference face, or ship plain outlines.
 * Interpretive chapters 15–26 are IA slots; they consume approved content-layer text that does not exist yet. The chapter template (12–14) is the proven container.
 * Production renderer choice (V4 §15 / V6 ADR-0008) remains undecided; this build proves the layout contract with Chromium as harness only.
+
+## 7. Repository note — 2026-09-28
+
+Sections 0–6 are the provenance record of the 2026-09-21 convergence build and are kept as written. Five statements above no longer describe the repository tree:
+
+1. `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` (status line, §3, §5.4, §6) was closed by the Product Owner on 2026-09-22 — Jira ETBZ-49 comment 16514, answer (a): the ink-pass asset set as shipped. The asset manifests keep the value `OPEN` as their build-time record; the decision lives in Jira and in `docs/adr/0009-canonical-visual-system-v1.md`.
+2. §3 "D05 18 executed negative guards": the Wu Xing centre-clearance repair of 2026-09-22 added three guards; the developer proof now executes 21.
+3. §3 "D06 … D11" numbering: the developer surface in the tree is D01–D08 plus `dev-wu-xing-zero` and the two V6 continuity pages.
+4. §4 artefact hashes: the evidence in `docs/evidence/etbz-49/` was re-rendered on 2026-09-28 after the clearance repair; the current hashes are in `render-receipt.json` and `determinism-report.json`, and only three page structures changed (`08-wu-xing`, `dev-wu-xing-zero`, `D05-negative`).
+5. §5.2 "677-word fixture": the V6 fixture's `wordCount` field says 693 (header included); the harness counts 679 and the contract's `countWords` 677 (text only). All three count the same words differently; none is a layout finding.

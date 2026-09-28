@@ -13,6 +13,7 @@
 // =============================================================================
 
 export * from './errors.js';
+export * from './fonts.js';
 export * from './glyphs.js';
 export * from './pageFamily.js';
 export * from './pagination.js';

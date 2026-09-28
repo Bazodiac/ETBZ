@@ -6,8 +6,8 @@
   "files": [
     {
       "path": "FINAL_DESIGN_PROVENANCE.md",
-      "bytes": 11945,
-      "sha256": "sha256:58b46b656e89afa87e923723e0f41af94bc5a16d919bcfcc0adff7e581b66839"
+      "bytes": 13312,
+      "sha256": "sha256:e8cec4ff0cad837e5198667de488ec8c651be4a59e2800a29de45203105033cb"
     },
     {
       "path": "brand/wordmark.manifest.json",
@@ -26,8 +26,8 @@
     },
     {
       "path": "determinism-report.json",
-      "bytes": 1845,
-      "sha256": "sha256:6490168f28d0d57ca8c41eb5c7491648654e3c88b39c66fcf403030fd1134c47"
+      "bytes": 2589,
+      "sha256": "sha256:f534d5c8fba3520c130719db8455c9925d1cf5f6d9e10c6e518a128ef754ccac"
     },
     {
       "path": "fixtures/chart-fixture.json",
@@ -232,7 +232,7 @@
     {
       "path": "render-receipt.json",
       "bytes": 15221,
-      "sha256": "sha256:c553ddced2cea4f76251164f090dd6052c90abf9b6bf6077cca7267c038e745d"
+      "sha256": "sha256:e5ae9c7a08a3340f7373c61295c6fd51ab213a300cf700182c9f69c57a3bca92"
     },
     {
       "path": "source-manifest.json",

@@ -111,7 +111,14 @@ def write(page_tuple, folder):
 def render_all(entries, ctx):
     page = ctx.new_page(); page.set_viewport_size({"width": A4_PX[0], "height": A4_PX[1]})
     for e in entries:
-        page.goto(e["html"].resolve().as_uri()); page.wait_for_load_state("networkidle"); page.evaluate("document.fonts.ready"); page.wait_for_timeout(80)
+        page.goto(e["html"].resolve().as_uri()); page.wait_for_load_state("networkidle")
+        # Settle before the screenshot: fonts resolved, every image decoded, two frames painted.
+        # A screenshot taken while the compositor is still rasterising differs by a few edge
+        # pixels between otherwise identical runs; the structural hash never does.
+        page.evaluate("document.fonts.ready")
+        page.evaluate("Promise.all(Array.from(document.images).map((i) => i.decode().catch(() => null)))")
+        page.evaluate("new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+        page.wait_for_timeout(250)
         png = e["folder"] / f"{e['pageId']}.png"; pdf = e["folder"] / f"{e['pageId']}.pdf"
         page.screenshot(path=str(png), clip={"x": 0, "y": 0, "width": A4_PX[0], "height": A4_PX[1]})
         page.pdf(path=str(pdf), width="210mm", height="297mm", print_background=True, margin={"top": "0", "right": "0", "bottom": "0", "left": "0"}, prefer_css_page_size=True)

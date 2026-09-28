@@ -16,6 +16,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DISPLAY_GLYPH_MANIFEST,
   DISPLAY_GLYPH_SET,
+  FONT_FACES,
   VISUAL_CONTRACT_ERROR_CODES,
   VisualContractError,
   acceptWuXingVector,
@@ -23,9 +24,11 @@ import {
   assertDisplayGlyphIntegrity,
   assertEveryWordPlaced,
   findEvidenceChrome,
+  hasFontFace,
   isVisualContractError,
   presentWuXing,
   resolveDisplayGlyph,
+  resolveFontFace,
   resolvePhasePaint,
   resolveShengKeRelation,
   resolveSlot,
@@ -188,8 +191,8 @@ describe('ETBZ-49 N4: the design side never recomputes a Wu Xing distribution', 
     [{ wood: 1, fire: 1, earth: 1, metal: 1 }, 'a missing phase'],
     [{ ...VALID, aether: 1 }, 'a sixth phase'],
     [{ ...VALID, water: -1 }, 'a negative count'],
-    [{ ...VALID, water: 1.5 }, 'a fractional count'],
     [{ ...VALID, water: Number.NaN }, 'a NaN count'],
+    [{ ...VALID, water: Number.POSITIVE_INFINITY }, 'an infinite count'],
     [{ ...VALID, water: '0' }, 'a count as a string'],
   ])('refuses %j (%s)', (vector, description) => {
     const error = expectRefusal('WU_XING_VECTOR_INVALID', () => acceptWuXingVector(vector));
@@ -409,6 +412,7 @@ describe('ETBZ-49 N11: the refusal vocabulary itself is closed', () => {
         'SEMANTIC_TRUNCATION_REFUSED',
         'SHENG_KE_NOT_SUPPORTED',
         'SHRINK_TO_FIT_REFUSED',
+        'UNKNOWN_FONT',
         'UNKNOWN_SLOT',
         'UNKNOWN_VISUAL_TYPE',
         'WU_XING_RECOMPUTATION_REFUSED',
@@ -427,5 +431,43 @@ describe('ETBZ-49 N11: the refusal vocabulary itself is closed', () => {
     expect(isVisualContractError(caught, 'DISPLAY_GLYPH_OUT_OF_CONTRACT')).toBe(true);
     expect(isVisualContractError(caught, 'UNKNOWN_SLOT')).toBe(false);
     expect(isVisualContractError(new Error('plain'))).toBe(false);
+  });
+});
+
+// -----------------------------------------------------------------------------
+
+describe('ETBZ-49 N12: an unknown font is refused, never substituted', () => {
+  it.each([
+    ['Helvetica', '400', 'an unknown family'],
+    ['Noto Sans CJK SC', '400', 'the informational CJK family, which is not a committed binary'],
+    ['inter', '400', 'a family name in the wrong case'],
+  ])('refuses an unknown face %s %s (%s)', (family, weight, description) => {
+    const error = expectRefusal('UNKNOWN_FONT', () => resolveFontFace(family, weight));
+    expect(error.detail['family'], description).toBe(family);
+    expect(error.detail['weight']).toBe(weight);
+    expect(error.detail['committed']).toEqual(
+      FONT_FACES.map((face) => `${face.family} ${face.weight}`),
+    );
+    expect(hasFontFace(family, weight)).toBe(false);
+  });
+
+  it.each([
+    ['Inter', '700', 'a bold Inter no binary carries'],
+    ['Inter Display', '600', 'a semibold Inter Display no binary carries'],
+    ['Inter', 450, 'a numeric weight between two committed ones'],
+  ])('refuses a weight the committed set does not carry: %s %s (%s)', (family, weight, description) => {
+    const error = expectRefusal('UNKNOWN_FONT', () => resolveFontFace(family, weight));
+    expect(error.detail['weight'], description).toBe(String(weight));
+    expect(hasFontFace(family, weight)).toBe(false);
+  });
+
+  it('never returns a neighbouring face in place of the one asked for', () => {
+    let caught: unknown;
+    try {
+      resolveFontFace('Inter', '401');
+    } catch (error: unknown) {
+      caught = error;
+    }
+    expect(isVisualContractError(caught, 'UNKNOWN_FONT')).toBe(true);
   });
 });

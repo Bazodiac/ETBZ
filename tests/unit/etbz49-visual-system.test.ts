@@ -18,11 +18,13 @@ import {
   CONVERGENCE_SHARES,
   CANONICAL_DECISION_SOURCE,
   DISPLAY_GLYPH_SET,
+  FONT_FACES,
   HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED,
   LONG_FORM_PAGE_BUDGET,
   LONG_FORM_WORD_BUDGET,
   PAGE_FAMILY,
   PHASES,
+  TYPE_FAMILIES,
   acceptWuXingVector,
   assertCustomerSurfaceClean,
   assertDisplayGlyphIntegrity,
@@ -31,9 +33,11 @@ import {
   canonicalColor,
   countWords,
   hasDisplayGlyph,
+  hasFontFace,
   listSlotIds,
   presentWuXing,
   resolveDisplayGlyph,
+  resolveFontFace,
   resolvePhasePaint,
   resolvePillarPaint,
   resolvePillarSelectionPaint,
@@ -239,6 +243,22 @@ describe('ETBZ-49 P4: the Wu Xing vector passes through untouched', () => {
     expect(acceptWuXingVector({ ...VECTOR })).toEqual(VECTOR);
   });
 
+  it('accepts the canonical chart fixture vector - FuFirE Qi weights are fractional', () => {
+    // The recovered fixture (wood 1.8, fire 2.5, ...) is what page 08 was rendered
+    // from; a schema that refused it would contradict the evidence it sits beside.
+    const fixture = (CHART as unknown as { wuXing?: { vector?: Record<string, number> } })
+      .wuXing?.vector;
+    expect(fixture, 'the chart fixture carries a Wu Xing vector').toBeDefined();
+    if (fixture === undefined) return;
+    expect(Object.values(fixture).some((value) => !Number.isInteger(value))).toBe(true);
+    // Asserted, not merely called: a refusal here must fail an assertion so the
+    // mutant that restores `.int()` is killed by this test and not by a throw.
+    expect(() => acceptWuXingVector({ ...fixture })).not.toThrow();
+    expect(acceptWuXingVector({ ...fixture })).toEqual(fixture);
+    expect(() => presentWuXing({ ...fixture })).not.toThrow();
+    expect(presentWuXing({ ...fixture }).max).toBe(2.5);
+  });
+
   it('carries the untouched vector alongside the presentation ratios', () => {
     const presentation = presentWuXing({ ...VECTOR });
     expect(presentation.vector).toEqual(VECTOR);
@@ -284,6 +304,28 @@ describe('ETBZ-49 P4: the Wu Xing vector passes through untouched', () => {
     expect(presentation.ratio.wood).toBe(1);
     expect(presentation.ratio.fire).toBe(1);
     expect(presentation).not.toHaveProperty('dominant');
+  });
+});
+
+// -----------------------------------------------------------------------------
+
+describe('ETBZ-49 P4b: every committed type face resolves, and only those', () => {
+  it('resolves each of the five committed Inter binaries by family and weight', () => {
+    for (const face of FONT_FACES) {
+      expect(resolveFontFace(face.family, face.weight)).toBe(face);
+      expect(hasFontFace(face.family, Number(face.weight))).toBe(true);
+    }
+  });
+
+  it('resolves the faces the pagination proof was measured with', () => {
+    expect(resolveFontFace('Inter', 400).file).toBe('fonts/Inter-Regular.ttf');
+    expect(resolveFontFace('Inter', '500').file).toBe('fonts/Inter-Medium.ttf');
+    expect(resolveFontFace('Inter Display', 300).file).toBe('fonts/InterDisplay-Light.ttf');
+  });
+
+  it('names the informational CJK family as a host-resolved chain, not a committed face', () => {
+    expect(TYPE_FAMILIES['cjk-text']).toContain('Noto Sans CJK SC');
+    expect(hasFontFace('Noto Sans CJK SC', 400)).toBe(false);
   });
 });
 

@@ -25,9 +25,12 @@
 #       permitted.
 #
 # `scripts/secret-scan.sh` scans the working tree and the history as two
-# separate gates. Bar A covers history only; bar B needs one entry per gate,
-# because the working-tree fingerprint carries no commit and the history one
-# does.
+# separate gates. A bar-A entry carries a commit and covers history only. A
+# bar-B entry is written WITHOUT a commit (`path:rule:line`): gitleaks matches
+# that global fingerprint in the working-tree (`--no-git`) gate and in the
+# history gate alike, so one line covers both — measured under gitleaks 8.30.1
+# locally and the CI-pinned 8.24.3 (entry removed: both gates red; restored:
+# both green).
 # =============================================================================
 
 # b939b596 — two synthetic, high-entropy test fixtures flagged by the upstream
@@ -57,11 +60,11 @@ b939b596c05ec23d3895e31adaf47cda4e63245f:tests/unit/narrative-draft.test.ts:gene
 # a credential-shaped literal in order to explain it makes the explanation the
 # next finding.
 #
-# The value is not rewritten, because `assets/visual-system-v1/` is a
-# byte-preserved copy of the converged build and editing it would forge the
-# provenance record it exists to carry. Instead the file is pinned: its SHA-256
-# is in `ASSET-INTEGRITY.json` and asserted by the ETBZ-49 contract suite, in
-# both directions (every listed file hashes as stated, every file on disk is
-# listed). Line 373 therefore cannot become anything other than this hash
-# without a test failing first.
+# The value is not rewritten: `assets/visual-system-v1/` is a hash-pinned copy
+# of the converged build (every file's SHA-256 is in `ASSET-INTEGRITY.json`,
+# asserted by the ETBZ-49 contract suite in both directions), so an edit there
+# is a visible, re-indexed revision — the 2026-09-28 evidence regeneration is
+# one. Line 373 has been the `tokens.json` content hash in every revision, and
+# the contract suite asserts that the exempted line still names `"tokens.json"`,
+# so this fingerprint cannot quietly come to cover anything else.
 assets/visual-system-v1/render-receipt.json:generic-api-key:373

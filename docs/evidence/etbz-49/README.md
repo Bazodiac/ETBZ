@@ -21,9 +21,11 @@ guard-table compaction, through the declared proof entrypoint
 | --- | --- |
 | Python · Playwright · Chromium | 3.13.3 · 1.52.0 · 136.0.7103.25 (headless shell), macOS |
 | Display glyphs | the 27 committed SVG assets — no font involved |
-| Inter faces | the five committed binaries, reported `loaded` by the proof |
+| Inter faces | the five committed binaries. The proof measures font status on the two Wu Xing pages only: there Inter 400/500 and Inter Display 300 are reported `loaded`, Inter 600 and Inter Display 400 `unloaded` (not used on those pages), none in `error`; the proof requires Inter 400 + Inter Display 300 |
 | Informational CJK face | `NotoSansCJK-Regular.ttc` installed as a user font, `sha256:b76b0433…690a` — byte-identical to the face pinned in `render-receipt.json` |
+| Chromium switches | `--deterministic-mode --disable-gpu --force-color-profile=srgb` (see "Determinism") |
 | Proof result | 29 pages · 0 DOM findings · 21/21 guards · prior-geometry counterexample rejected |
+| Carried into the tree by | `npm run etbz49:assemble` (`scripts/etbz49-assemble-evidence.mjs`) — the declared step; nothing here was edited by hand |
 
 Three pages changed structurally against the 2026-09-21 render, and only those
 three: `08-wu-xing` and `dev-wu-xing-zero` (the repaired medallion geometry)
@@ -34,14 +36,31 @@ the structural hashes are what the contract binds to.
 
 ## Determinism
 
-Two full builds, 29 pages each, on the environment above:
+Two full builds, 29 pages each, on the environment above (runs 1 and 2 of
+`determinism-report.json`):
 
 | Measure | Result |
 | --- | --- |
 | Structural hashes identical | 29 / 29 |
 | PNG hashes identical | 29 / 29 |
 | DOM overlap and out-of-bounds findings | 0 |
-| Merged deliverables byte-identical | `customer-sample.pdf`, `developer-proof.pdf`, `final-contact-sheet.png`, `tokens.json`, `glyphs/manifest.json`, `brand/wordmark.svg` |
+| Merged deliverables byte-identical | `customer-sample.pdf`, `developer-proof.pdf`, `final-contact-sheet.png`, `tokens.json`, `glyphs/manifest.json` (its file hash; the `manifestSha256` digest over the 27 glyph digests is a separate entry), `brand/wordmark.svg` |
+
+A third build is recorded under `pngByteStability` in the same report: 29 / 29
+again.
+
+**What PNG byte identity took, stated because it was not free.** Without
+Chromium's pixel-test switches, eight earlier builds on this same environment
+agreed on every structural hash but not on every PNG: only one adjacent pair
+agreed on all 29, the others differed on two to four pages (`01-cover`,
+`05-four-pillars`, `08-wu-xing` or `29-closing` — a few hundred pixels of
+≤ 32-level anti-aliasing along glyph edges, invisible at reading size — plus
+`D08-receipts`, which prints the PNG hashes and follows). The proof entrypoint
+now launches Chromium with `--deterministic-mode --disable-gpu
+--force-color-profile=srgb`; with them, three consecutive builds were
+byte-identical on all 29 pages and all merged deliverables. The structural
+hash, which is what the contract binds to, was identical in every one of the
+eleven builds.
 
 Per-page PDFs are *not* byte-identical and are deliberately not shipped:
 Chromium writes a `/CreationDate` and a random trailer ID into each one. Those
@@ -94,7 +113,7 @@ text that does not exist yet; pages 12–14 are the proven container for them.
 | File | What it proves |
 | --- | --- |
 | `developer/D01-glyph-proof.png` | all 27 assets, digests, licence basis |
-| `developer/D02-glyph-style.png` | ink pass vs plain outline — the PO decision, closed 2026-09-22 |
+| `developer/D02-glyph-style.png` | ink pass vs plain outline. The page still renders the pre-decision panel ("open style decision", three options) because it is generated from the asset manifests kept at `OPEN` (ADR 0009, limitation 3); the decision itself was closed on 2026-09-22 on `final-contact-sheet.png` |
 | `developer/D03-wordmark.png` | the static wordmark contract |
 | `developer/D04-bindings.png` | the fact-slot binding of every customer page |
 | `developer/D05-negative.png` | 21 executed negative guards: the 18 original ones plus the three Wu Xing centre-clearance guards added with the 2026-09-22 repair (shipped geometry accepted, prior label shape and prior Fire block rejected) |

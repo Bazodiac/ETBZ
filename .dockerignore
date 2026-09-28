@@ -28,6 +28,9 @@ scripts
 docs
 openapi
 contracts
+tools
+assets
+.agent-proofs.json
 vitest.config.ts
 eslint.config.js
 README.md

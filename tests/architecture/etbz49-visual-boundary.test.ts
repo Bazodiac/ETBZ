@@ -105,6 +105,7 @@ describe('ETBZ-49: the visual system is pure', () => {
     const names = VISUAL_FILES.map((file) => relative(VISUAL_ROOT, file)).sort();
     expect(names).toEqual([
       'errors.ts',
+      'fonts.ts',
       'glyphs.ts',
       'index.ts',
       'pageFamily.ts',

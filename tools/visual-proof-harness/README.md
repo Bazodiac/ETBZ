@@ -34,20 +34,56 @@ build/build_all.py        every page -> PNG/PDF, DOM scan, receipts, contact she
 build/contract.py         design-system.json + source-manifest.json
 ```
 
-`src/pages/*.html` and `src/base.css` are the harness's own rendering input.
-They are a reference composition for Chromium, not the renderer ETBZ-55 will
-build, and the production contract does not name them.
+`src/base.css` is the harness's own rendering input. `src/pages/*.html` are the
+page compositions the last proof run generated (the builders under `build/`
+write them; `proof/run_proof.py` reads none of them back). They are kept as a
+readable reference of what Chromium rendered and are refreshed together with
+the evidence; they are not the renderer ETBZ-55 will build, and the production
+contract does not name them.
 
 ## Requirements (local only, never in CI)
 
-Python 3 with `fontTools`, `Pillow`, `pikepdf` and `playwright` (Chromium), plus
-a local `NotoSansCJK-Black.ttc`. `build/extract_glyphs.py` pins that font by
-SHA-256 and exits `GLYPH_SOURCE_FACE_NOT_FOUND` rather than substituting a face.
+Python 3 with `fontTools`, `Pillow`, `pikepdf` and `playwright` (Chromium).
+
+Two Noto faces play different roles:
+
+- `NotoSansCJK-Black.ttc` is needed only to **re-extract** the 27 display
+  glyphs (`build/extract_glyphs.py`, which pins that font by SHA-256 and exits
+  `GLYPH_SOURCE_FACE_NOT_FOUND` rather than substituting a face). The proof
+  never runs it; the extracted SVG assets are committed.
+- `NotoSansCJK-Regular.ttc` is the informational CJK text face
+  (`--font-cjk: "Noto Sans CJK SC", …`). It is not committed. When it is
+  installed on the host the proof records its path and SHA-256 in
+  `proof-report.json` (`environment.informationalCjkFace`) and compares them to
+  the face pinned in `assets/visual-system-v1/render-receipt.json`; when it is
+  absent Chromium falls back to a host face and the report says so. Display
+  glyphs are SVG and are unaffected either way.
 
 Nothing here runs in `scripts/ci-verify.sh`. What CI verifies is that the
 committed contract still equals the committed assets — see
 `tests/contract/etbz49-visual-assets.contract.test.ts` and
 `scripts/verify-etbz49-visual-system.mjs`.
+
+## Refreshing the tracked evidence
+
+The proof changes no tracked file. Carrying a run into the tree is a separate,
+declared step, so that `docs/evidence/etbz-49/`, `structures/*.json`,
+`render-receipt.json`, `design-system.json` and `determinism-report.json` are
+never edited by hand:
+
+```
+PY=python3   # an interpreter with playwright, Pillow, pikepdf and fontTools
+for run in 1 2 3; do $PY tools/visual-proof-harness/proof/run_proof.py --out .etbz-verify/visual-proof-$run; done
+node scripts/etbz49-assemble-evidence.mjs .etbz-verify/visual-proof-1 .etbz-verify/visual-proof-2 .etbz-verify/visual-proof-3
+npm run etbz49:contract && node scripts/etbz49-asset-integrity.mjs
+npm test && npm run guards:etbz49
+```
+
+Run 1 becomes the evidence and determinism run 1, run 2 is determinism run 2,
+every further run is recorded in `determinism-report.json` under
+`pngByteStability` so the environment's PNG-byte stability is disclosed rather
+than selected. The assembler refuses on a failed run, a page without a tracked
+counterpart, or a receipt whose reviewed secret-scanner line would move.
 
 ## Running it as a project-native proof
 

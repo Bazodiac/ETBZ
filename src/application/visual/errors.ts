@@ -26,6 +26,8 @@ export const VISUAL_CONTRACT_ERROR_CODES = [
   'UNKNOWN_VISUAL_TYPE',
   /** A slot id no page in the family declares. */
   'UNKNOWN_SLOT',
+  /** A type face outside the committed set; no browser or host fallback is substituted. */
+  'UNKNOWN_FONT',
   /** Content was shortened to make it fit. */
   'SEMANTIC_TRUNCATION_REFUSED',
   /** Type was scaled below the locked scale to make it fit. */

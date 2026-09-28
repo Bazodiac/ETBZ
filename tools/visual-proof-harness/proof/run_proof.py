@@ -95,12 +95,54 @@ def stage(root: pathlib.Path) -> None:
         shutil.copy2(ASSETS / "brand" / name, root / "assets" / name)
 
 
+INFORMATIONAL_CJK_FILENAMES = ("NotoSansCJK-Regular.ttc", "NotoSansCJKsc-Regular.otf", "NotoSansSC-Regular.otf")
+INFORMATIONAL_CJK_DIRS = (
+    pathlib.Path.home() / "Library" / "Fonts",            # macOS, user
+    pathlib.Path("/Library/Fonts"),                       # macOS, system-wide
+    pathlib.Path("/usr/share/fonts/opentype/noto"),       # Debian/Ubuntu fonts-noto-cjk
+    pathlib.Path("/usr/share/fonts/noto-cjk"),            # Arch/Fedora
+    pathlib.Path("/usr/local/share/fonts"),
+    pathlib.Path.home() / ".fonts",
+    pathlib.Path.home() / ".local" / "share" / "fonts",
+)
+
+
+def informational_cjk_face() -> dict:
+    """What `--font-cjk: "Noto Sans CJK SC", …` will resolve to on this host.
+
+    The face is not committed (see tools/visual-proof-harness/README.md), so the report
+    records what was actually present, and whether it is the file the recovered render
+    receipt pinned - instead of a constant that could not tell the two situations apart.
+    Display glyphs are SVG and do not depend on it; informational CJK text does.
+    """
+    pinned = None
+    try:
+        receipt = json.loads((ASSETS / "render-receipt.json").read_text(encoding="utf-8"))
+        pinned = next((f["sha256"][7:] for f in receipt.get("pinnedFaces", [])
+                       if f.get("label") == "informational-cjk"), None)
+    except (OSError, ValueError, KeyError):
+        pinned = None
+    for directory in INFORMATIONAL_CJK_DIRS:
+        for name in INFORMATIONAL_CJK_FILENAMES:
+            candidate = directory / name
+            if candidate.is_file():
+                digest = sha256(candidate)
+                return {"status": "present", "file": str(candidate), "sha256": digest,
+                        "receiptPinSha256": pinned, "matchesReceiptPin": pinned is not None and digest == pinned,
+                        "note": "display glyphs are SVG; this face carries informational CJK text only"}
+    return {"status": "absent-host-fallback", "file": None, "sha256": None, "receiptPinSha256": pinned,
+            "matchesReceiptPin": False,
+            "note": "Noto Sans CJK SC is not committed and not installed; Chromium fell back to a host face for informational CJK text; display glyphs are SVG"}
+
+
 def source_revision() -> str | None:
     proc = subprocess.run(["git", "-C", str(REPO), "rev-parse", "HEAD"], capture_output=True, text=True, shell=False)
     return proc.stdout.strip() if proc.returncode == 0 else None
 
 
 def main(argv=None) -> int:
+    import datetime as _dt
+    started_at = _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", required=True, help="output directory, relative to the repository root")
     args = parser.parse_args(argv)
@@ -143,7 +185,9 @@ def main(argv=None) -> int:
     v6_entries = [B.write(p, B.DEV) for p in v6_pages]
     zero_entry = B.write(zero, B.DEV)
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        # Chromium's own pixel-test switches: draw every compositor stage before a frame is
+        # read back, no checker-imaging, no threaded animation, software raster, sRGB.
+        browser = p.chromium.launch(args=["--deterministic-mode", "--disable-gpu", "--force-color-profile=srgb"])
         ctx = browser.new_context(device_scale_factor=2)
         B.render_all(entries, ctx)
         B.render_all(v6_entries + [zero_entry], ctx)
@@ -171,6 +215,14 @@ def main(argv=None) -> int:
         B.render_all([rec_entry], ctx)
         B.merge(dev_entries[:5] + [zero_entry] + v6_entries + dev_entries[5:] + [rec_entry], out / "developer-proof.pdf")
         all_entries = entries + v6_entries + [zero_entry] + dev_entries + [rec_entry]
+        # Per-page structure dumps, written exactly as build_all.py writes them (json
+        # indent=1, no ASCII escaping). They are the input of `structural_hash`, so the
+        # committed `structures/*.json` can be refreshed from a proof run rather than
+        # from an ad-hoc script.
+        (out / "structures").mkdir()
+        for e in all_entries:
+            (out / "structures" / f"{e['pageId']}.json").write_text(
+                json.dumps(e["struct"], indent=1, ensure_ascii=False), encoding="utf-8")
 
         # 3. Measured geometry and font loading on the rendered Wu Xing pages.
         page = ctx.new_page()
@@ -227,6 +279,7 @@ def main(argv=None) -> int:
 
     report = {
         "reportVersion": REPORT_VERSION,
+        "startedAt": started_at,
         "sourceRevision": source_revision(),
         "passed": not failures,
         "failures": failures,
@@ -242,7 +295,7 @@ def main(argv=None) -> int:
                                                             "developer-proof.pdf")},
         "environment": {"python": platform.python_version(), "platform": sys.platform, "playwright": importlib.metadata.version("playwright"),
                         "chromium": chromium_version,
-                        "informationalCjkFace": "host fallback: Noto Sans CJK SC is not committed; display glyphs are SVG"},
+                        "informationalCjkFace": informational_cjk_face()},
         "scope": "artifact integrity, harness guards and rendered geometry; visual correctness needs human or model inspection",
     }
     (out / "proof-report.json").write_text(json.dumps(report, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

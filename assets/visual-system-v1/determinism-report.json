@@ -1,8 +1,8 @@
 {
   "determinismReportVersion": "1.0.0",
   "runs": [
-    "2026-09-28T01:02:23Z",
-    "2026-09-28T00:59:14Z"
+    "2026-09-28T07:03:07Z",
+    "2026-09-28T07:03:47Z"
   ],
   "pages": 29,
   "structuralSha256Identical": 29,
@@ -16,13 +16,13 @@
       "identical": true
     },
     "final-contact-sheet.png": {
-      "run1": "f9db6b5fec37ff07d0abbe702510cc39a5e43455e2d8e84b955cf542d8d95557",
-      "run2": "f9db6b5fec37ff07d0abbe702510cc39a5e43455e2d8e84b955cf542d8d95557",
+      "run1": "185ea9f4355645e232f6f3c7d9a8ce53c1846ab5e439638488cd1ef1db622af9",
+      "run2": "185ea9f4355645e232f6f3c7d9a8ce53c1846ab5e439638488cd1ef1db622af9",
       "identical": true
     },
     "glyphs/manifest.json": {
-      "run1": "54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
-      "run2": "54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
+      "run1": "a0c63cc99c1a9fb898255a807022a2e7d34eedb743e47d2736dfef86ab145c4c",
+      "run2": "a0c63cc99c1a9fb898255a807022a2e7d34eedb743e47d2736dfef86ab145c4c",
       "identical": true
     },
     "tokens.json": {
@@ -36,10 +36,26 @@
       "identical": true
     },
     "developer-proof.pdf": {
-      "run1": "05ce11611f3f226ecc93d4a0b78bcf5b9836eda0f4fd2381f3cfc74085ba0a77",
-      "run2": "05ce11611f3f226ecc93d4a0b78bcf5b9836eda0f4fd2381f3cfc74085ba0a77",
+      "run1": "296f15ecdebf5533e70cd51c5e19321056ed5acd62cb580d8e86a911f4d874c0",
+      "run2": "296f15ecdebf5533e70cd51c5e19321056ed5acd62cb580d8e86a911f4d874c0",
+      "identical": true
+    },
+    "glyphs/manifest.json#manifestSha256": {
+      "run1": "54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
+      "run2": "54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
       "identical": true
     }
   },
-  "domFindingsTotal": 0
+  "domFindingsTotal": 0,
+  "pngByteStability": {
+    "note": "Every further passing run of the same source revision and environment, compared with run 1. Structural hashes are what the contract binds to; PNG bytes can differ by anti-aliasing on pages whose rasterisation is not byte-stable, and pages that print PNG hashes (D08) follow.",
+    "runs": [
+      {
+        "startedAt": "2026-09-28T07:04:26Z",
+        "structuralSha256Identical": 29,
+        "pngSha256Identical": 29,
+        "differingPages": []
+      }
+    ]
+  }
 }

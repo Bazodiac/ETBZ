@@ -258,7 +258,12 @@ const DERIVED_WU_XING_KEYS = [
   'sheng_ke',
 ] as const;
 
-const WU_XING_COUNT = z.number().int().nonnegative().finite();
+// The supplied Wu Xing vector carries Qi weights - fractional values such as
+// 1.8 and 2.5 in the recovered chart fixture - so a count is any finite,
+// non-negative number. What stays refused is a sign, NaN, infinity, a string,
+// a missing or a sixth phase; what is never computed is anything derived from
+// the five.
+const WU_XING_COUNT = z.number().nonnegative().finite();
 
 const WuXingVectorSchema = z
   .object({
@@ -280,7 +285,7 @@ export function acceptWuXingVector(supplied: unknown): WuXingVector {
   if (typeof supplied !== 'object' || supplied === null || Array.isArray(supplied)) {
     throw new VisualContractError(
       'WU_XING_VECTOR_INVALID',
-      'a Wu Xing distribution is an object of five non-negative integer counts',
+      'a Wu Xing distribution is an object of five non-negative counts',
       { received: supplied === null ? 'null' : typeof supplied },
     );
   }
