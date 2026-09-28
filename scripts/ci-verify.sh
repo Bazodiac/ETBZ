@@ -124,6 +124,11 @@ run_guard_mutations() { bash "${REPO_ROOT}/scripts/verify-guards.sh"; }
 # contract, not an optional extra.
 run_etbz49_visual_guard() { node "${REPO_ROOT}/scripts/verify-etbz49-visual-system.mjs"; }
 
+# ETBZ-51 binds the released contract pages into the Skill Contract Bundle. The
+# bundle is consumed by nothing until ETBZ-52, so its guards are proven the same
+# way: weaken each one, require the suites to turn red.
+run_etbz51_skill_guard() { node "${REPO_ROOT}/scripts/verify-etbz51-skill-contract-bundle.mjs"; }
+
 # --- 7. secret gate -----------------------------------------------------------
 run_secret_gate() { bash "${REPO_ROOT}/scripts/secret-scan.sh"; }
 
@@ -156,6 +161,9 @@ if [ "${RUN_MUTATIONS}" -eq 1 ]; then
 fi
 if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: ETBZ-49 visual system (contract + asset + boundary mutation proofs)" run_etbz49_visual_guard
+fi
+if [ "${RUN_MUTATIONS}" -eq 1 ]; then
+  etbz_step "guards :: ETBZ-51 skill contract bundle (binding + precedence + boundary mutation proofs)" run_etbz51_skill_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan
