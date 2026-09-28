@@ -8,9 +8,33 @@ to. These are the artefacts for the parts a person has to look at.
 All of it was produced by the proof harness in `tools/visual-proof-harness/`.
 None of it is part of the production contract.
 
+## Render environment
+
+The evidence in this directory was regenerated on 2026-09-28 after the Wu Xing
+centre-clearance repair of 2026-09-22 (Jira ETBZ-49 comment 16547) and the D05
+guard-table compaction, through the declared proof entrypoint
+`tools/visual-proof-harness/proof/run_proof.py` (`.agent-proofs.json`, proof
+`etbz49-visual-proof`), from the harness inputs as committed at
+`290eb79db15409cc83c9d2000ac6106de2ffb99a`:
+
+| | |
+| --- | --- |
+| Python · Playwright · Chromium | 3.13.3 · 1.52.0 · 136.0.7103.25 (headless shell), macOS |
+| Display glyphs | the 27 committed SVG assets — no font involved |
+| Inter faces | the five committed binaries, reported `loaded` by the proof |
+| Informational CJK face | `NotoSansCJK-Regular.ttc` installed as a user font, `sha256:b76b0433…690a` — byte-identical to the face pinned in `render-receipt.json` |
+| Proof result | 29 pages · 0 DOM findings · 21/21 guards · prior-geometry counterexample rejected |
+
+Three pages changed structurally against the 2026-09-21 render, and only those
+three: `08-wu-xing` and `dev-wu-xing-zero` (the repaired medallion geometry)
+and `D05-negative` (18 → 21 guards). Every other structural hash is unchanged.
+The PNG bytes of all 29 pages differ from the 2026-09-21 render because the
+rasteriser differs (Chromium 136 on macOS against the original Linux build);
+the structural hashes are what the contract binds to.
+
 ## Determinism
 
-Two full builds, 29 pages each:
+Two full builds, 29 pages each, on the environment above:
 
 | Measure | Result |
 | --- | --- |
@@ -27,12 +51,15 @@ re-serialised with deterministic IDs and are byte-identical.
 
 Source: [`../../../assets/visual-system-v1/determinism-report.json`](../../../assets/visual-system-v1/determinism-report.json).
 
-## The open human decision
+## The human decision — closed
 
 [**`GLYPH-STYLE-DECISION.md`**](GLYPH-STYLE-DECISION.md) —
-`HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` is OPEN. That sheet carries the
-decision image, all 27 assets with their digests, and the three answers
-available. Nothing in this repository closes it.
+`HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` was closed by the Product Owner on
+2026-09-22 (Jira ETBZ-49 comment 16514): answer 1, the ink-pass asset set as
+shipped. That sheet carries the decision image, all 27 assets with their
+digests, and the three answers that were available. The repository did not
+close it; the contract constant and the asset manifests still record the
+pre-decision value `OPEN` (ADR 0009, accepted limitation 3).
 
 ## Customer surface — 18 designed pages
 
@@ -67,10 +94,10 @@ text that does not exist yet; pages 12–14 are the proven container for them.
 | File | What it proves |
 | --- | --- |
 | `developer/D01-glyph-proof.png` | all 27 assets, digests, licence basis |
-| `developer/D02-glyph-style.png` | ink pass vs plain outline — the open PO decision |
+| `developer/D02-glyph-style.png` | ink pass vs plain outline — the PO decision, closed 2026-09-22 |
 | `developer/D03-wordmark.png` | the static wordmark contract |
 | `developer/D04-bindings.png` | the fact-slot binding of every customer page |
-| `developer/D05-negative.png` | 18 executed negative guards |
+| `developer/D05-negative.png` | 21 executed negative guards: the 18 original ones plus the three Wu Xing centre-clearance guards added with the 2026-09-22 repair (shipped geometry accepted, prior label shape and prior Fire block rejected) |
 | `developer/D06-layout.png`, `D07-layout.png` | layout evidence with fragment tables |
 | `developer/D08-receipts.png` | render receipts |
 | `developer/dev-wu-xing-zero.png` | the tie-and-zero fixture through the customer template |

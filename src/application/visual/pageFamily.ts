@@ -187,7 +187,7 @@ export const PAGE_FAMILY: readonly PageContract[] = [
         "derives": [],
       },
     ],
-    "structuralSha256": "7aa0236d57fc730ffab0d717578e26891262e93733a1d121fe2032b0266dda99",
+    "structuralSha256": "d612d291a29bcad40be1bd2be791d3b77a5c1a3ad42765ee5c429f7eb5115a04",
   },
   {
     "page": 9,

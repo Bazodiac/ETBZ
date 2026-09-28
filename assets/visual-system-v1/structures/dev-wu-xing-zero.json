@@ -62,6 +62,17 @@
     "metal": 1,
     "water": 0
    }
+  },
+  {
+   "id": "wuXing.centre",
+   "kind": "protectedMedallion",
+   "diameterMm": 44,
+   "centreMm": [
+    85,
+    88
+   ],
+   "labelInside": true,
+   "blocksClear": true
   }
  ]
 }

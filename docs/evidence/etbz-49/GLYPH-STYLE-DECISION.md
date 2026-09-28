@@ -1,10 +1,15 @@
 # ETBZ-49 — glyph style decision sheet
 
-**`HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` — OPEN.**
+**`HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` — CLOSED 2026-09-22.**
 
-This sheet exists so the decision can be made by looking, not by reading a hash.
-Nothing in the repository closes this gate; the implementation does not wait for
-it. It is a merge gate for a human.
+The Product Owner approved the glyph/style variant shown in
+[`final-contact-sheet.png`](final-contact-sheet.png) (Jira ETBZ-49 comment
+16514): **answer 1 below — the ink-pass asset set as shipped.** No asset changed
+and no digest moved. This sheet stays as the record of what was decided and on
+which evidence. The decision was made by looking, not by reading a hash, and it
+was made in Jira, not in this repository: the contract constant and the asset
+manifests still carry the pre-decision value `OPEN` (ADR 0009, accepted
+limitation 3).
 
 ## What is being decided
 
@@ -31,7 +36,7 @@ The fill path is the **unmodified licensed outline**. The ink pass is a
 presentation expansion toward the V4 weight; it adds no new shape.
 
 **This is an approximation of the V4 look. It is not a claim of identity with
-the reference.** That is precisely why the decision is yours.
+the reference.** That is precisely why the decision was the Product Owner's.
 
 ## What to look at
 
@@ -48,7 +53,8 @@ the reference.** That is precisely why the decision is yours.
 ## The three answers
 
 1. **Accept** the ink-pass asset set as shipped. The gate closes, the assets do
-   not change, and no hash moves.
+   not change, and no hash moves. — **Chosen by the Product Owner, 2026-09-22
+   (Jira ETBZ-49 comment 16514).**
 2. **Supply the reference face.** The extraction is re-run against it; every
    per-glyph digest and the manifest digest change, and the 29-page proof is
    rebuilt and re-measured.

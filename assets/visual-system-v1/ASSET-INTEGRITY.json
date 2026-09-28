@@ -22,12 +22,12 @@
     {
       "path": "design-system.json",
       "bytes": 24349,
-      "sha256": "sha256:703bb950f655551f07da6b1899567474ee0875b28ba10fff92275a4359917dcf"
+      "sha256": "sha256:b7a227b889b1163c76a5e51ea41e67ebd48aa5904c929c7e85a146f51dcda7fa"
     },
     {
       "path": "determinism-report.json",
-      "bytes": 1855,
-      "sha256": "sha256:3af398d0b612834498ff41ddf6fa739819a39d7445ecbed93224cf2714686408"
+      "bytes": 1845,
+      "sha256": "sha256:6490168f28d0d57ca8c41eb5c7491648654e3c88b39c66fcf403030fd1134c47"
     },
     {
       "path": "fixtures/chart-fixture.json",
@@ -231,8 +231,8 @@
     },
     {
       "path": "render-receipt.json",
-      "bytes": 15226,
-      "sha256": "sha256:b7ec03554510aba24a3207531276569daf5cb879f254d75f4c92015d39486587"
+      "bytes": 15221,
+      "sha256": "sha256:c553ddced2cea4f76251164f090dd6052c90abf9b6bf6077cca7267c038e745d"
     },
     {
       "path": "source-manifest.json",
@@ -286,8 +286,8 @@
     },
     {
       "path": "structures/08-wu-xing.json",
-      "bytes": 1434,
-      "sha256": "sha256:8d6f093d83e129afe036fd00420ebb6e6878ed4b641823afd13c5b70af38c787"
+      "bytes": 1608,
+      "sha256": "sha256:18c32d8a833ef3f99b005bbe093c8d44e2ff1fd780b56877f0654b1b52be7fad"
     },
     {
       "path": "structures/09-five-phases.json",
@@ -382,7 +382,7 @@
     {
       "path": "structures/D05-negative.json",
       "bytes": 374,
-      "sha256": "sha256:f2b38c64c98d9522911072472bd08bcde4cb2872c14c04201284646c831489f4"
+      "sha256": "sha256:34f586b83c736a10ba0a81ccf9150213f107f11e37f44d2a5dcacf092cc3e055"
     },
     {
       "path": "structures/D06-layout.json",
@@ -416,8 +416,8 @@
     },
     {
       "path": "structures/dev-wu-xing-zero.json",
-      "bytes": 1446,
-      "sha256": "sha256:6596ac0340580bc3502bcc812e6dca7bad379c99429bdc06f46cdaf162c611bd"
+      "bytes": 1620,
+      "sha256": "sha256:93c65c84756ce8dc3da3b7f87c7d20b8728310ce89e70643fc309ffdd23037db"
     },
     {
       "path": "tokens.css",

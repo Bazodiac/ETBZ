@@ -1,9 +1,13 @@
 # ADR 0009 — Bazodiac Visual System v1 (ETBZ-49)
 
-- **Status:** Proposed — not merged. Merge requires explicit Product Owner
-  authorisation (Jira ETBZ-49) and carries one open human decision,
-  `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED`, which nothing in this repository
-  may close.
+- **Status:** Proposed — PR #11 open. Merge is governed by the Product Owner's
+  standing authorisation D1 of 2026-09-28 (Jira ETBZ-2 comment 16690), subject
+  to the merge gate on the exact head. The one human decision this ADR carried,
+  `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED`, was **closed by the Product Owner on
+  2026-09-22** (Jira ETBZ-49 comment 16514): the glyph/style variant shown in
+  `docs/evidence/etbz-49/final-contact-sheet.png` is approved — answer 1 of the
+  decision sheet, the ink-pass asset set as shipped. Nothing in this repository
+  closed it; Jira did.
 - **Date:** 2026-09-22
 - **Slice:** ETBZ-49 — recover the converged visual system as repository truth.
   Does not implement a renderer.
@@ -57,7 +61,7 @@ wordmark.ts     the static, chart-independent brand asset
 pagination.ts   the long-form rules and the two measured fixture results
 pageFamily.ts   18 designed pages, 25 slot bindings, structural hashes
 provenance.ts   the decision source, convergence shares, font provenance,
-                and the open human gate
+                and the human gate as recorded at build time (see status)
 visualSystem.ts the resolvers — and the refusals
 ```
 
@@ -112,9 +116,18 @@ fallback, because a silent fallback would ship a glyph nobody approved.
 
 The 金土木 reference face of the V4 donor was never identified. These assets are
 a licensed, deterministic *approximation* of that look and are not a claim of
-identity with it. `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` stays **OPEN** and is
-a merge gate for a human, not an implementation stop condition:
-`docs/evidence/etbz-49/` carries the inspectable proof the decision needs.
+identity with it. `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` was a merge gate for a
+human, not an implementation stop condition: `docs/evidence/etbz-49/` carries
+the inspectable proof the decision needed, and on that proof the Product Owner
+**closed the gate on 2026-09-22** (Jira ETBZ-49 comment 16514) with answer 1 of
+the decision sheet — the ink-pass asset set as shipped. No asset changed and no
+digest moved. The repository still records the pre-decision value: the constant
+`HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED = 'OPEN'` in `provenance.ts` and the
+`status` fields in `glyphs/manifest.json`, `design-system.json` and
+`structures/D02-glyph-style.json` are the byte-preserved state of the recovered
+asset package (asset format 2.0.0). Rewriting them is an asset-manifest
+revision, not a documentation edit, and is deliberately not part of this slice
+(accepted limitation 3).
 
 ### 6. Fonts: provenance established, nothing rebaselined
 
@@ -194,9 +207,14 @@ looks like, and the glyph decision is a human one.
 2. Interpretive chapters 15–26 are IA slots. They consume approved
    content-layer text that does not exist yet; pages 12–14 are the proven
    container.
-3. `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` is open. The alternatives the PO
-   holds are: accept the ink-pass asset set, supply the reference face, or ship
-   plain outlines.
+3. `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` is closed in Jira (2026-09-22,
+   answer 1: the ink-pass asset set as shipped) but still reads `OPEN` inside
+   the repository — in `src/application/visual/provenance.ts`, in the asset
+   manifests, and in the unit test that pins the constant. That is the recorded
+   state of the byte-preserved asset package, kept so that no digest moves in
+   this slice. The slice that next revises the glyph assets or their manifest
+   format carries the value forward together with a new manifest digest; until
+   then this ADR and Jira ETBZ-49 comment 16514 are where the decision lives.
 4. The harness needs a local `NotoSansCJK-Black.ttc` and Chromium. It never runs
    in CI; what CI verifies is that the committed contract still equals the
    committed assets.
@@ -219,4 +237,55 @@ provenance nobody had established. The binaries were identified against upstream
 first, and the upstream licence file was vendored.
 
 **Redesign the glyphs to close the human gate.** Out of scope and not ours to
-decide. The gate stays open with inspectable evidence attached.
+decide. The gate was closed by the Product Owner on the inspectable evidence,
+not by a redesign.
+
+## Evidence regeneration — 2026-09-28
+
+Two things happened on this branch after the ADR was written, and the tracked
+evidence had to follow them.
+
+1. **Wu Xing centre clearance (2026-09-22, Jira ETBZ-49 comments 16514 and
+   16547).** The proof harness had placed the Fire value block inside the
+   medallion's clearance band and the centre label wider than the 44 mm circle.
+   The repair moved the medallion into a protected region, stacked the label
+   inside it and added a rendered-DOM oracle for circle containment and phase
+   clearance, plus two counterexamples for the prior shapes (guards 18 → 21).
+2. **Project-native proof (PR #12, PR #13).** `.agent-proofs.json` declares
+   `tools/visual-proof-harness/proof/run_proof.py`, which stages the harness
+   from committed files only, runs the guards, renders all 29 pages, requires
+   the oracle to reject the prior geometry, and fails on any finding. PR #13
+   reported it red on `D05-negative` (the enlarged guard table overflowed the
+   sheet); `402a8aa` compacted that table.
+
+The tracked evidence was the 2026-09-21 render and therefore stale for
+`08-wu-xing`, `dev-wu-xing-zero` and `D05-negative`, and the old Wu Xing
+structural hash `7aa0236d…` was still what `render-receipt.json`,
+`design-system.json` and `pageFamily.ts` carried. On 2026-09-28 the proof was
+run on the harness inputs as committed at
+`290eb79db15409cc83c9d2000ac6106de2ffb99a`, twice, and:
+
+- all 29 PNGs, the contact sheet and both merged PDFs in `docs/evidence/etbz-49/`
+  are that render; `docs/evidence/etbz-49/README.md` records the environment;
+- exactly three structural hashes moved — `08-wu-xing` → `d612d291…`,
+  `dev-wu-xing-zero` → `c3ff8415…`, `D05-negative` → `5368f940…` — and the
+  three matching `structures/*.json` dumps were replaced; the other 26 are
+  byte-identical to the 2026-09-21 build;
+- `render-receipt.json` was updated in place (same keys, same line count, so the
+  reviewed secret-scanner fingerprint on line 373 still names the `tokens.json`
+  hash), `design-system.json` carries the new Wu Xing hash, `pageFamily.ts`
+  was regenerated by `npm run etbz49:contract`, `ASSET-INTEGRITY.json` was
+  re-indexed, and `determinism-report.json` records the two runs: 29/29
+  structural, 29/29 PNG, 0 DOM findings, merged deliverables identical;
+- the informational CJK face is no longer a host fallback for this evidence:
+  the `NotoSansCJK-Regular.ttc` pinned in the receipt (`sha256:b76b0433…`)
+  was obtained from the upstream `notofonts/noto-cjk` repository, verified by
+  SHA-256, and installed as a user font before rendering. It is still not
+  committed; ETBZ-55 decides how the renderer pins its informational face.
+
+Seven files under `assets/visual-system-v1/structures/` (`01-longform-p1`,
+`02-longform-p2`, `D02-wordmark`, `D03-bindings`, `D04-negative`,
+`D05-layout`, `D07-receipts`) are leftovers of an earlier page numbering that
+the current harness no longer produces. They are part of the byte-preserved
+recovered package and are left untouched; the contract test counts structure
+files, it does not bind them.
