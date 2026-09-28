@@ -109,6 +109,10 @@ describe('AC8: the verification contract still contains every mandatory gate', (
       'ETBZ-51 skill-contract-bundle guard',
       /etbz_step\s+"guards :: ETBZ-51[^"]*"\s+run_etbz51_skill_guard/,
     ],
+    [
+      'ETBZ-52 skill-reading guard',
+      /etbz_step\s+"guards :: ETBZ-52[^"]*"\s+run_etbz52_skill_reading_guard/,
+    ],
     ['secret scan', /secret-scan\.sh/],
     ['dependency risk scan', /npm audit/],
     ['container build dry run', /build-dry-run\.sh/],
