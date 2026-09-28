@@ -2,12 +2,26 @@
 
 Each builder turns one page of the PresentationProjection into one A4 HTML page
 in the ETBZ-49 visual language (the page layouts of the approved customer page
-family, ported). A builder reads every value from the projection and prints
-every string in its own element: the renderer adds no text and drops none, so
-the QA scan can require the page's text nodes to equal the page's projection
-strings exactly. Display glyphs are drawn from the 27-asset vector set, never
-from a font. Two strings that belong together (a polarity and its phase, a
-phase and its value) sit in one non-breaking group, so a wrap never splits them.
+family, ported). The renderer adds no text and drops none, and it binds every
+value to where it came from:
+
+- the page is bound before it is built (`bind_page`): every string of the
+  projection page becomes a `PStr` that carries its projection path
+  (`content.pillars.0.branch.phaseLabel`), every object and list its path;
+- `t()` prints only a bound string, in its own element, with `data-p` = its
+  path; `Context.glyph()` draws only a bound character, with `data-p`; an
+  unbound value raises (the render blocks as PAGE_BUILD);
+- every repeated entry (a pillar, a phase block, a fact row) is a slot
+  (`data-slot` = the entry's path), so the QA can require every value inside a
+  slot to belong to that entry; a page-level label shown inside an entry sits
+  in an explicit page slot (`PAGE_SLOT`).
+
+The QA (`render_pdf.DOM_QA`) then requires each text node and glyph to equal the
+projection value at its path, to sit in its own entry's slot, and every path
+the page must print (`page_binding`) to be printed and visible. Display glyphs
+are drawn from the 27-asset vector set, never from a font. Two strings that
+belong together (a polarity and its phase, a phase and its value) sit in one
+non-breaking group, and the QA requires such a group to stay on one line.
 """
 from __future__ import annotations
 
@@ -19,16 +33,118 @@ MM_PER_CP = 25.4 / 7200  # 1 cp = 1/100 pt
 SEP = '<span class="sep">·</span>'
 # A separator after which a line may wrap (spans sit back to back, so without it a run of pairs never breaks).
 SEP_BREAK = SEP + "<wbr>"
+# A page-level label shown inside an entry: its own slot, so it is not mistaken for a value out of place.
+PAGE_SLOT = ' data-slot="content"'
+
+# Mirror of NON_PRINTED_KEYS in src/application/presentation/projection.ts: fields that identify, classify,
+# position or colour - never printed as text. The renderer cross-checks the strings this yields against the
+# page's own `strings` and blocks on any difference, so the two lists cannot drift apart silently.
+NON_PRINTED_KEYS = frozenset({
+    "kind", "phase", "polarity", "position", "code", "familyId", "qiRole", "template", "mark", "marks",
+    "transformId", "zeroPhases", "paint", "blockId", "styleId", "meta", "boxCp", "character", "tagKind",
+})
+
+
+class PStr(str):
+    """A projection string that knows its path in the projection page."""
+
+    def __new__(cls, value: str, path: str):
+        obj = str.__new__(cls, value)
+        obj.path = path
+        return obj
+
+    def __reduce__(self):
+        return (PStr, (str(self), self.path))
+
+
+class PDict(dict):
+    """A projection object that knows its path."""
+
+    def __init__(self, items=(), path: str = ""):
+        super().__init__(items)
+        self.path = path
+
+
+class PList(list):
+    """A projection list that knows its path."""
+
+    def __init__(self, items=(), path: str = ""):
+        super().__init__(items)
+        self.path = path
+
+
+def bind_value(value, path: str):
+    if isinstance(value, dict):
+        return PDict({key: bind_value(entry, f"{path}.{key}") for key, entry in value.items()}, path)
+    if isinstance(value, list):
+        return PList([bind_value(entry, f"{path}.{index}") for index, entry in enumerate(value)], path)
+    if isinstance(value, str):
+        return PStr(value, path)
+    return value
+
+
+def bind_page(page: dict) -> dict:
+    bound = dict(page)
+    bound["content"] = bind_value(page["content"], "content")
+    bound["chrome"] = None if page["chrome"] is None else bind_value(page["chrome"], "chrome")
+    bound["pageLabel"] = PStr(page["pageLabel"], "pageLabel")
+    return bound
+
+
+def page_binding(page: dict) -> dict:
+    """What a page must show, by path.
+
+    `values`: every string of the page (content, chrome, page label) by path; `required`: the paths it must print
+    as visible text (the same selection as `strings` in the projection); `glyphs`: the `character` paths it must
+    draw as display glyphs.
+    """
+    values: dict = {}
+    required: list = []
+    glyphs: list = []
+
+    def walk(value, path: str, key, excluded: bool) -> None:
+        own = excluded or (key is not None and key in NON_PRINTED_KEYS)
+        if isinstance(value, dict):
+            for child, entry in value.items():
+                walk(entry, f"{path}.{child}", child, own)
+        elif isinstance(value, list):
+            for index, entry in enumerate(value):
+                walk(entry, f"{path}.{index}", key, own)
+        elif isinstance(value, str):
+            values[path] = value
+            if not own and value != "":
+                required.append(path)
+            if key == "character" and not excluded and value != "":
+                glyphs.append(path)
+
+    walk(page["content"], "content", None, False)
+    if page["chrome"] is not None:
+        walk(page["chrome"], "chrome", None, False)
+        values["pageLabel"] = page["pageLabel"]
+        required.append("pageLabel")
+    return {"values": values, "required": required, "glyphs": glyphs}
 
 
 def esc(text: str) -> str:
     return html.escape(text, quote=False)
 
 
+def path_of(value, what: str) -> str:
+    path = getattr(value, "path", None)
+    if path is None:
+        raise ValueError(f"UNBOUND_{what}: {str(value)[:40]!r} is not a projection value")
+    return html.escape(path, quote=True)
+
+
 def t(text: str, cls: str = "", style: str = "") -> str:
-    """One projection string in its own element."""
+    """One projection string in its own element, bound to its projection path."""
     attrs = (f' class="{cls}"' if cls else "") + (f' style="{style}"' if style else "")
-    return f"<span{attrs}>{esc(text)}</span>"
+    return f'<span data-p="{path_of(text, "TEXT")}"{attrs}>{esc(text)}</span>'
+
+
+def slot(entry) -> str:
+    """The attribute that makes an element the slot of one projection entry."""
+    return f' data-slot="{path_of(entry, "SLOT")}"'
 
 
 def pair(*spans: str) -> str:
@@ -38,6 +154,13 @@ def pair(*spans: str) -> str:
 
 def mm(cp: int | float) -> str:
     return f"{cp * MM_PER_CP:.3f}mm"
+
+
+def choose(table: dict, value, what: str):
+    """An explicit map from a projection classification to its presentation; anything else blocks."""
+    if value not in table:
+        raise ValueError(f"UNKNOWN_{what}: {value!r}")
+    return table[value]
 
 
 class Context:
@@ -54,11 +177,12 @@ class Context:
         self.content_w_cp = content_w_cp
 
     def glyph(self, character: str, size_mm: float, color: str | None = None) -> str:
+        path = path_of(character, "GLYPH")
         entry = self.glyphs.get(character)
         if entry is None:
             raise ValueError(f"DISPLAY_GLYPH_OUT_OF_CONTRACT {character!r}")
         style = f"width:{size_mm}mm;height:{size_mm}mm;" + (f"color:{color};" if color else "")
-        return (f'<svg class="disp" viewBox="{self.view_box}" style="{style}" data-glyph="{entry["codepoint"]}">'
+        return (f'<svg class="disp" data-p="{path}" viewBox="{self.view_box}" style="{style}" data-glyph="{entry["codepoint"]}">'
                 f'<use href="#g-{entry["slug"]}"/></svg>')
 
     def wordmark(self, height_mm: float) -> str:
@@ -70,18 +194,20 @@ def phase_dot(phase: str) -> str:
 
 
 def disc(ctx: Context, glyph: dict, circle_mm: float, glyph_mm: float) -> str:
-    return (f'<div class="disc f-{glyph["phase"]}" style="width:{circle_mm}mm;height:{circle_mm}mm">'
+    return (f'<div class="disc f-{glyph["phase"]}"{slot(glyph)} style="width:{circle_mm}mm;height:{circle_mm}mm">'
             f'{ctx.glyph(glyph["character"], glyph_mm)}</div>')
 
 
 # ------------------------------------------------------------------ chrome
 
+TAG_CLASS = {"general": "tag gen", "chart": "tag you", "reading": "tag you"}
+
+
 def head(ctx: Context, page: dict) -> str:
     chrome = page["chrome"]
     tag = ""
     if chrome["tag"] is not None:
-        cls = "tag gen" if chrome["tagKind"] == "general" else "tag you"
-        tag = t(chrome["tag"], cls)
+        tag = t(chrome["tag"], choose(TAG_CLASS, chrome["tagKind"], "TAG_KIND"))
     return (f'<div class="head"><div class="brand">{ctx.wordmark(2.6)}{SEP}{t(chrome["displayName"], "who")}</div>'
             f'<div>{tag}</div></div>')
 
@@ -95,7 +221,7 @@ def rows_table(rows: list, extra: str = "") -> str:
     out = []
     for row in rows:
         cjk = f' {t(row["cjk"], "cjk")}' if row.get("cjk") else ""
-        out.append(f'<tr><td>{t(row["label"])}</td><td>{t(row["value"])}{cjk}</td></tr>')
+        out.append(f'<tr{slot(row)}><td>{t(row["label"])}</td><td>{t(row["value"])}{cjk}</td></tr>')
     return f'<table class="facts">{"".join(out)}{extra}</table>'
 
 
@@ -130,8 +256,8 @@ def cover(ctx: Context, page: dict, c: dict) -> str:
 
 def identity(ctx: Context, page: dict, c: dict) -> str:
     legend = "".join(
-        f'<div style="margin-bottom:7mm"><div style="margin-bottom:2.5mm">{t(item["tag"], "tag " + ("gen" if i == 1 else "you"))}</div>'
-        f'<div class="body">{t(item["text"])}</div></div>' for i, item in enumerate(c["legend"]))
+        f'<div{slot(item)} style="margin-bottom:7mm"><div style="margin-bottom:2.5mm">{t(item["tag"], choose(TAG_CLASS, item["tagKind"], "TAG_KIND"))}</div>'
+        f'<div class="body">{t(item["text"])}</div></div>' for item in c["legend"])
     return f'''{head(ctx, page)}
     <div class="blob b-earth" style="width:70mm;height:70mm;right:-22mm;top:-18mm;opacity:.35"></div>
     <div class="content">
@@ -150,8 +276,8 @@ def contents(ctx: Context, page: dict, c: dict) -> str:
     cols = []
     for section in c["sections"]:
         rows = "".join(
-            f'<div class="toc-row">{t(e["pageLabel"], "label gold toc-n")}{t(e["title"], "body toc-t")}</div>' for e in section["entries"])
-        cols.append(f'<div><div class="kicker">{t(section["title"])}</div><div style="margin-top:3mm">{rows}</div></div>')
+            f'<div class="toc-row"{slot(e)}>{t(e["pageLabel"], "label gold toc-n")}{t(e["title"], "body toc-t")}</div>' for e in section["entries"])
+        cols.append(f'<div{slot(section)}><div class="kicker">{t(section["title"])}</div><div style="margin-top:3mm">{rows}</div></div>')
     return f'''{head(ctx, page)}
     <div class="blob b-water" style="width:60mm;height:60mm;left:-24mm;bottom:20mm;opacity:.3"></div>
     <div class="content">
@@ -166,12 +292,12 @@ def contents(ctx: Context, page: dict, c: dict) -> str:
 def glance(ctx: Context, page: dict, c: dict) -> str:
     dm = c["dayMaster"]
     pil = "".join(
-        f'<div style="text-align:center"><div class="label" style="margin-bottom:2mm">{t(p["positionLabel"])}</div>'
+        f'<div{slot(p)} style="text-align:center"><div class="label" style="margin-bottom:2mm">{t(p["positionLabel"])}</div>'
         f'<div style="display:flex;flex-direction:column;align-items:center;gap:1mm">{ctx.glyph(p["stem"]["character"], 11)}{ctx.glyph(p["branch"]["character"], 11)}</div>'
         f'<div class="pinyin" style="margin-top:2mm;color:var(--ink-600)">{t(p["stem"]["pinyin"])} {t(p["branch"]["pinyin"])}</div></div>'
         for p in c["pillars"])
     tally = "".join(
-        f'<div style="text-align:center"><div style="display:flex;justify-content:center">{ctx.glyph(w["character"], 8, f"var(--phase-{w["phase"]}-mark)")}</div>'
+        f'<div{slot(w)} style="text-align:center"><div style="display:flex;justify-content:center">{ctx.glyph(w["character"], 8, f"var(--phase-{w["phase"]}-mark)")}</div>'
         f'<div class="wx-v">{t(w["valueText"])}</div><div class="label">{t(w["label"])}</div></div>'
         for w in c["tally"])
     return f'''{head(ctx, page)}
@@ -204,28 +330,31 @@ def four_pillars(ctx: Context, page: dict, c: dict) -> str:
         day = p["isDayMaster"]
         stem, branch = p["stem"], p["branch"]
         hs = "".join(
-            f'<div class="f-{h["phase"]}" style="flex:1;text-align:center;padding:2.4mm 0 2mm;border-radius:1mm">'
+            f'<div class="f-{h["phase"]}"{slot(h)} style="flex:1;text-align:center;padding:2.4mm 0 2mm;border-radius:1mm">'
             f'<div style="display:flex;justify-content:center">{ctx.glyph(h["character"], 7.5)}</div>'
             f'<div class="pinyin" style="margin-top:1.2mm;color:var(--ink-600)">{t(h["pinyin"])}</div></div>' for h in p["hidden"])
-        if p["tenGod"] is None:
-            rel = f'<div class="h2" style="font-size:10.5pt;line-height:13pt;color:var(--gold-700)">{t(c["dayMasterLabel"])}</div>'
+        # The day pillar carries no relation to itself; every other pillar carries exactly one.
+        if day is True and p["tenGod"] is None:
+            rel = f'<div class="h2"{PAGE_SLOT} style="font-size:10.5pt;line-height:13pt;color:var(--gold-700)">{t(c["dayMasterLabel"])}</div>'
+        elif day is False and p["tenGod"] is not None:
+            rel = (f'<div{slot(p["tenGod"])}><div class="cjk term" style="font-size:11pt;line-height:14pt">{t(p["tenGod"]["hanzi"])}</div>'
+                   f'<div class="body-small" style="color:var(--ink-400);margin-top:0.5mm">{t(p["tenGod"]["pinyin"])}</div></div>')
         else:
-            rel = (f'<div class="cjk term" style="font-size:11pt;line-height:14pt">{t(p["tenGod"]["hanzi"])}</div>'
-                   f'<div class="body-small" style="color:var(--ink-400);margin-top:0.5mm">{t(p["tenGod"]["pinyin"])}</div>')
-        cols.append(f'''<div class="pillar{' selected' if day else ''}">
+            raise ValueError(f"PILLAR_RELATION_INCONSISTENT at {p.path}: isDayMaster={day!r}, tenGod={'set' if p['tenGod'] is not None else 'null'}")
+        cols.append(f'''<div class="pillar{' selected' if day else ''}"{slot(p)}>
           <div class="label ink" style="{'color:var(--gold-700)' if day else ''}">{t(p["positionLabel"])}</div>
-          <div class="cell" style="height:25.5mm">{disc(ctx, stem, 13, 10)}
+          <div class="cell"{slot(stem)} style="height:25.5mm">{disc(ctx, stem, 13, 10)}
             <div class="body-small" style="line-height:12pt">{t(stem["pinyin"], "pinyin", "display:block")}{t(stem["polarityLabel"])}<br>{t(stem["phaseLabel"])}</div></div>
-          <div class="cell" style="height:25.5mm">{disc(ctx, branch, 13, 10)}
+          <div class="cell"{slot(branch)} style="height:25.5mm">{disc(ctx, branch, 13, 10)}
             <div class="body-small" style="line-height:12pt">{t(branch["pinyin"], "pinyin", "display:block")}{t(branch["phaseLabel"])}<br>{t(branch["animalLabel"], "muted")}</div></div>
           <div class="cell" style="height:21mm;gap:1.5mm">{hs}</div>
           <div class="cell rel" style="height:20mm">{rel}</div></div>''')
     labels = c["rowLabels"]
     heights = [25.5, 25.5, 21, 20]
     rowlabels = '<div style="height:7.2mm"></div>' + "".join(
-        f'<div class="rowlabel" style="height:{heights[i]}mm;margin-top:3mm;padding-top:3mm">{t(l["label"])}'
+        f'<div class="rowlabel"{slot(l)} style="height:{heights[i]}mm;margin-top:3mm;padding-top:3mm">{t(l["label"])}'
         + (f'<br>{t(l["hanzi"], "cjk", "font-size:9pt")}' if l["hanzi"] else "") + "</div>" for i, l in enumerate(labels))
-    legend = "".join(f'<div class="i">{phase_dot(l["phase"])}{t(l["label"])} {ctx.glyph(l["character"], 3.4, f"var(--phase-{l["phase"]}-mark)")}</div>' for l in c["legend"])
+    legend = "".join(f'<div class="i"{slot(l)}>{phase_dot(l["phase"])}{t(l["label"])} {ctx.glyph(l["character"], 3.4, f"var(--phase-{l["phase"]}-mark)")}</div>' for l in c["legend"])
     return f'''{head(ctx, page)}
     <div class="blob b-fire" style="width:95mm;height:95mm;right:-32mm;top:-28mm;opacity:.28"></div>
     <div class="blob b-water" style="width:70mm;height:70mm;left:-30mm;bottom:14mm;opacity:.3"></div>
@@ -243,7 +372,7 @@ def four_pillars(ctx: Context, page: dict, c: dict) -> str:
 
 def foundation(ctx: Context, page: dict, c: dict) -> str:
     rows = "".join(
-        f'<div class="frow">{disc(ctx, e["glyph"], 14, 9.5)}'
+        f'<div class="frow"{slot(e)}>{disc(ctx, e["glyph"], 14, 9.5)}'
         f'<div style="flex:1">{t(e["glyph"]["pinyin"], "pinyin", "display:block;font-size:11pt")}'
         f'<div class="caption">{t(e["positionLabel"])}{SEP}{t(e["roleLabel"])}{SEP}{t(e["glyph"]["phaseLabel"])}{SEP}{t(e["detail"])}</div></div>'
         f'{phase_dot(e["glyph"]["phase"])}</div>' for e in c["characters"])
@@ -261,7 +390,7 @@ def day_master(ctx: Context, page: dict, c: dict) -> str:
     dm = c["dayMaster"]
     dp = c["dayPillar"]
     hidden = "".join(
-        f'<div class="frow">{disc(ctx, h, 11, 7.5)}<div style="flex:1">{t(h["pinyin"], "pinyin", "display:block")}'
+        f'<div class="frow"{slot(h)}>{disc(ctx, h, 11, 7.5)}<div style="flex:1">{t(h["pinyin"], "pinyin", "display:block")}'
         f'<div class="caption">{t(h["qiLabel"])}{SEP}{t(h["phaseLabel"])}</div></div>{phase_dot(h["phase"])}</div>' for h in dp["hidden"])
     return f'''{head(ctx, page)}
     <div style="position:absolute;left:0;top:22mm;width:96mm;height:243mm;background:var(--paper-200);border-radius:0 3mm 3mm 0">
@@ -280,7 +409,7 @@ def day_master(ctx: Context, page: dict, c: dict) -> str:
       <div class="kicker">{t(c["kicker"])}</div>
       <div class="h1 small" style="margin-top:3mm">{t(c["title"])}</div>
       <div class="rule gold" style="margin:6mm 0 7mm"></div>
-      <div style="display:flex;gap:4mm;align-items:center">
+      <div{slot(dp)} style="display:flex;gap:4mm;align-items:center">
         {disc(ctx, dp["stem"], 24, 16)}{disc(ctx, dp["branch"], 24, 16)}
         <div>{t(dp["stem"]["pinyin"], "pinyin", "display:block;font-size:11pt")}{t(dp["branch"]["pinyin"], "pinyin", "display:block;font-size:11pt")}<div class="caption">{t(dp["positionLabel"])}</div></div>
       </div>
@@ -293,31 +422,34 @@ def day_master(ctx: Context, page: dict, c: dict) -> str:
 
 WX_GEOMETRY = {"ringCx": 85, "ringCy": 80, "ringR": 58, "trackR": 21, "medallion": {"cx": 85, "cy": 88, "d": 44},
                "block": {"w": 36, "dy": 22, "h": 17.8}, "labelGap": 1.0}
+# The ring order of the five phases (template geometry, the ETBZ-49 page 08 layout).
+WX_RING = ["fire", "earth", "metal", "water", "wood"]
 
 
 def wu_xing(ctx: Context, page: dict, c: dict) -> str:
     g = WX_GEOMETRY
     md = g["medallion"]
     bw, bdy, tr = g["block"]["w"], g["block"]["dy"], g["trackR"]
-    order = ["fire", "earth", "metal", "water", "wood"]
     pos = {k: (g["ringCx"] + g["ringR"] * math.cos(math.radians(-90 + i * 72)), g["ringCy"] + g["ringR"] * math.sin(math.radians(-90 + i * 72)))
-           for i, k in enumerate(order)}
+           for i, k in enumerate(WX_RING)}
     by_phase = {w["phase"]: w for w in c["wuXing"]["phases"]}
+    if sorted(by_phase) != sorted(WX_RING) or len(c["wuXing"]["phases"]) != len(WX_RING):
+        raise ValueError(f"WU_XING_PHASES_INCOMPLETE: {sorted(by_phase)}")
     discs = ""
-    for k in order:
+    for k in WX_RING:
         w = by_phase[k]
         x, y = pos[k]
         r = round(11 + 7 * w["ratio"], 2)
         discs += (f'<div data-wx="track" data-phase="{k}" style="position:absolute;left:{x-tr:.2f}mm;top:{y-tr:.2f}mm;width:{2*tr}mm;height:{2*tr}mm;border-radius:50%;border:0.25mm solid var(--rule-200)"></div>'
-                  f'<div data-wx="disc" data-phase="{k}" style="position:absolute;left:{x-r:.2f}mm;top:{y-r:.2f}mm;width:{2*r:.2f}mm;height:{2*r:.2f}mm;border-radius:50%;background:var(--phase-{k}-field);display:flex;align-items:center;justify-content:center">{ctx.glyph(w["character"], 13)}</div>'
-                  f'<div data-wx="phase-block" data-phase="{k}" style="position:absolute;left:{x-bw/2:.2f}mm;top:{y+bdy:.2f}mm;width:{bw}mm;text-align:center">'
+                  f'<div data-wx="disc" data-phase="{k}"{slot(w)} style="position:absolute;left:{x-r:.2f}mm;top:{y-r:.2f}mm;width:{2*r:.2f}mm;height:{2*r:.2f}mm;border-radius:50%;background:var(--phase-{k}-field);display:flex;align-items:center;justify-content:center">{ctx.glyph(w["character"], 13)}</div>'
+                  f'<div data-wx="phase-block" data-phase="{k}"{slot(w)} style="position:absolute;left:{x-bw/2:.2f}mm;top:{y+bdy:.2f}mm;width:{bw}mm;text-align:center">'
                   f'<div data-wx="value" class="wx-big">{t(w["valueText"])}</div>'
                   f'<div class="pinyin" style="margin-top:0.5mm;line-height:11pt">{t(w["pinyin"])}</div><div class="label">{t(w["label"])}</div>'
                   f'<div data-wx="bar" style="margin:1.8mm auto 0;width:26mm;height:0.7mm;background:var(--rule-200);border-radius:1mm"><div style="width:{w["ratio"]*100:.1f}%;height:100%;background:var(--phase-{k}-mark);border-radius:1mm"></div></div></div>')
     table = "".join(
-        f'<div style="border-top:0.25mm solid var(--rule-200);padding-top:2.5mm;display:flex;align-items:center;gap:2mm">{ctx.glyph(w["character"], 4.5, f"var(--phase-{k}-mark)")}'
+        f'<div{slot(w)} style="border-top:0.25mm solid var(--rule-200);padding-top:2.5mm;display:flex;align-items:center;gap:2mm">{ctx.glyph(w["character"], 4.5, f"var(--phase-{w["phase"]}-mark)")}'
         f'<div class="body-small" style="color:var(--ink-900)">{t(w["label"])}{SEP}{t(w["valueText"])}</div></div>'
-        for k, w in ((w["phase"], w) for w in c["wuXing"]["phases"]))
+        for w in c["wuXing"]["phases"])
     captions = "".join(f'<div>{t(text)}</div>' for text in c["captions"])
     med = c["medallion"]
     return f'''{head(ctx, page)}
@@ -345,11 +477,11 @@ def five_phases(ctx: Context, page: dict, c: dict) -> str:
     for p in c["phases"]:
         stems = "".join(ctx.glyph(s["character"], 6.5) for s in p["stems"])
         branches = "".join(ctx.glyph(b["character"], 6.5) for b in p["branches"])
-        cards += (f'<div style="text-align:center"><div class="disc f-{p["phase"]}" style="width:30mm;height:30mm;margin:0 auto">{ctx.glyph(p["character"], 19)}</div>'
+        cards += (f'<div{slot(p)} style="text-align:center"><div class="disc f-{p["phase"]}" style="width:30mm;height:30mm;margin:0 auto">{ctx.glyph(p["character"], 19)}</div>'
                   f'<div class="pinyin" style="margin-top:3.5mm;font-size:11pt;font-weight:400">{t(p["pinyin"])}</div><div class="label" style="margin-top:1mm">{t(p["label"])}</div>'
-                  f'<div style="margin-top:5mm;border-top:0.25mm solid var(--rule-200);padding-top:3mm"><div class="caption" style="margin-bottom:1.5mm">{t(c["stemsLabel"])}</div>'
+                  f'<div style="margin-top:5mm;border-top:0.25mm solid var(--rule-200);padding-top:3mm"><div class="caption"{PAGE_SLOT} style="margin-bottom:1.5mm">{t(c["stemsLabel"])}</div>'
                   f'<div class="glyphrow">{stems}</div>'
-                  f'<div class="caption" style="margin:3mm 0 1.5mm">{t(c["branchesLabel"])}</div><div class="glyphrow">{branches}</div></div></div>')
+                  f'<div class="caption"{PAGE_SLOT} style="margin:3mm 0 1.5mm">{t(c["branchesLabel"])}</div><div class="glyphrow">{branches}</div></div></div>')
     return f'''{head(ctx, page)}
     <div class="blob b-wood" style="width:80mm;height:80mm;left:-30mm;top:40mm;opacity:.25"></div>
     <div class="blob b-fire" style="width:60mm;height:60mm;right:-20mm;top:120mm;opacity:.25"></div>
@@ -362,21 +494,23 @@ def five_phases(ctx: Context, page: dict, c: dict) -> str:
 
 # ------------------------------------------------------------------ 10 ten gods
 
+TEN_GOD_MARK = {
+    "stem": '<span class="mark stem"></span>',
+    "hidden": '<span class="mark hidden"></span>',
+    "both": '<span class="mark both"></span>',
+    None: '<span class="mark none"></span>',
+}
+
+
 def ten_gods(ctx: Context, page: dict, c: dict) -> str:
     def mark(kind):
-        if kind == "stem":
-            return '<span class="mark stem"></span>'
-        if kind == "hidden":
-            return '<span class="mark hidden"></span>'
-        if kind == "both":
-            return '<span class="mark both"></span>'
-        return '<span class="mark none"></span>'
+        return choose(TEN_GOD_MARK, kind, "TEN_GOD_MARK")
     rows = "".join(
-        f'<tr><td style="width:15mm">{t(r["tenGod"]["hanzi"], "cjk term")}</td><td style="width:22mm">{t(r["tenGod"]["pinyin"], "pinyin nw")}</td>'
+        f'<tr{slot(r)}><td style="width:15mm">{t(r["tenGod"]["hanzi"], "cjk term")}</td><td style="width:22mm">{t(r["tenGod"]["pinyin"], "pinyin nw")}</td>'
         f'<td class="body-small" style="color:var(--ink-900)">{t(r["tenGod"]["customerLabel"])}</td>'
         + "".join(f'<td style="text-align:center;width:13mm">{mark(m)}</td>' for m in r["marks"]) + "</tr>" for r in c["rows"])
     head_cells = "".join(f'<td style="text-align:center">{t(col)}</td>' for col in c["columns"])
-    legend = "".join(f'<div class="i">{mark(l["mark"])} {t(l["label"])}</div>' for l in c["legend"])
+    legend = "".join(f'<div class="i"{slot(l)}>{mark(l["mark"])} {t(l["label"])}</div>' for l in c["legend"])
     return f'''{head(ctx, page)}
     <div class="content">
       <div class="kicker">{t(c["kicker"])}</div>
@@ -396,12 +530,12 @@ def hidden_stems(ctx: Context, page: dict, c: dict) -> str:
     for r in c["rows"]:
         b = r["branch"]
         hs = "".join(
-            f'<div class="hrow">{disc(ctx, h, 11, 8)}'
+            f'<div class="hrow"{slot(h)}>{disc(ctx, h, 11, 8)}'
             f'<div>{t(h["pinyin"], "pinyin", "display:block")}{t(h["qiLabel"], "caption")}</div>'
             f'<div>{t(h["tenGod"]["hanzi"], "cjk", "font-size:10pt;color:var(--ink-900)")} {t(h["tenGod"]["pinyin"], "caption")}</div>'
             f'<div class="caption" style="color:var(--ink-600)">{phase_dot(h["phase"])}{t(h["phaseLabel"])}</div></div>' for h in r["hidden"])
-        rows += (f'<div class="brow"><div style="display:flex;align-items:center;gap:3mm">{disc(ctx, b, 20, 14)}'
-                 f'<div>{t(r["positionLabel"], "label", "display:block")}{t(c["branchLabel"], "label", "display:block")}'
+        rows += (f'<div class="brow"{slot(r)}><div style="display:flex;align-items:center;gap:3mm">{disc(ctx, b, 20, 14)}'
+                 f'<div>{t(r["positionLabel"], "label", "display:block")}<div{PAGE_SLOT}>{t(c["branchLabel"], "label", "display:block")}</div>'
                  f'{t(b["pinyin"], "pinyin", "display:block;font-size:11pt;margin-top:1mm")}'
                  f'<div class="caption">{t(b["phaseLabel"])}{SEP}{t(b["animalLabel"])}</div></div></div>'
                  f'<div>{hs}</div></div>')
@@ -429,14 +563,14 @@ LONG_STYLE_CSS = {
 
 def line_html(ctx: Context, text: str, style_id: str, x_cp: int, baseline_cp: int, measure_cp: int) -> str:
     top = baseline_cp - ctx.styles[style_id]["ascentCp"]
-    return (f'<div class="longline" data-measure-cp="{measure_cp}" style="left:{mm(x_cp)};top:{mm(top)};line-height:1;{LONG_STYLE_CSS[style_id]}">'
+    return (f'<div class="longline" data-p="{path_of(text, "TEXT")}" data-measure-cp="{measure_cp}" style="left:{mm(x_cp)};top:{mm(top)};line-height:1;{choose(LONG_STYLE_CSS, style_id, "TEXT_STYLE")}">'
             f'{esc(text)}</div>')
 
 
 def reference_block(ctx: Context, ref: dict, wide: bool) -> str:
     dm = ref["dayMaster"]
     terms = "".join(
-        f'<div class="refterm">{t(term["label"], "pinyin", "color:var(--ink-900)")} {t(term["hanzi"], "cjk muted", "font-weight:400")}</div>' for term in ref["terms"])
+        f'<div class="refterm"{slot(term)}>{t(term["label"], "pinyin", "color:var(--ink-900)")} {t(term["hanzi"], "cjk muted", "font-weight:400")}</div>' for term in ref["terms"])
     grid = "display:grid;grid-template-columns:1fr 1fr 1fr;gap:3mm 8mm" if wide else ""
     return (f'<div style="display:flex;gap:3mm;align-items:center;margin-bottom:{5 if wide else 0}mm">'
             f'<div class="disc f-{dm["phase"]}" style="width:14mm;height:14mm;flex:none">{ctx.glyph(dm["character"], 9.5)}</div>'
@@ -458,14 +592,16 @@ def long_form(ctx: Context, page: dict, c: dict) -> str:
             bx = f["boxCp"]
             parts.append(f'<div style="position:absolute;left:{mm(bx["xCp"])};top:{mm(bx["yCp"])};width:{mm(bx["widthCp"])};height:0.25mm;background:var(--gold-500)"></div>')
             parts.append(f'<div style="position:absolute;left:{mm(bx["xCp"])};top:{mm(bx["yCp"] + bx["heightCp"] - 25)};width:{mm(bx["widthCp"])};height:0.25mm;background:var(--gold-500)"></div>')
+        elif f["kind"] not in ("paragraph", "subhead"):
+            raise ValueError(f"UNKNOWN_FRAGMENT_KIND {f['kind']!r}")
         for line in f["lines"]:
             parts.append(line_html(ctx, line["text"], line.get("styleId", f["styleId"]), line["xCp"], line["baselineCp"], f["widthCp"]))
     if c["sidebar"] is not None:
         sb = c["sidebar"]
-        parts.append(f'<div class="panel" style="position:absolute;left:{mm(sb["xCp"])};top:{mm(sb["yCp"])};width:{mm(sb["widthCp"])};padding:3.5mm">{reference_block(ctx, sb, False)}</div>')
+        parts.append(f'<div class="panel"{slot(sb)} style="position:absolute;left:{mm(sb["xCp"])};top:{mm(sb["yCp"])};width:{mm(sb["widthCp"])};padding:3.5mm">{reference_block(ctx, sb, False)}</div>')
     if c["referencePanel"] is not None:
         rp = c["referencePanel"]
-        parts.append(f'<div class="panel recessed" style="position:absolute;left:{mm(rp["xCp"])};top:{mm(rp["yCp"])};width:{mm(rp["widthCp"])};padding:6mm">{reference_block(ctx, rp, True)}</div>')
+        parts.append(f'<div class="panel recessed"{slot(rp)} style="position:absolute;left:{mm(rp["xCp"])};top:{mm(rp["yCp"])};width:{mm(rp["widthCp"])};padding:6mm">{reference_block(ctx, rp, True)}</div>')
     return head(ctx, page) + "".join(parts) + foot(page)
 
 
@@ -473,10 +609,10 @@ def long_form(ctx: Context, page: dict, c: dict) -> str:
 
 def reflection(ctx: Context, page: dict, c: dict) -> str:
     eight = "".join(
-        f'<div style="display:flex;flex-direction:column;align-items:center;gap:2mm">{ctx.glyph(p["stem"]["character"], 13)}{ctx.glyph(p["branch"]["character"], 13)}'
+        f'<div{slot(p)} style="display:flex;flex-direction:column;align-items:center;gap:2mm">{ctx.glyph(p["stem"]["character"], 13)}{ctx.glyph(p["branch"]["character"], 13)}'
         f'<div class="label" style="margin-top:1mm">{t(p["positionLabel"])}</div></div>' for p in c["characters"])
     questions = "".join(
-        f'<div class="qrow">{t(q["number"], "label gold")}<div class="body" style="font-size:11.5pt;line-height:16pt;color:var(--ink-900)">{t(q["text"])}</div></div>'
+        f'<div class="qrow"{slot(q)}>{t(q["number"], "label gold")}<div class="body" style="font-size:11.5pt;line-height:16pt;color:var(--ink-900)">{t(q["text"])}</div></div>'
         for q in c["questions"])
     return f'''{head(ctx, page)}
     <div class="blob b-metal" style="width:110mm;height:110mm;right:-40mm;top:30mm;opacity:.35"></div>
@@ -492,7 +628,7 @@ def reflection(ctx: Context, page: dict, c: dict) -> str:
 
 def summary(ctx: Context, page: dict, c: dict) -> str:
     dm = c["dayMaster"]
-    tally = SEP_BREAK.join(pair(t(w["label"]), t(w["valueText"])) for w in c["tally"])
+    tally = SEP_BREAK.join(f'<span{slot(w)}>{pair(t(w["label"]), t(w["valueText"]))}</span>' for w in c["tally"])
     wu_xing_row = f'<tr><td>{t(c["wuXingLabel"])}</td><td>{tally}</td></tr>'
     return f'''{head(ctx, page)}
     <div class="content">
@@ -550,11 +686,12 @@ BUILDERS = {
 
 
 def page_html(ctx: Context, page: dict) -> str:
-    content = page["content"]
+    bound = bind_page(page)
+    content = bound["content"]
     builder = BUILDERS.get(content["kind"])
     if builder is None:
         raise ValueError(f"UNKNOWN_PAGE_KIND {content['kind']!r}")
-    inner = builder(ctx, page, content)
+    inner = builder(ctx, bound, content)
     return (f'<!doctype html><html lang="de"><head><meta charset="utf-8">'
             f'<style>{ctx.tokens_css}\n{ctx.base_css}</style></head><body>{ctx.sprite}'
             f'<div class="sheet" data-page="{esc(page["pageId"])}">{inner}</div></body></html>')

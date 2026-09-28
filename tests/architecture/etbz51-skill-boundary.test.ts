@@ -8,8 +8,8 @@
 // is what a structural hash freezes. This suite adds what an allowlist cannot
 // see:
 //
-//   1. it is a LEAF - nothing imports it yet, so ETBZ-51 cannot have shipped a
-//      served surface or a hidden runtime dependency ahead of ETBZ-52;
+//   1. it is a LEAF - no served layer imports it, and inside the application
+//      layer only the ETBZ-55 presentation projection does, through the index;
 //   2. it is PURE - no clock, randomness, process, filesystem or network;
 //   3. it binds, it does not execute - no model call, no prose generation, no
 //      astrology;
@@ -18,9 +18,9 @@
 // =============================================================================
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, resolve, sep } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { extractImportSpecifiers } from './dependency-direction.test.js';
+import { UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
 
 const REPO_ROOT = process.cwd();
 const SRC_ROOT = resolve(REPO_ROOT, 'src');
@@ -43,7 +43,9 @@ function listFiles(root: string, extension: string): string[] {
 }
 
 const SKILL_FILES = listFiles(SKILL_ROOT, '.ts');
+// An import the guard cannot resolve statically counts as a reference: the leaf check fails closed.
 const referencesSkill = (specifier: string): boolean =>
+  specifier === UNRESOLVABLE_DYNAMIC_IMPORT ||
   specifier.includes('application/skill') ||
   specifier.includes('/skill/') ||
   specifier.endsWith('/skill') ||
@@ -72,7 +74,7 @@ describe('ETBZ-51: the skill contract bundle is a leaf, reachable from no served
     }
     expect(
       offenders,
-      `ETBZ-52 owns the Skill package; until then the bundle is reachable from nothing:\n${offenders.join('\n')}`,
+      `the bundle is reachable from no served layer:\n${offenders.join('\n')}`,
     ).toEqual([]);
   });
 
@@ -134,9 +136,11 @@ describe('ETBZ-51: the skill contract bundle is pure and binds rather than execu
     for (const file of SKILL_FILES) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (specifier === 'zod') continue;
-        if (specifier.startsWith('./')) continue;
-        if (specifier.startsWith('../interpretation/')) continue;
-        if (specifier === '../../domain/structural-hash.js' || specifier === '../../domain/canonical-json.js') continue;
+        // Decided by resolved path, never by spelling ('./../' would otherwise pass).
+        const target = specifier.startsWith('.') ? resolve(dirname(file), specifier) : null;
+        if (target !== null && target.startsWith(SKILL_ROOT + sep)) continue;
+        if (target !== null && target.startsWith(join(SRC_ROOT, 'application', 'interpretation') + sep)) continue;
+        if (target === join(SRC_ROOT, 'domain', 'structural-hash.js') || target === join(SRC_ROOT, 'domain', 'canonical-json.js')) continue;
         offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }

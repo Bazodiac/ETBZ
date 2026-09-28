@@ -71,15 +71,21 @@ export const PRESENTATION_PROJECTION_VERSION = 'bazodiac-presentation-projection
 // the content payload
 // ---------------------------------------------------------------------------
 
-/** A Unicode control or format character, or any whitespace other than the plain space. */
-const FORBIDDEN_CHARACTER = /[\p{Cc}\p{Cf}]|[^\S ]/u;
+/**
+ * A character that is invisible, unassigned or not text: a control or format
+ * character, a lone surrogate, a private-use or unassigned code point, any
+ * default-ignorable code point (a variation selector, a Hangul filler, a
+ * combining grapheme joiner), or any whitespace other than the plain space.
+ */
+export const FORBIDDEN_CHARACTER = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}\p{Default_Ignorable_Code_Point}]|[^\S ]/u;
 
 /**
  * A customer text as the layout will set it: words separated by single plain
- * spaces, nothing invisible. A control character, a format character (a zero
- * width space, a soft hyphen, a bidi override), any other whitespace, a double
- * space or padding would be a decision the payload did not make visibly, so it
- * is refused rather than normalised.
+ * spaces, nothing invisible. A forbidden character (a zero width space, a soft
+ * hyphen, a bidi override, a lone surrogate, a private-use character), any
+ * other whitespace, a double space or padding would be a decision the payload
+ * did not make visibly, so it is refused rather than normalised. The display
+ * name, the one string from the end user, is held to the same rule.
  */
 const customerText = (max: number) =>
   z
@@ -216,7 +222,7 @@ export type PresenceMark = 'stem' | 'hidden' | 'both' | null;
 
 export type PageContent =
   | Readonly<{ kind: 'cover'; dayMaster: StemValue; dayMasterLabel: string; brand: string; title: string; product: string; preparedFor: string; displayName: string; footerTerm: TermValue }>
-  | Readonly<{ kind: 'identity'; kicker: string; title: string; rows: readonly FactRow[]; legend: readonly Readonly<{ tag: string; text: string }>[] }>
+  | Readonly<{ kind: 'identity'; kicker: string; title: string; rows: readonly FactRow[]; legend: readonly Readonly<{ tag: string; tagKind: 'chart' | 'general' | 'reading'; text: string }>[] }>
   | Readonly<{ kind: 'contents'; kicker: string; title: string; sections: readonly Readonly<{ title: string; entries: readonly Readonly<{ pageLabel: string; title: string }>[] }>[] }>
   | Readonly<{ kind: 'glance'; kicker: string; title: string; dayMaster: StemValue; dayMasterLabel: string; pillarsLabel: TermValue; pillars: readonly Readonly<{ positionLabel: string; stem: GlyphText; branch: GlyphText }>[]; wuXingLabel: TermValue; tally: readonly WuXingTallyEntry[]; rows: readonly FactRow[] }>
   | Readonly<{ kind: 'fourPillars'; kicker: string; title: string; rowLabels: readonly TermValue[]; dayMasterLabel: string; pillars: readonly PillarValue[]; legend: readonly Readonly<{ phase: Phase; label: string; character: string }>[] }>
@@ -229,11 +235,11 @@ export type PageContent =
   | Readonly<{ kind: 'longForm'; chapterNumber: number; chapterPage: number; template: 'opener' | 'continuation'; headerLines: readonly HeaderLine[]; runningKicker: string | null; fragments: readonly LayoutFragment[]; sidebar: (Readonly<{ xCp: number; yCp: number; widthCp: number }> & ChapterReference) | null; referencePanel: (Readonly<{ xCp: number; yCp: number; widthCp: number }> & ChapterReference) | null }>
   | Readonly<{ kind: 'reflection'; kicker: string; title: string; charactersLabel: string; characters: readonly Readonly<{ positionLabel: string; stem: GlyphRef; branch: GlyphRef }>[]; questions: readonly Readonly<{ number: string; text: string }>[] }>
   | Readonly<{ kind: 'summary'; kicker: string; title: string; rows: readonly FactRow[]; wuXingLabel: string; tally: readonly Readonly<{ phase: Phase; label: string; valueText: string }>[]; dayMaster: GlyphText; dayMasterLabel: string }>
-  | Readonly<{ kind: 'closing'; kicker: string; title: string; preparedFor: string; displayName: string; brand: string; product: string; pageNumberLabel: string }>
+  | Readonly<{ kind: 'closing'; kicker: string; title: string; preparedFor: string; displayName: string; product: string; pageNumberLabel: string }>
   | Readonly<{ kind: 'methodNote'; kicker: string; title: string; paragraphs: readonly string[]; dataNote: Readonly<{ label: string; text: string }> | null }>;
 
+/** The running head and foot. The brand is drawn as the wordmark; as text it is the footer's first item. */
 export interface PageChrome {
-  readonly brand: string;
   readonly displayName: string;
   readonly tag: string | null;
   readonly tagKind: 'chart' | 'general' | 'reading' | null;
@@ -664,9 +670,9 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
           { label: label('chartValues'), value: label('chartValuesSource') },
         ],
         legend: [
-          { tag: label('tagChart'), text: label('legendChart') },
-          { tag: label('tagGeneral'), text: label('legendGeneral') },
-          { tag: label('tagReading'), text: label('legendReading') },
+          { tag: label('tagChart'), tagKind: 'chart', text: label('legendChart') },
+          { tag: label('tagGeneral'), tagKind: 'general', text: label('legendGeneral') },
+          { tag: label('tagReading'), tagKind: 'reading', text: label('legendReading') },
         ],
       },
     },
@@ -918,7 +924,6 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
         title: content.title,
         preparedFor: label('preparedFor'),
         displayName: model.displayName,
-        brand: label('brand'),
         product: label('product'),
         pageNumberLabel: '',
       },
@@ -1038,8 +1043,8 @@ export function buildPresentationProjection(input: PresentationInput): Presentat
       provisionalFields: sortedUnique(precisions.flatMap((precision) => precision.provisionalFields)),
     });
   }
-  if (model.displayName === '' || model.displayName.trim() !== model.displayName) {
-    throw new PresentationError('PRESENTATION_INPUT_INVALID', 'the display name is empty or padded', {});
+  if (model.displayName === '' || model.displayName.trim() !== model.displayName || FORBIDDEN_CHARACTER.test(model.displayName) || / {2}/u.test(model.displayName)) {
+    throw new PresentationError('PRESENTATION_INPUT_INVALID', 'the display name is empty, padded, double-spaced or carries a forbidden character', {});
   }
 
   const chart = chartValues(model);
@@ -1088,7 +1093,6 @@ export function buildPresentationProjection(input: PresentationInput): Presentat
     const pageContent: PageContent = draft.content.kind === 'closing' ? { ...draft.content, pageNumberLabel: pageLabel } : draft.content;
     const chrome: PageChrome | null = draft.chrome
       ? {
-          brand: label('brand'),
           displayName: model.displayName,
           tag: draft.tag === null ? null : label(draft.tag),
           tagKind: draft.tag === null ? null : TAG_KIND[draft.tag],

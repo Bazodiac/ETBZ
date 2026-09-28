@@ -9,8 +9,8 @@
 //
 // This suite adds the four properties that a package allowlist cannot see:
 //
-//   1. it is a LEAF - nothing imports it, so ETBZ-49 cannot have shipped a
-//      served surface or a hidden runtime dependency ahead of ETBZ-55;
+//   1. it is a LEAF - no served layer imports it, and inside the application
+//      layer only the ETBZ-55 presentation projection does, through the index;
 //   2. it is PURE - no clock, no randomness, no process, no filesystem, which
 //      is what makes a structural hash of its output meaningful;
 //   3. it does NOT render - no PDF, no HTML, no headless browser;
@@ -18,9 +18,9 @@
 // =============================================================================
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, resolve, sep } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { extractImportSpecifiers } from './dependency-direction.test.js';
+import { UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
 
 const REPO_ROOT = process.cwd();
 const SRC_ROOT = resolve(REPO_ROOT, 'src');
@@ -45,7 +45,9 @@ function listTypeScriptFiles(root: string): string[] {
 }
 
 const VISUAL_FILES = listTypeScriptFiles(VISUAL_ROOT);
+// An import the guard cannot resolve statically counts as a reference: the leaf check fails closed.
 const referencesVisual = (specifier: string): boolean =>
+  specifier === UNRESOLVABLE_DYNAMIC_IMPORT ||
   specifier.includes('application/visual') ||
   specifier.includes('/visual/') ||
   specifier.endsWith('/visual') ||
@@ -69,7 +71,7 @@ describe('ETBZ-49: the visual system is a leaf, reachable from no served path', 
       }
       expect(
         offenders,
-        `ETBZ-55 owns the renderer; until then the visual system is reachable from nothing:\n${offenders.join('\n')}`,
+        `the visual system is reachable from no served layer:\n${offenders.join('\n')}`,
       ).toEqual([]);
     },
   );
@@ -134,7 +136,8 @@ describe('ETBZ-49: the visual system is pure', () => {
     for (const file of VISUAL_FILES) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (specifier === 'zod') continue;
-        if (specifier.startsWith('./')) continue;
+        // Own modules by resolved path, never by spelling ('./../' would otherwise pass).
+        if (specifier.startsWith('.') && resolve(dirname(file), specifier).startsWith(VISUAL_ROOT + sep)) continue;
         offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }

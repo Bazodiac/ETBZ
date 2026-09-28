@@ -26,6 +26,8 @@ import sys
 sys.dont_write_bytecode = True
 
 import argparse  # noqa: E402
+import copy  # noqa: E402
+import hashlib  # noqa: E402
 import json  # noqa: E402
 import pathlib  # noqa: E402
 import platform  # noqa: E402
@@ -82,6 +84,51 @@ def wrap_page_html(transform) -> None:
 def patch_digest(path: str) -> None:
     original = R.asset_digests
     R.asset_digests = lambda: {**original(), path: "0" * 64}
+
+
+def edit_builder(kind: str, change) -> None:
+    """Give one builder a changed copy of its bound content - the paths travel with the values."""
+    original = P.BUILDERS[kind]
+
+    def build(ctx, page, c):
+        changed = copy.deepcopy(c)
+        change(changed)
+        return original(ctx, page, changed)
+
+    P.BUILDERS[kind] = build
+
+
+def inject_css(css: str) -> None:
+    wrap_page_html(lambda html, page: html.replace("</head>", f"<style>{css}</style></head>", 1))
+
+
+def fake_latin_face(directory: pathlib.Path) -> pathlib.Path:
+    """A face that covers ASCII and names itself Inter-Fake: a PostScript name with an allowed prefix, not an allowed name."""
+    from fontTools.fontBuilder import FontBuilder
+    from fontTools.pens.ttGlyphPen import TTGlyphPen
+
+    directory.mkdir(parents=True, exist_ok=True)
+    names = [".notdef"] + [f"g{code}" for code in range(0x20, 0x7F)]
+    builder = FontBuilder(1000, isTTF=True)
+    builder.setupGlyphOrder(names)
+    builder.setupCharacterMap({code: f"g{code}" for code in range(0x20, 0x7F)})
+    glyphs = {}
+    for glyph_name in names:
+        pen = TTGlyphPen(None)
+        pen.moveTo((50, 0))
+        pen.lineTo((50, 600))
+        pen.lineTo((450, 600))
+        pen.closePath()
+        glyphs[glyph_name] = pen.glyph()
+    builder.setupGlyf(glyphs)
+    builder.setupHorizontalMetrics({glyph_name: (500, 50) for glyph_name in names})
+    builder.setupHorizontalHeader(ascent=800, descent=-200)
+    builder.setupNameTable({"familyName": "InterFake", "styleName": "Regular", "psName": "Inter-Fake"})
+    builder.setupOS2(sTypoAscender=800, sTypoDescender=-200, usWinAscent=800, usWinDescent=200)
+    builder.setupPost()
+    path = directory / "InterFake.ttf"
+    builder.save(str(path))
+    return path
 
 
 def fake_cjk_face(directory: pathlib.Path) -> None:
@@ -155,6 +202,15 @@ def c_glyph_out_of_contract(work):
 def c_cjk_uncovered(work):
     p = load()
     p["cjkText"] = sorted([*p["cjkText"], "\ue000"], key=u16)
+    return rehash(p)
+
+
+def c_page_strings(work):
+    # The projection claims a printed string no field of the page carries (rehashed, so the identity check passes).
+    p = load()
+    page = page_of(p, "summary")
+    page["strings"] = sorted([*page["strings"], "Ein Satz ohne Feld"], key=u16)
+    p["customerStrings"] = sorted(set().union(*(set(x["strings"]) for x in p["pages"])), key=u16)
     return rehash(p)
 
 
@@ -233,6 +289,73 @@ def c_font_load_failed(work):
     P.Context.__init__ = init
 
 
+def c_wrong_key(work):
+    # The year branch cell shows its stem's phase label (Metall instead of Feuer) - a value that is printed elsewhere.
+    def change(c):
+        c["pillars"][0]["branch"]["phaseLabel"] = c["pillars"][0]["stem"]["phaseLabel"]
+    edit_builder("fourPillars", change)
+
+
+def c_drop_copy(work):
+    # The month branch's phase label is left out; the same word is printed elsewhere on the page.
+    def change(c):
+        label = c["pillars"][1]["branch"]["phaseLabel"]
+        c["pillars"][1]["branch"]["phaseLabel"] = P.PStr("", label.path)
+    edit_builder("fourPillars", change)
+
+
+def c_wu_xing_swap(work):
+    # Two phases' values swap places (1.8 and 2.5): each value is shown, but in the other phase's block and cell.
+    def change(c):
+        phases = c["wuXing"]["phases"]
+        phases[0]["valueText"], phases[1]["valueText"] = phases[1]["valueText"], phases[0]["valueText"]
+    edit_builder("wuXing", change)
+
+
+def c_glyph_wrong_slot(work):
+    # The year stem disc draws the branch character.
+    def change(c):
+        c["pillars"][0]["stem"]["character"] = c["pillars"][0]["branch"]["character"]
+    edit_builder("fourPillars", change)
+
+
+def c_hidden_display_none(work):
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace("<p>", '<p style="display:none">', 1))
+
+
+def c_hidden_clip_path(work):
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace("<p>", '<p style="clip-path:inset(50%)">', 1))
+
+
+def c_prefix_face(work):
+    face = fake_latin_face(work / "fonts")
+    inject_css(f'@font-face{{font-family:"InterFake";src:url("{face.as_uri()}")}} .sheet .body span{{font-family:"InterFake" !important}}')
+
+
+def c_latin_in_cjk_face(work):
+    inject_css('.sheet .body span{font-family:"Noto Sans CJK SC" !important}')
+
+
+def c_group_wrapped(work):
+    inject_css(".nw{white-space:normal !important;display:inline-block;width:1px}")
+
+
+def c_occluded_text(work):
+    wrap_builder("methodNote", lambda html, ctx, page, c: html + '<div style="position:absolute;left:20mm;top:70mm;width:150mm;height:40mm;background:var(--paper-000)"></div>')
+
+
+def c_low_contrast(work):
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('margin-top:10mm;max-width:130mm"', 'margin-top:10mm;max-width:130mm;color:var(--paper-000)"', 1))
+
+
+def c_forbidden_element(work):
+    wrap_builder("methodNote", lambda html, ctx, page, c: html + '<ul style="position:absolute;left:20mm;top:250mm"><li></li></ul>')
+
+
+def c_text_too_small(work):
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('margin-top:10mm;max-width:130mm"', 'margin-top:10mm;max-width:130mm;font-size:6pt;line-height:8pt"', 1))
+
+
 def c_pdf_page_count(work):
     p = load()
     p["pageCount"] = p["pageCount"] + 1
@@ -263,6 +386,7 @@ CANARIES = {
     "cjk-face-ambiguous": ("font pins", "a second font file naming itself Noto Sans CJK SC sits in a font directory", "CJK_FACE_AMBIGUOUS", None, c_cjk_face_ambiguous),
     "glyph-out-of-contract": ("glyphs", "the projection lists a display glyph outside the 27 (rehashed)", "GLYPH_OUT_OF_CONTRACT", None, c_glyph_out_of_contract),
     "cjk-uncovered": ("CJK coverage", "the projection lists a character the pinned SC face does not cover (rehashed)", "CJK_GLYPH_UNCOVERED", None, c_cjk_uncovered),
+    "page-strings": ("page strings", "a page's strings list a string no field of the page carries (rehashed)", "PAGE_STRINGS", None, c_page_strings),
     "page-build": ("page build", "a page of a kind no builder knows (rehashed)", "PAGE_BUILD", None, c_page_build),
     "text-injected": ("renderer adds no text", "the method-note builder prints a sentence the projection does not carry", "PAGE_QA", "TEXT_NOT_IN_PROJECTION", c_text_injected),
     "text-dropped": ("renderer drops no text", "the summary builder leaves out its last fact row", "PAGE_QA", "TEXT_MISSING_FROM_PAGE", c_text_dropped),
@@ -277,6 +401,19 @@ CANARIES = {
     "wu-xing-medallion": ("Wu Xing medallion", "the medallion is drawn 100 mm wide", "PAGE_QA", "WX_DISC_INTRUDES", c_wu_xing_medallion),
     "unpinned-face": ("font pins", "every page is set in a host face", "PAGE_QA", "TEXT_SET_IN_UNPINNED_FACE", c_unpinned_face),
     "font-load-failed": ("font pins", "the Inter web fonts point at a missing directory", "PAGE_QA", "FONT_LOAD_FAILED", c_font_load_failed),
+    "wrong-key": ("fact in its slot", "the year branch cell shows its stem's phase label, a value printed elsewhere on the page", "PAGE_QA", "TEXT_OUT_OF_SLOT", c_wrong_key),
+    "drop-copy": ("renderer drops no text", "the month branch's phase label is left out; the same word is printed elsewhere", "PAGE_QA", "TEXT_MISSING_FROM_PAGE", c_drop_copy),
+    "wu-xing-swap": ("fact in its slot", "two phases' Wu Xing values swap places", "PAGE_QA", "TEXT_OUT_OF_SLOT", c_wu_xing_swap),
+    "glyph-wrong-slot": ("fact in its slot", "the year stem disc draws the branch character", "PAGE_QA", "GLYPH_OUT_OF_SLOT", c_glyph_wrong_slot),
+    "hidden-display-none": ("no hidden text", "the method note is display:none", "PAGE_QA", "TEXT_INVISIBLE", c_hidden_display_none),
+    "hidden-clip-path": ("no hidden text", "the method note is clipped away by clip-path", "PAGE_QA", "TEXT_INVISIBLE", c_hidden_clip_path),
+    "prefix-face": ("font pins", "the method note is set in a face named Inter-Fake (allowed prefix, not an allowed name)", "PAGE_QA", "TEXT_SET_IN_UNPINNED_FACE", c_prefix_face),
+    "latin-in-cjk-face": ("font pins", "German text is set in the CJK face", "PAGE_QA", "LATIN_SET_IN_CJK_FACE", c_latin_in_cjk_face),
+    "group-wrapped": ("no split pair", "the non-breaking groups are allowed to wrap", "PAGE_QA", "GROUP_WRAPPED", c_group_wrapped),
+    "occluded-text": ("no hidden text", "an opaque panel is painted over the method note", "PAGE_QA", "TEXT_OCCLUDED", c_occluded_text),
+    "low-contrast": ("no hidden text", "the method note is set in the paper colour", "PAGE_QA", "TEXT_LOW_CONTRAST", c_low_contrast),
+    "forbidden-element": ("renderer adds no text", "a list element appears on the page", "PAGE_QA", "FORBIDDEN_ELEMENT", c_forbidden_element),
+    "text-too-small": ("no hidden text", "the method note is set at 6 pt, below the template minimum", "PAGE_QA", "TEXT_TOO_SMALL", c_text_too_small),
     "pdf-page-count": ("PDF readback", "the projection states one page more than it has (rehashed)", "PDF_READBACK", "PDF_PAGE_COUNT", c_pdf_page_count),
     "determinism": ("determinism", "every run draws one marker pixel at a different place", "DETERMINISM", None, c_determinism),
 }
@@ -322,6 +459,37 @@ def run_one(canary_id: str) -> dict:
     return result
 
 
+MIRROR_PROBE = """
+import { readFileSync } from 'node:fs';
+import { canonicalJson } from '%s';
+process.stdout.write(canonicalJson(JSON.parse(readFileSync(process.argv[2], 'utf8'))));
+"""
+
+
+def canonical_json_mirror() -> dict:
+    """The renderer's Python canonical_json against the repository's TypeScript canonicalJson, on a fixed value set:
+    numbers across every magnitude JSON.stringify switches notation at, and keys and strings with non-ASCII, astral,
+    quote, backslash and line-separator characters."""
+    import random
+
+    rng = random.Random(55)
+    numbers = [0, 1, -1, 0.72, 1.8, 2.5, 0.05, 0.00005, 1e-7, 123.0, 1e20, 1e21, 1e22, 1.5e300, 5e-324, 0.1 + 0.2, 0.000001, 0.0000012, -3.25]
+    numbers += [rng.uniform(-1e6, 1e6) for _ in range(300)] + [rng.random() * 10 ** rng.randint(-14, 25) for _ in range(400)]
+    strings = ["", "a\"b", "back\\slash", "line\u2028sep", "tab\tx", "Fünf Wandlungsphasen", "辛亥", "\U0001F469\u200d", "ctl\u0001x"]
+    keys = {"b": 1, "a": 2, "ä": 3, "Z": 4, "辛": 5, "\U0001F469": 6, "\uffff": 7}
+    value = {"numbers": numbers, "strings": strings, "keys": keys}
+    with tempfile.TemporaryDirectory(prefix="etbz55-mirror-") as tmp:
+        data = pathlib.Path(tmp) / "value.json"
+        data.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+        probe = pathlib.Path(tmp) / "probe.ts"
+        probe.write_text(MIRROR_PROBE % (ROOT / "src" / "domain" / "canonical-json.ts").as_posix(), encoding="utf-8")
+        node = subprocess.run(["npx", "vite-node", str(probe), str(data)], cwd=ROOT, capture_output=True, text=True, timeout=300)
+    python_text = R.canonical_json(value)
+    return {"numbers": len(numbers), "strings": len(strings), "keys": len(keys), "nodeExitCode": node.returncode,
+            "equal": node.returncode == 0 and node.stdout == python_text,
+            "sha256": "sha256:" + hashlib.sha256(python_text.encode("utf-8")).hexdigest()}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--child")
@@ -341,8 +509,12 @@ def main() -> int:
         print(f"{canary_id:26s} {result['verdict']:20s} {result['observed']['check']} {result['observed']['codes'][:4]}", flush=True)
     held = sum(1 for r in results if r["verdict"] == "BLOCKED_AS_EXPECTED")
     projection = load()
+    mirror = canonical_json_mirror()
+    print(f"canonical-json mirror: equal={mirror['equal']} over {mirror['numbers']} numbers", flush=True)
     record = {
         "canaryVersion": CANARY_VERSION,
+        "canarySourceSha256": "sha256:" + hashlib.sha256(pathlib.Path(__file__).resolve().read_bytes()).hexdigest(),
+        "canonicalJsonMirror": mirror,
         "renderer": {"ref": R.RENDERER_REF, "sourceSha256": R.renderer_source_digest()},
         "projectionStructuralHash": projection["structuralHash"],
         "executedAt": args.executed_at,
@@ -355,7 +527,7 @@ def main() -> int:
         return 0 if held == len(results) else 1
     OUT.write_text(json.dumps(record, indent=1, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
     print(f"{OUT.relative_to(ROOT)}: {held}/{len(results)} canaries blocked as expected")
-    return 0 if held == len(results) else 1
+    return 0 if held == len(results) and mirror["equal"] else 1
 
 
 if __name__ == "__main__":

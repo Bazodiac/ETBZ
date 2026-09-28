@@ -26,7 +26,7 @@
 //  3. a CJK ideograph is measured at one em (`CJK_IDEOGRAPH_ADVANCE_EM`) - the
 //     advance the renderer's QA proves for the pinned Noto Sans CJK SC face;
 //     the original measured every character against Inter only.
-// No input of the two recorded layouts or of the 31 oracle chapters reaches a
+// No input of the two recorded layouts or of the 47 oracle chapters reaches a
 // difference; the unit suite proves that line for line.
 // =============================================================================
 

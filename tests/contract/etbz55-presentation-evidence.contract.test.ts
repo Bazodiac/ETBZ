@@ -15,7 +15,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -96,11 +96,22 @@ describe('ETBZ-55: the ArtifactManifest states what the files carry', () => {
       'FONT_PINS',
       'TEMPLATE_ASSET_PINS',
       'GLYPHS_AND_CJK',
+      'PAGE_STRINGS',
       'PAGE_QA',
       'PDF_READBACK',
       'DETERMINISM',
     ]);
     for (const check of manifest.qa.checks) expect(check.result, check.id).toBe('PASS');
+  });
+
+  it('agrees with the QA report and with its own check details', () => {
+    const report = json('qa-report.json') as { checks: unknown[] };
+    expect(report.checks).toEqual(manifest.qa.checks);
+    const detail = (id: string): Record<string, unknown> => (manifest.qa.checks.find((check) => check.id === id) as unknown as { detail: Record<string, unknown> }).detail;
+    expect(detail('DETERMINISM')['pdfSha256']).toBe(manifest.sha256);
+    expect(detail('PDF_READBACK')['pages']).toBe(manifest.pageCount);
+    expect(detail('PAGE_STRINGS')['pages']).toBe(manifest.pageCount);
+    expect(detail('PROJECTION_IDENTITY')).toEqual({ projection: projection.structuralHash, template: RELEASED_TEMPLATE_HASHES['1.0.0'] });
   });
 
   it('binds the PDF: MIME, digest, length, page count - read back from the committed bytes', () => {
@@ -173,12 +184,16 @@ describe('ETBZ-55: the ArtifactManifest states what the files carry', () => {
       }),
     ]);
     for (const font of manifest.fonts) expect(font.licence).toBe('SIL Open Font License 1.1');
+    for (const font of manifest.fonts as unknown as { licenceFile: string }[]) expect(existsSync(resolve(ROOT, font.licenceFile)), font.licenceFile).toBe(true);
+    expect(text.map((font) => font.family).sort()).toEqual(['Inter', 'Inter', 'Inter', 'Inter Display', 'Inter Display']);
   });
 
-  it('records the generation as a declaration, never as proof', () => {
+  it('records the generation as a declaration, on a head of this history', () => {
     expect(manifest.generation.declared).toBe(true);
     expect(manifest.generation.executedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/u);
     expect(manifest.generation.repositoryHead).toMatch(/^[0-9a-f]{40}$/u);
+    // CI checks out the full history (fetch-depth 0), so the declared head must be an ancestor of the tested commit.
+    expect(() => execFileSync('git', ['merge-base', '--is-ancestor', manifest.generation.repositoryHead, 'HEAD'])).not.toThrow();
   });
 });
 
@@ -197,6 +212,48 @@ describe('ETBZ-55: the QA report', () => {
 });
 
 describe('ETBZ-55: every renderer gate has failed once, on these renderer sources', () => {
+  // The canary contract, pinned here rather than read from the record: which check and finding each canary must end at.
+  const EXPECTED: readonly (readonly [string, string, string | null])[] = [
+    ['projection-version', 'PROJECTION_VERSION', null],
+    ['projection-hash', 'PROJECTION_HASH', null],
+    ['template-hash', 'TEMPLATE_HASH', null],
+    ['font-pin', 'FONT_PIN', null],
+    ['template-asset-pin', 'TEMPLATE_ASSET_PIN', null],
+    ['cjk-face-pin', 'CJK_FACE_PIN', null],
+    ['cjk-face-ambiguous', 'CJK_FACE_AMBIGUOUS', null],
+    ['glyph-out-of-contract', 'GLYPH_OUT_OF_CONTRACT', null],
+    ['cjk-uncovered', 'CJK_GLYPH_UNCOVERED', null],
+    ['page-strings', 'PAGE_STRINGS', null],
+    ['page-build', 'PAGE_BUILD', null],
+    ['text-injected', 'PAGE_QA', 'TEXT_NOT_IN_PROJECTION'],
+    ['text-dropped', 'PAGE_QA', 'TEXT_MISSING_FROM_PAGE'],
+    ['glyph-not-in-projection', 'PAGE_QA', 'GLYPH_NOT_IN_PROJECTION'],
+    ['generated-content', 'PAGE_QA', 'PSEUDO_CONTENT'],
+    ['invisible-text', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['clipped-by-ancestor', 'PAGE_QA', 'CLIPPED_BY_ANCESTOR'],
+    ['overflows-container', 'PAGE_QA', 'OVERFLOWS_CONTAINER'],
+    ['outside-sheet', 'PAGE_QA', 'OUTSIDE_SHEET'],
+    ['line-exceeds-measure', 'PAGE_QA', 'LINE_EXCEEDS_MEASURE'],
+    ['overlap', 'PAGE_QA', 'OVERLAP'],
+    ['wu-xing-medallion', 'PAGE_QA', 'WX_DISC_INTRUDES'],
+    ['unpinned-face', 'PAGE_QA', 'TEXT_SET_IN_UNPINNED_FACE'],
+    ['font-load-failed', 'PAGE_QA', 'FONT_LOAD_FAILED'],
+    ['wrong-key', 'PAGE_QA', 'TEXT_OUT_OF_SLOT'],
+    ['drop-copy', 'PAGE_QA', 'TEXT_MISSING_FROM_PAGE'],
+    ['wu-xing-swap', 'PAGE_QA', 'TEXT_OUT_OF_SLOT'],
+    ['glyph-wrong-slot', 'PAGE_QA', 'GLYPH_OUT_OF_SLOT'],
+    ['hidden-display-none', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['hidden-clip-path', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['prefix-face', 'PAGE_QA', 'TEXT_SET_IN_UNPINNED_FACE'],
+    ['latin-in-cjk-face', 'PAGE_QA', 'LATIN_SET_IN_CJK_FACE'],
+    ['group-wrapped', 'PAGE_QA', 'GROUP_WRAPPED'],
+    ['occluded-text', 'PAGE_QA', 'TEXT_OCCLUDED'],
+    ['low-contrast', 'PAGE_QA', 'TEXT_LOW_CONTRAST'],
+    ['forbidden-element', 'PAGE_QA', 'FORBIDDEN_ELEMENT'],
+    ['text-too-small', 'PAGE_QA', 'TEXT_TOO_SMALL'],
+    ['pdf-page-count', 'PDF_READBACK', 'PDF_PAGE_COUNT'],
+    ['determinism', 'DETERMINISM', null],
+  ];
   interface Canary {
     id: string;
     expectedCheck: string;
@@ -208,46 +265,29 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
   }
   const record = json('renderer-canaries.json') as {
     canaryVersion: string;
+    canarySourceSha256: string;
+    canonicalJsonMirror: { numbers: number; strings: number; keys: number; nodeExitCode: number; equal: boolean; sha256: string };
     renderer: { ref: string; sourceSha256: string };
     projectionStructuralHash: string;
     summary: { canaries: number; blockedAsExpected: number };
     canaries: Canary[];
   };
 
-  it('ran against the renderer and the projection the manifest binds', () => {
+  it('ran against the renderer and the projection the manifest binds, from the committed canary source', () => {
     expect(record.canaryVersion).toBe('bazodiac-renderer-canaries.v1');
     expect(record.renderer).toEqual({ ref: manifest.renderer.ref, sourceSha256: manifest.renderer.sourceSha256 });
     expect(record.projectionStructuralHash).toBe(projection.structuralHash);
+    expect(record.canarySourceSha256).toBe(sha256Of(readFileSync(join(RENDERER, 'qa', 'run_canaries.py'))));
+  });
+
+  it('recorded the renderer hash mirror equal to the TypeScript canonicalJson on a fixed value set', () => {
+    expect(record.canonicalJsonMirror.nodeExitCode).toBe(0);
+    expect(record.canonicalJsonMirror.equal).toBe(true);
+    expect(record.canonicalJsonMirror.numbers).toBeGreaterThanOrEqual(700);
   });
 
   it('covers every gate: identity, pins, glyphs, CJK, page build, page QA, PDF readback, determinism', () => {
-    expect(record.canaries.map((canary) => canary.id)).toEqual([
-      'projection-version',
-      'projection-hash',
-      'template-hash',
-      'font-pin',
-      'template-asset-pin',
-      'cjk-face-pin',
-      'cjk-face-ambiguous',
-      'glyph-out-of-contract',
-      'cjk-uncovered',
-      'page-build',
-      'text-injected',
-      'text-dropped',
-      'glyph-not-in-projection',
-      'generated-content',
-      'invisible-text',
-      'clipped-by-ancestor',
-      'overflows-container',
-      'outside-sheet',
-      'line-exceeds-measure',
-      'overlap',
-      'wu-xing-medallion',
-      'unpinned-face',
-      'font-load-failed',
-      'pdf-page-count',
-      'determinism',
-    ]);
+    expect(record.canaries.map((canary) => [canary.id, canary.expectedCheck, canary.expectedCode])).toEqual(EXPECTED.map((entry) => [...entry]));
     // Each check of a passing render, and the refusals that prove it can fail.
     const provenBy: Readonly<Record<string, readonly string[]>> = {
       PROJECTION_VERSION: ['PROJECTION_VERSION'],
@@ -255,6 +295,7 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
       FONT_PINS: ['FONT_PIN', 'CJK_FACE_PIN', 'CJK_FACE_AMBIGUOUS'],
       TEMPLATE_ASSET_PINS: ['TEMPLATE_ASSET_PIN'],
       GLYPHS_AND_CJK: ['GLYPH_OUT_OF_CONTRACT', 'CJK_GLYPH_UNCOVERED'],
+      PAGE_STRINGS: ['PAGE_STRINGS'],
       PAGE_QA: ['PAGE_BUILD', 'PAGE_QA'],
       PDF_READBACK: ['PDF_READBACK'],
       DETERMINISM: ['DETERMINISM'],

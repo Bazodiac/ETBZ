@@ -14,7 +14,8 @@
 //  - `lexicon`: a verbatim part of a released Lexicon term's German customer
 //    wording (`lexiconTerm` names the term; a test proves the containment);
 //  - `terminology`: the German name of one FuFirE enum value the chart carries
-//    (`fufireValue` names it) for which Lexicon v1 has no wording - today only
+//    (`fufireValue` names the HoroscopeModel field and the FuFirE enum value)
+//    for which Lexicon v1 has no wording - today only
 //    the three Qi roles of a hidden stem (ADR 0012 limitation 5);
 //  - `template`: a plain interface label that names a page, a column or a
 //    presentation convention.

@@ -86,7 +86,9 @@ describe('N1: the content payload', () => {
   });
 
   it('refuses a control or format character anywhere in the payload: a bell, a zero-width space, a soft hyphen, a bidi override, a byte-order mark', () => {
-    const invisible = [0x0007, 0x200b, 0x00ad, 0x202e, 0xfeff, 0x0085, 0x2028].map((codepoint) => String.fromCodePoint(codepoint));
+    // A bell, a zero-width space, a soft hyphen, a bidi override, a byte-order mark, NEL, a line separator,
+    // a lone surrogate, a Hangul filler, a variation selector and a private-use character.
+    const invisible = [0x0007, 0x200b, 0x00ad, 0x202e, 0xfeff, 0x0085, 0x2028, 0xd800, 0x3164, 0xfe0f, 0xe000].map((codepoint) => String.fromCodePoint(codepoint));
     for (const character of invisible) {
       const at = `U+${(character.codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, '0')}`;
       const title = expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.title = `Dein${character}Reading`; })), 'PRESENTATION_INPUT_INVALID');
@@ -103,6 +105,14 @@ describe('N1: the content payload', () => {
   it('refuses a padded or empty display name', () => {
     expectPresentationRefusal(() => project(modelWith((m) => { m.displayName = ' Musterkundin A'; })), 'PRESENTATION_INPUT_INVALID');
     expectPresentationRefusal(() => project(modelWith((m) => { m.displayName = ''; })), 'PRESENTATION_INPUT_INVALID');
+  });
+
+  it('holds the display name - printed on every page - to the payload rule: no forbidden character, no double space', () => {
+    for (const codepoint of [0x202e, 0x200b, 0x00ad, 0x00a0, 0xd800]) {
+      const name = `Muster${String.fromCodePoint(codepoint)}kundin A`;
+      expectPresentationRefusal(() => project(modelWith((m) => { m.displayName = name; })), 'PRESENTATION_INPUT_INVALID');
+    }
+    expectPresentationRefusal(() => project(modelWith((m) => { m.displayName = 'Musterkundin  A'; })), 'PRESENTATION_INPUT_INVALID');
   });
 });
 

@@ -22,6 +22,7 @@ import { FONT_METRICS } from '../../src/application/presentation/font-metrics.js
 import { CONTINUATION_COLUMN_CP, RUNNING_HEAD_CP } from '../../src/application/presentation/long-form.js';
 import { CJK_IDEOGRAPH_ADVANCE_EM, LINE_TOLERANCE_CP, TEXT_STYLES } from '../../src/application/presentation/text-measure.js';
 import { structuralHash } from '../../src/domain/structural-hash.js';
+import { NATAL_QI_ROLES } from '../../src/application/ports/fufire-gateway.js';
 import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
 import { CHART_TERMINOLOGY, findProhibitedWording, findUnsupportedMethodTerm } from '../../src/application/skill/index.js';
 import { DISPLAY_GLYPH_SET, GEOMETRY_CENTIPOINTS, PAGE_FAMILY, findEvidenceChrome } from '../../src/application/visual/index.js';
@@ -80,7 +81,10 @@ describe('ETBZ-55: the template', () => {
       }
       if (entry.source === 'terminology') {
         expect(lexiconTerm, id).toBeUndefined();
-        expect(fufireValue, id).toMatch(/^natal\.pillars\[\]\.hiddenStems\[\]\.qi = (principal|central|residual)$/u);
+        // The HoroscopeModel field the label names, and one value of FuFirE's Qi-role enum.
+        const match = /^natal\.pillars\[\]\.hiddenStems\[\]\.qi = (.+)$/u.exec(fufireValue ?? '');
+        expect(match, id).not.toBeNull();
+        expect(NATAL_QI_ROLES as readonly string[], id).toContain(match?.[1]);
         continue;
       }
       expect(fufireValue, id).toBeUndefined();
@@ -91,6 +95,8 @@ describe('ETBZ-55: the template', () => {
     expect([...sources].sort()).toEqual(['lexicon', 'template', 'terminology']);
     const terminology = Object.entries(TEMPLATE_LABELS).filter(([, entry]) => entry.source === 'terminology').map(([id]) => id);
     expect(terminology).toEqual(['qiPrincipal', 'qiCentral', 'qiResidual']);
+    const named = terminology.map((id) => (TEMPLATE_LABELS[id as keyof typeof TEMPLATE_LABELS] as { fufireValue?: string }).fufireValue?.split(' = ')[1]);
+    expect(named).toEqual([...NATAL_QI_ROLES]);
   });
 
   it('carries no label that is prohibited wording, a deferred method or evidence chrome', () => {
@@ -254,7 +260,7 @@ describe('ETBZ-55: the page model', () => {
         else expect(page.strings, page.pageId).not.toContain(page.pageLabel);
       } else {
         expect(page.strings, page.pageId).toContain(page.pageLabel);
-        expect(page.strings, page.pageId).toContain(page.chrome.brand);
+        expect(page.strings, page.pageId).toContain(page.chrome.footer[0]);
         expect(page.strings, page.pageId).toContain(page.chrome.displayName);
       }
     }

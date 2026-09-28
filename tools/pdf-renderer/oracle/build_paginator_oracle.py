@@ -16,7 +16,9 @@ opens a region and so loses its space before.
 
 The oracle records the sha256 of every file the canonical paginator read
 (`provenance`); the unit suite re-hashes the committed files and requires the
-same digests, so an oracle produced from anything else cannot pass CI.
+same digests. That binds the inputs, not the act of generating: a hand-edited
+layout would still pass CI, and only re-running this generator (byte-identical
+output) proves the layouts are the canonical paginator's.
 
     PY=/Library/Frameworks/Python.framework/Versions/3.13/bin/python3
     "$PY" tools/pdf-renderer/oracle/build_paginator_oracle.py
@@ -92,8 +94,8 @@ def chapters() -> list:
                   {"id": "p2", "kind": "paragraph", "text": words(n + 10, 180)},
                   {"id": "p3", "kind": "paragraph", "text": words(n + 12, 140)}]
         out.append({"id": f"band-{n}", "header": [{"id": "k", "kind": "kicker", "text": "KAPITEL 04"}, {"id": "t", "kind": "sectionTitle", "text": words(n + 4, 5)}], "blocks": blocks})
-    # E: a module that opens a region - first block of the opener, or first block of a continuation page -
-    # sets no space before, without the overflow path.
+    # E: a module that opens a region - the first block of the opener - sets no space before, without the
+    # overflow path. (All four lead modules sit at the top of page 1.)
     for n in range(4):
         lead = {"id": "q0", "kind": "pullQuote", "text": words(n, 12 + n)} if n % 2 == 0 else {"id": "k0", "kind": "keyInsight", "title": "Kernaussage", "text": words(n, 24 + n * 4)}
         blocks = [lead,

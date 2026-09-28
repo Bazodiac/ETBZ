@@ -159,7 +159,11 @@ def canonical_json(value) -> str:
 
 
 def structural_hash(value) -> str:
-    return "sha256:" + sha256_bytes(canonical_json(value).encode("utf-8"))
+    try:
+        return "sha256:" + sha256_bytes(canonical_json(value).encode("utf-8"))
+    except UnicodeEncodeError as error:
+        # A lone surrogate: the projection is not well-formed text, so it has no identity to verify.
+        raise Blocked("PROJECTION_HASH", {"error": f"not well-formed text: {error}"}) from error
 
 
 def check_projection_identity(projection: dict) -> dict:
@@ -176,29 +180,97 @@ def check_projection_identity(projection: dict) -> dict:
 
 # ------------------------------------------------------------------ DOM QA (runs in the page)
 
-DOM_QA = """
-(allowed) => {
-  const W = 793.7, H = 1122.5, MM = 96 / 25.4, CP = 96 / 7200, findings = [];
-  const pageSet = new Set(allowed.strings), glyphSet = new Set(allowed.glyphs), separators = new Set(allowed.separators);
+DOM_QA = r"""
+(q) => {
+  const W = 793.7, H = 1122.5, CP = 96 / 7200, MIN_FONT_PX = 11, findings = [];
+  const values = q.values, glyphSet = new Set(q.displayGlyphs), separators = new Set(q.separators);
   const sheet = document.querySelector('.sheet');
-  const alpha = (color) => { const m = /rgba?\\(([^)]*)\\)/.exec(color); if (!m) return 1; const p = m[1].split(/[ ,\\/]+/).filter(Boolean); return p.length > 3 ? parseFloat(p[3]) : 1; };
-  const opacity = (el) => { let o = 1; for (let a = el; a && a !== document.documentElement; a = a.parentElement) o *= parseFloat(getComputedStyle(a).opacity); return o; };
-  // (1) the printed text equals the page's projection strings: nothing added, nothing missing, nothing invisible.
-  const printed = new Set(); let textCount = 0; const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT); let n;
-  while ((n = walker.nextNode())) { const s = n.textContent.trim(); if (s.length === 0) continue;
-    textCount += 1; if (separators.has(s)) continue; printed.add(s);
-    if (!pageSet.has(s)) findings.push({code: 'TEXT_NOT_IN_PROJECTION', text: s.slice(0, 60)});
-    const el = n.parentElement; if (!el || el.closest('title')) continue;  // the wordmark's accessible name
-    const cs = getComputedStyle(el);
-    if (cs.visibility !== 'visible' || alpha(cs.color) === 0 || alpha(cs.webkitTextFillColor || cs.color) === 0 || opacity(el) === 0 || parseFloat(cs.fontSize) < 4)
-      findings.push({code: 'TEXT_INVISIBLE', text: s.slice(0, 60)}); }
-  for (const s of pageSet) if (!printed.has(s)) findings.push({code: 'TEXT_MISSING_FROM_PAGE', text: s.slice(0, 60)});
-  // (2) no generated content: the stylesheet declares no ::before / ::after text.
-  for (const el of [sheet, ...sheet.querySelectorAll('*')]) for (const pseudo of ['::before', '::after']) {
+  const parse = (color) => { const m = /rgba?\(([^)]*)\)/.exec(color || ''); if (!m) return null;
+    const p = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number); return {r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1}; };
+  const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
+  const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const opacityOf = (el) => { let o = 1; for (let a = el; a && a !== document.documentElement; a = a.parentElement) o *= parseFloat(getComputedStyle(a).opacity); return o; };
+  const name = (el) => String(el.className && el.className.baseVal === undefined ? el.className : el.tagName).slice(0, 40);
+  const effectsOf = (el) => { for (let a = el; a && a !== sheet.parentElement; a = a.parentElement) { const s = getComputedStyle(a);
+    if (s.clipPath !== 'none' || s.maskImage !== 'none' || (s.webkitMaskImage && s.webkitMaskImage !== 'none') || s.filter !== 'none') return name(a); } return null; };
+  const shown = (el) => typeof el.checkVisibility !== 'function' ||
+    el.checkVisibility({opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true, checkOpacity: true, checkVisibilityCSS: true});
+  const slotOf = (el) => { const s = el.closest('[data-slot]'); return s && sheet.contains(s) ? s.dataset.slot : null; };
+  // The first painted surface under the text at (x, y): the element's own background counts (a tag), its descendants do not.
+  const backdrop = (el, x, y) => { for (const hit of document.elementsFromPoint(x, y)) { if (hit !== el && el.contains(hit)) continue;
+    const c = parse(getComputedStyle(hit).backgroundColor); if (c && c.a >= 0.5) return c; } return {r: 255, g: 255, b: 255, a: 1}; };
+
+  // (1) Every text node is the projection value at its path, inside its own entry's slot, and visibly printed;
+  //     every path the page must print is printed. The wordmark's accessible name is not printed text.
+  const printed = new Set(); let textCount = 0;
+  const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT); let n;
+  while ((n = walker.nextNode())) {
+    const s = n.textContent.trim(); if (s.length === 0) continue;
+    const el = n.parentElement; if (!el || el.closest('title')) continue;
+    textCount += 1;
+    if (separators.has(s) && el.classList.contains('sep')) continue;
+    const host = el.closest('[data-p]'); const path = host && sheet.contains(host) ? host.dataset.p : null;
+    if (path === null) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'unbound', text: s.slice(0, 60)}); continue; }
+    if (!Object.prototype.hasOwnProperty.call(values, path)) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'unknown path', path, text: s.slice(0, 60)}); continue; }
+    if (values[path] !== s) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'not the value at its path', path, text: s.slice(0, 60)}); continue; }
+    const slot = slotOf(host);
+    if (slot !== null && !path.startsWith(slot + '.')) { findings.push({code: 'TEXT_OUT_OF_SLOT', path, slot, text: s.slice(0, 60)}); continue; }
+    const range = document.createRange(); range.selectNodeContents(n);
+    const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0.5 && r.height > 0.5);
+    const cs = getComputedStyle(el), fontPx = parseFloat(cs.fontSize);
+    const color = parse(cs.color) || {r: 0, g: 0, b: 0, a: 1}, fill = parse(cs.webkitTextFillColor) || color;
+    const effect = effectsOf(el);
+    let invisible = null;
+    if (rects.length === 0) invisible = 'no box';
+    else if (!shown(el) || cs.visibility !== 'visible') invisible = 'hidden';
+    else if (color.a < 0.1 || fill.a < 0.1 || opacityOf(el) < 0.1) invisible = 'transparent';
+    else if (effect !== null) invisible = `clipped, masked or filtered by ${effect}`;
+    else if (Math.max(...rects.map((r) => r.height)) < 0.5 * fontPx) invisible = 'scaled down';
+    if (invisible !== null) { findings.push({code: 'TEXT_INVISIBLE', reason: invisible, path, text: s.slice(0, 60)}); continue; }
+    if (fontPx < MIN_FONT_PX) findings.push({code: 'TEXT_TOO_SMALL', path, fontPx, text: s.slice(0, 40)});
+    // Every line of the text, probed at three points: a painted element above any of them occludes the text.
+    let occluder = null;
+    for (const r of rects) for (const fx of [0.15, 0.5, 0.85]) {
+      const hit = document.elementFromPoint(r.left + r.width * fx, r.top + r.height / 2);
+      if (hit && !(hit === el || el.contains(hit) || hit.contains(el))) occluder = occluder || hit; }
+    if (occluder !== null) findings.push({code: 'TEXT_OCCLUDED', path, by: name(occluder), text: s.slice(0, 40)});
+    const r0 = rects[0], cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
+    const ratio = contrast(fill, backdrop(el, cx, cy));
+    if (ratio < 1.5) findings.push({code: 'TEXT_LOW_CONTRAST', path, ratio: +ratio.toFixed(2), text: s.slice(0, 40)});
+    printed.add(path);
+  }
+  for (const p of q.required) if (!printed.has(p)) findings.push({code: 'TEXT_MISSING_FROM_PAGE', path: p, text: String(values[p]).slice(0, 60)});
+
+  // (2) Every display glyph is a projection glyph, the value at its path, in its slot, visible; every character
+  //     the page must draw is drawn.
+  const drawn = new Set(); const glyphEls = Array.from(sheet.querySelectorAll('svg.disp'));
+  for (const g of glyphEls) {
+    const ch = String.fromCodePoint(parseInt(g.dataset.glyph.slice(2), 16));
+    if (!glyphSet.has(ch)) findings.push({code: 'GLYPH_NOT_IN_PROJECTION', glyph: ch});
+    const path = g.dataset.p || null;
+    if (path === null || !Object.prototype.hasOwnProperty.call(values, path) || values[path] !== ch) { findings.push({code: 'GLYPH_NOT_ITS_VALUE', glyph: ch, path}); continue; }
+    const slot = slotOf(g);
+    if (slot !== null && !path.startsWith(slot + '.')) { findings.push({code: 'GLYPH_OUT_OF_SLOT', path, slot, glyph: ch}); continue; }
+    const r = g.getBoundingClientRect();
+    if (!(r.width > 1 && r.height > 1) || !shown(g) || opacityOf(g) < 0.1 || effectsOf(g) !== null) { findings.push({code: 'GLYPH_INVISIBLE', path, glyph: ch}); continue; }
+    drawn.add(path);
+  }
+  for (const p of q.glyphs) if (!drawn.has(p)) findings.push({code: 'GLYPH_MISSING_FROM_PAGE', path: p, glyph: values[p]});
+
+  // (3) No generated content, no element that can carry text the builders did not print, no broken pair.
+  for (const el of [sheet, ...sheet.querySelectorAll('*')]) for (const pseudo of ['::before', '::after', '::marker']) {
     const content = getComputedStyle(el, pseudo).content;
-    if (content && content !== 'none' && content !== 'normal') findings.push({code: 'PSEUDO_CONTENT', pseudo, content: content.slice(0, 60), on: (el.className && el.className.baseVal === undefined ? el.className : el.tagName)}); }
-  const glyphs = Array.from(sheet.querySelectorAll('svg.disp')).map(g => String.fromCodePoint(parseInt(g.dataset.glyph.slice(2), 16)));
-  for (const g of glyphs) if (!glyphSet.has(g)) findings.push({code: 'GLYPH_NOT_IN_PROJECTION', glyph: g});
+    if (content && content !== 'none' && content !== 'normal') findings.push({code: 'PSEUDO_CONTENT', pseudo, content: content.slice(0, 60), on: name(el)}); }
+  for (const el of sheet.querySelectorAll('img,picture,input,textarea,select,button,canvas,video,iframe,object,embed,ol,ul,li,foreignObject,svg text'))
+    findings.push({code: 'FORBIDDEN_ELEMENT', element: el.tagName});
+  // A group wraps when its text sits on more than one line: text rects whose tops differ by more than half a line.
+  for (const el of sheet.querySelectorAll('.nw')) { const range = document.createRange(); range.selectNodeContents(el);
+    const tops = Array.from(range.getClientRects()).filter((r) => r.width > 0.5 && r.height > 0.5).map((r) => r.top);
+    const fontPx = parseFloat(getComputedStyle(el).fontSize);
+    if (tops.length > 1 && Math.max(...tops) - Math.min(...tops) > 0.5 * fontPx) findings.push({code: 'GROUP_WRAPPED', text: el.textContent.trim().slice(0, 40)}); }
+
+  // (4) Geometry: inside the sheet, not clipped, inside the painted container, within the measure, no overlap.
   const els = []; const walk = (node) => { for (const c of node.children) walk(c);
     const own = Array.from(node.childNodes).some(x => x.nodeType === 3 && x.textContent.trim().length);
     if (own || (node.tagName === 'svg' && node.classList.contains('disp'))) els.push(node); };
@@ -207,17 +279,14 @@ DOM_QA = """
   for (const b of boxes) {
     if (b.r.left < -0.5 || b.r.top < -0.5 || b.r.right > W + 0.5 || b.r.bottom > H + 0.5) findings.push({code: 'OUTSIDE_SHEET', text: b.e.textContent.trim().slice(0, 40)});
     if (b.e.scrollWidth > b.e.clientWidth + 1 && getComputedStyle(b.e).overflow !== 'visible') findings.push({code: 'CLIPPED', text: b.e.textContent.trim().slice(0, 40)});
-    // (3) the box stays inside its nearest painted container (a panel, a tag, a disc, a cell): text that runs out of
-    // its panel is a layout failure even where nothing clips it.
     for (let a = b.e.parentElement; a && a !== sheet; a = a.parentElement) { const s = getComputedStyle(a);
-      if (alpha(s.backgroundColor) === 0 && s.backgroundImage === 'none') continue; const q = a.getBoundingClientRect();
-      if (b.r.left < q.left - 0.5 || b.r.top < q.top - 0.5 || b.r.right > q.right + 0.5 || b.r.bottom > q.bottom + 0.5)
-        findings.push({code: 'OVERFLOWS_CONTAINER', text: b.e.textContent.trim().slice(0, 40), container: String(a.className && a.className.baseVal === undefined ? a.className : a.tagName).slice(0, 40)});
+      if (alpha(s.backgroundColor) === 0 && s.backgroundImage === 'none') continue; const q2 = a.getBoundingClientRect();
+      if (b.r.left < q2.left - 0.5 || b.r.top < q2.top - 0.5 || b.r.right > q2.right + 0.5 || b.r.bottom > q2.bottom + 0.5)
+        findings.push({code: 'OVERFLOWS_CONTAINER', text: b.e.textContent.trim().slice(0, 40), container: name(a)});
       break; }
-    // (4) no ancestor clips the box: every ancestor that does not let overflow show must contain it whole.
     for (let a = b.e.parentElement; a && a !== document.body; a = a.parentElement) { const s = getComputedStyle(a);
-      if (s.overflowX === 'visible' && s.overflowY === 'visible') continue; const q = a.getBoundingClientRect();
-      if (b.r.left < q.left - 0.5 || b.r.top < q.top - 0.5 || b.r.right > q.right + 0.5 || b.r.bottom > q.bottom + 0.5) {
+      if (s.overflowX === 'visible' && s.overflowY === 'visible') continue; const q2 = a.getBoundingClientRect();
+      if (b.r.left < q2.left - 0.5 || b.r.top < q2.top - 0.5 || b.r.right > q2.right + 0.5 || b.r.bottom > q2.bottom + 0.5) {
         findings.push({code: 'CLIPPED_BY_ANCESTOR', text: b.e.textContent.trim().slice(0, 40)}); break; } }
     if (b.e.classList.contains('longline')) { const measure = parseInt(b.e.dataset.measureCp, 10) * CP;
       if (b.r.width > measure + 0.5) findings.push({code: 'LINE_EXCEEDS_MEASURE', text: b.e.textContent.slice(0, 40), widthPx: +b.r.width.toFixed(2), measurePx: +measure.toFixed(2)}); }
@@ -228,7 +297,8 @@ DOM_QA = """
     const y = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
     if (x > 1.5 && y > 1.5) findings.push({code: 'OVERLAP', a: a.e.textContent.trim().slice(0, 30), b: b.e.textContent.trim().slice(0, 30)});
   }
-  return {findings, textCount, glyphCount: glyphs.length};
+  return {findings, textCount, glyphCount: glyphEls.length};
+  function alpha(color) { const c = parse(color); return c === null ? 1 : c.a; }
 }
 """
 
@@ -348,17 +418,31 @@ def build_page(ctx: P.Context, entry: dict) -> str:
         raise Blocked("PAGE_BUILD", {"page": entry.get("pageId"), "error": f"{type(error).__name__}: {error}"}) from error
 
 
-def render_run(projection: dict, ctx: P.Context, work: pathlib.Path) -> dict:
+def page_bindings(projection: dict) -> list:
+    """What each page must show, by path - and the proof that it is exactly the page's `strings`."""
+    bindings = []
+    for entry in projection["pages"]:
+        binding = P.page_binding(entry)
+        derived = sorted({binding["values"][path] for path in binding["required"]})
+        if derived != sorted(set(entry["strings"])):
+            raise Blocked("PAGE_STRINGS", {"page": entry["pageId"], "onlyDerived": sorted(set(derived) - set(entry["strings"]))[:10],
+                                           "onlyInProjection": sorted(set(entry["strings"]) - set(derived))[:10]})
+        bindings.append(binding)
+    return bindings
+
+
+def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.Path) -> dict:
     pages_dir = work / "pages"
     pages_dir.mkdir(parents=True)
     entries = []
     with sync_playwright() as pw:
         browser = pw.chromium.launch(args=CHROMIUM_ARGS)
         chromium_version = browser.version
-        context = browser.new_context(device_scale_factor=2)
+        # The tokens redefine every colour under prefers-color-scheme: dark; the document is always the light one.
+        context = browser.new_context(device_scale_factor=2, color_scheme="light")
         page = context.new_page()
         page.set_viewport_size({"width": A4_PX[0], "height": A4_PX[1]})
-        for entry in projection["pages"]:
+        for entry, binding in zip(projection["pages"], bindings):
             html_path = pages_dir / f"{entry['pageLabel']}-{entry['pageId']}.html"
             html_path.write_text(build_page(ctx, entry), encoding="utf-8")
             page.goto(html_path.as_uri())
@@ -372,8 +456,9 @@ def render_run(projection: dict, ctx: P.Context, work: pathlib.Path) -> dict:
             page.screenshot(path=str(png), clip={"x": 0, "y": 0, "width": A4_PX[0], "height": A4_PX[1]})
             page.pdf(path=str(pdf), width="210mm", height="297mm", print_background=True, margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
                      prefer_css_page_size=True)
-            dom = page.evaluate(DOM_QA, {"strings": entry["strings"], "glyphs": projection["displayGlyphs"], "separators": sorted(SEPARATORS)})
-            used_fonts = platform_fonts(context, page)
+            dom = page.evaluate(DOM_QA, {"values": binding["values"], "required": binding["required"], "glyphs": binding["glyphs"],
+                                         "displayGlyphs": projection["displayGlyphs"], "separators": sorted(SEPARATORS)})
+            used_fonts, latin_faces = platform_fonts(context, page)
             wx = page.evaluate(WX_QA) if entry["content"]["kind"] == "wuXing" else []
             # "unloaded" is a declared face the page never asked for; "error" is a face that failed and fell back.
             failed = [f for f in fonts if f["status"] == "error"]
@@ -381,6 +466,10 @@ def render_run(projection: dict, ctx: P.Context, work: pathlib.Path) -> dict:
             foreign = sorted(f"{family}|{ps}" for family, ps in used_fonts if ps not in ALLOWED_POSTSCRIPT_NAMES)
             if foreign:
                 findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign})
+            # Latin text (an element whose own text carries no CJK character) is set in Inter, never in the CJK face.
+            latin_foreign = sorted(f"{family}|{ps}" for family, ps in latin_faces if ps not in INTER_POSTSCRIPT_NAMES)
+            if latin_foreign:
+                findings.append({"code": "LATIN_SET_IN_CJK_FACE", "families": latin_foreign})
             entries.append({"pageId": entry["pageId"], "pageLabel": entry["pageLabel"], "png": png, "pdf": pdf, "pngSha256": sha256_file(png),
                             "textNodes": dom["textCount"], "glyphs": dom["glyphCount"], "platformFonts": sorted(f"{a}|{b}" for a, b in used_fonts), "findings": findings})
         browser.close()
@@ -458,19 +547,38 @@ def collect_fonts(obj, fonts: set, findings: list, page: int, seen: set) -> None
             collect_fonts(xobject, fonts, findings, page, seen)
 
 
-def platform_fonts(context, page) -> set:
-    """(family, postScriptName) of every platform font Chromium used to set the page's text (DevTools CSS domain)."""
+MARK_LATIN = r"""
+() => {
+  const cjk = /[\u2E80-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF]|[\u{20000}-\u{3FFFF}]/u; let marked = 0;
+  for (const el of document.querySelectorAll('.sheet *')) {
+    if (el.closest('svg')) continue;
+    const own = Array.from(el.childNodes).filter((x) => x.nodeType === 3).map((x) => x.textContent).join('').trim();
+    if (own.length > 0 && !cjk.test(own)) { el.setAttribute('data-qa-latin', ''); marked += 1; }
+  }
+  return marked;
+}
+"""
+
+
+def platform_fonts(context, page) -> tuple:
+    """The platform fonts Chromium used to set the page's text (DevTools CSS domain), as (family, postScriptName):
+    for the whole sheet, and for the elements whose own text is Latin only. Runs after the screenshot and the PDF,
+    because it marks those elements."""
+    page.evaluate(MARK_LATIN)
     cdp = context.new_cdp_session(page)
     try:
         cdp.send("DOM.enable")
         cdp.send("CSS.enable")
         root = cdp.send("DOM.getDocument", {"depth": 0})["root"]["nodeId"]
-        node_ids = cdp.send("DOM.querySelectorAll", {"nodeId": root, "selector": ".sheet, .sheet *"})["nodeIds"]
-        used = set()
-        for node_id in node_ids:
-            for font in cdp.send("CSS.getPlatformFontsForNode", {"nodeId": node_id})["fonts"]:
-                used.add((font["familyName"], font.get("postScriptName", "")))
-        return used
+
+        def fonts_of(selector: str) -> set:
+            found = set()
+            for node_id in cdp.send("DOM.querySelectorAll", {"nodeId": root, "selector": selector})["nodeIds"]:
+                for font in cdp.send("CSS.getPlatformFontsForNode", {"nodeId": node_id})["fonts"]:
+                    found.add((font["familyName"], font.get("postScriptName", "")))
+            return found
+
+        return fonts_of(".sheet, .sheet *"), fonts_of(".sheet [data-qa-latin]")
     finally:
         cdp.detach()
 
@@ -501,6 +609,10 @@ def renderer_source_digest() -> str:
 
 # ------------------------------------------------------------------ main
 
+def partial_dir(out_dir: pathlib.Path) -> pathlib.Path:
+    return out_dir.parent / f".{out_dir.name}.partial"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--projection", required=True)
@@ -514,8 +626,8 @@ def main() -> int:
         return 2
 
     out_dir = pathlib.Path(args.out).resolve()
-    if out_dir.exists():
-        print(f"refusing to write into an existing directory: {out_dir}", file=sys.stderr)
+    if out_dir.exists() or partial_dir(out_dir).exists():
+        print(f"refusing to write into an existing directory: {out_dir} (or its {partial_dir(out_dir).name})", file=sys.stderr)
         return 2
     projection_path = pathlib.Path(args.projection).resolve()
     projection_bytes = projection_path.read_bytes()
@@ -542,13 +654,16 @@ def render(args, out_dir: pathlib.Path, projection: dict, projection_bytes: byte
         checks.append({"id": "TEMPLATE_ASSET_PINS", "result": "PASS", "detail": [a["path"] for a in env["assets"]]})
         glyph_manifest = json.loads((ASSETS / "glyphs" / "manifest.json").read_text())
         checks.append({"id": "GLYPHS_AND_CJK", "result": "PASS", "detail": check_glyphs_and_cjk(projection, env["cjkPath"], glyph_manifest)})
+        bindings = page_bindings(projection)
+        checks.append({"id": "PAGE_STRINGS", "result": "PASS", "detail": {"pages": len(bindings), "printedPaths": sum(len(b["required"]) for b in bindings),
+                                                                         "glyphPaths": sum(len(b["glyphs"]) for b in bindings)}})
 
         base_css = (HERE / "base.css").read_text().replace("{{FONTS}}", (ASSETS / "fonts").as_uri())
         ctx = P.Context((ASSETS / "tokens.css").read_text(), base_css, (ASSETS / "glyphs" / "sprite.svg").read_text(),
                         (ASSETS / "brand" / "wordmark.svg").read_text(), glyph_manifest, projection["longFormStyles"],
                         projection["template"]["geometry"]["contentW"])
         for run in range(args.runs):
-            runs.append(render_run(projection, ctx, staging / f"run-{run + 1}"))
+            runs.append(render_run(projection, bindings, ctx, staging / f"run-{run + 1}"))
         last, previous = runs[-1], runs[-2]
         page_findings = [{"page": e["pageLabel"], "pageId": e["pageId"], **f} for e in last["entries"] for f in e["findings"]]
         if page_findings:
@@ -600,22 +715,26 @@ def render(args, out_dir: pathlib.Path, projection: dict, projection_bytes: byte
               "projectionStructuralHash": projection.get("structuralHash"), "checks": checks,
               "pages": [{"pageLabel": e["pageLabel"], "pageId": e["pageId"], "pngSha256": f"sha256:{e['pngSha256']}", "textNodes": e["textNodes"],
                          "displayGlyphs": e["glyphs"], "platformFonts": e["platformFonts"], "findings": e["findings"]} for e in (runs[-1]["entries"] if runs else [])]}
-    out_dir.mkdir(parents=True)
-    (out_dir / "qa-report.json").write_text(json.dumps(report, indent=1, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+    # Everything is written into a hidden sibling first and renamed into place last (one rename on one file
+    # system), so a crash half-way leaves no --out directory that looks like a result.
+    partial = partial_dir(out_dir)
+    partial.mkdir(parents=True)
+    (partial / "qa-report.json").write_text(json.dumps(report, indent=1, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
     if status == "PASSED" and manifest is not None:
-        shutil.copy2(runs[-1]["pdf"], out_dir / "bazodiac-reading.pdf")
-        shutil.copy2(staging / "contact-sheet.png", out_dir / "contact-sheet.png")
-        pages_out = out_dir / "pages"
+        shutil.copy2(runs[-1]["pdf"], partial / "bazodiac-reading.pdf")
+        shutil.copy2(staging / "contact-sheet.png", partial / "contact-sheet.png")
+        pages_out = partial / "pages"
         pages_out.mkdir()
         for e in runs[-1]["entries"]:
             shutil.copy2(e["png"], pages_out / e["png"].name)
-        (out_dir / "artifact-manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+        (partial / "artifact-manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
     elif runs:
         # Diagnostics only: the page images of the blocked run, never a PDF.
-        diagnostics = out_dir / "diagnostics"
+        diagnostics = partial / "diagnostics"
         diagnostics.mkdir()
         for e in runs[-1]["entries"]:
             shutil.copy2(e["png"], diagnostics / e["png"].name)
+    partial.rename(out_dir)
     print(json.dumps({"status": status, "out": str(out_dir), "checks": [(c["id"], c["result"]) for c in checks]}, ensure_ascii=False))
     if status != "PASSED":
         print(json.dumps(checks[-1], ensure_ascii=False, indent=1)[:4000], file=sys.stderr)

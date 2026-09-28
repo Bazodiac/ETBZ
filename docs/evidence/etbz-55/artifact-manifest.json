@@ -58,7 +58,7 @@
   "declared": true,
   "executedAt": "2026-09-28",
   "host": "Darwin arm64",
-  "repositoryHead": "85761db22a12a86391f6ddbb376d9c55ada0223e"
+  "repositoryHead": "f04b28eaba83c204075d11a7217496e7d2196a85"
  },
  "input": {
   "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
@@ -73,9 +73,9 @@
  "mimeType": "application/pdf",
  "pageCount": 29,
  "presentation": {
-  "fileSha256": "sha256:96b519e7d8c4161f8c9fcd1992bb6d4f6c88c59cfd69cff91b06f8886debb57d",
+  "fileSha256": "sha256:547daabd9fe3c0e6b5aee7b00fe1fcc4a95211fd9dfa84371d73c65b5c72ef5f",
   "projectionVersion": "bazodiac-presentation-projection.v1",
-  "structuralHash": "sha256:3cfcb2bc0a3680c42b4522a5831a54e0c1646a481d3eee74792d8c0dc18d35e3"
+  "structuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765"
  },
  "qa": {
   "checks": [
@@ -86,7 +86,7 @@
    },
    {
     "detail": {
-     "projection": "sha256:3cfcb2bc0a3680c42b4522a5831a54e0c1646a481d3eee74792d8c0dc18d35e3",
+     "projection": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
      "template": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
     },
     "id": "PROJECTION_IDENTITY",
@@ -125,9 +125,18 @@
    },
    {
     "detail": {
+     "glyphPaths": 111,
+     "pages": 29,
+     "printedPaths": 1449
+    },
+    "id": "PAGE_STRINGS",
+    "result": "PASS"
+   },
+   {
+    "detail": {
      "displayGlyphs": 116,
      "pages": 29,
-     "textNodes": 1638
+     "textNodes": 1608
     },
     "id": "PAGE_QA",
     "result": "PASS"
@@ -182,7 +191,7 @@
    "version": "136.0.7103.25"
   },
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:e8f14f5c5ecf5fe45ebac445dfd438a9041b2844c5acf7a8112507e539a8dfac"
+  "sourceSha256": "sha256:70da31bf66e90f2ac212d5d854be2c51b986c113b37e3836207fcfc5a0a42796"
  },
  "sha256": "sha256:7ae43ef3e855967323d015332299028380ae6c914c20eb1ad7e69773d17c67a8",
  "state": "ARTIFACT_READY",

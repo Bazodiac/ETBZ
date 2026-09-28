@@ -38,10 +38,12 @@ network or document) and a leaf. It is the only consumer of `visual/` and `skill
 through its index; the two leaf tests were widened by exactly this consumer and assert the
 allowance is used. The renderer places and draws what the projection lists and checks the
 result. Each page carries `strings`, exactly the strings that page prints (content, running
-chrome, page number); `customerStrings` is their union. The renderer's QA requires the text
-printed on a page to equal that page's `strings`: nothing added, nothing missing. Page views
-carry only what their page prints, so no identifier, slot id or classification is in any
-printed set.
+chrome, page number); `customerStrings` is their union. Page views no longer carry the
+fields no page prints as text (the Lexicon family glosses, the full Wu Xing vector on the
+glance page, the brand as text where only the wordmark is drawn); the identifiers and
+classifications they still carry (relation codes, families, phases, roles) are in no printed
+set, which a unit test proves by value. The renderer binds every printed string and drawn
+glyph to its projection path and checks each page against it (section 6).
 
 ### 2. Input
 
@@ -57,8 +59,10 @@ printed set.
 
 The payload is refused (`PRESENTATION_INPUT_INVALID`) if a text needs normalising or hides
 something: a Unicode control or format character (a bell, a zero-width space, a soft
-hyphen, a bidi override, a byte-order mark), any whitespace other than the plain space, a
-double space, or padding.
+hyphen, a bidi override, a byte-order mark), a lone surrogate, a private-use or unassigned
+code point, any default-ignorable code point (a variation selector, a Hangul filler), any
+whitespace other than the plain space, a double space, or padding. The display name, the
+one string from the end user and printed on every page, is held to the same rule.
 
 ### 3. One template: `bazodiac-final-template@1.0.0`
 
@@ -151,25 +155,44 @@ Before it writes a PDF it checks:
   glyph manifest) equal `ASSET-INTEGRITY.json`; the CJK face equals its pin, and no other
   file in the font directories provides its family or PostScript name;
 - glyph and CJK coverage, and the one-em CJK advance;
-- a page that cannot be built blocks (`PAGE_BUILD`);
-- per-page DOM QA: the printed text equals the page's projection strings, no generated
-  `::before`/`::after` content, no invisible text, glyphs limited to projection glyphs,
-  nothing outside the sheet, clipped by an ancestor or out of its painted container, no
-  line wider than its measure, no overlap, the Wu Xing medallion clear, every web font
-  loaded;
+- the paths each page must print and draw (`page_binding`, a Python mirror of the
+  projection's printed-field selection) yield exactly the page's `strings`
+  (`PAGE_STRINGS`); a page that cannot be built blocks (`PAGE_BUILD`), and so does any
+  unbound value or unknown classification in a builder;
+- slot binding: the page is bound before it is built, so every text node carries the path
+  of the projection value it prints and every glyph the path of its character. The QA
+  requires each to equal the value at its path, to sit inside the slot of its own entry (a
+  pillar, a phase block, a fact row), and every path the page must print or draw to appear.
+  A wrong key, a value shown in another entry's slot and a dropped copy of a repeated value
+  all block;
+- visibility: no text without a box, hidden, transparent, clipped, masked, filtered,
+  scaled down, occluded by a painted element, below 11 px or below a 1.5 contrast ratio
+  against the surface under it; no generated `::before`/`::after`/`::marker` content; no
+  element that can carry text of its own (images, form controls, lists, SVG text); no
+  non-breaking pair split across lines;
+- geometry: nothing outside the sheet, clipped by an ancestor or out of its painted
+  container, no line wider than its measure, no overlap, the Wu Xing medallion clear, every
+  web font loaded;
 - a DevTools platform-font scan proving every character was set in one of exactly six
   PostScript faces: `Inter-Regular`, `Inter-Medium`, `Inter-SemiBold`,
-  `InterDisplay-Light`, `InterDisplay-Regular`, `NotoSansCJKsc-Regular`;
+  `InterDisplay-Light`, `InterDisplay-Regular`, `NotoSansCJKsc-Regular`, and every element
+  whose own text is Latin only in an Inter face;
 - PDF readback: magic, page count, A4 media boxes, embedded fonts limited to the Inter
   faces by exact name (the CJK face embeds as Type3, see below);
 - byte-identical PDFs and page images across the last two of three runs.
 
-A blocked run writes the QA report and diagnostics, never a PDF.
+Chromium renders with the light colour scheme pinned (the tokens redefine every colour
+under a dark scheme). A blocked run writes the QA report and diagnostics, never a PDF, and
+every run writes into a hidden sibling directory that is renamed into place only when
+complete.
 `tools/pdf-renderer/qa/run_canaries.py` breaks each gate once, runs the real renderer
-against it, and records the result in `renderer-canaries.json`: 25 canaries, each of
+against it, and records the result in `renderer-canaries.json`: 39 canaries, each of
 which must end BLOCKED at the expected check with the expected finding, exit 1 and no
-PDF or manifest. The record is bound to the renderer source digest, and the contract
-suite requires every canary to hold on the same digest the manifest states.
+PDF or manifest. The record is bound to the renderer source digest and to the digest of
+the canary source; the contract suite pins every canary's expected check and finding,
+and requires every canary to hold on the same renderer digest the manifest states. The
+same record carries the differential test of the Python hash mirror against the
+repository's TypeScript `canonicalJson` on a fixed value set.
 
 **The informational CJK face** (ADR 0009's open point) is pinned to
 `NotoSansCJK-Regular.ttc`, `sha256:b76b0433…690a`, byte-identical to upstream
@@ -245,6 +268,14 @@ are a declaration.
    prints the Lexicon wording for every relation; the ones absent from the chart carry the
    "Nicht vorhanden" mark of the legend. The rows are Lexicon content, the marks are chart
    values.
+8. **Slot binding does not bind geometry.** A builder that swaps two whole entries (the
+   fire block drawn at the wood position with wood's colour, label and value) keeps every
+   value in its own slot, so the QA cannot see it; positions are template code
+   (`WX_RING`, the page layouts), reviewed, not measured. Colour classes are taken from
+   the entry's phase, not from the projection's `paint`, which the renderer does not read.
+9. **The rival-face scan covers the listed font directories.** A face with the pinned
+   PostScript name in `/System/Library/Fonts` or activated by a font manager would not be
+   detected; on the measured host none exists.
 
 ## What this ADR does not decide
 

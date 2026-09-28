@@ -145,6 +145,22 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   },
   {
+   "expectedCheck": "PAGE_STRINGS",
+   "expectedCode": null,
+   "gate": "page strings",
+   "id": "page-strings",
+   "manifestWritten": false,
+   "mutation": "a page's strings list a string no field of the page carries (rehashed)",
+   "observed": {
+    "check": "PAGE_STRINGS",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
    "expectedCheck": "PAGE_BUILD",
    "expectedCode": null,
    "gate": "page build",
@@ -242,7 +258,8 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "TEXT_INVISIBLE"
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -261,7 +278,8 @@
     "check": "PAGE_QA",
     "codes": [
      "CLIPPED_BY_ANCESTOR",
-     "OVERLAP"
+     "OVERLAP",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -299,7 +317,8 @@
     "codes": [
      "CLIPPED_BY_ANCESTOR",
      "OUTSIDE_SHEET",
-     "OVERLAP"
+     "OVERLAP",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -336,7 +355,8 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "OVERLAP"
+     "OVERLAP",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -373,6 +393,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "LATIN_SET_IN_CJK_FACE",
      "TEXT_SET_IN_UNPINNED_FACE"
     ],
     "exitCode": 1,
@@ -392,7 +413,252 @@
     "check": "PAGE_QA",
     "codes": [
      "FONT_LOAD_FAILED",
+     "GROUP_WRAPPED",
+     "LATIN_SET_IN_CJK_FACE",
      "OVERLAP"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OUT_OF_SLOT",
+   "gate": "fact in its slot",
+   "id": "wrong-key",
+   "manifestWritten": false,
+   "mutation": "the year branch cell shows its stem's phase label, a value printed elsewhere on the page",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_OUT_OF_SLOT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_MISSING_FROM_PAGE",
+   "gate": "renderer drops no text",
+   "id": "drop-copy",
+   "manifestWritten": false,
+   "mutation": "the month branch's phase label is left out; the same word is printed elsewhere",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OUT_OF_SLOT",
+   "gate": "fact in its slot",
+   "id": "wu-xing-swap",
+   "manifestWritten": false,
+   "mutation": "two phases' Wu Xing values swap places",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_OUT_OF_SLOT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_OUT_OF_SLOT",
+   "gate": "fact in its slot",
+   "id": "glyph-wrong-slot",
+   "manifestWritten": false,
+   "mutation": "the year stem disc draws the branch character",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_MISSING_FROM_PAGE",
+     "GLYPH_OUT_OF_SLOT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "hidden-display-none",
+   "manifestWritten": false,
+   "mutation": "the method note is display:none",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "hidden-clip-path",
+   "manifestWritten": false,
+   "mutation": "the method note is clipped away by clip-path",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_SET_IN_UNPINNED_FACE",
+   "gate": "font pins",
+   "id": "prefix-face",
+   "manifestWritten": false,
+   "mutation": "the method note is set in a face named Inter-Fake (allowed prefix, not an allowed name)",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "LATIN_SET_IN_CJK_FACE",
+     "TEXT_SET_IN_UNPINNED_FACE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "LATIN_SET_IN_CJK_FACE",
+   "gate": "font pins",
+   "id": "latin-in-cjk-face",
+   "manifestWritten": false,
+   "mutation": "German text is set in the CJK face",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "LATIN_SET_IN_CJK_FACE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GROUP_WRAPPED",
+   "gate": "no split pair",
+   "id": "group-wrapped",
+   "manifestWritten": false,
+   "mutation": "the non-breaking groups are allowed to wrap",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GROUP_WRAPPED",
+     "OVERFLOWS_CONTAINER",
+     "OVERLAP",
+     "TEXT_OCCLUDED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OCCLUDED",
+   "gate": "no hidden text",
+   "id": "occluded-text",
+   "manifestWritten": false,
+   "mutation": "an opaque panel is painted over the method note",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_OCCLUDED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_LOW_CONTRAST",
+   "gate": "no hidden text",
+   "id": "low-contrast",
+   "manifestWritten": false,
+   "mutation": "the method note is set in the paper colour",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_LOW_CONTRAST"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "FORBIDDEN_ELEMENT",
+   "gate": "renderer adds no text",
+   "id": "forbidden-element",
+   "manifestWritten": false,
+   "mutation": "a list element appears on the page",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "FORBIDDEN_ELEMENT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_TOO_SMALL",
+   "gate": "no hidden text",
+   "id": "text-too-small",
+   "manifestWritten": false,
+   "mutation": "the method note is set at 6 pt, below the template minimum",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_TOO_SMALL"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -435,16 +701,25 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   }
  ],
+ "canarySourceSha256": "sha256:1857e739adca592201a570ee2c479782007602fb1a1aed27a6603b3be93c903e",
  "canaryVersion": "bazodiac-renderer-canaries.v1",
+ "canonicalJsonMirror": {
+  "equal": true,
+  "keys": 7,
+  "nodeExitCode": 0,
+  "numbers": 719,
+  "sha256": "sha256:09191c36aa9c3e0f2d4fea4a43cfb0b98e595e61d07b3e593de85fdb3e8ab5d4",
+  "strings": 9
+ },
  "executedAt": "2026-09-28",
  "host": "Darwin arm64",
- "projectionStructuralHash": "sha256:3cfcb2bc0a3680c42b4522a5831a54e0c1646a481d3eee74792d8c0dc18d35e3",
+ "projectionStructuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
  "renderer": {
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:e8f14f5c5ecf5fe45ebac445dfd438a9041b2844c5acf7a8112507e539a8dfac"
+  "sourceSha256": "sha256:70da31bf66e90f2ac212d5d854be2c51b986c113b37e3836207fcfc5a0a42796"
  },
  "summary": {
-  "blockedAsExpected": 25,
-  "canaries": 25
+  "blockedAsExpected": 39,
+  "canaries": 39
  }
 }

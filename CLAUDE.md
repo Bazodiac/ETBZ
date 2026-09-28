@@ -20,7 +20,7 @@ README on `main` still describes ETBZ-9; the code and `docs/adr/` are authoritat
 npm ci                      # deterministic install (lockfile drift fails here)
 npm run typecheck           # tsc --noEmit, strict
 npm run lint                # eslint, zero warnings: recommended rule sets + four type-aware defect rules, no formatting rules
-npm test                    # all five suites (1626 tests with ETBZ-55; the architecture leaf tests import dependency-direction.test.ts, so its 16 tests are also registered inside each of them)
+npm test                    # all five suites (1629 tests with ETBZ-55; the architecture leaf tests import dependency-direction.test.ts, so its 16 tests are also registered inside each of them)
 npm run build               # tsc -p tsconfig.build.json -> dist/
 ETBZ_ENV=local LOG_LEVEL=info npm start     # http://localhost:8120 — serves /health and /ready only
 ```
@@ -170,9 +170,10 @@ paginator proven line for line against its recorded layouts and against
 `tests/support/etbz55-paginator-oracle.json` (built by the canonical Python paginator). It is the only
 consumer of `visual/` and `skill/` (both leaf tests name it), and it is itself a leaf. The PDF is drawn by the
 local renderer `tools/pdf-renderer/` (Python + Chromium, never in CI, no npm dependency), which decides nothing,
-verifies the projection and template hashes, prints on every page exactly that page's `strings` and writes the
-ArtifactManifest only when its QA passes; `tools/pdf-renderer/qa/run_canaries.py` makes each renderer gate fail
-once and records it. The committed PDF, manifest, projection and canary record under `docs/evidence/etbz-55/`
+verifies the projection and template hashes, binds every printed string and drawn glyph to its projection path
+(the QA requires each to be the value at its path, in its own entry's slot, visible, and every required path to
+appear) and writes the ArtifactManifest only when its QA passes; `tools/pdf-renderer/qa/run_canaries.py` makes each
+renderer gate fail once and records it. The committed PDF, manifest, projection and canary record under `docs/evidence/etbz-55/`
 are re-derived by `tests/contract/etbz55-presentation-evidence.contract.test.ts`. Any change to
 `tools/pdf-renderer/*.py|*.css` changes the renderer digest: re-render and re-run the canaries.
 

@@ -18,7 +18,11 @@ evidence. Nothing under `src/` imports this directory and it adds no npm depende
 Every page, value, label and long-form line position comes from the projection. The
 page builders (`pages.py`) port the page layouts of the approved ETBZ-49 customer page
 family and print each projection string in its own element; the only literal text they
-emit is the `·` separator. The long-form lines are placed absolutely at the centipoint
+emit is the `·` separator. Before a page is built it is bound: every string becomes a
+value that carries its projection path, and the builders can print (`t()`) and draw
+(`Context.glyph()`) only bound values, each tagged with `data-p`, and mark every
+repeated entry as a slot (`data-slot`). An unbound value or an unknown classification (a
+tag kind, a presence mark, a text style) raises, which blocks the render as `PAGE_BUILD`. The long-form lines are placed absolutely at the centipoint
 positions the projection computed — the browser never breaks a line. Strings that belong
 together (a polarity and its phase, a phase and its value) sit in one non-breaking group,
 and a separator after which a line may wrap carries a `<wbr>`.
@@ -39,17 +43,28 @@ and a separator after which a line may wrap carries a `<wbr>`.
 3. **Glyphs and CJK.** Every display glyph is one of the 27 vector assets; every CJK
    character the projection sets as text is covered by the pinned *SC* face and is one
    em wide — the advance the long-form layout measured.
-4. **Page build.** A page no builder can build (an unknown kind, a missing field, a
-   glyph outside the contract) blocks as `PAGE_BUILD`.
-5. **Page QA** (per page, in Chromium): the printed text equals the page's projection
-   `strings` exactly — nothing added, nothing missing; no `::before`/`::after` content;
-   no invisible text (transparent, hidden, zero opacity, tiny); every display glyph is a
-   projection glyph; nothing leaves the sheet, is clipped by an ancestor or runs out of
-   its painted container; no long-form line is wider than its measure; no two text boxes
-   overlap; the Wu Xing medallion stays clear; no web font failed; and — through the
-   DevTools `CSS.getPlatformFontsForNode` — every character was set in one of exactly six
-   PostScript faces (`Inter-Regular`, `Inter-Medium`, `Inter-SemiBold`,
-   `InterDisplay-Light`, `InterDisplay-Regular`, `NotoSansCJKsc-Regular`).
+4. **Page strings and page build.** The paths each page must print (`page_binding`)
+   yield exactly the page's `strings` (`PAGE_STRINGS`). A page no builder can build (an
+   unknown kind, a missing field, an unbound value, a glyph outside the contract) blocks
+   as `PAGE_BUILD`.
+5. **Page QA** (per page, in Chromium, light colour scheme pinned):
+   - binding: every text node is the projection value at its `data-p` path and sits in
+     its own entry's slot; every glyph is the character at its path, in its slot; every
+     path the page must print or draw appears — so a wrong key, a value in another
+     entry's slot, a dropped copy of a repeated value and an extra string all block;
+   - visibility: no text without a box, hidden, transparent, clipped, masked, filtered,
+     scaled down, covered by a painted element, below 11 px, or below a 1.5 contrast
+     ratio against the surface under it; no `::before`/`::after`/`::marker` content; no
+     image, form control, list or SVG text on the page; no non-breaking pair split
+     across lines;
+   - geometry: nothing leaves the sheet, is clipped by an ancestor or runs out of its
+     painted container; no long-form line is wider than its measure; no two text boxes
+     overlap; the Wu Xing medallion stays clear; no web font failed;
+   - faces, through the DevTools `CSS.getPlatformFontsForNode`: every character was set
+     in one of exactly six PostScript faces (`Inter-Regular`, `Inter-Medium`,
+     `Inter-SemiBold`, `InterDisplay-Light`, `InterDisplay-Regular`,
+     `NotoSansCJKsc-Regular`), and every element whose own text is Latin only in an
+     Inter face.
 6. **PDF readback.** `%PDF-` magic, page count equal to the projection, A4 media boxes,
    every font embedded and every named font one of the Inter faces (Chromium sets the
    CFF-based CJK face as Type3 glyph procedures, which must carry a ToUnicode map; the
@@ -58,19 +73,23 @@ and a separator after which a line may wrap carries a `<wbr>`.
    warms the font caches); the last two PDFs and all page images must be byte-identical.
 
 A failed check writes `qa-report.json` with `BLOCKED` and the page images under
-`diagnostics/` — never a PDF. There is no partial artefact. The staging directory is
-removed however the run ends.
+`diagnostics/` — never a PDF. There is no partial artefact: every run writes into a
+hidden sibling of `--out` and renames it into place only when complete, and the staging
+directory is removed however the run ends.
 
 ## Proving the gates can fail
 
 `qa/run_canaries.py` breaks each gate once — the projection, a pin, the host fonts or
 one page builder — and runs the real renderer against it in a child process. Each of
-the 25 canaries must end `BLOCKED` at the expected check with the expected finding, exit
-1, and leave no PDF and no manifest. The results go to
-`docs/evidence/etbz-55/renderer-canaries.json`, bound to the renderer source digest; the
-contract suite requires every canary to hold on the digest the committed manifest states.
-Any change to `*.py` or `*.css` in this directory changes that digest, so re-render and
-re-run the canaries.
+the 39 canaries must end `BLOCKED` at the expected check with the expected finding,
+exit 1, and leave no PDF and no manifest. The results go to
+`docs/evidence/etbz-55/renderer-canaries.json`, bound to the renderer source digest and
+to the digest of `qa/run_canaries.py`, together with the differential test of the
+Python hash mirror against the TypeScript `canonicalJson`. The contract suite pins every
+canary's expected check and finding and requires every canary to hold on the digest the
+committed manifest states. Any change to `*.py` or `*.css` in this directory changes the
+renderer digest, and any change to `qa/run_canaries.py` the canary digest: re-render
+and re-run the canaries.
 
 ```sh
 "$PY" tools/pdf-renderer/qa/run_canaries.py --executed-at <YYYY-MM-DD>

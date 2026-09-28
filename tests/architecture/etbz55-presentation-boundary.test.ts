@@ -18,7 +18,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { extractImportSpecifiers } from './dependency-direction.test.js';
+import { UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
 
 const REPO_ROOT = process.cwd();
 const SRC_ROOT = resolve(REPO_ROOT, 'src');
@@ -46,7 +46,9 @@ function codeOnly(source: string): string {
     .join('\n');
 }
 
-const PRESENTATION_FILES = listFiles(PRESENTATION_ROOT, '.ts');
+// Every file in the module, whatever its extension: a .mts beside the .ts files would otherwise be invisible.
+const MODULE_FILES = listFiles(PRESENTATION_ROOT, '');
+const PRESENTATION_FILES = MODULE_FILES.filter((file) => /\.(ts|mts|cts|tsx)$/u.test(file));
 
 /** True when `path` is `root` itself or lies inside it - whole path segments, never a name prefix. */
 const within = (path: string, root: string): boolean => path === root || path.startsWith(root + sep);
@@ -55,6 +57,8 @@ const within = (path: string, root: string): boolean => path === root || path.st
 const target = (file: string, specifier: string): string | null => (specifier.startsWith('.') ? resolve(dirname(file), specifier) : null);
 
 const referencesPresentation = (file: string, specifier: string): boolean => {
+  // An import the guard cannot resolve statically counts as a reference: the leaf check fails closed.
+  if (specifier === UNRESOLVABLE_DYNAMIC_IMPORT) return true;
   const resolved = target(file, specifier);
   if (resolved !== null) return within(resolved.replace(/\.js$/u, ''), PRESENTATION_ROOT) || within(resolved, PRESENTATION_ROOT);
   return specifier.includes('application/presentation');
@@ -74,8 +78,8 @@ const ALLOWED_TARGETS = new Set(
 );
 
 describe('ETBZ-55: the presentation projection is a pure leaf', () => {
-  it('ships the declared modules', () => {
-    expect(PRESENTATION_FILES.map((file) => relative(PRESENTATION_ROOT, file)).sort()).toEqual([
+  it('ships the declared modules, and no other file of any extension', () => {
+    expect(MODULE_FILES.map((file) => relative(PRESENTATION_ROOT, file)).sort()).toEqual([
       'errors.ts',
       'font-metrics.ts',
       'index.ts',
@@ -114,6 +118,7 @@ describe('ETBZ-55: the presentation projection is a pure leaf', () => {
     expect(within(join(PRESENTATION_ROOT, 'a.ts'), PRESENTATION_ROOT)).toBe(true);
     expect(referencesPresentation(join(SRC_ROOT, 'application', 'x.ts'), './presentation/index.js')).toBe(true);
     expect(referencesPresentation(join(SRC_ROOT, 'application', 'x.ts'), './presentation-x/index.js')).toBe(false);
+    expect(referencesPresentation(join(SRC_ROOT, 'http', 'x.ts'), UNRESOLVABLE_DYNAMIC_IMPORT)).toBe(true);
   });
 
   it.each(['app', 'http', 'adapters', 'domain'])('is imported by no module under src/%s', (directory) => {
