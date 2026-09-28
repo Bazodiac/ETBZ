@@ -1,0 +1,68 @@
+{
+ "pageId": "longform-general-education-chapter-v1-p3",
+ "surface": "customer",
+ "pageNumber": 14,
+ "family": "long-form",
+ "donors": {
+  "primary": "V2 agent_x_ETBZ-6.png (editorial rhythm)",
+  "secondary": [
+   "V6 deterministic pagination",
+   "V5 page budgets / text floor",
+   "V4 palette"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "chapter.longForm",
+   "visualType": "longFormBlocks",
+   "consumedFactKinds": [
+    "approved_interpretation:chapter"
+   ],
+   "fixture": "bazodiac-final/fixture/long-form/general-education-chapter-v1",
+   "derivedNothing": true
+  }
+ ],
+ "glyphRefs": [
+  {
+   "ch": "辛",
+   "slug": "xin",
+   "sha256": "sha256:46d14e22373f228e5e1581d6880db61ca2731221f4d4e08ca7da2c24f4f82327"
+  }
+ ],
+ "components": [
+  {
+   "id": "ch.p8#5",
+   "kind": "paragraph",
+   "lines": 3,
+   "topCp": 11904,
+   "xCp": 5669
+  },
+  {
+   "id": "longform.referencePanel",
+   "kind": "chapterReference",
+   "topCp": 18989,
+   "reason": "final page fill < 60%"
+  }
+ ],
+ "layout": {
+  "pageNumber": 3,
+  "template": "continuation",
+  "fragments": [
+   {
+    "blockId": "ch.p8",
+    "kind": "paragraph",
+    "fragmentIndex": 5,
+    "continuedFromPreviousPage": true,
+    "continuesOnNextPage": false,
+    "xCp": 5669,
+    "topCp": 11904,
+    "widthCp": 29480,
+    "heightCp": 4251,
+    "styleId": "body",
+    "lineCount": 3
+   }
+  ],
+  "usedBottomCp": 16155
+ },
+ "paginationSha256": "sha256:4c60d30221575e5655936c49b9f4be20a6b016ac5af2770d5a29a7ff0b6174eb"
+}

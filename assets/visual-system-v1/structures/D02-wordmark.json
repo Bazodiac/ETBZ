@@ -1,0 +1,28 @@
+{
+ "pageId": "dev-wordmark",
+ "surface": "developer",
+ "pageNumber": 2,
+ "family": "developer-proof",
+ "donors": {
+  "primary": "V4 wordmark variant B (gold point + tracked caps)",
+  "secondary": [
+   "V6 wordmark contract (static, chart-independent)"
+  ]
+ },
+ "factSlotBindings": [],
+ "glyphRefs": [
+  {
+   "ch": "辛",
+   "slug": "xin",
+   "sha256": "sha256:46d14e22373f228e5e1581d6880db61ca2731221f4d4e08ca7da2c24f4f82327"
+  }
+ ],
+ "components": [
+  {
+   "id": "dev.wordmark",
+   "kind": "wordmarkContract",
+   "asset": "assets/wordmark.svg",
+   "sha256": "sha256:c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1"
+  }
+ ]
+}

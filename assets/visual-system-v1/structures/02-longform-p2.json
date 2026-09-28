@@ -1,0 +1,94 @@
+{
+ "pageId": "longform-pagination-stress-v1-p2",
+ "surface": "developer",
+ "pageNumber": 2,
+ "family": "long-form",
+ "donors": {
+  "primary": "V2 agent_x_ETBZ-6.png (editorial rhythm)",
+  "secondary": [
+   "V6 deterministic pagination",
+   "V5 page budgets / text floor",
+   "V4 palette"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "chapter.longForm",
+   "visualType": "longFormBlocks",
+   "consumedFactKinds": [],
+   "fixture": "etbz43/fixture/long-form/pagination-stress-v1",
+   "derivedNothing": true
+  }
+ ],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "longform.p4#0",
+   "kind": "paragraph",
+   "lines": 10,
+   "topCp": 11904,
+   "xCp": 5669
+  },
+  {
+   "id": "longform.p5#0",
+   "kind": "paragraph",
+   "lines": 10,
+   "topCp": 27491,
+   "xCp": 5669
+  },
+  {
+   "id": "longform.p6#0",
+   "kind": "paragraph",
+   "lines": 10,
+   "topCp": 43078,
+   "xCp": 5669
+  }
+ ],
+ "layout": {
+  "pageNumber": 2,
+  "template": "continuation",
+  "fragments": [
+   {
+    "blockId": "longform.p4",
+    "kind": "paragraph",
+    "fragmentIndex": 0,
+    "continuedFromPreviousPage": false,
+    "continuesOnNextPage": false,
+    "xCp": 5669,
+    "topCp": 11904,
+    "widthCp": 29480,
+    "heightCp": 14170,
+    "styleId": "body",
+    "lineCount": 10
+   },
+   {
+    "blockId": "longform.p5",
+    "kind": "paragraph",
+    "fragmentIndex": 0,
+    "continuedFromPreviousPage": false,
+    "continuesOnNextPage": false,
+    "xCp": 5669,
+    "topCp": 27491,
+    "widthCp": 29480,
+    "heightCp": 14170,
+    "styleId": "body",
+    "lineCount": 10
+   },
+   {
+    "blockId": "longform.p6",
+    "kind": "paragraph",
+    "fragmentIndex": 0,
+    "continuedFromPreviousPage": false,
+    "continuesOnNextPage": false,
+    "xCp": 5669,
+    "topCp": 43078,
+    "widthCp": 29480,
+    "heightCp": 14170,
+    "styleId": "body",
+    "lineCount": 10
+   }
+  ],
+  "usedBottomCp": 57248
+ },
+ "paginationSha256": "sha256:e522317a14e4003832b0fb4b4591534d8674d0b5d252d099c22492329e9bf18d"
+}

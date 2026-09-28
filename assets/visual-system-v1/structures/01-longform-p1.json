@@ -1,0 +1,199 @@
+{
+ "pageId": "longform-pagination-stress-v1-p1",
+ "surface": "developer",
+ "pageNumber": 1,
+ "family": "long-form",
+ "donors": {
+  "primary": "V2 agent_x_ETBZ-6.png (editorial rhythm)",
+  "secondary": [
+   "V6 deterministic pagination",
+   "V5 page budgets / text floor",
+   "V4 palette"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "chapter.longForm",
+   "visualType": "longFormBlocks",
+   "consumedFactKinds": [],
+   "fixture": "etbz43/fixture/long-form/pagination-stress-v1",
+   "derivedNothing": true
+  }
+ ],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "longform.header",
+   "kind": "openerHeader",
+   "heightCp": 14170
+  },
+  {
+   "id": "longform.p1#0",
+   "kind": "paragraph",
+   "lines": 14,
+   "topCp": 20406,
+   "xCp": 5669
+  },
+  {
+   "id": "longform.p1#14",
+   "kind": "paragraph",
+   "lines": 2,
+   "topCp": 20406,
+   "xCp": 30614
+  },
+  {
+   "id": "longform.p2#0",
+   "kind": "paragraph",
+   "lines": 14,
+   "topCp": 24657,
+   "xCp": 30614
+  },
+  {
+   "id": "longform.insight#0",
+   "kind": "keyInsight",
+   "lines": 5,
+   "topCp": 45912,
+   "xCp": 5669
+  },
+  {
+   "id": "longform.p3#0",
+   "kind": "paragraph",
+   "lines": 7,
+   "topCp": 58665,
+   "xCp": 5669
+  },
+  {
+   "id": "longform.p3#7",
+   "kind": "paragraph",
+   "lines": 6,
+   "topCp": 58665,
+   "xCp": 30614
+  },
+  {
+   "id": "longform.quote#0",
+   "kind": "pullQuote",
+   "lines": 1,
+   "topCp": 70001,
+   "xCp": 5669
+  }
+ ],
+ "layout": {
+  "pageNumber": 1,
+  "template": "opener",
+  "fragments": [
+   {
+    "blockId": "longform.p1",
+    "kind": "paragraph",
+    "fragmentIndex": 0,
+    "continuedFromPreviousPage": false,
+    "continuesOnNextPage": true,
+    "xCp": 5669,
+    "topCp": 20406,
+    "widthCp": 23244,
+    "heightCp": 19838,
+    "styleId": "body",
+    "lineCount": 14
+   },
+   {
+    "blockId": "longform.p1",
+    "kind": "paragraph",
+    "fragmentIndex": 14,
+    "continuedFromPreviousPage": true,
+    "continuesOnNextPage": false,
+    "xCp": 30614,
+    "topCp": 20406,
+    "widthCp": 23244,
+    "heightCp": 2834,
+    "styleId": "body",
+    "lineCount": 2
+   },
+   {
+    "blockId": "longform.p2",
+    "kind": "paragraph",
+    "fragmentIndex": 0,
+    "continuedFromPreviousPage": false,
+    "continuesOnNextPage": false,
+    "xCp": 30614,
+    "topCp": 24657,
+    "widthCp": 23244,
+    "heightCp": 19838,
+    "styleId": "body",
+    "lineCount": 14
+   },
+   {
+    "blockId": "longform.insight",
+    "kind": "keyInsight",
+    "fragmentIndex": 0,
+    "continuedFromPreviousPage": false,
+    "continuesOnNextPage": false,
+    "xCp": 5669,
+    "topCp": 45912,
+    "widthCp": 48189,
+    "heightCp": 11336,
+    "styleId": "keyInsight",
+    "boxCp": {
+     "xCp": 5669,
+     "yCp": 45912,
+     "widthCp": 48189,
+     "heightCp": 11336
+    },
+    "meta": {
+     "kind": "keyInsight",
+     "pad": 1400
+    },
+    "lineCount": 5
+   },
+   {
+    "blockId": "longform.p3",
+    "kind": "paragraph",
+    "fragmentIndex": 0,
+    "continuedFromPreviousPage": false,
+    "continuesOnNextPage": true,
+    "xCp": 5669,
+    "topCp": 58665,
+    "widthCp": 23244,
+    "heightCp": 9919,
+    "styleId": "body",
+    "lineCount": 7
+   },
+   {
+    "blockId": "longform.p3",
+    "kind": "paragraph",
+    "fragmentIndex": 7,
+    "continuedFromPreviousPage": true,
+    "continuesOnNextPage": false,
+    "xCp": 30614,
+    "topCp": 58665,
+    "widthCp": 23244,
+    "heightCp": 8502,
+    "styleId": "body",
+    "lineCount": 6
+   },
+   {
+    "blockId": "longform.quote",
+    "kind": "pullQuote",
+    "fragmentIndex": 0,
+    "continuedFromPreviousPage": false,
+    "continuesOnNextPage": false,
+    "xCp": 5669,
+    "topCp": 70001,
+    "widthCp": 48189,
+    "heightCp": 5668,
+    "styleId": "pullQuote",
+    "boxCp": {
+     "xCp": 5669,
+     "yCp": 70001,
+     "widthCp": 48189,
+     "heightCp": 5668
+    },
+    "meta": {
+     "kind": "pullQuote",
+     "rule": true
+    },
+    "lineCount": 1
+   }
+  ],
+  "usedBottomCp": 75669
+ },
+ "paginationSha256": "sha256:e522317a14e4003832b0fb4b4591534d8674d0b5d252d099c22492329e9bf18d"
+}

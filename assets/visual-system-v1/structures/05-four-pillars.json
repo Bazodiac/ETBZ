@@ -1,0 +1,195 @@
+{
+ "pageId": "four-pillars",
+ "surface": "customer",
+ "pageNumber": 5,
+ "family": "chart-foundation",
+ "donors": {
+  "primary": "V4 agent-x-etbz-5.png",
+  "secondary": [
+   "V6 region-scoped colour guard",
+   "V5 neutral pillar ground + gold selection"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "pillars.stem[*]",
+   "consumedFactKinds": [
+    "pillar_stem",
+    "stem_phase",
+    "stem_polarity"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  },
+  {
+   "slotId": "pillars.branch[*]",
+   "consumedFactKinds": [
+    "pillar_branch",
+    "branch_phase",
+    "branch_animal_label"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  },
+  {
+   "slotId": "pillars.hidden[*]",
+   "consumedFactKinds": [
+    "hidden_stem",
+    "hidden_stem_phase",
+    "hidden_stem_qi_role"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  },
+  {
+   "slotId": "pillars.tenGod[*]",
+   "consumedFactKinds": [
+    "ten_god_relation"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  }
+ ],
+ "glyphRefs": [
+  {
+   "ch": "丁",
+   "slug": "ding",
+   "sha256": "sha256:24cccc2672e9ee726e2c4bcb1ec291302fbf0cd88d34cfa5dc7eec792dfb6846"
+  },
+  {
+   "ch": "己",
+   "slug": "ji",
+   "sha256": "sha256:58f9dedf49d75d8f7ec610af044f31450a4fb2a8f9d3e846159811b67c4409e2"
+  },
+  {
+   "ch": "庚",
+   "slug": "geng",
+   "sha256": "sha256:080c23dd91cdec84393a66552638dd337d20c9f365b9ee0cc9b6ae3b52f7119a"
+  },
+  {
+   "ch": "午",
+   "slug": "wu-branch",
+   "sha256": "sha256:65b89a5671886182bc6abf6757d98706de3d5c04cd74e4adf035b75de6c9ec60"
+  },
+  {
+   "ch": "丁",
+   "slug": "ding",
+   "sha256": "sha256:24cccc2672e9ee726e2c4bcb1ec291302fbf0cd88d34cfa5dc7eec792dfb6846"
+  },
+  {
+   "ch": "己",
+   "slug": "ji",
+   "sha256": "sha256:58f9dedf49d75d8f7ec610af044f31450a4fb2a8f9d3e846159811b67c4409e2"
+  },
+  {
+   "ch": "壬",
+   "slug": "ren",
+   "sha256": "sha256:dada5e5110375a51efd295e3806fa9b8d01abefd8e34de6e36bef5d7a5cc315d"
+  },
+  {
+   "ch": "午",
+   "slug": "wu-branch",
+   "sha256": "sha256:65b89a5671886182bc6abf6757d98706de3d5c04cd74e4adf035b75de6c9ec60"
+  },
+  {
+   "ch": "壬",
+   "slug": "ren",
+   "sha256": "sha256:dada5e5110375a51efd295e3806fa9b8d01abefd8e34de6e36bef5d7a5cc315d"
+  },
+  {
+   "ch": "甲",
+   "slug": "jia",
+   "sha256": "sha256:9d118e3b4fb3a2de9c1fc69aead86fe8217407dba9606683cffa01c5c0ef13b6"
+  },
+  {
+   "ch": "辛",
+   "slug": "xin",
+   "sha256": "sha256:46d14e22373f228e5e1581d6880db61ca2731221f4d4e08ca7da2c24f4f82327"
+  },
+  {
+   "ch": "亥",
+   "slug": "hai",
+   "sha256": "sha256:738105f443e5b05edc66824121672e9268046a6474dc845255249ae9636caaab"
+  },
+  {
+   "ch": "己",
+   "slug": "ji",
+   "sha256": "sha256:58f9dedf49d75d8f7ec610af044f31450a4fb2a8f9d3e846159811b67c4409e2"
+  },
+  {
+   "ch": "乙",
+   "slug": "yi",
+   "sha256": "sha256:d25afb4ee855aff95050603c6c136b2b577e84065ae27b2ab488f6ed778f7f72"
+  },
+  {
+   "ch": "丁",
+   "slug": "ding",
+   "sha256": "sha256:24cccc2672e9ee726e2c4bcb1ec291302fbf0cd88d34cfa5dc7eec792dfb6846"
+  },
+  {
+   "ch": "乙",
+   "slug": "yi",
+   "sha256": "sha256:d25afb4ee855aff95050603c6c136b2b577e84065ae27b2ab488f6ed778f7f72"
+  },
+  {
+   "ch": "未",
+   "slug": "wei",
+   "sha256": "sha256:462310ae6d5938106c6cdbb08dbd180ac30370b526ba0a5db10119790e1f09c2"
+  }
+ ],
+ "components": [
+  {
+   "id": "pillar.year",
+   "kind": "pillar",
+   "container": "neutral",
+   "stemRegion": "phase-metal",
+   "branchRegion": "phase-fire",
+   "hiddenRegions": [
+    "phase-fire",
+    "phase-earth"
+   ],
+   "selected": false,
+   "selectionStyle": null,
+   "wholeColumnTint": false
+  },
+  {
+   "id": "pillar.month",
+   "kind": "pillar",
+   "container": "neutral",
+   "stemRegion": "phase-water",
+   "branchRegion": "phase-fire",
+   "hiddenRegions": [
+    "phase-fire",
+    "phase-earth"
+   ],
+   "selected": false,
+   "selectionStyle": null,
+   "wholeColumnTint": false
+  },
+  {
+   "id": "pillar.day",
+   "kind": "pillar",
+   "container": "neutral",
+   "stemRegion": "phase-metal",
+   "branchRegion": "phase-water",
+   "hiddenRegions": [
+    "phase-water",
+    "phase-wood"
+   ],
+   "selected": true,
+   "selectionStyle": "gold-edge",
+   "wholeColumnTint": false
+  },
+  {
+   "id": "pillar.hour",
+   "kind": "pillar",
+   "container": "neutral",
+   "stemRegion": "phase-wood",
+   "branchRegion": "phase-earth",
+   "hiddenRegions": [
+    "phase-earth",
+    "phase-wood",
+    "phase-fire"
+   ],
+   "selected": false,
+   "selectionStyle": null,
+   "wholeColumnTint": false
+  }
+ ]
+}

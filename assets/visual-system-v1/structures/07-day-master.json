@@ -1,0 +1,68 @@
+{
+ "pageId": "day-master",
+ "surface": "customer",
+ "pageNumber": 7,
+ "family": "chart-foundation",
+ "donors": {
+  "primary": "V4 agent-x-etbz-6.png",
+  "secondary": [
+   "V6 deterministic glyph placement",
+   "V5 customer/evidence boundary"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "dayMaster.hero",
+   "consumedFactKinds": [
+    "day_master_stem",
+    "stem_phase",
+    "stem_polarity",
+    "day_pillar"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1"
+  },
+  {
+   "slotId": "dayMaster.reading",
+   "consumedFactKinds": [
+    "approved_interpretation:day_master"
+   ],
+   "contentLayer": true,
+   "maxChars": 900
+  },
+  {
+   "slotId": "dayMaster.pillarReading",
+   "consumedFactKinds": [
+    "approved_interpretation:day_pillar"
+   ],
+   "contentLayer": true,
+   "maxChars": 500
+  }
+ ],
+ "glyphRefs": [
+  {
+   "ch": "辛",
+   "slug": "xin",
+   "sha256": "sha256:46d14e22373f228e5e1581d6880db61ca2731221f4d4e08ca7da2c24f4f82327"
+  }
+ ],
+ "components": [
+  {
+   "id": "dayMaster.stage",
+   "kind": "displayGlyph",
+   "ch": "辛",
+   "halo": "phase-metal-field",
+   "stage": "paper-200",
+   "fullPageBlack": false
+  },
+  {
+   "id": "dayMaster.readingPanel",
+   "kind": "contentSlot",
+   "edge": "gold"
+  },
+  {
+   "id": "dayMaster.goodToKnow",
+   "kind": "darkPanel",
+   "compact": true
+  }
+ ]
+}
