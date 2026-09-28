@@ -251,6 +251,33 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     ['low-contrast', 'PAGE_QA', 'TEXT_LOW_CONTRAST'],
     ['forbidden-element', 'PAGE_QA', 'FORBIDDEN_ELEMENT'],
     ['text-too-small', 'PAGE_QA', 'TEXT_TOO_SMALL'],
+    ['cross-entry-branch', 'PAGE_QA', 'TEXT_OUT_OF_SLOT'],
+    ['column-swap', 'PAGE_QA', 'SLOT_OUT_OF_ORDER'],
+    ['wrong-phase-colour', 'PAGE_QA', 'PHASE_NOT_ITS_VALUE'],
+    ['ring-phase', 'PAGE_QA', 'PHASE_NOT_ITS_VALUE'],
+    ['marks-shift', 'PAGE_QA', 'MARK_NOT_ITS_VALUE'],
+    ['line-swap', 'PAGE_QA', 'LINE_MISPLACED'],
+    ['pointer-events-overlay', 'PAGE_QA', 'TEXT_OCCLUDED'],
+    ['faint-text', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['scaled-text', 'PAGE_QA', 'TEXT_TOO_SMALL'],
+    ['filtered-text', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['masked-text', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['visibility-hidden', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['legacy-clip', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['unknown-path', 'PAGE_QA', 'TEXT_NOT_IN_PROJECTION'],
+    ['not-its-value', 'PAGE_QA', 'TEXT_NOT_IN_PROJECTION'],
+    ['glyph-not-its-value', 'PAGE_QA', 'GLYPH_NOT_ITS_VALUE'],
+    ['glyph-invisible', 'PAGE_QA', 'GLYPH_INVISIBLE'],
+    ['glyph-faint', 'PAGE_QA', 'GLYPH_INVISIBLE'],
+    ['glyph-occluded', 'PAGE_QA', 'GLYPH_OCCLUDED'],
+    ['glyph-missing', 'PAGE_QA', 'GLYPH_MISSING_FROM_PAGE'],
+    ['phase-unbound', 'PAGE_QA', 'PHASE_UNBOUND'],
+    ['unknown-mark', 'PAGE_BUILD', null],
+    ['day-master-inconsistent', 'PAGE_BUILD', null],
+    ['unbound-text', 'PAGE_BUILD', null],
+    ['unknown-tag-kind', 'PAGE_BUILD', null],
+    ['lone-surrogate', 'PROJECTION_HASH', null],
+    ['partial-write', 'NO_RESULT_DIRECTORY', null],
     ['pdf-page-count', 'PDF_READBACK', 'PDF_PAGE_COUNT'],
     ['determinism', 'DETERMINISM', null],
   ];
@@ -309,7 +336,8 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     for (const canary of record.canaries) {
       expect(canary.verdict, canary.id).toBe('BLOCKED_AS_EXPECTED');
       expect(canary.observed.exitCode, canary.id).toBe(1);
-      expect(canary.observed.status, canary.id).toBe('BLOCKED');
+      // The partial-write canary fails after a passing render: it proves that no --out directory (so no report) appears.
+      expect(canary.observed.status, canary.id).toBe(canary.expectedCheck === 'NO_RESULT_DIRECTORY' ? null : 'BLOCKED');
       expect(canary.observed.check, canary.id).toBe(canary.expectedCheck);
       if (canary.expectedCode !== null) expect(canary.observed.codes, canary.id).toContain(canary.expectedCode);
       expect(canary.pdfWritten, canary.id).toBe(false);

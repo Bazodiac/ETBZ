@@ -16,7 +16,7 @@ template `bazodiac-final-template@1.0.0` and rendered by the local
 | `contact-sheet.png` | all 29 pages, for visual inspection | the renderer |
 | `qa-report.json` | every check of the render, per page, including the platform faces Chromium used | the renderer |
 | `artifact-manifest.json` | PDF digest, length and page count; input, presentation, template (with its four drawing assets), renderer and font identities; QA state; the declared generation record | the renderer |
-| `renderer-canaries.json` | 39 executed negative runs: each renderer gate broken once, each run BLOCKED at the expected check with no PDF and no manifest; bound to the renderer and canary source digests; plus the differential test of the renderer's hash mirror against the TypeScript `canonicalJson` | `tools/pdf-renderer/qa/run_canaries.py` |
+| `renderer-canaries.json` | 66 executed negative runs: each renderer gate broken once, each run BLOCKED at the expected check with no PDF and no manifest; bound to the renderer and canary source digests; plus the differential test of the renderer's hash mirror against the TypeScript `canonicalJson` | `tools/pdf-renderer/qa/run_canaries.py` |
 
 `tests/contract/etbz55-presentation-evidence.contract.test.ts` re-derives in CI every
 claim that does not need a browser: the projection from the fixtures, the metrics from
@@ -50,8 +50,10 @@ both against the committed tree.
 - Only the 27 display glyphs as vector assets; every other Hanzi in the pinned Noto
   Sans CJK SC face; Inter for Latin text, checked per element. Every face that set text
   is one of six exact PostScript names (platform-font scan).
-- On every page every printed string and drawn glyph is the projection value at its
-  path, inside its own entry's slot, visible, and every path the page must show is shown.
+- On every page every printed string, drawn glyph, presence mark and phase colour is the
+  projection value at its path, inside its own entry's slots and in list order, every
+  long-form line at its computed position, all of it visible, and every path the page
+  must show is shown.
 - Deterministic: runs 2 and 3 produced the same PDF bytes and the same 29 page images,
   and a separate two-run render process produced the same PDF bytes again.
 
@@ -84,5 +86,5 @@ both against the committed tree.
 - Cosmetic, for the human verdict: a line may end on a `·` separator (the wrap
   opportunity sits after it); on the identity page the data note "Siehe
   Methodenhinweis, Seite 29" can wrap before its page number (it is one projection
-  string); on the four-pillars page the fire atmosphere blob tints the head tag, as in
-  the approved ETBZ-49 page 05.
+  string). The running head now paints above the atmosphere blobs, so the four-pillars
+  head tag is no longer tinted by the fire blob, as it was in the approved ETBZ-49 page 05.

@@ -20,7 +20,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
+import { TYPESCRIPT_EXTENSIONS, UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
 
 const REPO_ROOT = process.cwd();
 const SRC_ROOT = resolve(REPO_ROOT, 'src');
@@ -35,7 +35,7 @@ function listTypeScriptFiles(root: string): string[] {
       const entryPath = join(current, entry);
       if (statSync(entryPath).isDirectory()) {
         walk(entryPath);
-      } else if (entry.endsWith('.ts')) {
+      } else if (TYPESCRIPT_EXTENSIONS.some((extension) => entry.endsWith(extension))) {
         found.push(entryPath);
       }
     }

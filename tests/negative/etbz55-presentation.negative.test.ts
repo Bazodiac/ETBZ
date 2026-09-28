@@ -85,10 +85,10 @@ describe('N1: the content payload', () => {
     expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.methodNote = ` ${c.methodNote}`; })), 'PRESENTATION_INPUT_INVALID');
   });
 
-  it('refuses a control or format character anywhere in the payload: a bell, a zero-width space, a soft hyphen, a bidi override, a byte-order mark', () => {
+  it('refuses a control or format character anywhere in the payload: a bell, a zero-width space, a soft hyphen, a bidi override, a byte-order mark, a lone surrogate, a private-use, unassigned or default-ignorable character', () => {
     // A bell, a zero-width space, a soft hyphen, a bidi override, a byte-order mark, NEL, a line separator,
-    // a lone surrogate, a Hangul filler, a variation selector and a private-use character.
-    const invisible = [0x0007, 0x200b, 0x00ad, 0x202e, 0xfeff, 0x0085, 0x2028, 0xd800, 0x3164, 0xfe0f, 0xe000].map((codepoint) => String.fromCodePoint(codepoint));
+    // a lone surrogate, a Hangul filler, a variation selector, a private-use character and an unassigned code point.
+    const invisible = [0x0007, 0x200b, 0x00ad, 0x202e, 0xfeff, 0x0085, 0x2028, 0xd800, 0x3164, 0xfe0f, 0xe000, 0x0378].map((codepoint) => String.fromCodePoint(codepoint));
     for (const character of invisible) {
       const at = `U+${(character.codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, '0')}`;
       const title = expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.title = `Dein${character}Reading`; })), 'PRESENTATION_INPUT_INVALID');
@@ -99,6 +99,20 @@ describe('N1: the content payload', () => {
       expect(method.detail, at).toEqual({ path: 'methodNote' });
       const paragraph = expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.chapters[3]!.paragraphs[0] = c.chapters[3]!.paragraphs[0]!.replace(' ', `${character} `); })), 'PRESENTATION_INPUT_INVALID');
       expect(paragraph.detail, at).toEqual({ path: 'chapters.3.paragraphs.0' });
+    }
+  });
+
+  it('refuses a character the pinned faces cannot set in the texts the long form does not measure: a Braille blank, a decomposed umlaut, an emoji', () => {
+    const unmeasurable = [String.fromCodePoint(0x2800), `a${String.fromCodePoint(0x0308)}`, String.fromCodePoint(0x1f469)];
+    for (const text of unmeasurable) {
+      const title = expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.title = `Dein ${text} Reading`; })), 'PRESENTATION_TEXT_UNMEASURABLE');
+      expect(title.detail).toMatchObject({ where: 'title' });
+      const question = expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.reflectionQuestions[1] = `Frage ${text}?`; })), 'PRESENTATION_TEXT_UNMEASURABLE');
+      expect(question.detail).toMatchObject({ where: 'reflectionQuestions.1' });
+      const method = expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.methodNote = `${c.methodNote} ${text}`; })), 'PRESENTATION_TEXT_UNMEASURABLE');
+      expect(method.detail).toMatchObject({ where: 'methodNote' });
+      const name = expectPresentationRefusal(() => project(modelWith((m) => { m.displayName = `Musterkundin ${text}`; })), 'PRESENTATION_TEXT_UNMEASURABLE');
+      expect(name.detail).toMatchObject({ where: 'displayName' });
     }
   });
 

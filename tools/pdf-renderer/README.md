@@ -48,15 +48,22 @@ and a separator after which a line may wrap carries a `<wbr>`.
    unknown kind, a missing field, an unbound value, a glyph outside the contract) blocks
    as `PAGE_BUILD`.
 5. **Page QA** (per page, in Chromium, light colour scheme pinned):
-   - binding: every text node is the projection value at its `data-p` path and sits in
-     its own entry's slot; every glyph is the character at its path, in its slot; every
-     path the page must print or draw appears — so a wrong key, a value in another
-     entry's slot, a dropped copy of a repeated value and an extra string all block;
-   - visibility: no text without a box, hidden, transparent, clipped, masked, filtered,
-     scaled down, covered by a painted element, below 11 px, or below a 1.5 contrast
-     ratio against the surface under it; no `::before`/`::after`/`::marker` content; no
-     image, form control, list or SVG text on the page; no non-breaking pair split
-     across lines;
+   - binding: every text node, glyph, presence mark and phase colour is the projection
+     value at its path; every enclosing `data-slot` is a prefix of that path and every
+     entry of the path has a slot around it; a page label (`data-page-label`) carries
+     only a page-level value; the entries of a list appear in list order (the Wu Xing
+     ring keeps its template order, and each ring position must show its own phase);
+     long-form lines stand at the positions the projection computed; every path the
+     page must print, draw or mark appears — so a wrong key, a value or sub-entry in
+     another entry's slot, two entries trading places, a dropped copy, a mark in the
+     wrong column and a wrong phase colour all block;
+   - visibility, for text and glyphs alike: no box, hidden, faint (effective alpha
+     below 0.5), clipped, masked, filtered, scaled down, covered by a painted element
+     (hit-testing is forced on, so an overlay with `pointer-events:none` counts),
+     rendered below 11 px, or below a 1.5 contrast ratio of the composited colour
+     against the surface under it; no `::before`/`::after`/`::marker` content; no image,
+     form control, list or SVG text on the page; no non-breaking pair split across
+     lines;
    - geometry: nothing leaves the sheet, is clipped by an ancestor or runs out of its
      painted container; no long-form line is wider than its measure; no two text boxes
      overlap; the Wu Xing medallion stays clear; no web font failed;
@@ -75,13 +82,15 @@ and a separator after which a line may wrap carries a `<wbr>`.
 A failed check writes `qa-report.json` with `BLOCKED` and the page images under
 `diagnostics/` — never a PDF. There is no partial artefact: every run writes into a
 hidden sibling of `--out` and renames it into place only when complete, and the staging
-directory is removed however the run ends.
+directory is removed however the run ends. An unexpected renderer error is reported as a
+blocked `RENDERER_ERROR` check, not only as a trace.
 
 ## Proving the gates can fail
 
 `qa/run_canaries.py` breaks each gate once — the projection, a pin, the host fonts or
 one page builder — and runs the real renderer against it in a child process. Each of
-the 39 canaries must end `BLOCKED` at the expected check with the expected finding,
+the 66 canaries must end `BLOCKED` at the expected check with the expected finding (the
+`partial-write` canary instead proves that no `--out` directory appears),
 exit 1, and leave no PDF and no manifest. The results go to
 `docs/evidence/etbz-55/renderer-canaries.json`, bound to the renderer source digest and
 to the digest of `qa/run_canaries.py`, together with the differential test of the

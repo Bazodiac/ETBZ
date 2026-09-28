@@ -66,11 +66,12 @@
    "detail": {
     "embeddedFonts": [
      "AAAAAA+Inter-Medium",
-     "AAAAAA+Inter-Regular",
+     "AAAAAA+InterDisplay-Light",
      "BAAAAA+Inter-Medium",
+     "BAAAAA+Inter-Regular",
      "BAAAAA+InterDisplay-Light",
      "CAAAAA+Inter-Regular",
-     "CAAAAA+InterDisplay-Light",
+     "DAAAAA+Inter-Regular",
      "Type3"
     ],
     "mime": "application/pdf",
@@ -86,7 +87,7 @@
      3
     ],
     "pages": 29,
-    "pdfSha256": "sha256:7ae43ef3e855967323d015332299028380ae6c914c20eb1ad7e69773d17c67a8"
+    "pdfSha256": "sha256:462c182a6ecfa505cc19e2c359d29cbc35229f918fff80b849fead82e3c11938"
    },
    "id": "DETERMINISM",
    "result": "PASS"
@@ -158,7 +159,7 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:5efeec7e0c8104c3e4cab3a98790cbeb6203cd2930f40385d7bec0bbd49a0445",
+   "pngSha256": "sha256:ffa9a589823bf7cb68032520893a73422bb28dc0723bdc9e1f3200cf2164cdad",
    "textNodes": 67
   },
   {

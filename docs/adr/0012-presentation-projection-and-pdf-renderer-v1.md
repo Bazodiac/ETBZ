@@ -62,7 +62,11 @@ something: a Unicode control or format character (a bell, a zero-width space, a 
 hyphen, a bidi override, a byte-order mark), a lone surrogate, a private-use or unassigned
 code point, any default-ignorable code point (a variation selector, a Hangul filler), any
 whitespace other than the plain space, a double space, or padding. The display name, the
-one string from the end user and printed on every page, is held to the same rule.
+one string from the end user and printed on every page, is held to the same rule. The texts
+the long form does not measure (title, reflection questions, method note, display name) are
+held to the coverage the paragraphs meet: every character is in the pinned Inter tables or
+is a CJK ideograph (`PRESENTATION_TEXT_UNMEASURABLE` otherwise), so a Braille blank, a
+decomposed umlaut or an emoji is refused in every slot alike.
 
 ### 3. One template: `bazodiac-final-template@1.0.0`
 
@@ -160,19 +164,27 @@ Before it writes a PDF it checks:
   (`PAGE_STRINGS`); a page that cannot be built blocks (`PAGE_BUILD`), and so does any
   unbound value or unknown classification in a builder;
 - slot binding: the page is bound before it is built, so every text node carries the path
-  of the projection value it prints and every glyph the path of its character. The QA
-  requires each to equal the value at its path, to sit inside the slot of its own entry (a
-  pillar, a phase block, a fact row), and every path the page must print or draw to appear.
-  A wrong key, a value shown in another entry's slot and a dropped copy of a repeated value
-  all block;
-- visibility: no text without a box, hidden, transparent, clipped, masked, filtered,
-  scaled down, occluded by a painted element, below 11 px or below a 1.5 contrast ratio
-  against the surface under it; no generated `::before`/`::after`/`::marker` content; no
-  element that can carry text of its own (images, form controls, lists, SVG text); no
-  non-breaking pair split across lines;
+  of the projection value it prints, every glyph the path of its character, every presence
+  mark the path of its value and every phase-coloured element the path of the phase it
+  paints. The QA requires each to equal the value at its path; every enclosing slot to be a
+  prefix of the path and every entry of the path (each indexed step, such as
+  `content.pillars.0`) to have a slot around it; the entries of one list to appear in list
+  order; every long-form line at the centipoint position the projection computed for it;
+  and every path the page must print, draw or mark to appear. A page-level label shown
+  inside an entry may carry only a page-level value. A wrong key, a value or a whole
+  sub-entry shown in another entry's slot, two entries trading places, a dropped copy of a
+  repeated value, a presence mark in the wrong column, a disc in another phase's colour and
+  a Wu Xing ring position showing another phase all block;
+- visibility, for text and glyphs alike: no box, hidden, faint (effective alpha below 0.5),
+  clipped, masked, filtered, scaled down, covered by a painted element (an overlay with
+  `pointer-events:none` included, since the QA forces hit-testing on), a rendered size
+  below 11 px, or below a 1.5 contrast ratio of the composited colour against the surface
+  under it; no generated `::before`/`::after`/`::marker` content; no element that can carry
+  text of its own (images, form controls, lists, SVG text); no non-breaking pair split
+  across lines;
 - geometry: nothing outside the sheet, clipped by an ancestor or out of its painted
   container, no line wider than its measure, no overlap, the Wu Xing medallion clear, every
-  web font loaded;
+  web font loaded; the running head and foot paint above the atmosphere blobs;
 - a DevTools platform-font scan proving every character was set in one of exactly six
   PostScript faces: `Inter-Regular`, `Inter-Medium`, `Inter-SemiBold`,
   `InterDisplay-Light`, `InterDisplay-Regular`, `NotoSansCJKsc-Regular`, and every element
@@ -182,11 +194,13 @@ Before it writes a PDF it checks:
 - byte-identical PDFs and page images across the last two of three runs.
 
 Chromium renders with the light colour scheme pinned (the tokens redefine every colour
-under a dark scheme). A blocked run writes the QA report and diagnostics, never a PDF, and
-every run writes into a hidden sibling directory that is renamed into place only when
-complete.
-`tools/pdf-renderer/qa/run_canaries.py` breaks each gate once, runs the real renderer
-against it, and records the result in `renderer-canaries.json`: 39 canaries, each of
+under a dark scheme); the pin has no QA check of its own. A blocked run, including an
+unexpected renderer error (`RENDERER_ERROR`), writes the QA report and diagnostics, never
+a PDF, and every run writes into a hidden sibling directory that is renamed into place
+only when complete.
+`tools/pdf-renderer/qa/run_canaries.py` breaks every gate in its table at least once,
+runs the real renderer against it, and records the result in `renderer-canaries.json`:
+66 canaries, each of
 which must end BLOCKED at the expected check with the expected finding, exit 1 and no
 PDF or manifest. The record is bound to the renderer source digest and to the digest of
 the canary source; the contract suite pins every canary's expected check and finding,
@@ -268,11 +282,15 @@ are a declaration.
    prints the Lexicon wording for every relation; the ones absent from the chart carry the
    "Nicht vorhanden" mark of the legend. The rows are Lexicon content, the marks are chart
    values.
-8. **Slot binding does not bind geometry.** A builder that swaps two whole entries (the
-   fire block drawn at the wood position with wood's colour, label and value) keeps every
-   value in its own slot, so the QA cannot see it; positions are template code
-   (`WX_RING`, the page layouts), reviewed, not measured. Colour classes are taken from
-   the entry's phase, not from the projection's `paint`, which the renderer does not read.
+8. **Slot binding binds values, order and phase, not the template's geometry.** Entries of
+   a list must appear in list order and a phase colour must be its entry's phase, so two
+   pillars trading columns or a ring position showing another phase block. What stays
+   template code, reviewed rather than measured, is where the page layouts place each
+   block (the ring order `WX_RING`, the grid of each page); an edit there that keeps every
+   value, order and colour consistent is invisible to the QA. Colour classes come from the
+   entry's phase, not from the projection's `paint`, which the renderer does not read.
+   Three renderer checks have no canary: the one-em CJK advance, the PDF readback checks
+   other than the page count, and the light colour-scheme pin.
 9. **The rival-face scan covers the listed font directories.** A face with the pinned
    PostScript name in `/System/Library/Fonts` or activated by a font manager would not be
    detected; on the measured host none exists.

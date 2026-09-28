@@ -1,7 +1,7 @@
 {
- "artifactId": "bazodiac-reading-7ae43ef3e8559673",
- "byteLength": 1913531,
- "contactSheetSha256": "sha256:0369cd26c529582eedda19657d45364f9e81c26525015d46f3d3cdd592cbbdca",
+ "artifactId": "bazodiac-reading-462c182a6ecfa505",
+ "byteLength": 1914205,
+ "contactSheetSha256": "sha256:fa2dde5ed3e6eae1a65101b984361ca06817eba1dd5e2db4342ca72d562fdab5",
  "fonts": [
   {
    "family": "Inter",
@@ -58,7 +58,7 @@
   "declared": true,
   "executedAt": "2026-09-28",
   "host": "Darwin arm64",
-  "repositoryHead": "f04b28eaba83c204075d11a7217496e7d2196a85"
+  "repositoryHead": "c7d2c6dd46bd65c469b9bec53d08a92f1130db01"
  },
  "input": {
   "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
@@ -145,11 +145,12 @@
     "detail": {
      "embeddedFonts": [
       "AAAAAA+Inter-Medium",
-      "AAAAAA+Inter-Regular",
+      "AAAAAA+InterDisplay-Light",
       "BAAAAA+Inter-Medium",
+      "BAAAAA+Inter-Regular",
       "BAAAAA+InterDisplay-Light",
       "CAAAAA+Inter-Regular",
-      "CAAAAA+InterDisplay-Light",
+      "DAAAAA+Inter-Regular",
       "Type3"
      ],
      "mime": "application/pdf",
@@ -165,7 +166,7 @@
       3
      ],
      "pages": 29,
-     "pdfSha256": "sha256:7ae43ef3e855967323d015332299028380ae6c914c20eb1ad7e69773d17c67a8"
+     "pdfSha256": "sha256:462c182a6ecfa505cc19e2c359d29cbc35229f918fff80b849fead82e3c11938"
     },
     "id": "DETERMINISM",
     "result": "PASS"
@@ -191,9 +192,9 @@
    "version": "136.0.7103.25"
   },
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:70da31bf66e90f2ac212d5d854be2c51b986c113b37e3836207fcfc5a0a42796"
+  "sourceSha256": "sha256:f857cdf5f498f0a2e4f396591c14e7b9c48846746e07ea8b4c2c8d0984050af9"
  },
- "sha256": "sha256:7ae43ef3e855967323d015332299028380ae6c914c20eb1ad7e69773d17c67a8",
+ "sha256": "sha256:462c182a6ecfa505cc19e2c359d29cbc35229f918fff80b849fead82e3c11938",
  "state": "ARTIFACT_READY",
  "template": {
   "assets": [

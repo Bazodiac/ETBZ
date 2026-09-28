@@ -18,7 +18,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
+import { TYPESCRIPT_EXTENSIONS, UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
 
 const REPO_ROOT = process.cwd();
 const SRC_ROOT = resolve(REPO_ROOT, 'src');
@@ -47,7 +47,10 @@ function codeOnly(source: string): string {
 }
 
 // Every file in the module, whatever its extension: a .mts beside the .ts files would otherwise be invisible.
-const MODULE_FILES = listFiles(PRESENTATION_ROOT, '');
+// macOS Finder metadata is git-ignored and never part of the module.
+const MODULE_FILES = listFiles(PRESENTATION_ROOT, '').filter((file) => !file.endsWith(`${sep}.DS_Store`));
+/** Every TypeScript source under a root, in any TypeScript extension (a consumer can be a .mts too). */
+const listCode = (root: string): string[] => TYPESCRIPT_EXTENSIONS.flatMap((extension) => listFiles(root, extension));
 const PRESENTATION_FILES = MODULE_FILES.filter((file) => /\.(ts|mts|cts|tsx)$/u.test(file));
 
 /** True when `path` is `root` itself or lies inside it - whole path segments, never a name prefix. */
@@ -125,7 +128,7 @@ describe('ETBZ-55: the presentation projection is a pure leaf', () => {
     const root = join(SRC_ROOT, directory);
     expect(existsSync(root), `src/${directory} exists`).toBe(true);
     const offenders: string[] = [];
-    for (const file of listFiles(root, '.ts')) {
+    for (const file of listCode(root)) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (referencesPresentation(file, specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
@@ -135,7 +138,7 @@ describe('ETBZ-55: the presentation projection is a pure leaf', () => {
 
   it('is imported by no other application module', () => {
     const offenders: string[] = [];
-    for (const file of listFiles(join(SRC_ROOT, 'application'), '.ts')) {
+    for (const file of listCode(join(SRC_ROOT, 'application'))) {
       if (within(file, PRESENTATION_ROOT)) continue;
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (referencesPresentation(file, specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
@@ -191,7 +194,7 @@ describe('ETBZ-55: the renderer is local tooling behind the projection', () => {
 
   it('is imported by nothing under src/', () => {
     const offenders: string[] = [];
-    for (const file of listFiles(SRC_ROOT, '.ts')) {
+    for (const file of listCode(SRC_ROOT)) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (specifier.includes('tools/')) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }

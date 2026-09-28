@@ -317,8 +317,7 @@
     "codes": [
      "CLIPPED_BY_ANCESTOR",
      "OUTSIDE_SHEET",
-     "OVERLAP",
-     "TEXT_OCCLUDED"
+     "OVERLAP"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -355,8 +354,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "OVERLAP",
-     "TEXT_OCCLUDED"
+     "OVERLAP"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -585,8 +583,7 @@
     "codes": [
      "GROUP_WRAPPED",
      "OVERFLOWS_CONTAINER",
-     "OVERLAP",
-     "TEXT_OCCLUDED"
+     "OVERLAP"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -667,6 +664,498 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   },
   {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OUT_OF_SLOT",
+   "gate": "fact in its slot",
+   "id": "cross-entry-branch",
+   "manifestWritten": false,
+   "mutation": "the year and hour columns trade branches (the year pillar would read 庚未)",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_MISSING_FROM_PAGE",
+     "GLYPH_OUT_OF_SLOT",
+     "PHASE_OUT_OF_SLOT",
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_OUT_OF_SLOT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "SLOT_OUT_OF_ORDER",
+   "gate": "fact in its slot",
+   "id": "column-swap",
+   "manifestWritten": false,
+   "mutation": "the year and hour pillars trade columns",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "SLOT_OUT_OF_ORDER"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_NOT_ITS_VALUE",
+   "gate": "fact in its slot",
+   "id": "wrong-phase-colour",
+   "manifestWritten": false,
+   "mutation": "a Wu Xing disc is painted in another phase's colour",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_NOT_ITS_VALUE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_NOT_ITS_VALUE",
+   "gate": "fact in its slot",
+   "id": "ring-phase",
+   "manifestWritten": false,
+   "mutation": "the fire position of the Wu Xing ring shows the wood entry",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_NOT_ITS_VALUE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_NOT_ITS_VALUE",
+   "gate": "fact in its slot",
+   "id": "marks-shift",
+   "manifestWritten": false,
+   "mutation": "one Ten-God row's presence marks are drawn in reverse column order",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_NOT_ITS_VALUE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "LINE_MISPLACED",
+   "gate": "fact in its slot",
+   "id": "line-swap",
+   "manifestWritten": false,
+   "mutation": "two long-form lines trade their text",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "LINE_MISPLACED",
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_OUT_OF_SLOT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OCCLUDED",
+   "gate": "no hidden text",
+   "id": "pointer-events-overlay",
+   "manifestWritten": false,
+   "mutation": "an opaque panel with pointer-events:none covers the method note",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_OCCLUDED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "faint-text",
+   "manifestWritten": false,
+   "mutation": "the method note is set at opacity .3",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_TOO_SMALL",
+   "gate": "no hidden text",
+   "id": "scaled-text",
+   "manifestWritten": false,
+   "mutation": "the method note is scaled to 60 %",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_TOO_SMALL"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "filtered-text",
+   "manifestWritten": false,
+   "mutation": "the method note is blurred by a filter",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "masked-text",
+   "manifestWritten": false,
+   "mutation": "the method note is masked out",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "visibility-hidden",
+   "manifestWritten": false,
+   "mutation": "the method note is visibility:hidden",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "legacy-clip",
+   "manifestWritten": false,
+   "mutation": "the method note is clipped away by clip:rect",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "OVERLAP",
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_NOT_IN_PROJECTION",
+   "gate": "renderer adds no text",
+   "id": "unknown-path",
+   "manifestWritten": false,
+   "mutation": "a paragraph claims a path the page does not have",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_NOT_IN_PROJECTION"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_NOT_IN_PROJECTION",
+   "gate": "renderer adds no text",
+   "id": "not-its-value",
+   "manifestWritten": false,
+   "mutation": "a kicker claims the title's path",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_NOT_IN_PROJECTION"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_NOT_ITS_VALUE",
+   "gate": "glyphs",
+   "id": "glyph-not-its-value",
+   "manifestWritten": false,
+   "mutation": "the Day-Master glyph claims the pinyin's path",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_MISSING_FROM_PAGE",
+     "GLYPH_NOT_ITS_VALUE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_INVISIBLE",
+   "gate": "glyphs",
+   "id": "glyph-invisible",
+   "manifestWritten": false,
+   "mutation": "the Day-Master glyph is drawn at opacity 0",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_INVISIBLE",
+     "GLYPH_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_INVISIBLE",
+   "gate": "glyphs",
+   "id": "glyph-faint",
+   "manifestWritten": false,
+   "mutation": "the Day-Master glyph is drawn at 20 % alpha",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_INVISIBLE",
+     "GLYPH_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_OCCLUDED",
+   "gate": "glyphs",
+   "id": "glyph-occluded",
+   "manifestWritten": false,
+   "mutation": "an opaque panel covers the summary's Day-Master glyph",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_OCCLUDED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_MISSING_FROM_PAGE",
+   "gate": "glyphs",
+   "id": "glyph-missing",
+   "manifestWritten": false,
+   "mutation": "the summary leaves out its Day-Master glyph",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_UNBOUND",
+   "gate": "fact in its slot",
+   "id": "phase-unbound",
+   "manifestWritten": false,
+   "mutation": "a phase-coloured dot appears that no entry paints",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_UNBOUND"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_BUILD",
+   "expectedCode": null,
+   "gate": "page build",
+   "id": "unknown-mark",
+   "manifestWritten": false,
+   "mutation": "a presence mark no map knows",
+   "observed": {
+    "check": "PAGE_BUILD",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_BUILD",
+   "expectedCode": null,
+   "gate": "page build",
+   "id": "day-master-inconsistent",
+   "manifestWritten": false,
+   "mutation": "a pillar that is not the Day Master carries no relation",
+   "observed": {
+    "check": "PAGE_BUILD",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_BUILD",
+   "expectedCode": null,
+   "gate": "page build",
+   "id": "unbound-text",
+   "manifestWritten": false,
+   "mutation": "a builder is handed a plain string instead of a projection value",
+   "observed": {
+    "check": "PAGE_BUILD",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_BUILD",
+   "expectedCode": null,
+   "gate": "page build",
+   "id": "unknown-tag-kind",
+   "manifestWritten": false,
+   "mutation": "a page's running head declares a tag kind no map knows (rehashed)",
+   "observed": {
+    "check": "PAGE_BUILD",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PROJECTION_HASH",
+   "expectedCode": null,
+   "gate": "projection identity",
+   "id": "lone-surrogate",
+   "manifestWritten": false,
+   "mutation": "the projection carries a lone surrogate: it is not well-formed text",
+   "observed": {
+    "check": "PROJECTION_HASH",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "NO_RESULT_DIRECTORY",
+   "expectedCode": null,
+   "gate": "no partial artefact",
+   "id": "partial-write",
+   "manifestWritten": false,
+   "mutation": "the PDF copy into the output fails after a passing render",
+   "observed": {
+    "check": "NO_RESULT_DIRECTORY",
+    "codes": [],
+    "exitCode": 1,
+    "status": null
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
    "expectedCheck": "PDF_READBACK",
    "expectedCode": "PDF_PAGE_COUNT",
    "gate": "PDF readback",
@@ -701,7 +1190,7 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   }
  ],
- "canarySourceSha256": "sha256:1857e739adca592201a570ee2c479782007602fb1a1aed27a6603b3be93c903e",
+ "canarySourceSha256": "sha256:57a423a5625fe6f6095d8237a11806b8be79fe68c832cfd6e1e6611646c51f73",
  "canaryVersion": "bazodiac-renderer-canaries.v1",
  "canonicalJsonMirror": {
   "equal": true,
@@ -716,10 +1205,10 @@
  "projectionStructuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
  "renderer": {
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:70da31bf66e90f2ac212d5d854be2c51b986c113b37e3836207fcfc5a0a42796"
+  "sourceSha256": "sha256:f857cdf5f498f0a2e4f396591c14e7b9c48846746e07ea8b4c2c8d0984050af9"
  },
  "summary": {
-  "blockedAsExpected": 39,
-  "canaries": 39
+  "blockedAsExpected": 66,
+  "canaries": 66
  }
 }

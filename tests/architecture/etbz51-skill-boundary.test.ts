@@ -20,7 +20,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
+import { TYPESCRIPT_EXTENSIONS, UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
 
 const REPO_ROOT = process.cwd();
 const SRC_ROOT = resolve(REPO_ROOT, 'src');
@@ -67,7 +67,7 @@ describe('ETBZ-51: the skill contract bundle is a leaf, reachable from no served
     const root = join(SRC_ROOT, directory);
     // Every layer this guard covers exists; a missing one would make the check vacuous.
     expect(existsSync(root), `src/${directory} exists`).toBe(true);
-    for (const file of listFiles(root, '.ts')) {
+    for (const file of TYPESCRIPT_EXTENSIONS.flatMap((extension) => listFiles(root, extension))) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (referencesSkill(specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
@@ -86,7 +86,7 @@ describe('ETBZ-51: the skill contract bundle is a leaf, reachable from no served
     const offenders: string[] = [];
     let presentationUses = 0;
     const presentationRoot = join(SRC_ROOT, 'application', 'presentation');
-    for (const file of listFiles(join(SRC_ROOT, 'application'), '.ts')) {
+    for (const file of TYPESCRIPT_EXTENSIONS.flatMap((extension) => listFiles(join(SRC_ROOT, 'application'), extension))) {
       if (file.startsWith(SKILL_ROOT + sep)) continue;
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (!referencesSkill(specifier)) continue;

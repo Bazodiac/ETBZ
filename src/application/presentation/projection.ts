@@ -62,7 +62,7 @@ import { CONTENT_W, blockWords, headerHeight, layoutHeader, paginateLongForm } f
 import type { HeaderLine, LayoutFragment, LongFormBlock, LongFormHeaderBlock } from './long-form.js';
 import { TEMPLATE_LABELS, assertReleasedTemplate, label, templateBinding } from './template.js';
 import type { TemplateBinding, TemplateLabelId } from './template.js';
-import { BASELINE_CP, TEXT_STYLES, ascentOf, ceilToBaseline, firstBaseline, isCjkIdeograph } from './text-measure.js';
+import { BASELINE_CP, TEXT_STYLES, ascentOf, ceilToBaseline, firstBaseline, isCjkIdeograph, textWidth } from './text-measure.js';
 import type { TextStyle, TextStyleId } from './text-measure.js';
 
 export const PRESENTATION_PROJECTION_VERSION = 'bazodiac-presentation-projection.v1' as const;
@@ -1019,6 +1019,20 @@ function assertCustomerText(text: string): void {
   }
 }
 
+/**
+ * The texts the long form does not measure (title, reflection questions, method note, display name) are held to
+ * the coverage the paragraphs already meet: every character is in the pinned Inter tables or is a CJK ideograph.
+ * A blank that is not a space (a Braille blank), a decomposed umlaut or an emoji is refused, not printed.
+ */
+function assertMeasurable(text: string, where: string): void {
+  try {
+    textWidth(text, 'body');
+  } catch (error) {
+    if (error instanceof PresentationError) throw new PresentationError(error.code, `${where}: ${error.message}`, { ...error.detail, where });
+    throw error;
+  }
+}
+
 function sortedUnique(values: Iterable<string>): string[] {
   return [...new Set(values)].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
 }
@@ -1046,6 +1060,10 @@ export function buildPresentationProjection(input: PresentationInput): Presentat
   if (model.displayName === '' || model.displayName.trim() !== model.displayName || FORBIDDEN_CHARACTER.test(model.displayName) || / {2}/u.test(model.displayName)) {
     throw new PresentationError('PRESENTATION_INPUT_INVALID', 'the display name is empty, padded, double-spaced or carries a forbidden character', {});
   }
+  assertMeasurable(content.title, 'title');
+  content.reflectionQuestions.forEach((question, index) => assertMeasurable(question, `reflectionQuestions.${String(index)}`));
+  assertMeasurable(content.methodNote, 'methodNote');
+  assertMeasurable(model.displayName, 'displayName');
 
   const chart = chartValues(model);
   const drafts = buildDrafts(model, content, chart);

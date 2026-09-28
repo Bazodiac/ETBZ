@@ -47,7 +47,9 @@ const T = {
   architecture: 'tests/architecture/etbz55-presentation-boundary.test.ts',
   visualBoundary: 'tests/architecture/etbz49-visual-boundary.test.ts',
   skillBoundary: 'tests/architecture/etbz51-skill-boundary.test.ts',
+  dependency: 'tests/architecture/dependency-direction.test.ts',
 };
+const DEPENDENCY = 'tests/architecture/dependency-direction.test.ts';
 
 const TEMP = '// TEMPORARY MUTATION - scripts/verify-etbz55-presentation.mjs, never committed.\n';
 
@@ -66,6 +68,21 @@ const MUTANTS = [
   ['CONTENT: lone surrogates, private-use and default-ignorable characters are accepted (the round-2 class)', 'text', PROJECTION,
     'export const FORBIDDEN_CHARACTER = /[\\p{Cc}\\p{Cf}\\p{Cs}\\p{Co}\\p{Cn}\\p{Default_Ignorable_Code_Point}]|[^\\S ]/u;', 'export const FORBIDDEN_CHARACTER = /[\\p{Cc}\\p{Cf}]|[^\\S ]/u;',
     [T.negative], 'refuses a control or format character anywhere in the payload'],
+  ['CONTENT: unassigned code points are accepted', 'text', PROJECTION,
+    '\\p{Co}\\p{Cn}\\p{Default_Ignorable_Code_Point}', '\\p{Co}\\p{Default_Ignorable_Code_Point}',
+    [T.negative], 'refuses a control or format character anywhere in the payload'],
+  ['CONTENT: the title is not held to the pinned faces', 'text', PROJECTION,
+    "  assertMeasurable(content.title, 'title');\n", '',
+    [T.negative], 'refuses a character the pinned faces cannot set in the texts the long form does not measure'],
+  ['CONTENT: the reflection questions are not held to the pinned faces', 'text', PROJECTION,
+    '  content.reflectionQuestions.forEach((question, index) => assertMeasurable(question, `reflectionQuestions.${String(index)}`));\n', '',
+    [T.negative], 'refuses a character the pinned faces cannot set in the texts the long form does not measure'],
+  ['CONTENT: the method note is not held to the pinned faces', 'text', PROJECTION,
+    "  assertMeasurable(content.methodNote, 'methodNote');\n", '',
+    [T.negative], 'refuses a character the pinned faces cannot set in the texts the long form does not measure'],
+  ['CONTENT: the display name is not held to the pinned faces', 'text', PROJECTION,
+    "  assertMeasurable(model.displayName, 'displayName');\n", '',
+    [T.negative], 'refuses a character the pinned faces cannot set in the texts the long form does not measure'],
   ['CONTENT: an empty display name is accepted', 'text', PROJECTION,
     "  if (model.displayName === '' || model.displayName.trim()", '  if (model.displayName.trim()',
     [T.negative], 'refuses a padded or empty display name'],
@@ -318,6 +335,25 @@ const MUTANTS = [
     'src/http/etbz55-mutant-dynamic.ts',
     `${TEMP}export const load = (specifier: string): Promise<unknown> => import(specifier);\n`,
     null, [T.architecture], 'is imported by no module under src/http'],
+  ['BOUNDARY: a served module imports a path the ETBZ-49 leaf check cannot resolve', 'create',
+    'src/http/etbz55-mutant-dynamic.ts',
+    `${TEMP}export const load = (specifier: string): Promise<unknown> => import(specifier);\n`,
+    null, [T.visualBoundary], 'is imported by no module under src/http'],
+  ['BOUNDARY: a served module imports a path the ETBZ-51 leaf check cannot resolve', 'create',
+    'src/http/etbz55-mutant-dynamic.ts',
+    `${TEMP}export const load = (specifier: string): Promise<unknown> => import(specifier);\n`,
+    null, [T.skillBoundary], 'is imported by no module under src/http'],
+  ['BOUNDARY: a served module requires a computed path', 'create',
+    'src/http/etbz55-mutant-require.ts',
+    `${TEMP}const name = 'presentation';\nexport const load = (): unknown => require(\`../application/\${name}/index.js\`);\n`,
+    null, [T.architecture], 'is imported by no module under src/http'],
+  ['BOUNDARY: a served .mts module imports the presentation module', 'create',
+    'src/http/etbz55-mutant-consumer.mts',
+    `${TEMP}export { TEMPLATE_REF } from '../application/presentation/index.js';\n`,
+    null, [T.architecture], 'is imported by no module under src/http'],
+  ['EXTRACTOR: a computed require is skipped instead of reported', 'text', DEPENDENCY,
+    '        } else {\n          // A computed specifier', '        } else if (isDynamicImport) {\n          // A computed specifier',
+    [T.dependency], 'sees the specifier in a computed require'],
   ['BOUNDARY: the visual system escapes its folder through a ./../ specifier', 'create',
     'src/application/visual/etbz55-mutant-escape.ts',
     `${TEMP}export * from './../interpretation/index.js';\n`,
@@ -388,7 +424,7 @@ const trackedState = () =>
   execFileSync('git', ['status', '--porcelain', '--', 'src', 'tests', 'scripts', 'docs', 'tools'], { encoding: 'utf8' }).trim();
 const stateBefore = trackedState();
 
-const ALL_SUITES = [T.unit, T.longForm, T.negative, T.contract, T.architecture, T.visualBoundary, T.skillBoundary];
+const ALL_SUITES = [T.unit, T.longForm, T.negative, T.contract, T.architecture, T.visualBoundary, T.skillBoundary, T.dependency];
 const baseline = run(ALL_SUITES);
 if (baseline.outcome !== 'GREEN') {
   process.stdout.write(`BASELINE_NOT_GREEN (${baseline.outcome}): the unmutated suites fail, so a red mutant would prove nothing\n`);

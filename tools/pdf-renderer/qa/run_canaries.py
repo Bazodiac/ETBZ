@@ -320,11 +320,11 @@ def c_glyph_wrong_slot(work):
 
 
 def c_hidden_display_none(work):
-    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace("<p>", '<p style="display:none">', 1))
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace("<p data-slot=", '<p style="display:none" data-slot=', 1))
 
 
 def c_hidden_clip_path(work):
-    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace("<p>", '<p style="clip-path:inset(50%)">', 1))
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace("<p data-slot=", '<p style="clip-path:inset(50%)" data-slot=', 1))
 
 
 def c_prefix_face(work):
@@ -354,6 +354,161 @@ def c_forbidden_element(work):
 
 def c_text_too_small(work):
     wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('margin-top:10mm;max-width:130mm"', 'margin-top:10mm;max-width:130mm;font-size:6pt;line-height:8pt"', 1))
+
+
+def style_method_note(extra: str) -> None:
+    """Add CSS to the method note's body block (the paragraph and its data)."""
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('margin-top:10mm;max-width:130mm"', f'margin-top:10mm;max-width:130mm;{extra}"', 1))
+
+
+def c_cross_entry_branch(work):
+    # The year column draws the hour pillar's branch (and vice versa): 庚未 instead of 庚午, each value in its own
+    # cell slot, but inside another pillar's slot.
+    def change(c):
+        c["pillars"][0]["branch"], c["pillars"][3]["branch"] = c["pillars"][3]["branch"], c["pillars"][0]["branch"]
+    edit_builder("fourPillars", change)
+
+
+def c_column_swap(work):
+    # Two whole pillars trade columns: every value stays in its own pillar, but the hour pillar stands first.
+    def change(c):
+        c["pillars"][0], c["pillars"][3] = c["pillars"][3], c["pillars"][0]
+    edit_builder("fourPillars", change)
+
+
+def c_wrong_phase_colour(work):
+    wrap_builder("wuXing", lambda html, ctx, page, c: html.replace("background:var(--phase-fire-field)", "background:var(--phase-wood-field)", 1))
+
+
+def c_ring_phase(work):
+    # The fire position of the ring shows the wood entry.
+    def change(html, ctx, page, c):
+        fire = next(i for i, w in enumerate(c["wuXing"]["phases"]) if w["phase"] == "fire")
+        wood = next(i for i, w in enumerate(c["wuXing"]["phases"]) if w["phase"] == "wood")
+        return html.replace(f'data-phase="fire" data-phase-p="content.wuXing.phases.{fire}.phase"', f'data-phase="fire" data-phase-p="content.wuXing.phases.{wood}.phase"', 1)
+    wrap_builder("wuXing", change)
+
+
+def c_marks_shift(work):
+    def change(c):
+        marks = c["rows"][1]["marks"]  # Jie Cai: visible in the year pillar only
+        marks[:] = list(reversed(marks))
+    edit_builder("tenGods", change)
+
+
+def c_line_swap(work):
+    def change(c):
+        lines = c["fragments"][0]["lines"]
+        lines[0]["text"], lines[1]["text"] = lines[1]["text"], lines[0]["text"]
+    edit_builder("longForm", change)
+
+
+def c_pointer_events_overlay(work):
+    wrap_builder("methodNote", lambda html, ctx, page, c: html + '<div style="position:absolute;left:20mm;top:70mm;width:150mm;height:40mm;background:var(--paper-000);pointer-events:none"></div>')
+
+
+def c_faint_text(work):
+    style_method_note("opacity:.3")
+
+
+def c_scaled_text(work):
+    style_method_note("transform:scale(.6);transform-origin:0 0")
+
+
+def c_filtered_text(work):
+    style_method_note("filter:blur(1px)")
+
+
+def c_masked_text(work):
+    style_method_note("-webkit-mask-image:linear-gradient(transparent,transparent);mask-image:linear-gradient(transparent,transparent)")
+
+
+def c_visibility_hidden(work):
+    style_method_note("visibility:hidden")
+
+
+def c_legacy_clip(work):
+    style_method_note("position:absolute;clip:rect(0 0 0 0)")
+
+
+def c_unknown_path(work):
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('data-p="content.paragraphs.0"', 'data-p="content.paragraphz.0"', 1))
+
+
+def c_not_its_value(work):
+    wrap_builder("summary", lambda html, ctx, page, c: html.replace('data-p="content.kicker"', 'data-p="content.title"', 1))
+
+
+def c_glyph_not_its_value(work):
+    wrap_builder("summary", lambda html, ctx, page, c: html.replace('data-p="content.dayMaster.character"', 'data-p="content.dayMaster.pinyin"', 1))
+
+
+def c_glyph_invisible(work):
+    inject_css('svg.disp[data-p="content.dayMaster.character"]{opacity:0}')
+
+
+def c_glyph_faint(work):
+    inject_css('svg.disp[data-p="content.dayMaster.character"]{color:rgba(0,0,0,.2) !important}')
+
+
+def c_glyph_occluded(work):
+    overlay = '<div style="position:absolute;left:0;top:0;right:0;bottom:0;background:var(--paper-200);z-index:1"></div>'
+    wrap_builder("summary", lambda html, ctx, page, c: html.replace('style="width:40mm;height:40mm">', f'style="width:40mm;height:40mm;position:relative">{overlay}', 1))
+
+
+def c_glyph_missing(work):
+    import re
+    wrap_builder("summary", lambda html, ctx, page, c: re.sub(r'<svg class="disp" data-p="content\.dayMaster\.character".*?</svg>', "", html, count=1))
+
+
+def c_phase_unbound(work):
+    wrap_builder("methodNote", lambda html, ctx, page, c: html + '<span class="dot m-fire" style="position:absolute;left:20mm;top:250mm"></span>')
+
+
+def c_unknown_mark(work):
+    def change(c):
+        mark = c["rows"][0]["marks"]
+        mark[0] = P.PStr("neither", f"{mark.path}.0")
+    edit_builder("tenGods", change)
+
+
+def c_day_master_inconsistent(work):
+    def change(c):
+        c["pillars"][0]["tenGod"] = None
+    edit_builder("fourPillars", change)
+
+
+def c_unbound_text(work):
+    def change(c):
+        c["kicker"] = str(c["kicker"])
+    edit_builder("methodNote", change)
+
+
+def c_unknown_tag_kind(work):
+    p = load()
+    page_of(p, "glance")["chrome"]["tagKind"] = "other"
+    return rehash(p)
+
+
+def c_lone_surrogate(work):
+    # Written with JSON escapes (the text is not valid UTF-8 otherwise) and not rehashable: it has no identity.
+    p = load()
+    page_of(p, "cover")["content"]["title"] += chr(0xD800)
+    path = work / "projection.json"
+    path.write_text(json.dumps(p, ensure_ascii=True), encoding="ascii")
+    return path
+
+
+def c_partial_write(work):
+    # The render passes, then the copy into the output fails: no --out directory may appear.
+    original = R.shutil.copy2
+
+    def copy2(source, target, *rest, **kw):
+        if str(target).endswith("bazodiac-reading.pdf"):
+            raise OSError("canary: disk full while writing the PDF")
+        return original(source, target, *rest, **kw)
+
+    R.shutil.copy2 = copy2
 
 
 def c_pdf_page_count(work):
@@ -414,6 +569,33 @@ CANARIES = {
     "low-contrast": ("no hidden text", "the method note is set in the paper colour", "PAGE_QA", "TEXT_LOW_CONTRAST", c_low_contrast),
     "forbidden-element": ("renderer adds no text", "a list element appears on the page", "PAGE_QA", "FORBIDDEN_ELEMENT", c_forbidden_element),
     "text-too-small": ("no hidden text", "the method note is set at 6 pt, below the template minimum", "PAGE_QA", "TEXT_TOO_SMALL", c_text_too_small),
+    "cross-entry-branch": ("fact in its slot", "the year and hour columns trade branches (the year pillar would read 庚未)", "PAGE_QA", "TEXT_OUT_OF_SLOT", c_cross_entry_branch),
+    "column-swap": ("fact in its slot", "the year and hour pillars trade columns", "PAGE_QA", "SLOT_OUT_OF_ORDER", c_column_swap),
+    "wrong-phase-colour": ("fact in its slot", "a Wu Xing disc is painted in another phase's colour", "PAGE_QA", "PHASE_NOT_ITS_VALUE", c_wrong_phase_colour),
+    "ring-phase": ("fact in its slot", "the fire position of the Wu Xing ring shows the wood entry", "PAGE_QA", "PHASE_NOT_ITS_VALUE", c_ring_phase),
+    "marks-shift": ("fact in its slot", "one Ten-God row's presence marks are drawn in reverse column order", "PAGE_QA", "MARK_NOT_ITS_VALUE", c_marks_shift),
+    "line-swap": ("fact in its slot", "two long-form lines trade their text", "PAGE_QA", "LINE_MISPLACED", c_line_swap),
+    "pointer-events-overlay": ("no hidden text", "an opaque panel with pointer-events:none covers the method note", "PAGE_QA", "TEXT_OCCLUDED", c_pointer_events_overlay),
+    "faint-text": ("no hidden text", "the method note is set at opacity .3", "PAGE_QA", "TEXT_INVISIBLE", c_faint_text),
+    "scaled-text": ("no hidden text", "the method note is scaled to 60 %", "PAGE_QA", "TEXT_TOO_SMALL", c_scaled_text),
+    "filtered-text": ("no hidden text", "the method note is blurred by a filter", "PAGE_QA", "TEXT_INVISIBLE", c_filtered_text),
+    "masked-text": ("no hidden text", "the method note is masked out", "PAGE_QA", "TEXT_INVISIBLE", c_masked_text),
+    "visibility-hidden": ("no hidden text", "the method note is visibility:hidden", "PAGE_QA", "TEXT_INVISIBLE", c_visibility_hidden),
+    "legacy-clip": ("no hidden text", "the method note is clipped away by clip:rect", "PAGE_QA", "TEXT_INVISIBLE", c_legacy_clip),
+    "unknown-path": ("renderer adds no text", "a paragraph claims a path the page does not have", "PAGE_QA", "TEXT_NOT_IN_PROJECTION", c_unknown_path),
+    "not-its-value": ("renderer adds no text", "a kicker claims the title's path", "PAGE_QA", "TEXT_NOT_IN_PROJECTION", c_not_its_value),
+    "glyph-not-its-value": ("glyphs", "the Day-Master glyph claims the pinyin's path", "PAGE_QA", "GLYPH_NOT_ITS_VALUE", c_glyph_not_its_value),
+    "glyph-invisible": ("glyphs", "the Day-Master glyph is drawn at opacity 0", "PAGE_QA", "GLYPH_INVISIBLE", c_glyph_invisible),
+    "glyph-faint": ("glyphs", "the Day-Master glyph is drawn at 20 % alpha", "PAGE_QA", "GLYPH_INVISIBLE", c_glyph_faint),
+    "glyph-occluded": ("glyphs", "an opaque panel covers the summary's Day-Master glyph", "PAGE_QA", "GLYPH_OCCLUDED", c_glyph_occluded),
+    "glyph-missing": ("glyphs", "the summary leaves out its Day-Master glyph", "PAGE_QA", "GLYPH_MISSING_FROM_PAGE", c_glyph_missing),
+    "phase-unbound": ("fact in its slot", "a phase-coloured dot appears that no entry paints", "PAGE_QA", "PHASE_UNBOUND", c_phase_unbound),
+    "unknown-mark": ("page build", "a presence mark no map knows", "PAGE_BUILD", None, c_unknown_mark),
+    "day-master-inconsistent": ("page build", "a pillar that is not the Day Master carries no relation", "PAGE_BUILD", None, c_day_master_inconsistent),
+    "unbound-text": ("page build", "a builder is handed a plain string instead of a projection value", "PAGE_BUILD", None, c_unbound_text),
+    "unknown-tag-kind": ("page build", "a page's running head declares a tag kind no map knows (rehashed)", "PAGE_BUILD", None, c_unknown_tag_kind),
+    "lone-surrogate": ("projection identity", "the projection carries a lone surrogate: it is not well-formed text", "PROJECTION_HASH", None, c_lone_surrogate),
+    "partial-write": ("no partial artefact", "the PDF copy into the output fails after a passing render", "NO_RESULT_DIRECTORY", None, c_partial_write),
     "pdf-page-count": ("PDF readback", "the projection states one page more than it has (rehashed)", "PDF_READBACK", "PDF_PAGE_COUNT", c_pdf_page_count),
     "determinism": ("determinism", "every run draws one marker pixel at a different place", "DETERMINISM", None, c_determinism),
 }
@@ -422,7 +604,9 @@ CANARIES = {
 def child(canary_id: str, work: pathlib.Path) -> int:
     projection = CANARIES[canary_id][4](work)
     path = PROJECTION
-    if projection is not None:
+    if isinstance(projection, pathlib.Path):
+        path = projection
+    elif projection is not None:
         path = work / "projection.json"
         path.write_text(json.dumps(projection, ensure_ascii=False), encoding="utf-8")
     sys.argv = ["render_pdf.py", "--projection", str(path), "--out", str(work / "out"), "--runs", "2",
@@ -443,14 +627,21 @@ def run_one(canary_id: str) -> dict:
         report = json.loads(report_path.read_text(encoding="utf-8")) if report_path.is_file() else None
         pdfs = sorted(str(p.relative_to(out)) for p in out.rglob("*.pdf")) if out.exists() else []
         manifest = (out / "artifact-manifest.json").is_file()
+        out_exists = out.exists()
     last = report["checks"][-1] if report else None
     detail = last["detail"] if last else None
     codes = sorted({f["code"] for f in detail if isinstance(f, dict) and "code" in f}) if isinstance(detail, list) else []
-    holds = (proc.returncode == 1 and report is not None and report["status"] == "BLOCKED" and last["result"] == "BLOCKED"
-             and last["id"] == expected_check and (expected_code is None or expected_code in codes) and not pdfs and not manifest)
+    if expected_check == "NO_RESULT_DIRECTORY":
+        # A crash after a passing render: the run fails and no --out directory appears (only its hidden .partial).
+        observed_check = "NO_RESULT_DIRECTORY" if not out_exists else "RESULT_DIRECTORY_WRITTEN"
+        holds = proc.returncode != 0 and not out_exists
+    else:
+        observed_check = last["id"] if last else None
+        holds = (proc.returncode == 1 and report is not None and report["status"] == "BLOCKED" and last["result"] == "BLOCKED"
+                 and last["id"] == expected_check and (expected_code is None or expected_code in codes) and not pdfs and not manifest)
     result = {
         "id": canary_id, "gate": gate, "mutation": mutation, "expectedCheck": expected_check, "expectedCode": expected_code,
-        "observed": {"exitCode": proc.returncode, "status": report["status"] if report else None, "check": last["id"] if last else None, "codes": codes},
+        "observed": {"exitCode": proc.returncode, "status": report["status"] if report else None, "check": observed_check, "codes": codes},
         "pdfWritten": bool(pdfs), "manifestWritten": manifest,
         "verdict": "BLOCKED_AS_EXPECTED" if holds else "NOT_AS_EXPECTED",
     }

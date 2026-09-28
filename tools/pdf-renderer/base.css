@@ -88,3 +88,4 @@ table.tg tbody tr:last-child td{border-bottom:0.25mm solid var(--rule-200)}
 .mark.hidden{border:0.3mm solid var(--ink-600)}
 .mark.both{background:var(--ink-900);box-shadow:0 0 0 0.45mm var(--paper-000),0 0 0 0.75mm var(--ink-600)}
 .mark.none{height:0.25mm;border-radius:0;background:var(--rule-200)}
+.head,.foot{z-index:2}

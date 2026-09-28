@@ -182,27 +182,44 @@ def check_projection_identity(projection: dict) -> dict:
 
 DOM_QA = r"""
 (q) => {
-  const W = 793.7, H = 1122.5, CP = 96 / 7200, MIN_FONT_PX = 11, findings = [];
+  const W = 793.7, H = 1122.5, CP = 96 / 7200, MIN_FONT_PX = 11, VISIBLE = 0.5, findings = [];
   const values = q.values, glyphSet = new Set(q.displayGlyphs), separators = new Set(q.separators);
   const sheet = document.querySelector('.sheet');
+  const has = (p) => Object.prototype.hasOwnProperty.call(values, p);
   const parse = (color) => { const m = /rgba?\(([^)]*)\)/.exec(color || ''); if (!m) return null;
     const p = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number); return {r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1}; };
   const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
     return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
   const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const mix = (top, under, a) => ({r: top.r * a + under.r * (1 - a), g: top.g * a + under.g * (1 - a), b: top.b * a + under.b * (1 - a), a: 1});
   const opacityOf = (el) => { let o = 1; for (let a = el; a && a !== document.documentElement; a = a.parentElement) o *= parseFloat(getComputedStyle(a).opacity); return o; };
   const name = (el) => String(el.className && el.className.baseVal === undefined ? el.className : el.tagName).slice(0, 40);
   const effectsOf = (el) => { for (let a = el; a && a !== sheet.parentElement; a = a.parentElement) { const s = getComputedStyle(a);
-    if (s.clipPath !== 'none' || s.maskImage !== 'none' || (s.webkitMaskImage && s.webkitMaskImage !== 'none') || s.filter !== 'none') return name(a); } return null; };
+    if (s.clipPath !== 'none' || s.maskImage !== 'none' || (s.webkitMaskImage && s.webkitMaskImage !== 'none') || s.filter !== 'none' || (s.clip && s.clip !== 'auto')) return name(a); } return null; };
   const shown = (el) => typeof el.checkVisibility !== 'function' ||
     el.checkVisibility({opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true, checkOpacity: true, checkVisibilityCSS: true});
-  const slotOf = (el) => { const s = el.closest('[data-slot]'); return s && sheet.contains(s) ? s.dataset.slot : null; };
-  // The first painted surface under the text at (x, y): the element's own background counts (a tag), its descendants do not.
+  // How much an element covers what lies under it: its composite opacity times its background alpha.
+  const paint = (el) => { const s = getComputedStyle(el); const c = parse(s.backgroundColor);
+    const cover = s.backgroundImage !== 'none' ? 1 : (c === null ? 0 : c.a); return cover * opacityOf(el); };
+  // The first painted surface under (x, y) for el: its own background counts (a tag), its descendants do not.
   const backdrop = (el, x, y) => { for (const hit of document.elementsFromPoint(x, y)) { if (hit !== el && el.contains(hit)) continue;
-    const c = parse(getComputedStyle(hit).backgroundColor); if (c && c.a >= 0.5) return c; } return {r: 255, g: 255, b: 255, a: 1}; };
+    if (paint(hit) >= VISIBLE) { const c = parse(getComputedStyle(hit).backgroundColor); if (c) return c; } } return {r: 255, g: 255, b: 255, a: 1}; };
+  // A painted element above el at (x, y) - pointer-events are forced on for the QA, so overlays with none are seen.
+  const occluderAt = (el, x, y) => { for (const hit of document.elementsFromPoint(x, y)) {
+    if (hit === el || el.contains(hit) || hit.contains(el)) return null; if (paint(hit) >= VISIBLE) return hit; } return null; };
+  // Binding: every enclosing slot is a prefix of the path, every entry of the path has a slot around it; inside a
+  // page label only a page-level value may sit.
+  const PAGE_LEVEL = /^(content|chrome)\.[A-Za-z]+$/;
+  const entriesOf = (p) => { const parts = p.split('.'), out = []; for (let i = 1; i < parts.length; i++) if (/^\d+$/.test(parts[i])) out.push(parts.slice(0, i + 1).join('.')); return out; };
+  const slotsOf = (el) => { const out = []; for (let a = el; a && a !== sheet.parentElement; a = a.parentElement) if (a.dataset && a.dataset.slot !== undefined) out.push(a.dataset.slot); return out; };
+  const placement = (el, path) => {
+    if (el.closest('[data-page-label]')) return PAGE_LEVEL.test(path) ? null : 'an entry value in a page label';
+    const slots = slotsOf(el);
+    for (const s of slots) if (!(path === s || path.startsWith(s + '.'))) return `outside slot ${s}`;
+    for (const entry of entriesOf(path)) if (!slots.includes(entry)) return `entry ${entry} has no slot around it`;
+    return null; };
 
-  // (1) Every text node is the projection value at its path, inside its own entry's slot, and visibly printed;
-  //     every path the page must print is printed. The wordmark's accessible name is not printed text.
+  // (1) Text: the value at its path, in its slots, visible, readable; every required path printed.
   const printed = new Set(); let textCount = 0;
   const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT); let n;
   while ((n = walker.nextNode())) {
@@ -212,65 +229,116 @@ DOM_QA = r"""
     if (separators.has(s) && el.classList.contains('sep')) continue;
     const host = el.closest('[data-p]'); const path = host && sheet.contains(host) ? host.dataset.p : null;
     if (path === null) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'unbound', text: s.slice(0, 60)}); continue; }
-    if (!Object.prototype.hasOwnProperty.call(values, path)) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'unknown path', path, text: s.slice(0, 60)}); continue; }
+    if (!has(path)) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'unknown path', path, text: s.slice(0, 60)}); continue; }
     if (values[path] !== s) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'not the value at its path', path, text: s.slice(0, 60)}); continue; }
-    const slot = slotOf(host);
-    if (slot !== null && !path.startsWith(slot + '.')) { findings.push({code: 'TEXT_OUT_OF_SLOT', path, slot, text: s.slice(0, 60)}); continue; }
+    const why = placement(host, path);
+    if (why !== null) { findings.push({code: 'TEXT_OUT_OF_SLOT', path, reason: why, text: s.slice(0, 60)}); continue; }
     const range = document.createRange(); range.selectNodeContents(n);
     const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0.5 && r.height > 0.5);
     const cs = getComputedStyle(el), fontPx = parseFloat(cs.fontSize);
     const color = parse(cs.color) || {r: 0, g: 0, b: 0, a: 1}, fill = parse(cs.webkitTextFillColor) || color;
-    const effect = effectsOf(el);
+    const alpha = fill.a * opacityOf(el), effect = effectsOf(el);
     let invisible = null;
     if (rects.length === 0) invisible = 'no box';
     else if (!shown(el) || cs.visibility !== 'visible') invisible = 'hidden';
-    else if (color.a < 0.1 || fill.a < 0.1 || opacityOf(el) < 0.1) invisible = 'transparent';
+    else if (alpha < VISIBLE) invisible = `faint (alpha ${alpha.toFixed(2)})`;
     else if (effect !== null) invisible = `clipped, masked or filtered by ${effect}`;
     else if (Math.max(...rects.map((r) => r.height)) < 0.5 * fontPx) invisible = 'scaled down';
     if (invisible !== null) { findings.push({code: 'TEXT_INVISIBLE', reason: invisible, path, text: s.slice(0, 60)}); continue; }
-    if (fontPx < MIN_FONT_PX) findings.push({code: 'TEXT_TOO_SMALL', path, fontPx, text: s.slice(0, 40)});
-    // Every line of the text, probed at three points: a painted element above any of them occludes the text.
+    // The size the reader sees: the computed font size times the scale any transform applies (rendered / layout height).
+    const box = el.getBoundingClientRect(), scale = el.offsetHeight > 0 ? box.height / el.offsetHeight : 1, renderedPx = fontPx * scale;
+    if (fontPx < MIN_FONT_PX || renderedPx < MIN_FONT_PX - 0.25) findings.push({code: 'TEXT_TOO_SMALL', path, fontPx, renderedPx: +renderedPx.toFixed(2), text: s.slice(0, 40)});
     let occluder = null;
-    for (const r of rects) for (const fx of [0.15, 0.5, 0.85]) {
-      const hit = document.elementFromPoint(r.left + r.width * fx, r.top + r.height / 2);
-      if (hit && !(hit === el || el.contains(hit) || hit.contains(el))) occluder = occluder || hit; }
+    for (const r of rects) for (const fx of [0.15, 0.5, 0.85]) occluder = occluder || occluderAt(el, r.left + r.width * fx, r.top + r.height / 2);
     if (occluder !== null) findings.push({code: 'TEXT_OCCLUDED', path, by: name(occluder), text: s.slice(0, 40)});
-    const r0 = rects[0], cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2;
-    const ratio = contrast(fill, backdrop(el, cx, cy));
+    const r0 = rects[0], under = backdrop(el, r0.left + r0.width / 2, r0.top + r0.height / 2);
+    const ratio = contrast(mix(fill, under, alpha), under);
     if (ratio < 1.5) findings.push({code: 'TEXT_LOW_CONTRAST', path, ratio: +ratio.toFixed(2), text: s.slice(0, 40)});
     printed.add(path);
   }
   for (const p of q.required) if (!printed.has(p)) findings.push({code: 'TEXT_MISSING_FROM_PAGE', path: p, text: String(values[p]).slice(0, 60)});
 
-  // (2) Every display glyph is a projection glyph, the value at its path, in its slot, visible; every character
-  //     the page must draw is drawn.
+  // (2) Glyphs: a projection glyph, the value at its path, in its slots, visible, unoccluded, readable; every
+  //     character the page must draw is drawn.
   const drawn = new Set(); const glyphEls = Array.from(sheet.querySelectorAll('svg.disp'));
   for (const g of glyphEls) {
     const ch = String.fromCodePoint(parseInt(g.dataset.glyph.slice(2), 16));
     if (!glyphSet.has(ch)) findings.push({code: 'GLYPH_NOT_IN_PROJECTION', glyph: ch});
     const path = g.dataset.p || null;
-    if (path === null || !Object.prototype.hasOwnProperty.call(values, path) || values[path] !== ch) { findings.push({code: 'GLYPH_NOT_ITS_VALUE', glyph: ch, path}); continue; }
-    const slot = slotOf(g);
-    if (slot !== null && !path.startsWith(slot + '.')) { findings.push({code: 'GLYPH_OUT_OF_SLOT', path, slot, glyph: ch}); continue; }
-    const r = g.getBoundingClientRect();
-    if (!(r.width > 1 && r.height > 1) || !shown(g) || opacityOf(g) < 0.1 || effectsOf(g) !== null) { findings.push({code: 'GLYPH_INVISIBLE', path, glyph: ch}); continue; }
+    if (path === null || !has(path) || values[path] !== ch) { findings.push({code: 'GLYPH_NOT_ITS_VALUE', glyph: ch, path}); continue; }
+    const why = placement(g, path);
+    if (why !== null) { findings.push({code: 'GLYPH_OUT_OF_SLOT', path, reason: why, glyph: ch}); continue; }
+    const r = g.getBoundingClientRect(), gc = parse(getComputedStyle(g).color) || {r: 0, g: 0, b: 0, a: 1}, ga = gc.a * opacityOf(g);
+    if (!(r.width > 1 && r.height > 1) || !shown(g) || ga < VISIBLE || effectsOf(g) !== null) { findings.push({code: 'GLYPH_INVISIBLE', path, glyph: ch}); continue; }
+    let occluder = null;
+    for (const [fx, fy] of [[0.5, 0.5], [0.3, 0.3], [0.7, 0.3], [0.3, 0.7], [0.7, 0.7]]) occluder = occluder || occluderAt(g, r.left + r.width * fx, r.top + r.height * fy);
+    if (occluder !== null) findings.push({code: 'GLYPH_OCCLUDED', path, by: name(occluder), glyph: ch});
+    const under = backdrop(g, r.left + r.width / 2, r.top + r.height / 2), ratio = contrast(mix(gc, under, ga), under);
+    if (ratio < 1.5) findings.push({code: 'GLYPH_LOW_CONTRAST', path, ratio: +ratio.toFixed(2), glyph: ch});
     drawn.add(path);
   }
   for (const p of q.glyphs) if (!drawn.has(p)) findings.push({code: 'GLYPH_MISSING_FROM_PAGE', path: p, glyph: values[p]});
 
-  // (3) No generated content, no element that can carry text the builders did not print, no broken pair.
+  // (3) Drawn classifications: every presence mark is the value at its path; every phase colour is the phase of the
+  //     entry it paints; the entries of a list appear in list order (the Wu Xing ring keeps its template order).
+  const marked = new Set();
+  for (const el of sheet.querySelectorAll('.mark')) {
+    const path = el.dataset.p || null;
+    if (path === null || !has(path)) { findings.push({code: 'MARK_NOT_ITS_VALUE', reason: 'unbound', path}); continue; }
+    const expected = values[path] === null ? 'none' : values[path];
+    const drawnClass = ['stem', 'hidden', 'both', 'none'].filter((c) => el.classList.contains(c));
+    if (el.dataset.mark !== expected || drawnClass.length !== 1 || drawnClass[0] !== expected) { findings.push({code: 'MARK_NOT_ITS_VALUE', path, drawn: drawnClass.join('|'), value: expected}); continue; }
+    const why = placement(el, path);
+    if (why !== null) { findings.push({code: 'MARK_OUT_OF_SLOT', path, reason: why}); continue; }
+    marked.add(path);
+  }
+  for (const p of q.marks) if (!marked.has(p)) findings.push({code: 'MARK_MISSING_FROM_PAGE', path: p});
+  for (const el of sheet.querySelectorAll('*')) {
+    if (el.classList.contains('blob')) continue;
+    const painted = new Set();
+    for (const c of el.classList) { const m = /^[fm]-(wood|fire|earth|metal|water)$/.exec(c); if (m) painted.add(m[1]); }
+    for (const m of (el.getAttribute('style') || '').matchAll(/--phase-(wood|fire|earth|metal|water)-/g)) painted.add(m[1]);
+    const declared = el.dataset.phase, path = el.dataset.phaseP;
+    if (painted.size === 0 && declared === undefined) continue;
+    if (path === undefined) { findings.push({code: 'PHASE_UNBOUND', on: name(el), painted: Array.from(painted).join('|')}); continue; }
+    if (!has(path) || values[path] !== declared) { findings.push({code: 'PHASE_NOT_ITS_VALUE', path, declared, value: has(path) ? values[path] : null}); continue; }
+    const wrong = Array.from(painted).filter((p) => p !== declared);
+    if (wrong.length > 0) { findings.push({code: 'PHASE_NOT_ITS_VALUE', path, declared, painted: wrong.join('|')}); continue; }
+    const why = placement(el, path); if (why !== null) findings.push({code: 'PHASE_OUT_OF_SLOT', path, reason: why});
+  }
+  const lastIndex = new Map();
+  for (const el of sheet.querySelectorAll('[data-slot]')) {
+    if (el.closest('[data-slot-order="template"]')) continue;
+    const m = /^(.*)\.(\d+)$/.exec(el.dataset.slot); if (!m) continue;
+    const list = m[1], index = Number(m[2]), last = lastIndex.get(list);
+    if (last !== undefined && index < last) findings.push({code: 'SLOT_OUT_OF_ORDER', list, index, after: last});
+    lastIndex.set(list, index);
+  }
+
+  // (4) No generated content, no element that can carry text of its own, no broken pair.
   for (const el of [sheet, ...sheet.querySelectorAll('*')]) for (const pseudo of ['::before', '::after', '::marker']) {
     const content = getComputedStyle(el, pseudo).content;
     if (content && content !== 'none' && content !== 'normal') findings.push({code: 'PSEUDO_CONTENT', pseudo, content: content.slice(0, 60), on: name(el)}); }
   for (const el of sheet.querySelectorAll('img,picture,input,textarea,select,button,canvas,video,iframe,object,embed,ol,ul,li,foreignObject,svg text'))
     findings.push({code: 'FORBIDDEN_ELEMENT', element: el.tagName});
-  // A group wraps when its text sits on more than one line: text rects whose tops differ by more than half a line.
   for (const el of sheet.querySelectorAll('.nw')) { const range = document.createRange(); range.selectNodeContents(el);
     const tops = Array.from(range.getClientRects()).filter((r) => r.width > 0.5 && r.height > 0.5).map((r) => r.top);
     const fontPx = parseFloat(getComputedStyle(el).fontSize);
     if (tops.length > 1 && Math.max(...tops) - Math.min(...tops) > 0.5 * fontPx) findings.push({code: 'GROUP_WRAPPED', text: el.textContent.trim().slice(0, 40)}); }
 
-  // (4) Geometry: inside the sheet, not clipped, inside the painted container, within the measure, no overlap.
+  // (5) Geometry: long-form lines at the projection's positions; inside the sheet, not clipped, inside the painted
+  //     container, within the measure, no overlap.
+  const sheetBox = sheet.getBoundingClientRect();
+  for (const el of sheet.querySelectorAll('.longline')) {
+    const path = el.dataset.p; if (!path) continue;
+    const line = path.replace(/\.text$/, ''), fragment = line.replace(/\.lines\.\d+$/, '');
+    const x = values[line + '.xCp'], base = values[line + '.baselineCp'];
+    const style = has(line + '.styleId') ? values[line + '.styleId'] : values[fragment + '.styleId'], ascent = q.ascent[style];
+    if (typeof x !== 'number' || typeof base !== 'number' || typeof ascent !== 'number') { findings.push({code: 'LINE_UNPLACEABLE', path}); continue; }
+    const r = el.getBoundingClientRect();
+    const dx = Math.abs(r.left - sheetBox.left - x * CP), dy = Math.abs(r.top - sheetBox.top - (base - ascent) * CP);
+    if (dx > 0.75 || dy > 0.75) findings.push({code: 'LINE_MISPLACED', path, dxPx: +dx.toFixed(2), dyPx: +dy.toFixed(2)});
+  }
   const els = []; const walk = (node) => { for (const c of node.children) walk(c);
     const own = Array.from(node.childNodes).some(x => x.nodeType === 3 && x.textContent.trim().length);
     if (own || (node.tagName === 'svg' && node.classList.contains('disp'))) els.push(node); };
@@ -279,8 +347,8 @@ DOM_QA = r"""
   for (const b of boxes) {
     if (b.r.left < -0.5 || b.r.top < -0.5 || b.r.right > W + 0.5 || b.r.bottom > H + 0.5) findings.push({code: 'OUTSIDE_SHEET', text: b.e.textContent.trim().slice(0, 40)});
     if (b.e.scrollWidth > b.e.clientWidth + 1 && getComputedStyle(b.e).overflow !== 'visible') findings.push({code: 'CLIPPED', text: b.e.textContent.trim().slice(0, 40)});
-    for (let a = b.e.parentElement; a && a !== sheet; a = a.parentElement) { const s = getComputedStyle(a);
-      if (alpha(s.backgroundColor) === 0 && s.backgroundImage === 'none') continue; const q2 = a.getBoundingClientRect();
+    for (let a = b.e.parentElement; a && a !== sheet; a = a.parentElement) { const s = getComputedStyle(a); const c = parse(s.backgroundColor);
+      if ((c === null || c.a === 0) && s.backgroundImage === 'none') continue; const q2 = a.getBoundingClientRect();
       if (b.r.left < q2.left - 0.5 || b.r.top < q2.top - 0.5 || b.r.right > q2.right + 0.5 || b.r.bottom > q2.bottom + 0.5)
         findings.push({code: 'OVERFLOWS_CONTAINER', text: b.e.textContent.trim().slice(0, 40), container: name(a)});
       break; }
@@ -298,7 +366,6 @@ DOM_QA = r"""
     if (x > 1.5 && y > 1.5) findings.push({code: 'OVERLAP', a: a.e.textContent.trim().slice(0, 30), b: b.e.textContent.trim().slice(0, 30)});
   }
   return {findings, textCount, glyphCount: glyphEls.length};
-  function alpha(color) { const c = parse(color); return c === null ? 1 : c.a; }
 }
 """
 
@@ -435,6 +502,7 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
     pages_dir = work / "pages"
     pages_dir.mkdir(parents=True)
     entries = []
+    ascent = {style_id: style["ascentCp"] for style_id, style in projection["longFormStyles"].items()}
     with sync_playwright() as pw:
         browser = pw.chromium.launch(args=CHROMIUM_ARGS)
         chromium_version = browser.version
@@ -456,8 +524,12 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
             page.screenshot(path=str(png), clip={"x": 0, "y": 0, "width": A4_PX[0], "height": A4_PX[1]})
             page.pdf(path=str(pdf), width="210mm", height="297mm", print_background=True, margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
                      prefer_css_page_size=True)
+            # After the screenshot and the PDF: every element becomes hit-testable for the QA, so an overlay with
+            # pointer-events:none (the atmosphere blobs use it) still counts when it covers text.
+            page.add_style_tag(content=".sheet, .sheet * { pointer-events: auto !important; }")
             dom = page.evaluate(DOM_QA, {"values": binding["values"], "required": binding["required"], "glyphs": binding["glyphs"],
-                                         "displayGlyphs": projection["displayGlyphs"], "separators": sorted(SEPARATORS)})
+                                         "marks": binding["marks"], "displayGlyphs": projection["displayGlyphs"],
+                                         "separators": sorted(SEPARATORS), "ascent": ascent})
             used_fonts, latin_faces = platform_fonts(context, page)
             wx = page.evaluate(WX_QA) if entry["content"]["kind"] == "wuXing" else []
             # "unloaded" is a declared face the page never asked for; "error" is a face that failed and fell back.
@@ -710,6 +782,8 @@ def render(args, out_dir: pathlib.Path, projection: dict, projection_bytes: byte
         }
     except Blocked as blocked:
         checks.append({"id": blocked.check, "result": "BLOCKED", "detail": blocked.detail})
+    except Exception as error:  # noqa: BLE001 - an unexpected failure is a blocked render with a report, never a trace only
+        checks.append({"id": "RENDERER_ERROR", "result": "BLOCKED", "detail": f"{type(error).__name__}: {error}"})
 
     report = {"reportVersion": QA_REPORT_VERSION, "status": status, "state": "QA_PASSED" if status == "PASSED" else "BLOCKED",
               "projectionStructuralHash": projection.get("structuralHash"), "checks": checks,
