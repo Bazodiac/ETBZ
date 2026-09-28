@@ -1,0 +1,43 @@
+{
+ "pageId": "dev-glyph-style",
+ "surface": "developer",
+ "pageNumber": 2,
+ "family": "developer-proof",
+ "donors": {
+  "primary": "V4 agent-x-etbz-3.png (ink pass target)",
+  "secondary": [
+   "V6 asset pipeline",
+   "V5 DISPLAY_GLYPH_SYSTEM_NOT_FINAL"
+  ]
+ },
+ "factSlotBindings": [],
+ "glyphRefs": [
+  {
+   "ch": "金",
+   "slug": "jin",
+   "sha256": "sha256:af5788f1b3fa82240669155aec605733c71b94adfe3da8641cb77ce401c7e186"
+  },
+  {
+   "ch": "土",
+   "slug": "tu",
+   "sha256": "sha256:3bcf2f8468cd7781c8bf1afbd35f6d8d80066c0cbbe82985ace736ca22e1ed2c"
+  },
+  {
+   "ch": "木",
+   "slug": "mu",
+   "sha256": "sha256:0f5f3325ad1f9088e4760832f0552cc000fc453036d1d460be78943552eaa81a"
+  },
+  {
+   "ch": "寅",
+   "slug": "yin",
+   "sha256": "sha256:a67b83d861661c51f9d7b4fe87dc8bcee25f1059f38b35809dc2a5a99470e195"
+  }
+ ],
+ "components": [
+  {
+   "id": "dev.inkPass",
+   "kind": "glyphStyleDecision",
+   "status": "HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED"
+  }
+ ]
+}

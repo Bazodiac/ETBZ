@@ -28,6 +28,10 @@ scripts
 docs
 openapi
 contracts
+tools
+assets
+.agent-proofs.json
+.etbz-verify
 vitest.config.ts
 eslint.config.js
 README.md

@@ -1,0 +1,24 @@
+{
+ "pageId": "dev-layout-7",
+ "surface": "developer",
+ "pageNumber": 7,
+ "family": "developer-proof",
+ "donors": {
+  "primary": "V6 render evidence + pagination receipts",
+  "secondary": [
+   "V4 audit stamps",
+   "V2 rhythm"
+  ]
+ },
+ "factSlotBindings": [],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "dev.layoutEvidence",
+   "kind": "paginationReport",
+   "pages": 2,
+   "lines": 79,
+   "findings": 0
+  }
+ ]
+}

@@ -1,0 +1,35 @@
+{
+ "pageId": "contents",
+ "surface": "customer",
+ "pageNumber": 3,
+ "family": "front-matter",
+ "donors": {
+  "primary": "V3 Contents (contact sheet, page 03)",
+  "secondary": [
+   "V4 shell/type",
+   "V5 tokens"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "contents.entries",
+   "consumedFactKinds": [],
+   "derivedNothing": true
+  }
+ ],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "contents.structure",
+   "kind": "toc",
+   "sections": [
+    "A",
+    "B",
+    "C",
+    "D"
+   ],
+   "pages": 30,
+   "luckPillars": false
+  }
+ ]
+}

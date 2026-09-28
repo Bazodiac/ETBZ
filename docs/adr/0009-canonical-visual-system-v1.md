@@ -1,0 +1,340 @@
+# ADR 0009 — Bazodiac Visual System v1 (ETBZ-49)
+
+- **Status:** Proposed — PR #11 open. Merge is governed by the Product Owner's
+  standing authorisation D1 of 2026-09-28 (Jira ETBZ-2 comment 16690), subject
+  to the merge gate on the exact head. The one human decision this ADR carried,
+  `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED`, was **closed by the Product Owner on
+  2026-09-22** (Jira ETBZ-49 comment 16514): the glyph/style variant shown in
+  `docs/evidence/etbz-49/final-contact-sheet.png` is approved — answer 1 of the
+  decision sheet, the ink-pass asset set as shipped. Nothing in this repository
+  closed it; Jira did.
+- **Date:** 2026-09-22
+- **Slice:** ETBZ-49 — recover the converged visual system as repository truth.
+  Does not implement a renderer.
+- **Base:** `main@cd26b1065c7b7908f63e567259020d0474cf06e0`
+- **Canonical product text:** Confluence ETBZ — *ETBZ-43 — Bazodiac PDF Visual
+  System Final Convergence v1* (`66650114`, page version 2). That page is the
+  decision; this ADR records how the repository carries it.
+
+## Context
+
+The visual system was decided by analysis across six donor packages (V1–V6) and
+then built once, locally, outside the repository. The product therefore had a
+premium template that existed only as a folder on one machine: not rebuildable,
+not versioned, not testable, and impossible for a renderer to bind to.
+
+Two things had to be true at once. The system had to become repository truth —
+with provenance, hashes and tests — and it had to arrive **without** a renderer,
+because the renderer is a separate slice with its own acceptance.
+
+The obvious move, porting the V6 donor implementation wholesale, was rejected by
+the Product Owner. V6 is 25 % of the decision, not the decision; it carries a
+repository-shaped Python/Chromium build system, and adopting its shape would
+have imported a rendering stack under the name of a design contract.
+
+## Decision
+
+### 1. The converged system, not a donor package
+
+The implementation is the converged composite Confluence 66650114 v2 decided:
+
+| Donor | Share | What it contributed |
+| --- | --- | --- |
+| V4 | 35 % | visual shell, palette atmosphere, Four Pillars, Day Master, display-glyph target |
+| V6 | 25 % | deterministic vector glyph pipeline, provenance and hashes, centipoint layout, region-scoped colour guards |
+| V3 | 20 % | report information architecture and page-family completeness |
+| V2 | 12 % | Wu Xing Distribution visual language, long-form editorial rhythm |
+| V5 | 6 % | design tokens, customer/evidence boundary, the two CJK contracts |
+| V1 | 2 % | restraint and whitespace heuristic only |
+
+No donor ships as a selectable variant. There is exactly one visual system.
+
+### 2. It is a contract, not a renderer
+
+`src/application/visual/` carries the system as values:
+
+```
+tokens.ts       19 canonical colour tokens + 5 decorative, type scale, spacing,
+                geometry in mm and in integer centipoints
+glyphs.ts       BazodiacDisplayGlyphSet — 27 identities, outlines, provenance
+wordmark.ts     the static, chart-independent brand asset
+pagination.ts   the long-form rules and the two measured fixture results
+pageFamily.ts   18 designed pages, 25 slot bindings, structural hashes
+provenance.ts   the decision source, convergence shares, font provenance,
+                and the human gate as recorded at build time (see status)
+visualSystem.ts the resolvers — and the refusals
+```
+
+It answers *what does the contract say* and *is this allowed*. It does not
+answer *what does the page look like*. There is no HTML, no PDF, no layout
+engine and no browser in it.
+
+The renderer that consumes this contract is **ETBZ-55**. This ADR assigns no
+renderer work to any other slice; earlier drafts that named ETBZ-26 as the owner
+of `PresentationProjection` / `PdfRenderer` are superseded.
+
+### 3. Narrowest boundary: inside the application layer
+
+The module lands in `src/application/visual`, not as a new top-level layer under
+`src/`. A sibling layer would need its own hand-written barrier. Inside the
+application layer it inherits the existing one: `dependency-direction.test.ts`
+already restricts `src/application` to the package `zod` and to relative imports
+that stay within application/domain, enforced by parsing the source rather than
+matching text, with a mutation proof in `scripts/verify-guards.sh`.
+
+So the visual system is bound by the strictest rule the repository already has,
+and `tests/architecture/etbz49-visual-boundary.test.ts` adds the four properties
+a package allowlist cannot express: the module is a leaf that nothing imports;
+it is pure (no clock, randomness, process, filesystem or network); it emits no
+document; and it computes no BaZi fact, Wu Xing derivation or interpretation.
+
+### 4. Values in TypeScript, artefacts on disk, equality proven
+
+The application layer may not read files, so the contract has to travel as
+values. The recovered artefacts nevertheless remain in the repository under
+`assets/visual-system-v1/`, byte-identical to the converged build, because their
+hashes are what the provenance record names.
+
+`scripts/etbz49-generate-visual-contract.mjs` projects the assets into the
+TypeScript modules. The contract test regenerates into a temporary directory and
+requires a **byte-identical** result, so the two cannot drift in either
+direction. The test also recomputes every per-glyph digest and the manifest
+digest in Node rather than reading back the values that claim them, and rebuilds
+each of the 27 SVG assets from the outline the contract carries.
+
+### 5. Glyphs: 27 assets, preserved, not redesigned
+
+`BazodiacDisplayGlyphSet` is exactly 27 deterministic vector assets — 10
+Heavenly Stems, 12 Earthly Branches, 5 Wu Xing characters — extracted from
+Noto Sans CJK SC Black (SIL OFL 1.1, source face pinned by SHA-256) with a
+documented ink pass. Every asset carries its Unicode identity, its outline, its
+bounding box and a canonical digest over all of them.
+
+Arbitrary Chinese text is the *other* contract, `InformationalCjkText`. A
+codepoint outside the 27 is `DISPLAY_GLYPH_OUT_OF_CONTRACT` — a refusal, not a
+fallback, because a silent fallback would ship a glyph nobody approved.
+
+The 金土木 reference face of the V4 donor was never identified. These assets are
+a licensed, deterministic *approximation* of that look and are not a claim of
+identity with it. `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` was a merge gate for a
+human, not an implementation stop condition: `docs/evidence/etbz-49/` carries
+the inspectable proof the decision needed, and on that proof the Product Owner
+**closed the gate on 2026-09-22** (Jira ETBZ-49 comment 16514) with answer 1 of
+the decision sheet — the ink-pass asset set as shipped. No asset changed and no
+digest moved. The repository still records the pre-decision value: the constant
+`HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED = 'OPEN'` in `provenance.ts` and the
+`status` fields in `glyphs/manifest.json`, `design-system.json` and
+`structures/D02-glyph-style.json` are the byte-preserved state of the recovered
+asset package (asset format 2.0.0). Rewriting them is an asset-manifest
+revision, not a documentation edit, and is deliberately not part of this slice
+(accepted limitation 3).
+
+### 6. Fonts: provenance established, nothing rebaselined
+
+The five recovered Inter binaries are byte-identical to the official
+`rsms/inter` **v4.1** release (`Inter-4.1.zip`,
+`sha256:9883fdd4…b11e`, inner path `extras/ttf/`), verified by SHA-256 and by
+`cmp`. The upstream `LICENSE.txt` (`sha256:262481e8…935a`) is vendored beside
+them as `fonts/OFL.txt`. Negative control: the same five filenames in the v4.0
+release hash differently, so the match identifies a release rather than a family.
+
+`FONT_LICENSE_PROVENANCE = VERIFIED`. No font was substituted, so no typography
+or pagination result was rebaselined.
+
+### 7. What the contract refuses
+
+Sixteen named codes, each with a negative test that asserts the code and not
+merely that something threw. The eleven ETBZ-49 requires:
+
+| Refusal | Code |
+| --- | --- |
+| glyph outside the 27 | `DISPLAY_GLYPH_OUT_OF_CONTRACT` |
+| malformed or clipped glyph | `DISPLAY_GLYPH_MALFORMED` / `DISPLAY_GLYPH_CLIPPED` |
+| unknown font: a family or weight outside the five committed binaries | `UNKNOWN_FONT` |
+| whole-column phase tint | `PHASE_SCOPE_OUT_OF_CONTRACT` |
+| design-side Wu Xing derivation | `WU_XING_RECOMPUTATION_REFUSED` |
+| Sheng/Ke relation graphic | `SHENG_KE_NOT_SUPPORTED` |
+| unknown visual type | `UNKNOWN_VISUAL_TYPE` |
+| unknown slot | `UNKNOWN_SLOT` |
+| semantic truncation | `SEMANTIC_TRUNCATION_REFUSED` |
+| uncontrolled shrink-to-fit | `SHRINK_TO_FIT_REFUSED` |
+| evidence chrome on the customer surface | `EVIDENCE_CHROME_IN_CUSTOMER_SURFACE` |
+
+Two of them are worth naming precisely.
+
+**Phase scope.** A phase colour classifies exactly one fact-bearing region —
+Stem, Branch or one Hidden Stem. The pillar container stays neutral
+(`paper-100`, or `paper-200` when selected). The recovered fixture is what makes
+this checkable rather than decorative: its year pillar carries a Metal stem over
+a Fire branch over Fire and Earth hidden stems, so a column tint is visibly
+false on it. Day Master selection is neutral ground plus a 0.35 mm `gold-500`
+edge, `isPhase: false` — a state, not a sixth phase.
+
+**Wu Xing.** Supplied counts pass through untouched. A vector carrying a derived
+quantity — `dominant`, `strength`, `balance`, `weighted`, `normalized`, … — is
+refused under its own code rather than quietly ignored by a permissive parse.
+The one permitted computation is the registered presentation transform
+`pt.linear-max-v1`, which maps a count to a ratio of the largest count; it is
+monotonic, and `presentWuXing` returns the untouched vector beside the ratios so
+that is checkable. Zero means zero in this distribution and nothing else.
+
+### 8. The proof harness stays outside the contract
+
+The Python/Chromium build system that produced the 29 proof pages lives under
+`tools/visual-proof-harness/`, declared as harness. Nothing in `src/` imports
+it, it contributes no npm dependency, and `tsconfig.json` excludes it — all
+three asserted, not promised. The production dependency set stays exactly
+`express` and `zod`.
+
+## Consequences
+
+**Good.** The visual system is rebuildable repository truth with machine-checked
+provenance. ETBZ-55 can implement a renderer against a contract that already
+states its refusals, so the renderer inherits the guards instead of
+re-litigating them. The font licence question is closed against a first-party
+upstream source. `contracts/`, the dependency set and every ETBZ-30/34 guard are
+untouched.
+
+**Costs.** The repository grows by roughly 19 MB, most of it the 29 proof PNGs
+and two merged PDFs under `docs/evidence/etbz-49/`. That is the price of the
+visual oracle: JSON equality alone cannot show a human what the glyph style
+looks like, and the glyph decision is a human one.
+
+**Accepted limitations.**
+
+1. The contract is a projection of assets, so an asset edit without
+   regeneration fails the contract test rather than silently updating the
+   contract. That is deliberate friction.
+2. Interpretive chapters 15–26 are IA slots. They consume approved
+   content-layer text that does not exist yet; pages 12–14 are the proven
+   container.
+3. `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED` is closed in Jira (2026-09-22,
+   answer 1: the ink-pass asset set as shipped) but still reads `OPEN` inside
+   the repository — in `src/application/visual/provenance.ts`, in the asset
+   manifests, and in the unit test that pins the constant. That is the recorded
+   state of the byte-preserved asset package, kept so that no digest moves in
+   this slice. The slice that next revises the glyph assets or their manifest
+   format carries the value forward together with a new manifest digest; until
+   then this ADR and Jira ETBZ-49 comment 16514 are where the decision lives.
+   `assets/visual-system-v1/FINAL_DESIGN_PROVENANCE.md` is the same kind of
+   record: sections 0–6 describe the 2026-09-21 build, and its section 7 lists
+   the five statements the tree has since moved past.
+4. The proof (`tools/visual-proof-harness/proof/run_proof.py`) needs Chromium
+   and the committed assets; for informational CJK text it uses the host's
+   `NotoSansCJK-Regular.ttc` when installed and records which face it found
+   (`environment.informationalCjkFace` in `proof-report.json`), otherwise a
+   host fallback face. `NotoSansCJK-Black.ttc` is needed only to re-extract the
+   27 display glyphs (`build/extract_glyphs.py`), which the proof never does.
+   Nothing under `tools/` runs in CI; what CI verifies is that the committed
+   contract still equals the committed assets.
+
+## Alternatives rejected
+
+**Port the V6 donor implementation.** Rejected by the Product Owner: V6 is a
+quarter of the decision and its repository shape is a rendering stack. The local
+branch that did this is kept as recovery evidence and was never published.
+
+**A new top-level `src/visual` layer.** Rejected: it would need a hand-written
+barrier where the application layer already has a proven one.
+
+**Read the assets from disk at runtime.** Rejected: it would put `node:fs` into
+the application layer, break the dependency guard, and make the contract
+depend on a deployment's file layout.
+
+**Attach a generic OFL to the recovered fonts.** Rejected: it would assert a
+provenance nobody had established. The binaries were identified against upstream
+first, and the upstream licence file was vendored.
+
+**Redesign the glyphs to close the human gate.** Out of scope and not ours to
+decide. The gate was closed by the Product Owner on the inspectable evidence,
+not by a redesign.
+
+## Evidence regeneration — 2026-09-28
+
+Two things happened on this branch after the ADR was written, and the tracked
+evidence had to follow them.
+
+1. **Wu Xing centre clearance (2026-09-22, PR #12; Jira ETBZ-49 comments 16514
+   and 16547).** The proof harness had placed the Fire value block inside the
+   medallion's clearance band and the centre label wider than the 44 mm circle.
+   The repair moved the medallion into a protected region, stacked the label
+   inside it and added a rendered-DOM oracle for circle containment and phase
+   clearance, plus two counterexamples for the prior shapes (guards 18 → 21).
+2. **Project-native proof (PR #13).** `.agent-proofs.json` declares
+   `tools/visual-proof-harness/proof/run_proof.py`, which stages the harness
+   from committed files only, runs the guards, renders all 29 pages, requires
+   the oracle to reject the prior geometry, and fails on any finding. PR #13
+   reported it red on `D05-negative` (the enlarged guard table overflowed the
+   sheet); `402a8aa` compacted that table.
+
+The tracked evidence was the 2026-09-21 render and therefore stale for
+`08-wu-xing`, `dev-wu-xing-zero` and `D05-negative`, and the old Wu Xing
+structural hash `7aa0236d…` was still what `render-receipt.json`,
+`design-system.json` and `pageFamily.ts` carried. On 2026-09-28 the proof was
+run through the harness as committed on this branch, on the assets unchanged
+since `290eb79db15409cc83c9d2000ac6106de2ffb99a`, and:
+
+- all 29 PNGs, the contact sheet and both merged PDFs in `docs/evidence/etbz-49/`
+  are that render; `docs/evidence/etbz-49/README.md` records the environment;
+- exactly three structural hashes moved — `08-wu-xing` → `d612d291…`,
+  `dev-wu-xing-zero` → `c3ff8415…`, `D05-negative` → `5368f940…` — and the
+  three matching `structures/*.json` dumps were replaced; the other 26 are
+  byte-identical to the 2026-09-21 build;
+- `render-receipt.json` was updated in place (same keys, same line count, so the
+  reviewed secret-scanner fingerprint on line 373 still names the `tokens.json`
+  hash), `design-system.json` carries the new Wu Xing hash, `pageFamily.ts`
+  was regenerated by `npm run etbz49:contract`, `ASSET-INTEGRITY.json` was
+  re-indexed, and `determinism-report.json` records two runs — 29/29
+  structural, 29/29 PNG, 0 DOM findings, merged deliverables identical — plus
+  every further run under `pngByteStability`;
+- the tracked artefacts are produced by **declared tooling only**:
+  `run_proof.py` (which now also writes the `structures/*.json` dumps, records
+  `startedAt` and the informational CJK face it found, and launches Chromium
+  with `--deterministic-mode --disable-gpu --force-color-profile=srgb`) and
+  `scripts/etbz49-assemble-evidence.mjs` (`npm run etbz49:assemble`), which
+  carries a run into the tree and refuses on a failed run, an untracked page,
+  a receipt that does not round-trip or a moved line 373. The first
+  regeneration of 2026-09-28 was assembled by an ad-hoc script; it was redone
+  with the declared one before merge;
+- PNG byte identity on this environment needed Chromium's pixel-test switches:
+  without them, eight builds agreed on every structural hash but pairs differed
+  on two to five PNGs (edge anti-aliasing on `01-cover`, `05-four-pillars`,
+  `08-wu-xing`, `11-hidden-stems`, `29-closing`, `D06-layout`, `D07-layout`,
+  and `D08-receipts` which prints the hashes). With them, three consecutive
+  builds and a fourth on the merged head were byte-identical on all 29 pages.
+  The README states the numbers; the structural hash is the binding one;
+- the informational CJK face is no longer a host fallback for this evidence:
+  the `NotoSansCJK-Regular.ttc` pinned in the receipt (`sha256:b76b0433…`)
+  was obtained from the upstream `notofonts/noto-cjk` repository, verified by
+  SHA-256, and installed as a user font before rendering; the proof report's
+  `environment.informationalCjkFace` records the file, its hash and that it
+  matches the pin. It is still not committed; ETBZ-55 decides how the renderer
+  pins its informational face;
+- `tools/visual-proof-harness/src/pages/*.html` are refreshed from the same run:
+  they are outputs of the builders, not inputs of the proof, and the harness
+  README now says so.
+
+### Contract corrections from the independent review (2026-09-28)
+
+The read-only review of PR #11 before merge (four lenses, every finding
+re-checked by two skeptics) found two defects in the contract itself, both
+fixed on the branch with a negative test and a mutant each:
+
+1. **The Wu Xing schema refused the fixture it ships with.** `WU_XING_COUNT`
+   demanded integers, while the supplied vector carries Qi weights — 1.8 and 2.5
+   in the recovered chart fixture that page 08 was rendered from. A count is now
+   any finite, non-negative number; a sign, NaN, infinity, a string, a missing or
+   a sixth phase are still refused, and nothing derived from the five is ever
+   computed (`WU_XING_RECOMPUTATION_REFUSED`, unchanged).
+2. **"Unknown font" had no refusal.** Jira ETBZ-49 lists it as a required
+   negative path and AC 3 forbids an unknown fallback as final. `fonts.ts` adds
+   `resolveFontFace` / `hasFontFace` over the five committed binaries; a family
+   or weight outside that set is `UNKNOWN_FONT`, never a neighbouring face. The
+   informational CJK family remains a host-resolved chain and is named as such.
+
+Seven files under `assets/visual-system-v1/structures/` (`01-longform-p1`,
+`02-longform-p2`, `D02-wordmark`, `D03-bindings`, `D04-negative`,
+`D05-layout`, `D07-receipts`) are leftovers of an earlier page numbering that
+the current harness no longer produces. They are part of the byte-preserved
+recovered package and are left untouched; the contract test counts structure
+files, it does not bind them.

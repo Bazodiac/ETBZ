@@ -1,0 +1,69 @@
+/* Bazodiac FINAL — page shell (V4 visual shell · V5 tokens · V6 geometry) */
+@font-face{font-family:"Inter";src:url("../fonts/Inter-Regular.ttf");font-weight:400}
+@font-face{font-family:"Inter";src:url("../fonts/Inter-Medium.ttf");font-weight:500}
+@font-face{font-family:"Inter";src:url("../fonts/Inter-SemiBold.ttf");font-weight:600}
+@font-face{font-family:"Inter Display";src:url("../fonts/InterDisplay-Light.ttf");font-weight:300}
+@font-face{font-family:"Inter Display";src:url("../fonts/InterDisplay-Regular.ttf");font-weight:400}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#888}
+body{font-family:var(--font-sans);color:var(--ink-900);-webkit-font-smoothing:antialiased;font-kerning:normal}
+@page{size:210mm 297mm;margin:0}
+.sheet{position:relative;width:210mm;height:297mm;overflow:hidden;background:var(--paper-000);color:var(--ink-900)}
+.content{position:absolute;left:var(--geo-marginSide);top:var(--geo-marginTop);width:var(--geo-contentW);height:var(--geo-contentH)}
+/* running head / foot */
+.head{position:absolute;left:20mm;right:20mm;top:11mm;display:flex;justify-content:space-between;align-items:center;height:6mm}
+.head .brand{display:flex;align-items:center;gap:3mm}
+.head .brand svg{height:2.6mm;width:auto;color:var(--ink-900)}
+.head .brand .who{font-size:9pt;letter-spacing:.16em;text-transform:uppercase;font-weight:500;color:var(--ink-900)}
+.head .brand .sep{color:var(--ink-400)}
+.tag{display:inline-block;font-size:9pt;letter-spacing:.14em;text-transform:uppercase;font-weight:500;padding:1.1mm 2.6mm 0.9mm;border-radius:0.8mm;line-height:1}
+.tag.you{background:var(--ink-900);color:var(--paper-000)}
+.tag.gen{border:0.25mm solid var(--ink-400);color:var(--ink-600)}
+.foot{position:absolute;left:20mm;right:20mm;bottom:11mm;display:flex;justify-content:space-between;align-items:baseline;font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-400)}
+.foot .pn{color:var(--gold-700);font-weight:500}
+/* type */
+.kicker{font-size:9pt;letter-spacing:.16em;text-transform:uppercase;font-weight:500;color:var(--gold-700);line-height:12pt}
+.h1{font-family:var(--font-display);font-weight:300;font-size:30pt;line-height:33pt;letter-spacing:-.02em;color:var(--ink-900)}
+.h1.small{font-size:22pt;line-height:25pt;letter-spacing:-.015em}
+.h2{font-size:13pt;line-height:17pt;font-weight:500;letter-spacing:-.005em}
+.standfirst{font-size:12.5pt;line-height:17pt;font-weight:300;color:var(--ink-600)}
+.body{font-size:10.5pt;line-height:14.17pt;color:var(--ink-600)}
+.body p+p{margin-top:5mm}
+.body-small{font-size:9pt;line-height:12.5pt;color:var(--ink-600)}
+.caption{font-size:9pt;line-height:12pt;color:var(--ink-400)}
+.label{font-size:9pt;letter-spacing:.12em;text-transform:uppercase;font-weight:500;color:var(--ink-400);line-height:11pt}
+.label.ink{color:var(--ink-900)}
+.cjk{font-family:var(--font-cjk);font-weight:400;letter-spacing:.02em}
+.cjk.term{font-weight:500;font-size:12pt;letter-spacing:.04em}
+.pinyin{font-size:9pt;font-weight:500;letter-spacing:.02em;color:var(--ink-900)}
+.gold{color:var(--gold-700)}
+.muted{color:var(--ink-400)}
+.rule{height:0.25mm;background:var(--rule-200)}
+.rule.gold{background:var(--gold-500)}
+/* display glyphs: vector assets, never fonts */
+svg.disp{display:block;color:var(--ink-900);overflow:visible}
+svg.disp use{color:inherit}
+/* atmospheric forms — decorative only, never bind a fact */
+.blob{position:absolute;border-radius:50%;pointer-events:none}
+.b-wood{background:var(--atmos-wood)} .b-fire{background:var(--atmos-fire)} .b-earth{background:var(--atmos-earth)} .b-metal{background:var(--atmos-metal)} .b-water{background:var(--atmos-water)}
+/* phase fields / marks — one fact-bearing region each */
+.f-wood{background:var(--phase-wood-field)} .f-fire{background:var(--phase-fire-field)} .f-earth{background:var(--phase-earth-field)} .f-metal{background:var(--phase-metal-field)} .f-water{background:var(--phase-water-field)}
+.m-wood{background:var(--phase-wood-mark)} .m-fire{background:var(--phase-fire-mark)} .m-earth{background:var(--phase-earth-mark)} .m-metal{background:var(--phase-metal-mark)} .m-water{background:var(--phase-water-mark)}
+.c-wood{color:var(--phase-wood-mark)} .c-fire{color:var(--phase-fire-mark)} .c-earth{color:var(--phase-earth-mark)} .c-metal{color:var(--phase-metal-mark)} .c-water{color:var(--phase-water-mark)}
+.dot{display:inline-block;width:2.4mm;height:2.4mm;border-radius:50%;vertical-align:middle;margin-right:1.6mm}
+/* panels */
+.panel{background:var(--paper-100);border-radius:var(--radius-panel);padding:5mm}
+.panel.recessed{background:var(--paper-200)}
+.panel.dark{background:var(--ink-900);color:var(--paper-000)}
+.panel.dark .label{color:var(--gold-500)}
+.panel.dark .body,.panel.dark .body-small{color:var(--paper-100)}
+.panel.edge{border-left:0.6mm solid var(--gold-500);border-radius:0 var(--radius-panel) var(--radius-panel) 0}
+.legend{display:flex;gap:6mm;align-items:center}
+.legend .i{display:flex;align-items:center;gap:1.6mm;font-size:9pt;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-600)}
+.legend .i .cjk{letter-spacing:0;text-transform:none;color:var(--ink-400)}
+table.facts{width:100%;border-collapse:collapse}
+table.facts td{padding:2.6mm 0;border-top:0.25mm solid var(--rule-200);font-size:9.5pt;line-height:12pt;vertical-align:top}
+table.facts td:first-child{font-size:9pt;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-400);font-weight:500;width:34%}
+table.facts td:last-child{text-align:right;color:var(--ink-900)}
+table.facts tr:last-child td{border-bottom:0.25mm solid var(--rule-200)}
+.longline{font-kerning:none;font-variant-ligatures:none;font-feature-settings:"kern" 0,"liga" 0,"calt" 0;white-space:nowrap;position:absolute}

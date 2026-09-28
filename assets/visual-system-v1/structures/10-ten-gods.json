@@ -1,0 +1,40 @@
+{
+ "pageId": "ten-gods",
+ "surface": "customer",
+ "pageNumber": 10,
+ "family": "chart-foundation",
+ "donors": {
+  "primary": "V3 Ten Gods & Hidden Stems (contact sheet, page 08)",
+  "secondary": [
+   "V5 InformationalCjkText contract",
+   "V6 fail-closed facts",
+   "V4 tokens"
+  ]
+ },
+ "factSlotBindings": [
+  {
+   "slotId": "tenGods.presence",
+   "consumedFactKinds": [
+    "ten_god_relation",
+    "hidden_stem_ten_god_relation"
+   ],
+   "fixture": "bazodiac-final/fixture/chart/v4-mixed-v1",
+   "cjkRole": "InformationalCjkText"
+  }
+ ],
+ "glyphRefs": [],
+ "components": [
+  {
+   "id": "tenGods.table",
+   "kind": "presenceMatrix",
+   "rows": 10,
+   "columns": [
+    "year",
+    "month",
+    "day",
+    "hour"
+   ],
+   "cjkRole": "InformationalCjkText"
+  }
+ ]
+}

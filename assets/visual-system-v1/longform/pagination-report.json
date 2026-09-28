@@ -1,0 +1,1521 @@
+{
+ "reportVersion": "bazodiac-final-pagination-report@1.0.0",
+ "rules": {
+  "orphanMinLines": 2,
+  "widowMinLines": 2,
+  "keepWithNextLines": 2,
+  "atomic": [
+   "pullQuote",
+   "keyInsight"
+  ],
+  "shrinkToFit": false,
+  "clipping": false,
+  "semanticShortening": false,
+  "hyphenation": false,
+  "justification": false,
+  "minBandLines": 8,
+  "shortFinalPageRule": "fill < 60% receives chapter reference panel (no stretch, no shrink)"
+ },
+ "fixtures": [
+  {
+   "fixtureId": "bazodiac-final/fixture/long-form/general-education-chapter-v1",
+   "surface": "customer",
+   "wordCount": 749,
+   "pages": 3,
+   "lines": 89,
+   "findings": [],
+   "structuralSha256": "sha256:4c60d30221575e5655936c49b9f4be20a6b016ac5af2770d5a29a7ff0b6174eb",
+   "layout": {
+    "pages": [
+     {
+      "pageNumber": 1,
+      "template": "opener",
+      "sidebar": null,
+      "fragments": [
+       {
+        "blockId": "ch.p1",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 26074,
+        "widthCp": 23244,
+        "heightCp": 15587,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "A BaZi chart is not a verdict written about",
+          "xCp": 5669,
+          "baselineCp": 27165,
+          "widthCp": 20512
+         },
+         {
+          "text": "you. It is eight characters, four Heavenly",
+          "xCp": 5669,
+          "baselineCp": 28582,
+          "widthCp": 20110
+         },
+         {
+          "text": "Stems above four Earthly Branches, set out in",
+          "xCp": 5669,
+          "baselineCp": 29999,
+          "widthCp": 22654
+         },
+         {
+          "text": "four columns for the year, month, day and",
+          "xCp": 5669,
+          "baselineCp": 31416,
+          "widthCp": 20892
+         },
+         {
+          "text": "hour of a birth. They come from a calendar",
+          "xCp": 5669,
+          "baselineCp": 32833,
+          "widthCp": 21286
+         },
+         {
+          "text": "system used in China for well over two",
+          "xCp": 5669,
+          "baselineCp": 34250,
+          "widthCp": 19251
+         },
+         {
+          "text": "thousand years, and the arrangement itself is",
+          "xCp": 5669,
+          "baselineCp": 35667,
+          "widthCp": 22425
+         },
+         {
+          "text": "mechanical: given a moment and a declared",
+          "xCp": 5669,
+          "baselineCp": 37084,
+          "widthCp": 21882
+         },
+         {
+          "text": "day boundary, the eight characters are fixed.",
+          "xCp": 5669,
+          "baselineCp": 38501,
+          "widthCp": 22351
+         },
+         {
+          "text": "Two people born in the same hour in the",
+          "xCp": 5669,
+          "baselineCp": 39918,
+          "widthCp": 20056
+         },
+         {
+          "text": "same place receive the same eight.",
+          "xCp": 5669,
+          "baselineCp": 41335,
+          "widthCp": 17557
+         }
+        ]
+       },
+       {
+        "blockId": "ch.p2",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 43078,
+        "widthCp": 23244,
+        "heightCp": 17004,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "What follows from those characters is a",
+          "xCp": 5669,
+          "baselineCp": 44169,
+          "widthCp": 19722
+         },
+         {
+          "text": "different matter, and that difference is why",
+          "xCp": 5669,
+          "baselineCp": 45586,
+          "widthCp": 21292
+         },
+         {
+          "text": "this report is built the way it is. The chart facts",
+          "xCp": 5669,
+          "baselineCp": 47003,
+          "widthCp": 22929
+         },
+         {
+          "text": "are deterministic. The reading is",
+          "xCp": 5669,
+          "baselineCp": 48420,
+          "widthCp": 15965
+         },
+         {
+          "text": "interpretation, a tradition of relating the",
+          "xCp": 5669,
+          "baselineCp": 49837,
+          "widthCp": 19407
+         },
+         {
+          "text": "characters to one another, developed over",
+          "xCp": 5669,
+          "baselineCp": 51254,
+          "widthCp": 21192
+         },
+         {
+          "text": "centuries, with schools that disagree.",
+          "xCp": 5669,
+          "baselineCp": 52671,
+          "widthCp": 18522
+         },
+         {
+          "text": "Bazodiac keeps the two visibly apart rather",
+          "xCp": 5669,
+          "baselineCp": 54088,
+          "widthCp": 21409
+         },
+         {
+          "text": "than blending them into one confident voice.",
+          "xCp": 5669,
+          "baselineCp": 55505,
+          "widthCp": 22144
+         },
+         {
+          "text": "Chart pages carry a provenance line naming",
+          "xCp": 5669,
+          "baselineCp": 56922,
+          "widthCp": 21993
+         },
+         {
+          "text": "where their values came from. Reading pages",
+          "xCp": 5669,
+          "baselineCp": 58339,
+          "widthCp": 22758
+         },
+         {
+          "text": "are marked as reading.",
+          "xCp": 5669,
+          "baselineCp": 59756,
+          "widthCp": 11424
+         }
+        ]
+       },
+       {
+        "blockId": "ch.sub1",
+        "kind": "subhead",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 30614,
+        "topCp": 26074,
+        "widthCp": 23244,
+        "heightCp": 1417,
+        "styleId": "subhead",
+        "lines": [
+         {
+          "text": "What the chart pages show",
+          "xCp": 30614,
+          "baselineCp": 27255,
+          "widthCp": 16850
+         }
+        ]
+       },
+       {
+        "blockId": "ch.p3",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 30614,
+        "topCp": 28908,
+        "widthCp": 23244,
+        "heightCp": 17004,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "Every character on a chart page is set as real",
+          "xCp": 30614,
+          "baselineCp": 29999,
+          "widthCp": 22414
+         },
+         {
+          "text": "text in a real typeface, never drawn and never",
+          "xCp": 30614,
+          "baselineCp": 31416,
+          "widthCp": 22852
+         },
+         {
+          "text": "generated. Where one appears large, it also",
+          "xCp": 30614,
+          "baselineCp": 32833,
+          "widthCp": 21734
+         },
+         {
+          "text": "appears complete: a Stem or a Branch is",
+          "xCp": 30614,
+          "baselineCp": 34250,
+          "widthCp": 20085
+         },
+         {
+          "text": "never cropped for effect. Pinyin always",
+          "xCp": 30614,
+          "baselineCp": 35667,
+          "widthCp": 19580
+         },
+         {
+          "text": "carries its tone marks, because without them",
+          "xCp": 30614,
+          "baselineCp": 37084,
+          "widthCp": 22268
+         },
+         {
+          "text": "a syllable is ambiguous. A Branch is never",
+          "xCp": 30614,
+          "baselineCp": 38501,
+          "widthCp": 20872
+         },
+         {
+          "text": "swapped for its animal. The animal is a",
+          "xCp": 30614,
+          "baselineCp": 39918,
+          "widthCp": 19244
+         },
+         {
+          "text": "traditional association that travels with the",
+          "xCp": 30614,
+          "baselineCp": 41335,
+          "widthCp": 20904
+         },
+         {
+          "text": "Branch, and it is shown as a secondary label",
+          "xCp": 30614,
+          "baselineCp": 42752,
+          "widthCp": 22042
+         },
+         {
+          "text": "so that the character remains the fact and the",
+          "xCp": 30614,
+          "baselineCp": 44169,
+          "widthCp": 22640
+         },
+         {
+          "text": "animal remains the association.",
+          "xCp": 30614,
+          "baselineCp": 45586,
+          "widthCp": 15558
+         }
+        ]
+       },
+       {
+        "blockId": "ch.p4",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 30614,
+        "topCp": 47329,
+        "widthCp": 23244,
+        "heightCp": 14170,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "Colour is used sparingly and always locally. A",
+          "xCp": 30614,
+          "baselineCp": 48420,
+          "widthCp": 22637
+         },
+         {
+          "text": "field of colour classifies exactly one thing at a",
+          "xCp": 30614,
+          "baselineCp": 49837,
+          "widthCp": 22709
+         },
+         {
+          "text": "time: this Stem, that Branch, this one Hidden",
+          "xCp": 30614,
+          "baselineCp": 51254,
+          "widthCp": 22025
+         },
+         {
+          "text": "Stem. A whole pillar is never tinted, because a",
+          "xCp": 30614,
+          "baselineCp": 52671,
+          "widthCp": 22885
+         },
+         {
+          "text": "pillar holds a Stem and a Branch that usually",
+          "xCp": 30614,
+          "baselineCp": 54088,
+          "widthCp": 21931
+         },
+         {
+          "text": "belong to different phases, and a single wash",
+          "xCp": 30614,
+          "baselineCp": 55505,
+          "widthCp": 22584
+         },
+         {
+          "text": "over both would be a claim the chart does not",
+          "xCp": 30614,
+          "baselineCp": 56922,
+          "widthCp": 22749
+         },
+         {
+          "text": "make. The Day Master is set apart with a",
+          "xCp": 30614,
+          "baselineCp": 58339,
+          "widthCp": 20201
+         },
+         {
+          "text": "quiet gold edge on a neutral ground. Gold is a",
+          "xCp": 30614,
+          "baselineCp": 59756,
+          "widthCp": 22653
+         },
+         {
+          "text": "selection, not a sixth phase.",
+          "xCp": 30614,
+          "baselineCp": 61173,
+          "widthCp": 13816
+         }
+        ]
+       },
+       {
+        "blockId": "ch.quote",
+        "kind": "pullQuote",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 62916,
+        "widthCp": 48189,
+        "heightCp": 7085,
+        "styleId": "pullQuote",
+        "boxCp": {
+         "xCp": 5669,
+         "yCp": 62916,
+         "widthCp": 48189,
+         "heightCp": 7085
+        },
+        "meta": {
+         "kind": "pullQuote",
+         "rule": true
+        },
+        "lines": [
+         {
+          "text": "“Everything marked Your chart came from validated chart data. Everything",
+          "styleId": "pullQuote",
+          "xCp": 5669,
+          "baselineCp": 65878,
+          "widthCp": 45756
+         },
+         {
+          "text": "marked General education is identical in every copy.”",
+          "styleId": "pullQuote",
+          "xCp": 5669,
+          "baselineCp": 67878,
+          "widthCp": 32584
+         }
+        ]
+       }
+      ],
+      "usedBottomCp": 70001
+     },
+     {
+      "pageNumber": 2,
+      "template": "continuation",
+      "sidebar": {
+       "xCp": 36850,
+       "yCp": 11904,
+       "widthCp": 17008
+      },
+      "fragments": [
+       {
+        "blockId": "ch.sub2",
+        "kind": "subhead",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 11904,
+        "widthCp": 29480,
+        "heightCp": 1417,
+        "styleId": "subhead",
+        "lines": [
+         {
+          "text": "What this edition deliberately leaves out",
+          "xCp": 5669,
+          "baselineCp": 13085,
+          "widthCp": 24579
+         }
+        ]
+       },
+       {
+        "blockId": "ch.p5",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 14738,
+        "widthCp": 29480,
+        "heightCp": 14170,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "Some things are absent on purpose. This edition does not",
+          "xCp": 5669,
+          "baselineCp": 15829,
+          "widthCp": 28637
+         },
+         {
+          "text": "calculate the strength of a Day Master, does not nominate",
+          "xCp": 5669,
+          "baselineCp": 17246,
+          "widthCp": 28745
+         },
+         {
+          "text": "a favourable element, does not draw luck pillars or annual",
+          "xCp": 5669,
+          "baselineCp": 18663,
+          "widthCp": 28673
+         },
+         {
+          "text": "transits, and prints no lucky numbers, colours or",
+          "xCp": 5669,
+          "baselineCp": 20080,
+          "widthCp": 23956
+         },
+         {
+          "text": "directions. None of that is an oversight. Each would",
+          "xCp": 5669,
+          "baselineCp": 21497,
+          "widthCp": 25554
+         },
+         {
+          "text": "require a method this report has not committed to, and",
+          "xCp": 5669,
+          "baselineCp": 22914,
+          "widthCp": 27093
+         },
+         {
+          "text": "printing it anyway would mean asserting something the",
+          "xCp": 5669,
+          "baselineCp": 24331,
+          "widthCp": 27371
+         },
+         {
+          "text": "report cannot support. Where a page shows a count, the",
+          "xCp": 5669,
+          "baselineCp": 25748,
+          "widthCp": 28066
+         },
+         {
+          "text": "count is a count: a zero in the Wu Xing distribution means",
+          "xCp": 5669,
+          "baselineCp": 27165,
+          "widthCp": 28578
+         },
+         {
+          "text": "the tally is zero, not that something is missing from you.",
+          "xCp": 5669,
+          "baselineCp": 28582,
+          "widthCp": 27665
+         }
+        ]
+       },
+       {
+        "blockId": "ch.insight",
+        "kind": "keyInsight",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 30325,
+        "widthCp": 29480,
+        "heightCp": 12753,
+        "styleId": "keyInsight",
+        "boxCp": {
+         "xCp": 5669,
+         "yCp": 30325,
+         "widthCp": 29480,
+         "heightCp": 12753
+        },
+        "meta": {
+         "kind": "keyInsight",
+         "pad": 1400
+        },
+        "lines": [
+         {
+          "text": "Key insight",
+          "styleId": "panelTitle",
+          "xCp": 7069,
+          "baselineCp": 32653,
+          "widthCp": 6374
+         },
+         {
+          "text": "Read the chart pages and the reading pages as two",
+          "styleId": "panelBody",
+          "xCp": 7069,
+          "baselineCp": 34545,
+          "widthCp": 23120
+         },
+         {
+          "text": "different kinds of writing. One reports what your chart",
+          "styleId": "panelBody",
+          "xCp": 7069,
+          "baselineCp": 35895,
+          "widthCp": 24218
+         },
+         {
+          "text": "contains. The other explains a system that existed long",
+          "styleId": "panelBody",
+          "xCp": 7069,
+          "baselineCp": 37245,
+          "widthCp": 24693
+         },
+         {
+          "text": "before your chart did. Where the two meet, the page says",
+          "styleId": "panelBody",
+          "xCp": 7069,
+          "baselineCp": 38595,
+          "widthCp": 25957
+         },
+         {
+          "text": "so.",
+          "styleId": "panelBody",
+          "xCp": 7069,
+          "baselineCp": 39945,
+          "widthCp": 1345
+         }
+        ]
+       },
+       {
+        "blockId": "ch.p6",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 44495,
+        "widthCp": 29480,
+        "heightCp": 9919,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "That restraint has a cost and a benefit. The cost is that you",
+          "xCp": 5669,
+          "baselineCp": 45586,
+          "widthCp": 29169
+         },
+         {
+          "text": "will not find a sentence telling you what will happen. The",
+          "xCp": 5669,
+          "baselineCp": 47003,
+          "widthCp": 28040
+         },
+         {
+          "text": "benefit is that everything you do find can be traced, either",
+          "xCp": 5669,
+          "baselineCp": 48420,
+          "widthCp": 28824
+         },
+         {
+          "text": "to a character in your chart, to a named relationship",
+          "xCp": 5669,
+          "baselineCp": 49837,
+          "widthCp": 25648
+         },
+         {
+          "text": "between characters, or to a labelled piece of general",
+          "xCp": 5669,
+          "baselineCp": 51254,
+          "widthCp": 26185
+         },
+         {
+          "text": "education. If a passage cannot be traced to one of those,",
+          "xCp": 5669,
+          "baselineCp": 52671,
+          "widthCp": 28374
+         },
+         {
+          "text": "it does not belong in this document, and it is not here.",
+          "xCp": 5669,
+          "baselineCp": 54088,
+          "widthCp": 26617
+         }
+        ]
+       },
+       {
+        "blockId": "ch.sub3",
+        "kind": "subhead",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 55831,
+        "widthCp": 29480,
+        "heightCp": 1417,
+        "styleId": "subhead",
+        "lines": [
+         {
+          "text": "How the following chapters are built",
+          "xCp": 5669,
+          "baselineCp": 57012,
+          "widthCp": 22201
+         }
+        ]
+       },
+       {
+        "blockId": "ch.p7",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 58665,
+        "widthCp": 29480,
+        "heightCp": 11336,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "Each interpretive chapter opens with the part of the chart",
+          "xCp": 5669,
+          "baselineCp": 59756,
+          "widthCp": 28408
+         },
+         {
+          "text": "it refers to, named in the running head, so you always",
+          "xCp": 5669,
+          "baselineCp": 61173,
+          "widthCp": 26625
+         },
+         {
+          "text": "know which characters a passage is about. A short",
+          "xCp": 5669,
+          "baselineCp": 62590,
+          "widthCp": 25285
+         },
+         {
+          "text": "highlighted sentence marks the one idea the chapter turns",
+          "xCp": 5669,
+          "baselineCp": 64007,
+          "widthCp": 28937
+         },
+         {
+          "text": "on. A Key insight panel, where present, restates the",
+          "xCp": 5669,
+          "baselineCp": 65424,
+          "widthCp": 25625
+         },
+         {
+          "text": "practical point in plain words. Chapters are written to be",
+          "xCp": 5669,
+          "baselineCp": 66841,
+          "widthCp": 27817
+         },
+         {
+          "text": "read in order, but each one stands on its own, and nothing",
+          "xCp": 5669,
+          "baselineCp": 68258,
+          "widthCp": 28937
+         },
+         {
+          "text": "in a later chapter overrides an earlier one.",
+          "xCp": 5669,
+          "baselineCp": 69675,
+          "widthCp": 20704
+         }
+        ]
+       },
+       {
+        "blockId": "ch.p8",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": true,
+        "xCp": 5669,
+        "topCp": 71418,
+        "widthCp": 29480,
+        "heightCp": 7085,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "You may find that some passages describe you well and",
+          "xCp": 5669,
+          "baselineCp": 72509,
+          "widthCp": 27968
+         },
+         {
+          "text": "others do not. That is expected, and it is not a failure of",
+          "xCp": 5669,
+          "baselineCp": 73926,
+          "widthCp": 27425
+         },
+         {
+          "text": "the chart or of you. A classical reading describes a",
+          "xCp": 5669,
+          "baselineCp": 75343,
+          "widthCp": 25161
+         },
+         {
+          "text": "structure and the tendencies traditionally associated with",
+          "xCp": 5669,
+          "baselineCp": 76760,
+          "widthCp": 28368
+         },
+         {
+          "text": "it. What you do with a structure is the part that stays",
+          "xCp": 5669,
+          "baselineCp": 78177,
+          "widthCp": 25889
+         }
+        ]
+       }
+      ],
+      "usedBottomCp": 78503
+     },
+     {
+      "pageNumber": 3,
+      "template": "continuation",
+      "sidebar": {
+       "xCp": 36850,
+       "yCp": 11904,
+       "widthCp": 17008
+      },
+      "fragments": [
+       {
+        "blockId": "ch.p8",
+        "kind": "paragraph",
+        "fragmentIndex": 5,
+        "continuedFromPreviousPage": true,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 11904,
+        "widthCp": 29480,
+        "heightCp": 4251,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "yours. If you want to go further, the method note at the",
+          "xCp": 5669,
+          "baselineCp": 12995,
+          "widthCp": 27251
+         },
+         {
+          "text": "end of this report states which conventions were used and",
+          "xCp": 5669,
+          "baselineCp": 14412,
+          "widthCp": 29132
+         },
+         {
+          "text": "which were deliberately left aside.",
+          "xCp": 5669,
+          "baselineCp": 15829,
+          "widthCp": 16973
+         }
+        ]
+       }
+      ],
+      "usedBottomCp": 16155
+     }
+    ],
+    "lineCount": 89,
+    "wordCount": 749,
+    "findings": [],
+    "geometry": {
+     "contentXCp": 5669,
+     "contentYCp": 6236,
+     "contentWidthCp": 48189,
+     "contentHeightCp": 72283,
+     "baselineCp": 1417,
+     "toleranceCp": 300
+    },
+    "structuralSha256": "sha256:4c60d30221575e5655936c49b9f4be20a6b016ac5af2770d5a29a7ff0b6174eb"
+   }
+  },
+  {
+   "fixtureId": "etbz43/fixture/long-form/pagination-stress-v1",
+   "surface": "developer",
+   "wordCount": 679,
+   "pages": 2,
+   "lines": 79,
+   "findings": [],
+   "structuralSha256": "sha256:e522317a14e4003832b0fb4b4591534d8674d0b5d252d099c22492329e9bf18d",
+   "layout": {
+    "pages": [
+     {
+      "pageNumber": 1,
+      "template": "opener",
+      "sidebar": null,
+      "fragments": [
+       {
+        "blockId": "longform.p1",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": true,
+        "xCp": 5669,
+        "topCp": 20406,
+        "widthCp": 23244,
+        "heightCp": 19838,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "A printed page has one honest failure mode",
+          "xCp": 5669,
+          "baselineCp": 21497,
+          "widthCp": 21719
+         },
+         {
+          "text": "and several dishonest ones. The honest",
+          "xCp": 5669,
+          "baselineCp": 22914,
+          "widthCp": 19780
+         },
+         {
+          "text": "failure is running out of room, which is",
+          "xCp": 5669,
+          "baselineCp": 24331,
+          "widthCp": 19019
+         },
+         {
+          "text": "resolved by starting another page. The",
+          "xCp": 5669,
+          "baselineCp": 25748,
+          "widthCp": 19258
+         },
+         {
+          "text": "dishonest ones all pretend the room was",
+          "xCp": 5669,
+          "baselineCp": 27165,
+          "widthCp": 20142
+         },
+         {
+          "text": "there: shrinking the type by two per cent so a",
+          "xCp": 5669,
+          "baselineCp": 28582,
+          "widthCp": 22515
+         },
+         {
+          "text": "last line fits, letting a descender slide under",
+          "xCp": 5669,
+          "baselineCp": 29999,
+          "widthCp": 21556
+         },
+         {
+          "text": "the margin, quietly dropping a sentence that",
+          "xCp": 5669,
+          "baselineCp": 31416,
+          "widthCp": 21926
+         },
+         {
+          "text": "nobody counted, or asking a summariser to",
+          "xCp": 5669,
+          "baselineCp": 32833,
+          "widthCp": 21541
+         },
+         {
+          "text": "make the paragraph shorter. Each of those",
+          "xCp": 5669,
+          "baselineCp": 34250,
+          "widthCp": 21230
+         },
+         {
+          "text": "produces a page that looks finished and is",
+          "xCp": 5669,
+          "baselineCp": 35667,
+          "widthCp": 20994
+         },
+         {
+          "text": "not. This template removes the dishonest",
+          "xCp": 5669,
+          "baselineCp": 37084,
+          "widthCp": 20520
+         },
+         {
+          "text": "options from the system rather than from a",
+          "xCp": 5669,
+          "baselineCp": 38501,
+          "widthCp": 21279
+         },
+         {
+          "text": "style guide, which is why there is no scale",
+          "xCp": 5669,
+          "baselineCp": 39918,
+          "widthCp": 20880
+         }
+        ]
+       },
+       {
+        "blockId": "longform.p1",
+        "kind": "paragraph",
+        "fragmentIndex": 14,
+        "continuedFromPreviousPage": true,
+        "continuesOnNextPage": false,
+        "xCp": 30614,
+        "topCp": 20406,
+        "widthCp": 23244,
+        "heightCp": 2834,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "factor, no clip path and no minimum-size",
+          "xCp": 30614,
+          "baselineCp": 21497,
+          "widthCp": 20315
+         },
+         {
+          "text": "override anywhere in the layout code.",
+          "xCp": 30614,
+          "baselineCp": 22914,
+          "widthCp": 18774
+         }
+        ]
+       },
+       {
+        "blockId": "longform.p2",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 30614,
+        "topCp": 24657,
+        "widthCp": 23244,
+        "heightCp": 19838,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "Measurement comes first. Text is measured",
+          "xCp": 30614,
+          "baselineCp": 25748,
+          "widthCp": 21821
+         },
+         {
+          "text": "against a pinned table of advance widths",
+          "xCp": 30614,
+          "baselineCp": 27165,
+          "widthCp": 20330
+         },
+         {
+          "text": "taken from one named instance of one named",
+          "xCp": 30614,
+          "baselineCp": 28582,
+          "widthCp": 22849
+         },
+         {
+          "text": "font file, identified by version and by content",
+          "xCp": 30614,
+          "baselineCp": 29999,
+          "widthCp": 22231
+         },
+         {
+          "text": "hash. Nothing in the layout asks a renderer",
+          "xCp": 30614,
+          "baselineCp": 31416,
+          "widthCp": 21288
+         },
+         {
+          "text": "how wide a word is, because two renderers",
+          "xCp": 30614,
+          "baselineCp": 32833,
+          "widthCp": 21677
+         },
+         {
+          "text": "will eventually disagree, and a disagreement",
+          "xCp": 30614,
+          "baselineCp": 34250,
+          "widthCp": 22036
+         },
+         {
+          "text": "about a word becomes a disagreement about",
+          "xCp": 30614,
+          "baselineCp": 35667,
+          "widthCp": 22502
+         },
+         {
+          "text": "a line, then about a page, then about the",
+          "xCp": 30614,
+          "baselineCp": 37084,
+          "widthCp": 20000
+         },
+         {
+          "text": "whole document. The table is not a",
+          "xCp": 30614,
+          "baselineCp": 38501,
+          "widthCp": 17384
+         },
+         {
+          "text": "convenience; it is the reason the same input",
+          "xCp": 30614,
+          "baselineCp": 39918,
+          "widthCp": 21874
+         },
+         {
+          "text": "produces the same book on a laptop, in a",
+          "xCp": 30614,
+          "baselineCp": 41335,
+          "widthCp": 20500
+         },
+         {
+          "text": "container and on whatever machine prints the",
+          "xCp": 30614,
+          "baselineCp": 42752,
+          "widthCp": 22767
+         },
+         {
+          "text": "final file.",
+          "xCp": 30614,
+          "baselineCp": 44169,
+          "widthCp": 4214
+         }
+        ]
+       },
+       {
+        "blockId": "longform.insight",
+        "kind": "keyInsight",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 45912,
+        "widthCp": 48189,
+        "heightCp": 11336,
+        "styleId": "keyInsight",
+        "boxCp": {
+         "xCp": 5669,
+         "yCp": 45912,
+         "widthCp": 48189,
+         "heightCp": 11336
+        },
+        "meta": {
+         "kind": "keyInsight",
+         "pad": 1400
+        },
+        "lines": [
+         {
+          "text": "Key insight",
+          "styleId": "panelTitle",
+          "xCp": 7069,
+          "baselineCp": 48240,
+          "widthCp": 6374
+         },
+         {
+          "text": "Every length in this system is an integer number of centipoints, one hundredth of a point. Integers",
+          "styleId": "panelBody",
+          "xCp": 7069,
+          "baselineCp": 50132,
+          "widthCp": 43803
+         },
+         {
+          "text": "were chosen over millimetres and over floating point because a rounding difference of one",
+          "styleId": "panelBody",
+          "xCp": 7069,
+          "baselineCp": 51482,
+          "widthCp": 40811
+         },
+         {
+          "text": "ten-thousandth of a point is enough, after thirty-three lines, to move a break — and a moved break",
+          "styleId": "panelBody",
+          "xCp": 7069,
+          "baselineCp": 52832,
+          "widthCp": 44332
+         },
+         {
+          "text": "invalidates every page after it.",
+          "styleId": "panelBody",
+          "xCp": 7069,
+          "baselineCp": 54182,
+          "widthCp": 13576
+         }
+        ]
+       },
+       {
+        "blockId": "longform.p3",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": true,
+        "xCp": 5669,
+        "topCp": 58665,
+        "widthCp": 23244,
+        "heightCp": 9919,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "With widths settled, breaking is mechanical.",
+          "xCp": 5669,
+          "baselineCp": 59756,
+          "widthCp": 21777
+         },
+         {
+          "text": "Words are placed greedily onto a line until the",
+          "xCp": 5669,
+          "baselineCp": 61173,
+          "widthCp": 22787
+         },
+         {
+          "text": "next one would exceed the measure, and the",
+          "xCp": 5669,
+          "baselineCp": 62590,
+          "widthCp": 22350
+         },
+         {
+          "text": "line ends there. There is no hyphenation,",
+          "xCp": 5669,
+          "baselineCp": 64007,
+          "widthCp": 20253
+         },
+         {
+          "text": "because a hyphenation dictionary is a second",
+          "xCp": 5669,
+          "baselineCp": 65424,
+          "widthCp": 22715
+         },
+         {
+          "text": "source of layout truth and would have to be",
+          "xCp": 5669,
+          "baselineCp": 66841,
+          "widthCp": 21645
+         },
+         {
+          "text": "versioned and hashed like everything else.",
+          "xCp": 5669,
+          "baselineCp": 68258,
+          "widthCp": 21196
+         }
+        ]
+       },
+       {
+        "blockId": "longform.p3",
+        "kind": "paragraph",
+        "fragmentIndex": 7,
+        "continuedFromPreviousPage": true,
+        "continuesOnNextPage": false,
+        "xCp": 30614,
+        "topCp": 58665,
+        "widthCp": 23244,
+        "heightCp": 8502,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "There is no justification, because stretching",
+          "xCp": 30614,
+          "baselineCp": 59756,
+          "widthCp": 21683
+         },
+         {
+          "text": "word spaces to a flush edge means the",
+          "xCp": 30614,
+          "baselineCp": 61173,
+          "widthCp": 19533
+         },
+         {
+          "text": "renderer decides where the ink lands. Ragged",
+          "xCp": 30614,
+          "baselineCp": 62590,
+          "widthCp": 22875
+         },
+         {
+          "text": "right on a fixed measure looks quieter on",
+          "xCp": 30614,
+          "baselineCp": 64007,
+          "widthCp": 20315
+         },
+         {
+          "text": "warm paper anyway, and it has the advantage",
+          "xCp": 30614,
+          "baselineCp": 65424,
+          "widthCp": 22869
+         },
+         {
+          "text": "of being reproducible.",
+          "xCp": 30614,
+          "baselineCp": 66841,
+          "widthCp": 10988
+         }
+        ]
+       },
+       {
+        "blockId": "longform.quote",
+        "kind": "pullQuote",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 70001,
+        "widthCp": 48189,
+        "heightCp": 5668,
+        "styleId": "pullQuote",
+        "boxCp": {
+         "xCp": 5669,
+         "yCp": 70001,
+         "widthCp": 48189,
+         "heightCp": 5668
+        },
+        "meta": {
+         "kind": "pullQuote",
+         "rule": true
+        },
+        "lines": [
+         {
+          "text": "“Overflow has exactly one resolution in this template, and it is another page.”",
+          "styleId": "pullQuote",
+          "xCp": 5669,
+          "baselineCp": 72963,
+          "widthCp": 46814
+         }
+        ]
+       }
+      ],
+      "usedBottomCp": 75669
+     },
+     {
+      "pageNumber": 2,
+      "template": "continuation",
+      "sidebar": {
+       "xCp": 36850,
+       "yCp": 11904,
+       "widthCp": 17008
+      },
+      "fragments": [
+       {
+        "blockId": "longform.p4",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 11904,
+        "widthCp": 29480,
+        "heightCp": 14170,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "The page break itself follows three rules that a reader",
+          "xCp": 5669,
+          "baselineCp": 12995,
+          "widthCp": 26606
+         },
+         {
+          "text": "feels without noticing. A paragraph may be split, but never",
+          "xCp": 5669,
+          "baselineCp": 14412,
+          "widthCp": 28998
+         },
+         {
+          "text": "so that a single line is abandoned at the foot of a page or",
+          "xCp": 5669,
+          "baselineCp": 15829,
+          "widthCp": 28212
+         },
+         {
+          "text": "arrives alone at the top of the next one; two lines is the",
+          "xCp": 5669,
+          "baselineCp": 17246,
+          "widthCp": 27202
+         },
+         {
+          "text": "minimum on either side of the break. A heading is never",
+          "xCp": 5669,
+          "baselineCp": 18663,
+          "widthCp": 27675
+         },
+         {
+          "text": "the last thing on a page: it reserves room for the first two",
+          "xCp": 5669,
+          "baselineCp": 20080,
+          "widthCp": 28232
+         },
+         {
+          "text": "lines of whatever follows it, and moves forward with them",
+          "xCp": 5669,
+          "baselineCp": 21497,
+          "widthCp": 28698
+         },
+         {
+          "text": "if that room is not there. A panel and a pull quote move",
+          "xCp": 5669,
+          "baselineCp": 22914,
+          "widthCp": 27206
+         },
+         {
+          "text": "whole or not at all, because half a framed box is not a",
+          "xCp": 5669,
+          "baselineCp": 24331,
+          "widthCp": 26532
+         },
+         {
+          "text": "design decision that anyone made.",
+          "xCp": 5669,
+          "baselineCp": 25748,
+          "widthCp": 17303
+         }
+        ]
+       },
+       {
+        "blockId": "longform.p5",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 27491,
+        "widthCp": 29480,
+        "heightCp": 14170,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "What remains is the proof. After the layout is computed, a",
+          "xCp": 5669,
+          "baselineCp": 28582,
+          "widthCp": 28642
+         },
+         {
+          "text": "validator walks the placed result rather than the intention.",
+          "xCp": 5669,
+          "baselineCp": 29999,
+          "widthCp": 28493
+         },
+         {
+          "text": "It checks that nothing sits outside the content box, that no",
+          "xCp": 5669,
+          "baselineCp": 31416,
+          "widthCp": 28778
+         },
+         {
+          "text": "two fragments overlap, that no rendered size fell below",
+          "xCp": 5669,
+          "baselineCp": 32833,
+          "widthCp": 27468
+         },
+         {
+          "text": "the smallest size the tokens define, and that the lines",
+          "xCp": 5669,
+          "baselineCp": 34250,
+          "widthCp": 26285
+         },
+         {
+          "text": "actually placed are exactly the lines the wrapper",
+          "xCp": 5669,
+          "baselineCp": 35667,
+          "widthCp": 23997
+         },
+         {
+          "text": "produced, in order, with none missing. That last check is",
+          "xCp": 5669,
+          "baselineCp": 37084,
+          "widthCp": 28054
+         },
+         {
+          "text": "the one that makes the phrase no semantic truncation",
+          "xCp": 5669,
+          "baselineCp": 38501,
+          "widthCp": 26703
+         },
+         {
+          "text": "mean something, because it compares text to text instead",
+          "xCp": 5669,
+          "baselineCp": 39918,
+          "widthCp": 28714
+         },
+         {
+          "text": "of trusting that nothing was dropped.",
+          "xCp": 5669,
+          "baselineCp": 41335,
+          "widthCp": 18416
+         }
+        ]
+       },
+       {
+        "blockId": "longform.p6",
+        "kind": "paragraph",
+        "fragmentIndex": 0,
+        "continuedFromPreviousPage": false,
+        "continuesOnNextPage": false,
+        "xCp": 5669,
+        "topCp": 43078,
+        "widthCp": 29480,
+        "heightCp": 14170,
+        "styleId": "body",
+        "lines": [
+         {
+          "text": "Finally the whole placement is hashed. The hash covers",
+          "xCp": 5669,
+          "baselineCp": 44169,
+          "widthCp": 27722
+         },
+         {
+          "text": "the template version, the token set, the glyph manifest, the",
+          "xCp": 5669,
+          "baselineCp": 45586,
+          "widthCp": 29172
+         },
+         {
+          "text": "page count and every placed component in order, so a",
+          "xCp": 5669,
+          "baselineCp": 47003,
+          "widthCp": 27199
+         },
+         {
+          "text": "second run over the same input either produces the same",
+          "xCp": 5669,
+          "baselineCp": 48420,
+          "widthCp": 28703
+         },
+         {
+          "text": "value or announces that something changed. An image of",
+          "xCp": 5669,
+          "baselineCp": 49837,
+          "widthCp": 28633
+         },
+         {
+          "text": "the page is kept beside it as evidence that the file really",
+          "xCp": 5669,
+          "baselineCp": 51254,
+          "widthCp": 27580
+         },
+         {
+          "text": "renders, but the image is never the test. A picture can look",
+          "xCp": 5669,
+          "baselineCp": 52671,
+          "widthCp": 29051
+         },
+         {
+          "text": "correct for reasons that have nothing to do with the",
+          "xCp": 5669,
+          "baselineCp": 54088,
+          "widthCp": 25546
+         },
+         {
+          "text": "contract, and a contract that is checked by looking is not",
+          "xCp": 5669,
+          "baselineCp": 55505,
+          "widthCp": 28155
+         },
+         {
+          "text": "checked at all.",
+          "xCp": 5669,
+          "baselineCp": 56922,
+          "widthCp": 7189
+         }
+        ]
+       }
+      ],
+      "usedBottomCp": 57248
+     }
+    ],
+    "lineCount": 79,
+    "wordCount": 679,
+    "findings": [],
+    "geometry": {
+     "contentXCp": 5669,
+     "contentYCp": 6236,
+     "contentWidthCp": 48189,
+     "contentHeightCp": 72283,
+     "baselineCp": 1417,
+     "toleranceCp": 300
+    },
+    "structuralSha256": "sha256:e522317a14e4003832b0fb4b4591534d8674d0b5d252d099c22492329e9bf18d"
+   }
+  }
+ ]
+}

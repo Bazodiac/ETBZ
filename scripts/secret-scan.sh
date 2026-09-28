@@ -36,7 +36,18 @@ cleanup_fixture() {
 trap cleanup_fixture EXIT INT TERM
 
 scan_working_tree() {
-  "${GITLEAKS}" detect --source "${REPO_ROOT}" --no-git --redact --no-banner --exit-code 1
+  # `.` rather than "${REPO_ROOT}" — the shell is already there. In --no-git
+  # mode gitleaks echoes the source path into every finding, so an ABSOLUTE
+  # source makes every fingerprint absolute:
+  #
+  #   /Users/someone/checkout/path/to/file:generic-api-key:373
+  #
+  # A fingerprint like that names one machine's checkout, so no entry in
+  # `.gitleaksignore` could ever match it here AND in CI. With a relative source
+  # the fingerprint is `path/to/file:rule:line`, which is portable and is the
+  # form the ignore file documents. Nothing about coverage changes: the same
+  # tree is scanned either way.
+  "${GITLEAKS}" detect --source . --no-git --redact --no-banner --exit-code 1
 }
 
 scan_history() {

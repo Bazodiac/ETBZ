@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "proofs": [
+    {
+      "id": "etbz49-visual-proof",
+      "runtime": "python",
+      "entrypoint": "tools/visual-proof-harness/proof/run_proof.py",
+      "args": ["--out", ".etbz-verify/visual-proof"],
+      "requires": {
+        "python_modules": ["playwright", "PIL", "pikepdf", "fontTools"],
+        "capabilities": ["playwright-chromium"]
+      },
+      "output_dir": ".etbz-verify/visual-proof",
+      "artifacts": [
+        { "path": "customer/08-wu-xing.png", "kind": "png" },
+        { "path": "final-contact-sheet.png", "kind": "png" },
+        { "path": "developer/dev-wu-xing-zero.png", "kind": "png" },
+        { "path": "developer/D05-negative.png", "kind": "png" },
+        { "path": "counterexample/08-wu-xing-prior-geometry.png", "kind": "png" },
+        { "path": "proof-report.json", "kind": "json" }
+      ],
+      "mandatory": true,
+      "timeout_seconds": 900
+    }
+  ]
+}

@@ -117,6 +117,13 @@ assert_build_output() {
 # --- 6. guards ----------------------------------------------------------------
 run_guard_mutations() { bash "${REPO_ROOT}/scripts/verify-guards.sh"; }
 
+# --- 6b. slice guards ---------------------------------------------------------
+# ETBZ-49 owns a contract nothing imports yet, so a broken guard there would be
+# invisible until ETBZ-55 consumes it. The mutation proofs make it visible now:
+# they weaken each guard in turn and require the suites to turn red. Part of the
+# contract, not an optional extra.
+run_etbz49_visual_guard() { node "${REPO_ROOT}/scripts/verify-etbz49-visual-system.mjs"; }
+
 # --- 7. secret gate -----------------------------------------------------------
 run_secret_gate() { bash "${REPO_ROOT}/scripts/secret-scan.sh"; }
 
@@ -146,6 +153,9 @@ etbz_step "build :: tsc -p tsconfig.build.json" run_build
 etbz_step "build :: output assertion" assert_build_output
 if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: architecture + contract + lint mutation proofs" run_guard_mutations
+fi
+if [ "${RUN_MUTATIONS}" -eq 1 ]; then
+  etbz_step "guards :: ETBZ-49 visual system (contract + asset + boundary mutation proofs)" run_etbz49_visual_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan

@@ -1,0 +1,29 @@
+{
+  "asset": "assets/wordmark.svg",
+  "text": "BAZODIAC",
+  "trackingEm": 0.34,
+  "pointDiameterCapRatio": 0.4,
+  "pointColour": "#B2913F",
+  "viewBox": [
+    0,
+    -1490,
+    16713,
+    1490
+  ],
+  "unitsPerEm": 2048,
+  "capHeight": 1490,
+  "source": {
+    "family": "Inter",
+    "style": "SemiBold",
+    "file": "Inter-SemiBold.ttf",
+    "version": "Version 4.001;git-9221beed3",
+    "fileSha256": "sha256:78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3",
+    "licence": "SIL Open Font License 1.1"
+  },
+  "contract": {
+    "static": true,
+    "chartIndependent": true,
+    "customerGlyphForbidden": true
+  },
+  "sha256": "sha256:c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1"
+}

@@ -1,0 +1,62 @@
+{
+ "fixtureId": "etbz43/fixture/long-form/pagination-stress-v1",
+ "source": "V6 src/template/fixtures/index.ts (verbatim)",
+ "notice": "NON-CANONICAL LAYOUT FIXTURE — typographic stress content, not customer prose",
+ "surface": "developer-proof",
+ "header": [
+  {
+   "id": "longform.kicker",
+   "kind": "kicker",
+   "text": "Layout stress fixture · non-canonical content"
+  },
+  {
+   "id": "longform.title",
+   "kind": "sectionTitle",
+   "text": "How this page decides where a page ends"
+  }
+ ],
+ "blocks": [
+  {
+   "id": "longform.p1",
+   "kind": "paragraph",
+   "text": "A printed page has one honest failure mode and several dishonest ones. The honest failure is running out of room, which is resolved by starting another page. The dishonest ones all pretend the room was there: shrinking the type by two per cent so a last line fits, letting a descender slide under the margin, quietly dropping a sentence that nobody counted, or asking a summariser to make the paragraph shorter. Each of those produces a page that looks finished and is not. This template removes the dishonest options from the system rather than from a style guide, which is why there is no scale factor, no clip path and no minimum-size override anywhere in the layout code."
+  },
+  {
+   "id": "longform.p2",
+   "kind": "paragraph",
+   "text": "Measurement comes first. Text is measured against a pinned table of advance widths taken from one named instance of one named font file, identified by version and by content hash. Nothing in the layout asks a renderer how wide a word is, because two renderers will eventually disagree, and a disagreement about a word becomes a disagreement about a line, then about a page, then about the whole document. The table is not a convenience; it is the reason the same input produces the same book on a laptop, in a container and on whatever machine prints the final file."
+  },
+  {
+   "id": "longform.insight",
+   "kind": "keyInsight",
+   "title": "Key insight",
+   "text": "Every length in this system is an integer number of centipoints, one hundredth of a point. Integers were chosen over millimetres and over floating point because a rounding difference of one ten-thousandth of a point is enough, after thirty-three lines, to move a break — and a moved break invalidates every page after it."
+  },
+  {
+   "id": "longform.p3",
+   "kind": "paragraph",
+   "text": "With widths settled, breaking is mechanical. Words are placed greedily onto a line until the next one would exceed the measure, and the line ends there. There is no hyphenation, because a hyphenation dictionary is a second source of layout truth and would have to be versioned and hashed like everything else. There is no justification, because stretching word spaces to a flush edge means the renderer decides where the ink lands. Ragged right on a fixed measure looks quieter on warm paper anyway, and it has the advantage of being reproducible."
+  },
+  {
+   "id": "longform.quote",
+   "kind": "pullQuote",
+   "text": "Overflow has exactly one resolution in this template, and it is another page."
+  },
+  {
+   "id": "longform.p4",
+   "kind": "paragraph",
+   "text": "The page break itself follows three rules that a reader feels without noticing. A paragraph may be split, but never so that a single line is abandoned at the foot of a page or arrives alone at the top of the next one; two lines is the minimum on either side of the break. A heading is never the last thing on a page: it reserves room for the first two lines of whatever follows it, and moves forward with them if that room is not there. A panel and a pull quote move whole or not at all, because half a framed box is not a design decision that anyone made."
+  },
+  {
+   "id": "longform.p5",
+   "kind": "paragraph",
+   "text": "What remains is the proof. After the layout is computed, a validator walks the placed result rather than the intention. It checks that nothing sits outside the content box, that no two fragments overlap, that no rendered size fell below the smallest size the tokens define, and that the lines actually placed are exactly the lines the wrapper produced, in order, with none missing. That last check is the one that makes the phrase no semantic truncation mean something, because it compares text to text instead of trusting that nothing was dropped."
+  },
+  {
+   "id": "longform.p6",
+   "kind": "paragraph",
+   "text": "Finally the whole placement is hashed. The hash covers the template version, the token set, the glyph manifest, the page count and every placed component in order, so a second run over the same input either produces the same value or announces that something changed. An image of the page is kept beside it as evidence that the file really renders, but the image is never the test. A picture can look correct for reasons that have nothing to do with the contract, and a contract that is checked by looking is not checked at all."
+  }
+ ],
+ "wordCount": 693
+}

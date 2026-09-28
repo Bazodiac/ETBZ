@@ -95,9 +95,13 @@ the shared prefix; the guard matches whole path segments.
 | `src/adapters/` | Outbound infrastructure. Empty in ETBZ-9. |
 | `src/http/` | Thin Express 5 inbound adapter: routes, middleware, errors. |
 | `src/app/` | Composition root: configuration, logging, readiness, build info, server. |
+| `src/application/visual/` | Bazodiac Visual System v1 (ETBZ-49): the design contract as values. A leaf — nothing imports it until the renderer arrives with ETBZ-55. |
 | `contracts/` | Cross-boundary data contracts. **No business schema in ETBZ-9.** |
 | `openapi/` | The public HTTP surface contract. |
+| `assets/visual-system-v1/` | The recovered visual artefacts the contract is a projection of: tokens, 27 glyph assets, wordmark, structures, fixtures, fonts. |
+| `tools/visual-proof-harness/` | **Proof harness, not production contract.** The Python/Chromium build that produced the visual evidence. |
 | `docs/adr/` | Architecture decisions, including what is *not* claimed. |
+| `docs/evidence/` | Human-inspectable proof for the parts a person has to look at. |
 | `scripts/` | The executable verification contract. |
 
 Decisions are recorded in [`docs/adr/`](docs/adr/):
@@ -105,7 +109,11 @@ Decisions are recorded in [`docs/adr/`](docs/adr/):
 [0002 project-local configuration](docs/adr/0002-project-local-configuration.md) ·
 [0003 selective Sizhu reuse](docs/adr/0003-selective-sizhu-reuse.md) ·
 [0004 delivery mode](docs/adr/0004-delivery-mode-gated-direct-to-main.md) ·
-[0005 reproducibility scope](docs/adr/0005-reproducibility-scope.md).
+[0005 reproducibility scope](docs/adr/0005-reproducibility-scope.md) ·
+[0006 method registry and interpretation input](docs/adr/0006-method-registry-and-interpretation-input.md) ·
+[0007 interpretive claim graph](docs/adr/0007-interpretive-claim-graph.md) ·
+[0008 meta-narrative plan](docs/adr/0008-meta-narrative-plan.md) ·
+[0009 canonical visual system v1](docs/adr/0009-canonical-visual-system-v1.md).
 
 ---
 
