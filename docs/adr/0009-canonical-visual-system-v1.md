@@ -271,8 +271,8 @@ The tracked evidence was the 2026-09-21 render and therefore stale for
 `08-wu-xing`, `dev-wu-xing-zero` and `D05-negative`, and the old Wu Xing
 structural hash `7aa0236d…` was still what `render-receipt.json`,
 `design-system.json` and `pageFamily.ts` carried. On 2026-09-28 the proof was
-run on the harness inputs as committed at
-`290eb79db15409cc83c9d2000ac6106de2ffb99a`, twice, and:
+run through the harness as committed on this branch, on the assets unchanged
+since `290eb79db15409cc83c9d2000ac6106de2ffb99a`, and:
 
 - all 29 PNGs, the contact sheet and both merged PDFs in `docs/evidence/etbz-49/`
   are that render; `docs/evidence/etbz-49/README.md` records the environment;
@@ -298,10 +298,11 @@ run on the harness inputs as committed at
   with the declared one before merge;
 - PNG byte identity on this environment needed Chromium's pixel-test switches:
   without them, eight builds agreed on every structural hash but pairs differed
-  on two to four PNGs (edge anti-aliasing on `01-cover`, `05-four-pillars`,
-  `08-wu-xing`, `29-closing`, and `D08-receipts` which prints the hashes). With
-  them, three consecutive builds were byte-identical on all 29 pages. The README
-  states the numbers; the structural hash is the binding one;
+  on two to five PNGs (edge anti-aliasing on `01-cover`, `05-four-pillars`,
+  `08-wu-xing`, `11-hidden-stems`, `29-closing`, `D06-layout`, `D07-layout`,
+  and `D08-receipts` which prints the hashes). With them, three consecutive
+  builds and a fourth on the merged head were byte-identical on all 29 pages.
+  The README states the numbers; the structural hash is the binding one;
 - the informational CJK face is no longer a host fallback for this evidence:
   the `NotoSansCJK-Regular.ttc` pinned in the receipt (`sha256:b76b0433…`)
   was obtained from the upstream `notofonts/noto-cjk` repository, verified by

@@ -14,8 +14,9 @@ The evidence in this directory was regenerated on 2026-09-28 after the Wu Xing
 centre-clearance repair of 2026-09-22 (Jira ETBZ-49 comment 16547) and the D05
 guard-table compaction, through the declared proof entrypoint
 `tools/visual-proof-harness/proof/run_proof.py` (`.agent-proofs.json`, proof
-`etbz49-visual-proof`), from the harness inputs as committed at
-`290eb79db15409cc83c9d2000ac6106de2ffb99a`:
+`etbz49-visual-proof`) as committed on this branch, from the committed assets
+(unchanged since `290eb79db15409cc83c9d2000ac6106de2ffb99a`); a proof run on
+the merged head reproduced every PNG and merged deliverable byte for byte:
 
 | | |
 | --- | --- |
@@ -52,10 +53,12 @@ again.
 **What PNG byte identity took, stated because it was not free.** Without
 Chromium's pixel-test switches, eight earlier builds on this same environment
 agreed on every structural hash but not on every PNG: only one adjacent pair
-agreed on all 29, the others differed on two to four pages (`01-cover`,
-`05-four-pillars`, `08-wu-xing` or `29-closing` — a few hundred pixels of
-≤ 32-level anti-aliasing along glyph edges, invisible at reading size — plus
-`D08-receipts`, which prints the PNG hashes and follows). The proof entrypoint
+agreed on all 29, the others differed on two to five pages (`01-cover`,
+`05-four-pillars`, `08-wu-xing`, `11-hidden-stems`, `29-closing`, `D06-layout`,
+`D07-layout` — on the one page measured, 142 pixels of ≤ 32-level
+anti-aliasing along glyph edges, invisible at reading size — plus
+`D08-receipts`, which prints the PNG hashes and follows; the first pair also
+spans the installation of the CJK face). The proof entrypoint
 now launches Chromium with `--deterministic-mode --disable-gpu
 --force-color-profile=srgb`; with them, three consecutive builds were
 byte-identical on all 29 pages and all merged deliverables. The structural

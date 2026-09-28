@@ -21,7 +21,12 @@
 //
 //   docs/evidence/etbz-49/        the 29 PNGs, the contact sheet, both merged PDFs
 //   assets/visual-system-v1/structures/*.json
-//                                 every dump that differs from the committed one
+//                                 every dump that differs from the committed one;
+//                                 committed dumps the proof no longer produces are
+//                                 listed, never touched
+//   tools/visual-proof-harness/src/pages/*.html
+//                                 the run's page compositions (builder outputs,
+//                                 not proof inputs), refreshed to match the evidence
 //   assets/visual-system-v1/render-receipt.json
 //                                 values in place - same keys, same order, same
 //                                 line count, so the reviewed secret-scanner
@@ -107,6 +112,28 @@ for (const file of readdirSync(dumpDir).filter((f) => f.endsWith('.json'))) {
   }
 }
 log.push(`structures replaced: [${replacedStructures.join(', ')}]`);
+const dumpedNames = new Set(readdirSync(dumpDir).filter((f) => f.endsWith('.json')));
+const leftoverStructures = readdirSync(resolve(ASSETS, 'structures'))
+  .filter((f) => f.endsWith('.json') && !dumpedNames.has(f))
+  .sort();
+log.push(`structures the proof does not produce (left as committed): [${leftoverStructures.join(', ')}]`);
+
+// 2b. the harness's page compositions ----------------------------------------------------
+// Builder outputs, not proof inputs (tools/visual-proof-harness/README.md); kept as the
+// readable reference of what was rendered, so they follow the evidence they belong to.
+const PAGES = resolve(REPO_ROOT, 'tools/visual-proof-harness/src/pages');
+const stagedPages = resolve(run1.dir, 'stage', 'src', 'pages');
+if (!existsSync(stagedPages)) refuse(`${run1.relative}/stage/src/pages is missing`);
+let pagesRefreshed = 0;
+for (const file of readdirSync(PAGES).filter((f) => f.endsWith('.html')).sort()) {
+  const staged = resolve(stagedPages, file);
+  if (!existsSync(staged)) refuse(`tracked page ${file} was not produced by ${run1.relative}`);
+  if (sha(staged) !== sha(resolve(PAGES, file))) {
+    copyFileSync(staged, resolve(PAGES, file));
+    pagesRefreshed++;
+  }
+}
+log.push(`harness page compositions refreshed: ${pagesRefreshed}`);
 
 // 3. render-receipt.json ------------------------------------------------------------------
 const receiptPath = resolve(ASSETS, 'render-receipt.json');

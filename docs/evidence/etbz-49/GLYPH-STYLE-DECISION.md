@@ -5,8 +5,9 @@
 The Product Owner approved the glyph/style variant shown in
 [`final-contact-sheet.png`](final-contact-sheet.png) (Jira ETBZ-49 comment
 16514): **answer 1 below — the ink-pass asset set as shipped.** No asset changed
-and no digest moved. The sheet the PO looked at was the 2026-09-21 render (git
-blob `5c134ae0…` at `290eb79`); the sheet in the tree today is the 2026-09-28
+and no digest moved. The sheet the PO looked at was the 2026-09-21 render
+(sha256 `5c134ae0…`, git blob `35c7480b…`, at `290eb79`); the sheet in the tree
+today is the 2026-09-28
 re-render of the same, unchanged 27 assets after the Wu Xing centre-clearance
 repair. This sheet stays as the record of what was decided and on which
 evidence. The decision was made by looking, not by reading a hash, and it

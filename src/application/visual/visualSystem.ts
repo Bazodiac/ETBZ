@@ -305,7 +305,7 @@ export function acceptWuXingVector(supplied: unknown): WuXingVector {
   if (!parsed.success) {
     throw new VisualContractError(
       'WU_XING_VECTOR_INVALID',
-      'exactly the five phases, each a non-negative integer count',
+      'exactly the five phases, each a non-negative finite count',
       { issues: parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.code}`) },
     );
   }

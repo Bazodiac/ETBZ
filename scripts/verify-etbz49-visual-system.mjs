@@ -99,7 +99,7 @@ const MUTANTS = [
     '  })\n  .strict();',
     '  });',
     [T.negative], 'refuses'],
-  ['WUXING: a count may be negative, NaN or infinite', 'text', SYS,
+  ['WUXING: a count may be negative (zod 4 z.number() still refuses NaN and infinity)', 'text', SYS,
     'const WU_XING_COUNT = z.number().nonnegative().finite();',
     'const WU_XING_COUNT = z.number();',
     [T.negative], 'refuses'],

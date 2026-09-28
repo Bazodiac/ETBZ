@@ -82,7 +82,9 @@ npm test && npm run guards:etbz49
 Run 1 becomes the evidence and determinism run 1, run 2 is determinism run 2,
 every further run is recorded in `determinism-report.json` under
 `pngByteStability` so the environment's PNG-byte stability is disclosed rather
-than selected. The assembler refuses on a failed run, a page without a tracked
+than selected. The assembler also refreshes `src/pages/*.html` from run 1's
+staged compositions and prints the committed `structures/*.json` the proof no
+longer produces. It refuses on a failed run, a page without a tracked
 counterpart, or a receipt whose reviewed secret-scanner line would move.
 
 ## Running it as a project-native proof
