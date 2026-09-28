@@ -43,6 +43,8 @@ bash scripts/verify-guards.sh                # foundation guard mutation proofs 
 bash scripts/secret-scan.sh                  # gitleaks tree + history + scanner mutation proof
 bash scripts/build-dry-run.sh                # container build / provenance / smoke / reproducibility
 npm run guards:etbz34 | guards:etbz30a | guards:etbz30b   # slice source-mutation proofs (NOT part of ci-verify)
+npm run guards:etbz49 | guards:etbz51                    # slice mutation proofs that ARE steps of ci-verify
+npm run build && npm run etbz51:bundle                   # print the portable Skill Contract Bundle (canonical JSON)
 ```
 
 `scripts/ci-verify.sh` is the single definition of "verified". `.github/workflows/ci.yml` runs that same
@@ -136,6 +138,14 @@ normalisation, hash-bound artefact out — or a typed refusal (`ClaimError`, `Cl
 `MetaNarrativePlanError`, `MethodRegistryError`, `InterpretationInputError`, `ReportError`,
 `HoroscopeError`). Later boundaries **compose** the earlier gates (`assertInterpretiveClaimGraphIntact`,
 `assertCentralGraphClaim`) and never re-implement them.
+
+ETBZ-51 adds `src/application/skill/`: the Skill Contract Bundle
+(`bazodiac-skill-contract-bundle@1.0.0`, ADR 0010) binds the five released contract pages by id and
+page version, carries the Lens / Lexicon / Anti-Boilerplate vocabularies as values, pins the
+repository's own version markers and is frozen by `RELEASED_BUNDLE_HASHES` like the registry. It is a
+leaf until ETBZ-52 consumes it (`tests/architecture/etbz51-skill-boundary.test.ts`); a portable copy is
+accepted only if it equals the repository bundle in canonical content, and a run's recorded contract set is
+checked against it by `assertRunEvidenceBound`.
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:
@@ -248,9 +258,9 @@ Assemble credential-shaped test strings at runtime from fragments, never as one 
 - TypeScript is ESM + `NodeNext`: relative imports carry a `.js` extension, `verbatimModuleSyntax`
   requires `import type`, and `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess` are on (hence
   conditional spreads for optional overrides and checked array reads).
-- Decisions live in `docs/adr/0001`–`0008`. ADRs 0006 and 0007 record their merge commit in the status
-  line through a separate `docs/…` closeout PR after the merge; ADR 0008 has not received that closeout
-  yet and still reads "Proposed". `docs/evidence/` records executed gates; transient output goes to the
+- Decisions live in `docs/adr/0001`–`0010`. ADRs 0006 and 0007 record their merge commit in the status
+  line through a separate `docs/…` closeout PR after the merge; ADR 0008 (merged with PR #10) and ADR 0009
+  (merged with PR #11) have not received that closeout yet and still read "Proposed". `docs/evidence/` records executed gates; transient output goes to the
   git-ignored `.etbz-verify/`. Durable evidence is a green CI run for a specific SHA.
 - Delivery: branch → pull request → CI → **Product Owner authorisation** → merge. Green CI never
   authorises a merge; the PR body states whether merge is requested and carries the evidence. Branches

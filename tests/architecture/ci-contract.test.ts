@@ -104,6 +104,11 @@ describe('AC8: the verification contract still contains every mandatory gate', (
       'ETBZ-49 visual-system guard',
       /etbz_step\s+"guards :: ETBZ-49[^"]*"\s+run_etbz49_visual_guard/,
     ],
+    // ETBZ-51. Same reasoning: the REGISTRATION of the step, not the script name.
+    [
+      'ETBZ-51 skill-contract-bundle guard',
+      /etbz_step\s+"guards :: ETBZ-51[^"]*"\s+run_etbz51_skill_guard/,
+    ],
     ['secret scan', /secret-scan\.sh/],
     ['dependency risk scan', /npm audit/],
     ['container build dry run', /build-dry-run\.sh/],
