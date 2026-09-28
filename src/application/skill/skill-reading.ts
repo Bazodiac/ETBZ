@@ -177,17 +177,20 @@ export const PROHIBITED_PHRASES: readonly ProhibitedPhraseClass[] = [
 
 /**
  * Vocabulary of the methods the released profile defers or forbids (Method
- * Profile section 6.3), in English and German: naming one in customer prose is
- * using it. Everyday words that also name a method ("root", "strong") are kept
- * out so the gate refuses methods, not language; a human reads for the rest.
+ * Profile section 6.3), in English and German, pinyin spaced and concatenated:
+ * naming one in customer prose is using it. Everyday words that also name a
+ * method ("root", "strong") are kept out so the gate refuses methods, not
+ * language; a human reads for the rest. The German noun "Ehe" (marriage) is
+ * matched, which also refuses the conjunction "ehe" - write "bevor".
  */
 export const UNSUPPORTED_METHOD_TERMS: readonly string[] = [
-  'day master strength', 'strong day master', 'weak day master', 'rooting', 'rooted', 'unrooted', 'tong gen',
-  'ge ju', 'geju', 'structure classification', 'useful god', 'yong shen', 'xi shen', 'ji shen', 'tiao hou', 'climatic adjustment',
+  'day master strength', 'strong day master', 'weak day master', 'rooting', 'rooted', 'unrooted', 'tong gen', 'tonggen',
+  'ge ju', 'geju', 'structure classification', 'useful god', 'yong shen', 'yongshen', 'xi shen', 'xishen', 'ji shen', 'jishen',
+  'tiao hou', 'tiaohou', 'climatic adjustment',
   'stem combination', 'stem combinations', 'branch combination', 'branch combinations', 'stem clash', 'stem clashes',
   'branch clash', 'branch clashes', 'branch harm', 'branch harms', 'branch punishment', 'branch punishments',
-  'branch destruction', 'branch destructions', 'he hua', 'shen sha', 'symbolic star', 'symbolic stars', 'twelve life stages',
-  'life stage', 'life stages', 'na yin', 'kong wang', 'luck pillar', 'luck pillars', 'da yun', 'liu nian', 'annual pillar',
+  'branch destruction', 'branch destructions', 'he hua', 'hehua', 'shen sha', 'shensha', 'symbolic star', 'symbolic stars', 'twelve life stages',
+  'life stage', 'life stages', 'na yin', 'nayin', 'kong wang', 'kongwang', 'luck pillar', 'luck pillars', 'da yun', 'dayun', 'liu nian', 'liunian', 'annual pillar',
   'transit', 'transits', 'season', 'seasons', 'seasonal', 'summer', 'winter', 'spring', 'autumn',
   'remedy', 'remedies', 'organ', 'organs', 'health', 'illness', 'compatibility', 'synastry', 'spouse', 'marriage',
   'career rank', 'wealth prediction',
@@ -329,6 +332,18 @@ function coveredValuesOf(facts: readonly ChartFact[]): Set<string> {
   return covered;
 }
 
+/** A symbol or a number on a customer surface is the value or source label of a cited fact. */
+function checkSymbols(text: string, where: string, covered: Set<string>): void {
+  const uncitedSymbols = findUncitedSymbols(text, covered);
+  if (uncitedSymbols.length > 0) {
+    throw new SkillRunError('READING_UNCITED_SYMBOL', `${where} names a chart symbol no cited fact carries`, { where, symbols: uncitedSymbols });
+  }
+  const uncitedNumerals = findUncitedNumerals(text, covered);
+  if (uncitedNumerals.length > 0) {
+    throw new SkillRunError('READING_UNCITED_NUMERAL', `${where} states a number no cited fact carries`, { where, numerals: uncitedNumerals });
+  }
+}
+
 function checkSurface(text: string, where: string): void {
   const chrome = findEvidenceChrome(text);
   if (chrome !== null) {
@@ -403,7 +418,9 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   if (reading.chapters.length !== planChapters.length) {
     throw new SkillRunError('READING_CHAPTER_PLAN_MISMATCH', `the reading has ${String(reading.chapters.length)} chapters, the plan ${String(planChapters.length)}`);
   }
+  const chartCovered = coveredValuesOf(inputPackage.facts);
   checkSurface(reading.title, 'title');
+  checkSymbols(reading.title, 'title', chartCovered);
   const renderedBefore = new Set<string>();
   const renderedAnywhere = new Set<string>();
   reading.chapters.forEach((chapter, index) => {
@@ -415,6 +432,7 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
     checkSurface(chapter.title, `${where}.title`);
     const chapterClaims = new Set(planned_.claimRefs);
     const renderedHere = new Set<string>();
+    const chapterFacts: ChartFact[] = [];
     let words = 0;
 
     chapter.paragraphs.forEach((paragraph, paragraphIndex) => {
@@ -422,7 +440,7 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       words += countWords(paragraph.text);
       checkSurface(paragraph.text, at);
 
-      // Kind and posture.
+      // Kind and grounding.
       const interpretive = paragraph.kind === 'INTERPRETATION' || paragraph.kind === 'REFLECTION';
       if (interpretive && paragraph.claimRefs.length === 0) {
         throw new SkillRunError('READING_PARAGRAPH_UNGROUNDED', `${at} is ${paragraph.kind} but cites no accepted claim`, { where: at });
@@ -430,20 +448,20 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       if (paragraph.kind === 'FACT' && paragraph.factRefs.length === 0) {
         throw new SkillRunError('READING_PARAGRAPH_UNGROUNDED', `${at} is FACT but cites no fact`, { where: at });
       }
+      if (paragraph.kind === 'FACT' && paragraph.claimRefs.length > 0) {
+        throw new SkillRunError('READING_POSTURE_INVALID', `${at} is FACT but cites a claim; a fact paragraph interprets nothing`, { where: at });
+      }
       if (paragraph.kind === 'FRAME' && paragraph.factRefs.length === 0 && paragraph.claimRefs.length === 0) {
         throw new SkillRunError('READING_PARAGRAPH_UNGROUNDED', `${at} is FRAME but cites neither a fact nor a claim`, { where: at });
       }
-      if (interpretive ? paragraph.posture === 'NONE' : paragraph.posture !== 'NONE') {
-        throw new SkillRunError('READING_POSTURE_INVALID', `${at} has posture ${paragraph.posture}, which does not fit a ${paragraph.kind} paragraph`, { where: at });
-      }
 
-      // Claims: accepted, planned for this chapter.
+      // Claims: accepted, planned for this chapter; only an INTERPRETATION paragraph renders one.
       const claims = paragraph.claimRefs.map((id) => resolveClaim(id, at));
       for (const claim of claims) {
         if (!chapterClaims.has(claim.claimId)) {
           throw new SkillRunError('READING_CLAIM_NOT_PLANNED_HERE', `${at} renders claim ${claim.claimId}, which the plan does not place in this chapter`, { where: at, claimRef: claim.claimId });
         }
-        renderedHere.add(claim.claimId);
+        if (paragraph.kind === 'INTERPRETATION') renderedHere.add(claim.claimId);
       }
 
       // Facts: known, interpretable, and - for an interpretive paragraph - grounding one of its claims.
@@ -457,25 +475,26 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
         }
       }
 
-      // Provisionality never disappears.
+      // Posture fits the kind: an interpretive paragraph is SUPPORTED or TENTATIVE; a FACT or FRAME
+      // paragraph is NONE, or TENTATIVE exactly when it rests on a provisional fact or a tentative claim.
       const tentative = claims.some((claim) => claim.epistemicClass === 'TENTATIVE_INTERPRETATION') || facts.some((fact) => fact.provisional);
+      if (interpretive ? paragraph.posture === 'NONE' : paragraph.posture === 'SUPPORTED' || (paragraph.posture === 'TENTATIVE' && !tentative)) {
+        throw new SkillRunError('READING_POSTURE_INVALID', `${at} has posture ${paragraph.posture}, which does not fit a ${paragraph.kind} paragraph`, { where: at });
+      }
+
+      // Provisionality never disappears.
       if (tentative && paragraph.posture !== 'TENTATIVE') {
         throw new SkillRunError('READING_PROVISIONALITY_LAUNDERED', `${at} cites a tentative claim or a provisional fact but is not written as tentative`, { where: at });
       }
 
       // A symbol or a number in prose is a cited fact.
       const coveredFacts = [...facts, ...claims.flatMap((claim) => claim.factRefs.map((id) => factById.get(id)).filter((fact): fact is ChartFact => fact !== undefined))];
-      const covered = coveredValuesOf(coveredFacts);
-      const uncitedSymbols = findUncitedSymbols(paragraph.text, covered);
-      if (uncitedSymbols.length > 0) {
-        throw new SkillRunError('READING_UNCITED_SYMBOL', `${at} names a chart symbol no cited fact carries`, { where: at, symbols: uncitedSymbols });
-      }
-      const uncitedNumerals = findUncitedNumerals(paragraph.text, covered);
-      if (uncitedNumerals.length > 0) {
-        throw new SkillRunError('READING_UNCITED_NUMERAL', `${at} states a number no cited fact carries`, { where: at, numerals: uncitedNumerals });
-      }
+      chapterFacts.push(...coveredFacts);
+      checkSymbols(paragraph.text, at, coveredValuesOf(coveredFacts));
     });
 
+    // The chapter title names only what the chapter's paragraphs cite.
+    checkSymbols(chapter.title, `${where}.title`, coveredValuesOf(chapterFacts));
     for (const claimId of planned_.claimRefs) {
       if (!renderedHere.has(claimId)) {
         throw new SkillRunError('READING_CHAPTER_CLAIM_UNRENDERED', `${where} does not render claim ${claimId}, which the plan places here`, { where, claimRef: claimId });
@@ -498,6 +517,13 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
         if (delta.kind === 'NEW_CLAIM' && renderedBefore.has(claimId)) {
           throw new SkillRunError('READING_NEW_CLAIM_ALREADY_RENDERED', `${where} declares NEW_CLAIM for ${claimId}, which an earlier chapter already rendered`, { where, claimRef: claimId });
         }
+      }
+    }
+    // A first rendering is declared as such: introduced claims are part of the chapter's delta.
+    const declaredNew = new Set(chapter.semanticDelta.filter((delta) => delta.kind === 'NEW_CLAIM').flatMap((delta) => delta.claimRefs));
+    for (const claimId of renderedHere) {
+      if (!renderedBefore.has(claimId) && !declaredNew.has(claimId)) {
+        throw new SkillRunError('READING_NEW_CLAIM_UNDECLARED', `${where} renders ${claimId} for the first time without declaring it as NEW_CLAIM`, { where, claimRef: claimId });
       }
     }
 
@@ -540,12 +566,11 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
         throw new SkillRunError('READING_CLAIM_NOT_PLANNED_HERE', `${at} rests on claim ${claim.claimId}, which the plan does not use`, { where: at, claimRef: claim.claimId });
       }
     }
-    const covered = coveredValuesOf(claims.flatMap((claim) => claim.factRefs.map((id) => factById.get(id)).filter((fact): fact is ChartFact => fact !== undefined)));
-    if (findUncitedSymbols(question.text, covered).length > 0 || findUncitedNumerals(question.text, covered).length > 0) {
-      throw new SkillRunError('READING_UNCITED_SYMBOL', `${at} names a chart symbol or number its claims do not carry`, { where: at });
-    }
+    const questionFacts = claims.flatMap((claim) => claim.factRefs.map((id) => factById.get(id)).filter((fact): fact is ChartFact => fact !== undefined));
+    checkSymbols(question.text, at, coveredValuesOf(questionFacts));
   });
   checkSurface(reading.methodNote.text, 'methodNote');
+  checkSymbols(reading.methodNote.text, 'methodNote', chartCovered);
   if (!sameList(reading.methodNote.warningCodes, inputPackage.warnings)) {
     throw new SkillRunError('READING_WARNINGS_NOT_VERBATIM', 'the method note does not carry the source warnings verbatim, in source order');
   }

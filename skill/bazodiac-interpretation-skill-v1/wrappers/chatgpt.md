@@ -7,4 +7,3 @@ Invocation only. Nothing here changes a rule of `SKILL.md`; a ChatGPT run and a 
 3. Emit the reading as one JSON document and nothing else. Where the runtime offers a structured-output mode, use `reading-schema.json`; where it does not, emit a single fenced ```json block.
 4. Report to the operator, outside the reading: the model identity the runtime reports, the date, and the `structuralHash` values copied from the input. The operator runs the acceptance boundary.
 5. A refusal may be handed back once with its code and path; repair only what it names. A second refusal ends the run.
-6. Browsing, code execution, memory of earlier conversations and any tool that could fetch a chart fact or a method from outside the input are not used.

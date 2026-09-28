@@ -20,7 +20,7 @@ README on `main` still describes ETBZ-9; the code and `docs/adr/` are authoritat
 npm ci                      # deterministic install (lockfile drift fails here)
 npm run typecheck           # tsc --noEmit, strict
 npm run lint                # eslint, zero warnings: recommended rule sets + four type-aware defect rules, no formatting rules
-npm test                    # all five suites (~980 tests on main)
+npm test                    # all five suites (~1450 tests on main)
 npm run build               # tsc -p tsconfig.build.json -> dist/
 ETBZ_ENV=local LOG_LEVEL=info npm start     # http://localhost:8120 — serves /health and /ready only
 ```
@@ -163,7 +163,7 @@ Design rules that hold across the whole chain — the first six each pinned by n
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:
 
 - **Fail closed, never repair — in the acceptance boundaries.** In `InterpretiveClaim`,
-  `InterpretiveClaimGraph`, `MetaNarrativePlan` and `BazodiacInterpretationInput` nothing substitutes,
+  `InterpretiveClaimGraph`, `MetaNarrativePlan`, `BazodiacInterpretationInput` and `acceptSkillReading` nothing substitutes,
   defaults, trims, deduplicates, normalises text or downgrades a fact; the first violation throws and
   no partial artefact exists. `report-model.ts` is the one place that normalises provider output (it
   sorts and de-duplicates a section's cited fact ids) before re-checking it against the model.
@@ -271,8 +271,8 @@ Assemble credential-shaped test strings at runtime from fragments, never as one 
   requires `import type`, and `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess` are on (hence
   conditional spreads for optional overrides and checked array reads).
 - Decisions live in `docs/adr/0001`–`0011`. ADRs 0006 and 0007 record their merge commit in the status
-  line through a separate `docs/…` closeout PR after the merge; ADR 0008 (merged with PR #10) and ADR 0009
-  (merged with PR #11) have not received that closeout yet and still read "Proposed". `docs/evidence/` records executed gates; transient output goes to the
+  line through a separate `docs/…` closeout PR after the merge; ADRs 0008 (merged with PR #10), 0009
+  (merged with PR #11) and 0010 (merged with PR #15) have not received that closeout yet and still read "Proposed". `docs/evidence/` records executed gates; transient output goes to the
   git-ignored `.etbz-verify/`. Durable evidence is a green CI run for a specific SHA.
 - Delivery: branch → pull request → CI → **Product Owner authorisation** → merge. Green CI never
   authorises a merge; the PR body states whether merge is requested and carries the evidence. Branches

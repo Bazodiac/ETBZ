@@ -25,6 +25,7 @@ import {
   skillReadingJsonSchema,
 } from '../../src/application/skill/index.js';
 import { listSlotIds } from '../../src/application/visual/index.js';
+import { LONG_FORM_WORD_BUDGET } from '../../src/application/visual/pagination.js';
 import { skillFixture } from '../support/skillFixture.js';
 
 const FIXTURE_DIR = resolve(process.cwd(), 'docs/evidence/etbz-52/fixture');
@@ -155,7 +156,7 @@ describe('ETBZ-52: the wording gates and helpers', () => {
     expect(findProhibitedWording('You may recognise one side more than the other.')).toBeNull();
   });
 
-  it.each(['die Jahreszeit', 'the seasonal strength', 'ein Sommer', 'luck pillars', 'Glückssäulen', 'Ge Ju', 'Useful God'])(
+  it.each(['die Jahreszeit', 'the seasonal strength', 'ein Sommer', 'luck pillars', 'Glückssäulen', 'Ge Ju', 'Useful God', 'Nayin', 'Shensha', 'Yongshen', 'Dayun', 'Tonggen', 'Kongwang'])(
     'finds unsupported method language in "%s"',
     (text) => {
       expect(findUnsupportedMethodTerm(text)).not.toBeNull();
@@ -181,6 +182,10 @@ describe('ETBZ-52: the wording gates and helpers', () => {
   it('counts words on whitespace', () => {
     expect(countWords('  vier   Säulen\nund ein Reading ')).toBe(5);
     expect(countWords('')).toBe(0);
+  });
+
+  it('binds the chapter word budget to the visual system budget (Confluence 66650114 v2 section 12)', () => {
+    expect(CHAPTER_WORD_BUDGET).toEqual(LONG_FORM_WORD_BUDGET);
   });
 
   it('exports the reading schema as JSON Schema with the closed shape', () => {

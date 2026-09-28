@@ -79,16 +79,24 @@ is the JSON Schema exported from the boundary's own zod schema.
 and returns a hash-bound accepted reading otherwise. In order: shape; bindings
 (skill, bundle, package/graph/plan hashes; contract set through the bundle's drift
 gate); chapters exactly the plan's sequence; per chapter — every planned claim
-rendered and no other, facts known, interpretable and (for interpretive paragraphs)
-grounding a cited claim, posture fits kind, no laundering of a tentative claim or a
-provisional fact, no symbol or number in prose that no cited fact carries (the
-ETBZ-25 rule, reused), no prohibited wording (Lexicon §12 and Lens §9.2 phrase lists
-in EN and DE), no deferred-method vocabulary (Method Profile §6.3, EN and DE), no
-evidence chrome, 600–900 words; at least one semantic delta over rendered claims,
-`NEW_CLAIM` only for a first rendering, every re-rendered claim declared as a callback
-with a delta; thesis rendered; reflection grounded in planned claims; warnings
-verbatim; specs over declared slots, known facts and planned claims, unique ids.
-Thirty `READING_*` codes and two `PACKAGE_*` codes (`skill-run-errors.ts`).
+rendered by an INTERPRETATION paragraph (a FRAME or REFLECTION paragraph cites a
+claim, it does not render it) and no other claim, a FACT paragraph carries no claim,
+facts known, interpretable and (for interpretive paragraphs) grounding a cited
+claim, posture fits kind (an interpretive paragraph is SUPPORTED or TENTATIVE; a
+FACT or FRAME paragraph is NONE, or TENTATIVE exactly when it rests on a provisional
+fact or a tentative claim), no laundering of a tentative claim or a provisional fact,
+no symbol or number in prose that no cited fact carries (the ETBZ-25 rule, reused —
+on every paragraph, on a chapter title against the chapter's cited facts, on the
+reading title and the method note against the chart), no prohibited wording
+(Lexicon §12 and Lens §9.2 phrase lists in EN and DE), no deferred-method vocabulary
+(Method Profile §6.3, EN and DE, pinyin spaced and concatenated), no evidence chrome,
+600–900 words (the budget equals the visual system's, pinned by a test); at least
+one semantic delta over rendered claims, every first rendering declared as
+`NEW_CLAIM` and `NEW_CLAIM` only for a first rendering, every re-rendered claim
+declared as a callback with a delta; thesis rendered; reflection grounded in planned
+claims; warnings verbatim; specs over declared slots, known facts and planned claims,
+unique ids. Thirty-one `READING_*` codes and two `PACKAGE_*` codes
+(`skill-run-errors.ts`).
 
 The boundary repairs nothing. What it cannot judge — whether a sentence is true of a
 person, whether prose is Barnum residue — stays with the Anti-Boilerplate checks
@@ -126,7 +134,11 @@ by `scripts/etbz52-fixture-manifest.mjs` plus a **declared** generation record
 `declared: true`, because nothing in a repository can prove which model wrote a text.
 The run accepted on the first accepted attempt after two refusals repaired in the
 reading only (`READING_UNCITED_SYMBOL` — "Verantwortung" is a Ten-God label;
-`READING_CHAPTER_LENGTH_OUT_OF_CONTRACT` — three chapters under 600 words).
+`READING_CHAPTER_LENGTH_OUT_OF_CONTRACT` — three chapters under 600 words). The
+independent review of the delivering PR tightened `SKILL.md` and the boundary
+(section 4) after the run; the reading was not changed and is re-accepted unchanged
+under the revised boundary, so the accepted-reading hash is the run's, while the
+package hash in `manifest.json` is the revised package's.
 
 ### 8. Proven
 
@@ -135,7 +147,8 @@ and `tests/contract/etbz52-skill-fixture-run.contract.test.ts` pin the package, 
 accepted reading (hash stated literally), every refusal code and the regeneration of
 every generated file. `scripts/verify-etbz52-skill-reading.mjs` (`npm run
 guards:etbz52`, a step of `ci-verify.sh`) weakens each guard of the boundary and the
-package builder with the ETBZ-30B kill semantics.
+package builder — sixty mutants, one per guard site a negative test reaches — with
+the ETBZ-30B kill semantics.
 
 ## Consequences
 

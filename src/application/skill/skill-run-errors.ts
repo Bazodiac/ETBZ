@@ -40,7 +40,7 @@ export const SKILL_RUN_ERROR_CODES = [
   'READING_FACT_NOT_GROUNDED',
   /** A paragraph without the references its kind requires. */
   'READING_PARAGRAPH_UNGROUNDED',
-  /** A posture that does not fit the paragraph kind. */
+  /** A posture that does not fit the paragraph kind, or a FACT paragraph that cites a claim. */
   'READING_POSTURE_INVALID',
   /** A paragraph sounds more certain than the claims or facts it cites. */
   'READING_PROVISIONALITY_LAUNDERED',
@@ -64,6 +64,8 @@ export const SKILL_RUN_ERROR_CODES = [
   'READING_DELTA_CLAIM_NOT_RENDERED',
   /** NEW_CLAIM declared for a claim an earlier chapter already rendered. */
   'READING_NEW_CLAIM_ALREADY_RENDERED',
+  /** A claim rendered for the first time without a declared NEW_CLAIM delta. */
+  'READING_NEW_CLAIM_UNDECLARED',
   /** A claim rendered again without a declared callback delta. */
   'READING_CALLBACK_WITHOUT_DELTA',
   /** A callback declared for a claim no earlier chapter rendered, or this chapter does not render. */

@@ -179,6 +179,19 @@ describe('N2: chapters are the plan', () => {
     })), 'READING_CHAPTER_CLAIM_UNRENDERED');
     expect(error.detail).toEqual({ where: 'chapters[0]', claimRef: C.dayMaster });
   });
+
+  it('refuses a planned claim that only a FRAME paragraph cites: framing is not rendering', () => {
+    const error = expectRefusal(() => accept(readingWith((r) => {
+      for (const p of chapter(r, 0).paragraphs) {
+        if (!p.claimRefs.includes(C.dayMaster) || p.kind === 'FRAME') continue;
+        p.claimRefs = [C.recurrence];
+        p.factRefs = [];
+        p.text = 'Dieser Absatz bleibt ohne besondere Wendung.';
+        p.posture = 'TENTATIVE';
+      }
+    })), 'READING_CHAPTER_CLAIM_UNRENDERED');
+    expect(error.detail).toEqual({ where: 'chapters[0]', claimRef: C.dayMaster });
+  });
 });
 
 describe('N3: facts', () => {
@@ -208,15 +221,41 @@ describe('N3: facts', () => {
   it('refuses a posture that does not fit the kind', () => {
     expectRefusal(() => accept(readingWith((r) => { paragraph(r, 0, 0).posture = 'SUPPORTED'; })), 'READING_POSTURE_INVALID');
     expectRefusal(() => accept(readingWith((r) => { paragraph(r, 0, 2).posture = 'NONE'; })), 'READING_POSTURE_INVALID');
+    // A FACT or FRAME paragraph over certain facts is not written as tentative.
+    expectRefusal(() => accept(readingWith((r) => { paragraph(r, 0, 0).posture = 'TENTATIVE'; })), 'READING_POSTURE_INVALID');
+    expectRefusal(() => accept(readingWith((r) => { paragraph(r, 0, 1).posture = 'TENTATIVE'; })), 'READING_POSTURE_INVALID');
+  });
+
+  it('refuses a FACT paragraph that cites a claim', () => {
+    const error = expectRefusal(() => accept(readingWith((r) => { paragraph(r, 0, 0).claimRefs = [C.dayMaster]; })), 'READING_POSTURE_INVALID');
+    expect(error.detail).toEqual({ where: 'chapters[0].paragraphs[0]' });
+  });
+
+  const withProvisionalDayMaster = () => packageWith((core) => {
+    const facts = core['facts'] as ChartFact[];
+    core['facts'] = facts.map((fact) => (fact.id === 'chart.dayMaster.stem' ? { ...fact, provisional: true } : fact));
+    core['provisionalFactIds'] = ['chart.dayMaster.stem'];
   });
 
   it('refuses a paragraph written as certain over a provisional fact', () => {
-    const { inputPackage: pkg, reading } = packageWith((core) => {
-      const facts = core['facts'] as ChartFact[];
-      core['facts'] = facts.map((fact) => (fact.id === 'chart.dayMaster.stem' ? { ...fact, provisional: true } : fact));
-      core['provisionalFactIds'] = ['chart.dayMaster.stem'];
-    });
-    expectRefusal(() => accept(reading, pkg), 'READING_PROVISIONALITY_LAUNDERED');
+    const { inputPackage: pkg, reading } = withProvisionalDayMaster();
+    const error = expectRefusal(() => accept(reading, pkg), 'READING_PROVISIONALITY_LAUNDERED');
+    expect(error.detail).toEqual({ where: 'chapters[0].paragraphs[0]' });
+  });
+
+  it('accepts the provisional fact once every paragraph resting on it is written as tentative (the guard seen green)', () => {
+    const { inputPackage: pkg, reading } = withProvisionalDayMaster();
+    // A paragraph is tentative through the facts it cites itself or a TENTATIVE claim; the accepted
+    // claims stay SUPPORTED here, so only paragraphs citing the fact directly change posture.
+    for (const c of reading.chapters) {
+      for (const p of c.paragraphs) {
+        if (p.factRefs.includes('chart.dayMaster.stem')) p.posture = 'TENTATIVE';
+      }
+    }
+    const accepted = acceptSkillReading(reading, { bundle, inputPackage: pkg });
+    const factParagraph = accepted.chapters[0]?.paragraphs[0];
+    expect(factParagraph?.kind).toBe('FACT');
+    expect(factParagraph?.posture).toBe('TENTATIVE');
   });
 });
 
@@ -228,6 +267,20 @@ describe('N4: text', () => {
 
   it('refuses a number no cited fact carries', () => {
     expectRefusal(() => accept(readingWith((r) => { paragraph(r, 0, 2).text += ' Das sind 3 Zeichen.'; })), 'READING_UNCITED_NUMERAL');
+  });
+
+  it('refuses a title, a chapter title and a method note naming a symbol or a number no fact carries', () => {
+    // The reading title and the method note may name what the chart carries; a chapter title only what its
+    // paragraphs cite. The stem Gui is in no pillar and no hidden stem of the fixture chart.
+    const title = expectRefusal(() => accept(readingWith((r) => { r['title'] = 'Gui und der Anfang'; })), 'READING_UNCITED_SYMBOL');
+    expect(title.detail).toMatchObject({ where: 'title', symbols: ['gui'] });
+    expectRefusal(() => accept(readingWith((r) => { r['title'] = 'Ein Reading aus 1990'; })), 'READING_UNCITED_NUMERAL');
+    const chapterTitle = expectRefusal(() => accept(readingWith((r) => { chapter(r, 0).title = 'Der Stamm Gui'; })), 'READING_UNCITED_SYMBOL');
+    expect(chapterTitle.detail).toMatchObject({ where: 'chapters[0].title', symbols: ['gui'] });
+    expectRefusal(() => accept(readingWith((r) => { chapter(r, 0).title += ' in 4 Säulen'; })), 'READING_UNCITED_NUMERAL');
+    const note = expectRefusal(() => accept(readingWith((r) => { r.methodNote.text += ' Der Stamm Gui fehlt.'; })), 'READING_UNCITED_SYMBOL');
+    expect(note.detail).toMatchObject({ where: 'methodNote', symbols: ['gui'] });
+    expectRefusal(() => accept(readingWith((r) => { r.methodNote.text += ' Es gibt 12 Zweige.'; })), 'READING_UNCITED_NUMERAL');
   });
 
   it('refuses prohibited wording, naming the class', () => {
@@ -274,6 +327,13 @@ describe('N5: semantic delta and callbacks', () => {
     expectRefusal(() => accept(readingWith((r) => { chapter(r, 2).callbacks = [{ claimRef: C.recurrence, deltaKind: 'NEW_CLAIM' }]; })), 'READING_NEW_CLAIM_ALREADY_RENDERED');
   });
 
+  it('refuses a claim rendered for the first time without a declared NEW_CLAIM', () => {
+    const error = expectRefusal(() => accept(readingWith((r) => {
+      chapter(r, 2).semanticDelta = chapter(r, 2).semanticDelta.filter((delta) => delta.kind !== 'NEW_CLAIM');
+    })), 'READING_NEW_CLAIM_UNDECLARED');
+    expect(error.detail).toEqual({ where: 'chapters[2]', claimRef: C.pressure });
+  });
+
   it('refuses a claim rendered again without a declared callback delta', () => {
     const error = expectRefusal(() => accept(readingWith((r) => { chapter(r, 2).callbacks = []; })), 'READING_CALLBACK_WITHOUT_DELTA');
     expect(error.detail).toEqual({ where: 'chapters[2]', claimRef: C.recurrence });
@@ -292,6 +352,7 @@ describe('N5: semantic delta and callbacks', () => {
   it('refuses a reflection question resting on an unknown claim or naming a symbol its claims do not carry', () => {
     expectRefusal(() => accept(readingWith((r) => { r.reflectionQuestions[0]!.claimRefs = ['claim.sha256:' + '02'.repeat(32)]; })), 'READING_CLAIM_UNKNOWN');
     expectRefusal(() => accept(readingWith((r) => { r.reflectionQuestions[0]!.text += ' Denk an Geng.'; })), 'READING_UNCITED_SYMBOL');
+    expectRefusal(() => accept(readingWith((r) => { r.reflectionQuestions[0]!.text += ' Das sind 3 Zeichen.'; })), 'READING_UNCITED_NUMERAL');
   });
 });
 
@@ -385,6 +446,34 @@ describe('N7: the input package', () => {
   it('refuses an interpretation input built under another Method Profile', () => {
     const input = { ...fixture.input, methodProfile: { ...fixture.input.methodProfile, ref: 'bazi-method-profile@1.0.1' } };
     expectRefusal(() => buildSkillInputPackage({ ...parts(), input }), 'PACKAGE_BINDING_MISMATCH');
+  });
+
+  it('refuses an interpretation input of another schema or feature-set version', () => {
+    const otherSchema = { ...fixture.input, schemaVersion: 'bazodiac-interpretation-input.v2' } as unknown as typeof fixture.input;
+    expectRefusal(() => buildSkillInputPackage({ ...parts(), input: otherSchema }), 'PACKAGE_BINDING_MISMATCH');
+    const otherFeatureSet = { ...fixture.input, validatedChart: { ...fixture.input.validatedChart, featureSetVersion: 'v0' } } as unknown as typeof fixture.input;
+    expectRefusal(() => buildSkillInputPackage({ ...parts(), input: otherFeatureSet }), 'PACKAGE_BINDING_MISMATCH');
+  });
+
+  it('refuses a plan bound to another Lens release', () => {
+    const plan = {
+      ...fixture.plan,
+      interpretationLens: { ...fixture.plan.interpretationLens, confluencePageVersion: '2' },
+    } as unknown as typeof fixture.plan;
+    expectRefusal(() => buildSkillInputPackage({ ...parts(), plan }), 'PACKAGE_BINDING_MISMATCH');
+  });
+
+  it('refuses an input whose excluded fact ids do not equal its non-interpretable facts', () => {
+    const input = {
+      ...fixture.input,
+      provisionality: { ...fixture.input.provisionality, excludedFactIds: ['chart.pillar.hour.stem'] },
+    } as unknown as typeof fixture.input;
+    expectRefusal(() => buildSkillInputPackage({ ...parts(), input }), 'PACKAGE_BINDING_MISMATCH');
+  });
+
+  it('refuses a slot id that is not one lowercase token', () => {
+    expectRefusal(() => buildSkillInputPackage({ ...parts(), allowedSlotIds: ['Cover.primaryGlyph'] }), 'PACKAGE_SCHEMA_INVALID');
+    expectRefusal(() => buildSkillInputPackage({ ...parts(), allowedSlotIds: ['cover primary'] }), 'PACKAGE_SCHEMA_INVALID');
   });
 
   it('refuses a subject that contradicts the input, an empty name, and duplicated slot ids', () => {
