@@ -147,8 +147,8 @@ and `tests/contract/etbz52-skill-fixture-run.contract.test.ts` pin the package, 
 accepted reading (hash stated literally), every refusal code and the regeneration of
 every generated file. `scripts/verify-etbz52-skill-reading.mjs` (`npm run
 guards:etbz52`, a step of `ci-verify.sh`) weakens each guard of the boundary and the
-package builder — sixty mutants, one per guard site a negative test reaches — with
-the ETBZ-30B kill semantics.
+package builder — sixty mutants, one per guard site a test reaches (the stray-file
+mutant is killed by the contract suite) — with the ETBZ-30B kill semantics.
 
 ## Consequences
 
@@ -158,10 +158,12 @@ the ETBZ-30B kill semantics.
 - ETBZ-54 hands a real package to the same runtime under the same `SKILL.md` and
   accepts the reading through the same boundary; its evidence names the package
   hash, the reading hash and the declared generation record.
-- Two observations for contract owners, recorded not repaired: the Lexicon has no
+- Observations for contract owners, recorded not repaired: the Lexicon has no
   customer wording per element, so element names appear in FACT paragraphs only as
   source labels; the symbol rule's treatment of `You` forbids English second-person
-  prose under this boundary.
+  prose under this boundary; a display name that is itself a stem or branch name is
+  left out of the title (SKILL.md section 2), because the title is under the symbol
+  rule and a name is not a citation.
 
 ## What this ADR does not decide
 
