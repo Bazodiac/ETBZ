@@ -8,6 +8,7 @@
  * Inter binaries - otherwise "the same content yields the same page-break
  * structure" would be a claim about a different algorithm.
  */
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -80,13 +81,34 @@ interface OracleChapter {
 
 const oracle = JSON.parse(readFileSync(resolve(process.cwd(), 'tests/support/etbz55-paginator-oracle.json'), 'utf8')) as {
   source: string;
+  provenance: Readonly<Record<string, string>>;
   chapters: readonly OracleChapter[];
 };
 
 describe('ETBZ-55: the port against the canonical paginator on the branches the fixtures never reach', () => {
-  it('carries thirty-one chapters laid out by the canonical ETBZ-49 paginator', () => {
+  it('carries forty-seven chapters laid out by the canonical ETBZ-49 paginator', () => {
     expect(oracle.source).toContain('tools/visual-proof-harness/build/paginate.py');
-    expect(oracle.chapters.map((chapter) => chapter.id.split('-')[0])).toEqual([...Array<string>(9).fill('widow'), ...Array<string>(16).fill('subhead'), ...Array<string>(6).fill('module')]);
+    expect(oracle.chapters.map((chapter) => chapter.id.split('-')[0])).toEqual([
+      ...Array<string>(9).fill('widow'),
+      ...Array<string>(16).fill('subhead'),
+      ...Array<string>(6).fill('module'),
+      ...Array<string>(12).fill('band'),
+      ...Array<string>(4).fill('lead'),
+    ]);
+  });
+
+  it('was produced from the committed canonical paginator, tokens and Inter faces (their digests re-derived here)', () => {
+    expect(Object.keys(oracle.provenance).sort()).toEqual([
+      'assets/visual-system-v1/fonts/Inter-Medium.ttf',
+      'assets/visual-system-v1/fonts/Inter-Regular.ttf',
+      'assets/visual-system-v1/fonts/InterDisplay-Light.ttf',
+      'assets/visual-system-v1/fonts/InterDisplay-Regular.ttf',
+      'assets/visual-system-v1/tokens.json',
+      'tools/visual-proof-harness/build/paginate.py',
+    ]);
+    for (const [path, digest] of Object.entries(oracle.provenance)) {
+      expect(`sha256:${createHash('sha256').update(readFileSync(resolve(process.cwd(), path))).digest('hex')}`, path).toBe(digest);
+    }
   });
 
   it.each(oracle.chapters.map((chapter) => [chapter.id, chapter] as const))('reproduces the canonical layout of %s', (_id, chapter) => {

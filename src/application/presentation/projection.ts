@@ -5,22 +5,24 @@
 // (the `HoroscopeModel`, FuFirE-owned symbolic truth) and a presentation-ready
 // text payload into the complete, paginated page model of the one template.
 // Every value a page shows is taken from the chart, from the released Lexicon,
-// from the payload or from the template's declared labels - and every string
-// the renderer may print is listed in `customerStrings`. The renderer places
-// and draws; it decides nothing and adds no text.
+// from the glyph contract, from the payload or from the template's declared
+// labels. Each page carries exactly the strings it prints (`strings`) - the
+// renderer must print that set, no more and no less - and `customerStrings` is
+// their union. The renderer places and draws; it decides nothing.
 //
 // Fail-closed at every binding:
-//  - an unknown birth time is refused (the template defines no unknown-time
-//    rendering, so nothing is guessed);
+//  - an unknown or provisional birth time is refused (the template defines no
+//    unknown-time rendering, so nothing is guessed);
 //  - a glyph outside the 27 is refused by the visual contract;
 //  - a chart value that two sources state differently is refused
-//    (`PRESENTATION_FACT_MISMATCH`) - e.g. the chart's stem phase against the
-//    glyph contract's phase for that character;
+//    (`PRESENTATION_FACT_MISMATCH`) - the chart against the glyph contract, the
+//    BaZi answer against the natal answer, the Sizhu table against the glyph
+//    contract;
 //  - a Ten-God relation without exactly one Lexicon entry is refused;
 //  - a long-form chapter outside its word or page budget, or losing a word, is
 //    refused by the visual contract;
-//  - customer text carrying evidence chrome, prohibited wording or a deferred
-//    method is refused.
+//  - customer text carrying a control or format character, evidence chrome,
+//    prohibited wording or a deferred method is refused.
 //
 // The fixture-first payload is text only (title, chapters, reflection
 // questions, method note). Mapping an accepted Skill reading - its claims,
@@ -46,7 +48,6 @@ import type { DisplayGlyph, Phase, PillarPaint } from '../visual/index.js';
 import {
   CHART_TERMINOLOGY,
   RELEASED_CONTRACT_SOURCES,
-  TEN_GOD_FAMILY_WORDING,
   TEN_GOD_RELATION_WORDING,
   contractBindingRef,
   findProhibitedWording,
@@ -54,7 +55,7 @@ import {
 } from '../skill/index.js';
 import type { HoroscopeModel, PillarName } from '../horoscope-model.js';
 import type { FufireTenGodFact } from '../ports/fufire-gateway.js';
-import { elementDeByEn } from '../../domain/sizhu.js';
+import { elementDeByEn, stemFactByName } from '../../domain/sizhu.js';
 import { structuralHash, structuralHashOfCanonicalText } from '../../domain/structural-hash.js';
 import { PresentationError } from './errors.js';
 import { CONTENT_W, blockWords, headerHeight, layoutHeader, paginateLongForm } from './long-form.js';
@@ -70,18 +71,23 @@ export const PRESENTATION_PROJECTION_VERSION = 'bazodiac-presentation-projection
 // the content payload
 // ---------------------------------------------------------------------------
 
+/** A Unicode control or format character, or any whitespace other than the plain space. */
+const FORBIDDEN_CHARACTER = /[\p{Cc}\p{Cf}]|[^\S ]/u;
+
 /**
- * A customer text as the layout will set it: one line of words separated by
- * single spaces. Any other whitespace would be a layout decision the payload
- * did not make, so it is refused rather than normalised.
+ * A customer text as the layout will set it: words separated by single plain
+ * spaces, nothing invisible. A control character, a format character (a zero
+ * width space, a soft hyphen, a bidi override), any other whitespace, a double
+ * space or padding would be a decision the payload did not make visibly, so it
+ * is refused rather than normalised.
  */
 const customerText = (max: number) =>
   z
     .string()
     .min(1)
     .max(max)
-    .refine((text) => !/[\t\n\r\f\v\u00A0\u2028\u2029]/u.test(text) && !/ {2}/u.test(text) && text.trim() === text, {
-      message: 'customer text is single-spaced, without leading, trailing or control whitespace',
+    .refine((text) => !FORBIDDEN_CHARACTER.test(text) && !/ {2}/u.test(text) && text.trim() === text, {
+      message: 'customer text is single-spaced plain text, without padding, control or format characters',
     });
 
 const contentSchema = z.strictObject({
@@ -103,41 +109,50 @@ export interface PresentationInput {
 }
 
 // ---------------------------------------------------------------------------
-// the projection model
+// the projection model - page views carry exactly what their page prints
 // ---------------------------------------------------------------------------
 
-export interface GlyphValue {
+/** A display glyph and its phase field - no text. */
+export interface GlyphRef {
   readonly character: string;
-  readonly pinyin: string;
   readonly phase: Phase;
-  /** The chart's German element label for this character's phase. */
-  readonly phaseLabel: string;
 }
 
-export interface StemValue extends GlyphValue {
+/** A display glyph with its pinyin printed beside it. */
+export interface GlyphText extends GlyphRef {
+  readonly pinyin: string;
+}
+
+export interface StemValue extends GlyphText {
+  /** The chart's German element label for this character's phase. */
+  readonly phaseLabel: string;
   readonly polarity: 'yang' | 'yin';
   readonly polarityLabel: string;
 }
 
-export interface BranchValue extends GlyphValue {
+export interface BranchValue extends GlyphText {
+  readonly phaseLabel: string;
   readonly animalLabel: string;
 }
 
-export interface TenGodValue {
-  /** FuFirE's relation name - an identity, never printed. */
+/** A Ten-God relation by its Lexicon name. `code` is FuFirE's identity and is never printed. */
+export interface TenGodName {
   readonly code: string;
   readonly hanzi: string;
   readonly pinyin: string;
-  /** The Lexicon's German customer wording for this relation, verbatim. */
-  readonly customerLabel: string;
-  readonly familyId: string;
-  readonly familyLabel: string;
 }
 
-export interface HiddenStemValue extends GlyphValue {
+/** A Ten-God relation with the Lexicon's German customer wording, verbatim. */
+export interface TenGodEntry extends TenGodName {
+  readonly customerLabel: string;
+  readonly familyId: string;
+}
+
+export interface HiddenStemValue extends GlyphText {
+  readonly phaseLabel: string;
   readonly qiRole: 'principal' | 'central' | 'residual';
   readonly qiLabel: string;
-  readonly tenGod: TenGodValue;
+  readonly tenGod: TenGodName;
 }
 
 export interface PillarValue {
@@ -145,9 +160,9 @@ export interface PillarValue {
   readonly positionLabel: string;
   readonly stem: StemValue;
   readonly branch: BranchValue;
-  readonly hidden: readonly HiddenStemValue[];
+  readonly hidden: readonly GlyphText[];
   /** Null for the day pillar only: the day stem IS the Day Master. */
-  readonly tenGod: TenGodValue | null;
+  readonly tenGod: TenGodName | null;
   readonly isDayMaster: boolean;
   readonly paint: PillarPaint;
 }
@@ -170,6 +185,13 @@ export interface WuXingValue {
   readonly zeroPhases: readonly Phase[];
 }
 
+export interface WuXingTallyEntry {
+  readonly phase: Phase;
+  readonly character: string;
+  readonly label: string;
+  readonly valueText: string;
+}
+
 export interface TermValue {
   readonly label: string;
   readonly hanzi: string;
@@ -190,23 +212,33 @@ export interface ChapterReference {
   readonly terms: readonly TermValue[];
 }
 
+export type PresenceMark = 'stem' | 'hidden' | 'both' | null;
+
 export type PageContent =
   | Readonly<{ kind: 'cover'; dayMaster: StemValue; dayMasterLabel: string; brand: string; title: string; product: string; preparedFor: string; displayName: string; footerTerm: TermValue }>
   | Readonly<{ kind: 'identity'; kicker: string; title: string; rows: readonly FactRow[]; legend: readonly Readonly<{ tag: string; text: string }>[] }>
   | Readonly<{ kind: 'contents'; kicker: string; title: string; sections: readonly Readonly<{ title: string; entries: readonly Readonly<{ pageLabel: string; title: string }>[] }>[] }>
-  | Readonly<{ kind: 'glance'; kicker: string; title: string; dayMaster: StemValue; dayMasterLabel: string; pillarsLabel: TermValue; pillars: readonly Readonly<{ positionLabel: string; stem: StemValue; branch: BranchValue }>[]; wuXingLabel: TermValue; wuXing: WuXingValue; rows: readonly FactRow[] }>
+  | Readonly<{ kind: 'glance'; kicker: string; title: string; dayMaster: StemValue; dayMasterLabel: string; pillarsLabel: TermValue; pillars: readonly Readonly<{ positionLabel: string; stem: GlyphText; branch: GlyphText }>[]; wuXingLabel: TermValue; tally: readonly WuXingTallyEntry[]; rows: readonly FactRow[] }>
   | Readonly<{ kind: 'fourPillars'; kicker: string; title: string; rowLabels: readonly TermValue[]; dayMasterLabel: string; pillars: readonly PillarValue[]; legend: readonly Readonly<{ phase: Phase; label: string; character: string }>[] }>
-  | Readonly<{ kind: 'foundation'; kicker: string; title: string; characters: readonly Readonly<{ positionLabel: string; roleLabel: string; glyph: GlyphValue; detail: string }>[] }>
-  | Readonly<{ kind: 'dayMaster'; kicker: string; title: string; dayMaster: StemValue; dayMasterLabel: string; rows: readonly FactRow[]; dayPillar: PillarValue; hiddenStemsLabel: string }>
+  | Readonly<{ kind: 'foundation'; kicker: string; title: string; characters: readonly Readonly<{ positionLabel: string; roleLabel: string; glyph: GlyphText & Readonly<{ phaseLabel: string }>; detail: string }>[] }>
+  | Readonly<{ kind: 'dayMaster'; kicker: string; title: string; dayMaster: StemValue; dayMasterLabel: string; rows: readonly FactRow[]; dayPillar: Readonly<{ positionLabel: string; stem: GlyphText; branch: GlyphText; hidden: readonly Readonly<GlyphText & { phaseLabel: string; qiLabel: string }>[] }>; hiddenStemsLabel: string }>
   | Readonly<{ kind: 'wuXing'; kicker: string; title: string; wuXing: WuXingValue; medallion: TermValue; captions: readonly string[] }>
-  | Readonly<{ kind: 'fivePhases'; kicker: string; title: string; stemsLabel: string; branchesLabel: string; phases: readonly Readonly<{ phase: Phase; character: string; pinyin: string; label: string; stems: readonly GlyphValue[]; branches: readonly GlyphValue[] }>[] }>
-  | Readonly<{ kind: 'tenGods'; kicker: string; title: string; relationHeader: string; columns: readonly string[]; rows: readonly Readonly<{ tenGod: TenGodValue; marks: readonly ('stem' | 'hidden' | null)[] }>[]; legend: readonly Readonly<{ mark: 'stem' | 'hidden' | null; label: string }>[] }>
+  | Readonly<{ kind: 'fivePhases'; kicker: string; title: string; stemsLabel: string; branchesLabel: string; phases: readonly Readonly<{ phase: Phase; character: string; pinyin: string; label: string; stems: readonly GlyphRef[]; branches: readonly GlyphRef[] }>[] }>
+  | Readonly<{ kind: 'tenGods'; kicker: string; title: string; relationHeader: string; columns: readonly string[]; rows: readonly Readonly<{ tenGod: TenGodEntry; marks: readonly PresenceMark[] }>[]; legend: readonly Readonly<{ mark: PresenceMark; label: string }>[] }>
   | Readonly<{ kind: 'hiddenStems'; kicker: string; title: string; branchLabel: string; rows: readonly Readonly<{ positionLabel: string; branch: BranchValue; hidden: readonly HiddenStemValue[] }>[] }>
   | Readonly<{ kind: 'longForm'; chapterNumber: number; chapterPage: number; template: 'opener' | 'continuation'; headerLines: readonly HeaderLine[]; runningKicker: string | null; fragments: readonly LayoutFragment[]; sidebar: (Readonly<{ xCp: number; yCp: number; widthCp: number }> & ChapterReference) | null; referencePanel: (Readonly<{ xCp: number; yCp: number; widthCp: number }> & ChapterReference) | null }>
-  | Readonly<{ kind: 'reflection'; kicker: string; title: string; charactersLabel: string; characters: readonly Readonly<{ positionLabel: string; stem: StemValue; branch: BranchValue }>[]; questions: readonly Readonly<{ number: string; text: string }>[] }>
-  | Readonly<{ kind: 'summary'; kicker: string; title: string; rows: readonly FactRow[]; dayMaster: StemValue; dayMasterLabel: string }>
-  | Readonly<{ kind: 'closing'; kicker: string; title: string; preparedFor: string; displayName: string; brand: string; product: string }>
-  | Readonly<{ kind: 'methodNote'; kicker: string; title: string; paragraphs: readonly string[] }>;
+  | Readonly<{ kind: 'reflection'; kicker: string; title: string; charactersLabel: string; characters: readonly Readonly<{ positionLabel: string; stem: GlyphRef; branch: GlyphRef }>[]; questions: readonly Readonly<{ number: string; text: string }>[] }>
+  | Readonly<{ kind: 'summary'; kicker: string; title: string; rows: readonly FactRow[]; wuXingLabel: string; tally: readonly Readonly<{ phase: Phase; label: string; valueText: string }>[]; dayMaster: GlyphText; dayMasterLabel: string }>
+  | Readonly<{ kind: 'closing'; kicker: string; title: string; preparedFor: string; displayName: string; brand: string; product: string; pageNumberLabel: string }>
+  | Readonly<{ kind: 'methodNote'; kicker: string; title: string; paragraphs: readonly string[]; dataNote: Readonly<{ label: string; text: string }> | null }>;
+
+export interface PageChrome {
+  readonly brand: string;
+  readonly displayName: string;
+  readonly tag: string | null;
+  readonly tagKind: 'chart' | 'general' | 'reading' | null;
+  readonly footer: readonly string[];
+}
 
 export interface PresentationPage {
   readonly pageId: string;
@@ -216,9 +248,11 @@ export interface PresentationPage {
   readonly pageNumber: number;
   readonly pageLabel: string;
   /** Running head and foot; null on cover and closing. */
-  readonly chrome: Readonly<{ brand: string; displayName: string; tag: string | null; tagKind: 'chart' | 'general' | 'reading' | null; footer: readonly string[] }> | null;
+  readonly chrome: PageChrome | null;
   readonly slots: readonly string[];
   readonly content: PageContent;
+  /** Exactly the strings this page prints, sorted and unique. */
+  readonly strings: readonly string[];
 }
 
 export interface PresentationProjection {
@@ -236,7 +270,7 @@ export interface PresentationProjection {
   readonly pages: readonly PresentationPage[];
   /** Content slots of the template this projection leaves empty, and why. Never filled with stock copy. */
   readonly emptyContentSlots: readonly Readonly<{ slotId: string; reason: 'NO_APPROVED_CONTENT' }>[];
-  /** Every string the renderer may print, sorted and unique. */
+  /** The union of the pages' `strings`, sorted and unique. */
   readonly customerStrings: readonly string[];
   /** Every character drawn from the 27-glyph display set, sorted and unique. */
   readonly displayGlyphs: readonly string[];
@@ -317,7 +351,13 @@ function termValue(term: string, labelId: TemplateLabelId): TermValue {
   return { label: label(labelId), hanzi };
 }
 
-function bindTenGod(fact: FufireTenGodFact, where: string): TenGodValue {
+type LexiconRelation = (typeof TEN_GOD_RELATION_WORDING)[number];
+
+function tenGodEntry(entry: LexiconRelation, code: string): TenGodEntry {
+  return { code, hanzi: simplified(entry.hanzi), pinyin: entry.pinyin, customerLabel: entry.customerDe, familyId: entry.familyId };
+}
+
+function bindTenGod(fact: FufireTenGodFact, where: string): TenGodName {
   const key = withoutTones(fact.pinyin);
   const matches = TEN_GOD_RELATION_WORDING.filter((entry) => withoutTones(entry.pinyin) === key);
   if (matches.length !== 1) {
@@ -327,29 +367,23 @@ function bindTenGod(fact: FufireTenGodFact, where: string): TenGodValue {
       matches: matches.length,
     });
   }
-  const entry = matches[0] as (typeof TEN_GOD_RELATION_WORDING)[number];
-  return tenGodValueOf(entry, fact.name);
+  const entry = matches[0] as LexiconRelation;
+  return { code: fact.name, hanzi: simplified(entry.hanzi), pinyin: entry.pinyin };
 }
 
-function tenGodValueOf(entry: (typeof TEN_GOD_RELATION_WORDING)[number], code: string): TenGodValue {
-  const family = TEN_GOD_FAMILY_WORDING.find((candidate) => candidate.familyId === entry.familyId);
-  if (family === undefined) return missing(`the Lexicon family ${entry.familyId} is absent`, { familyId: entry.familyId });
-  return {
-    code,
-    hanzi: simplified(entry.hanzi),
-    pinyin: entry.pinyin,
-    customerLabel: entry.customerDe,
-    familyId: entry.familyId,
-    familyLabel: family.customerDe,
-  };
-}
+const glyphText = (value: GlyphText): GlyphText => ({ character: value.character, pinyin: value.pinyin, phase: value.phase });
+const glyphRef = (value: GlyphRef): GlyphRef => ({ character: value.character, phase: value.phase });
 
 // ---------------------------------------------------------------------------
 // the chart values
 // ---------------------------------------------------------------------------
 
+interface ChartPillar extends Omit<PillarValue, 'hidden'> {
+  readonly hidden: readonly HiddenStemValue[];
+}
+
 interface ChartValues {
-  readonly pillars: readonly PillarValue[];
+  readonly pillars: readonly ChartPillar[];
   readonly dayMaster: StemValue;
   readonly wuXing: WuXingValue;
 }
@@ -359,24 +393,16 @@ function stemValue(character: string, pinyin: string, phase: Phase, polarity: 'y
   if (glyph.phase !== phase) mismatch(`${where}: the chart places ${character} in ${phase}, the glyph contract in ${glyph.phase}`, { where, character, chart: phase, glyph: glyph.phase });
   if (glyph.polarity !== polarity) mismatch(`${where}: the chart gives ${character} polarity ${polarity}, the glyph contract ${String(glyph.polarity)}`, { where, character });
   if (glyph.pinyin !== pinyin) mismatch(`${where}: the chart spells ${character} "${pinyin}", the glyph contract "${glyph.pinyin}"`, { where, character });
-  return {
-    character,
-    pinyin,
-    phase,
-    phaseLabel: elementDeByEn(phase),
-    polarity,
-    polarityLabel: label(polarity),
-  };
+  return { character, pinyin, phase, phaseLabel: elementDeByEn(phase), polarity, polarityLabel: label(polarity) };
 }
 
 function chartValues(model: HoroscopeModel): ChartValues {
-  const pillars: PillarValue[] = POSITIONS.map((position) => {
+  const pillars: ChartPillar[] = POSITIONS.map((position) => {
     const where = `pillars.${position}`;
     const pillar = model.pillars[position];
     const natal = model.natal.pillars[position];
-    if (pillar.stemHanzi !== natal.stemCn || pillar.branchHanzi !== natal.branchCn) {
-      mismatch(`${where}: the BaZi and natal answers name different characters`, { where });
-    }
+    if (pillar.stemHanzi !== natal.stemCn) mismatch(`${where}: the BaZi and natal answers name different stems`, { where });
+    if (pillar.branchHanzi !== natal.branchCn) mismatch(`${where}: the BaZi and natal answers name different branches`, { where });
     const stemPhase = phaseOfGerman(pillar.stemElementDe, `${where}.stemElementDe`);
     if (natal.stemElement !== stemPhase) mismatch(`${where}: the stem element differs between the BaZi and natal answers`, { where });
     const stem = stemValue(pillar.stemHanzi, pillar.stemPinyin, stemPhase, natal.polarity, `${where}.stem`);
@@ -396,12 +422,14 @@ function chartValues(model: HoroscopeModel): ChartValues {
       animalLabel: pillar.tierDe,
     };
 
-    if (natal.hiddenStems.length < 1 || natal.hiddenStems.length > 3) missing(`${where}: ${String(natal.hiddenStems.length)} hidden stems`, { where });
+    if (natal.hiddenStems.length < 1) missing(`${where}: no hidden stems`, { where });
+    if (natal.hiddenStems.length > 3) missing(`${where}: ${String(natal.hiddenStems.length)} hidden stems, at most three exist`, { where });
     const hidden: HiddenStemValue[] = natal.hiddenStems.map((entry, index) => {
       const at = `${where}.hiddenStems[${String(index)}]`;
       const glyph = glyphOf(entry.stemCn, 'heavenly_stem', at);
       const phase = asPhase(entry.element, `${at}.element`);
       if (glyph.phase !== phase) mismatch(`${at}: the chart places ${entry.stemCn} in ${phase}, the glyph contract in ${glyph.phase}`, { where: at });
+      if (stemFactByName(entry.stem).pinyin !== glyph.pinyin) mismatch(`${at}: the Sizhu table and the glyph contract spell ${entry.stemCn} differently`, { where: at });
       return {
         character: entry.stemCn,
         pinyin: glyph.pinyin,
@@ -414,7 +442,7 @@ function chartValues(model: HoroscopeModel): ChartValues {
     });
 
     const isDayMaster = position === 'day';
-    let tenGod: TenGodValue | null = null;
+    let tenGod: TenGodName | null = null;
     if (isDayMaster) {
       if (natal.tenGod !== null) mismatch(`${where}: the day pillar carries a relation to itself`, { where });
     } else {
@@ -434,14 +462,19 @@ function chartValues(model: HoroscopeModel): ChartValues {
     };
   });
 
-  const day = pillars[2] as PillarValue;
-  const dm = model.dayMaster;
-  if (dm.stemHanzi !== day.stem.character || model.natal.dayMaster.stemCn !== dm.stemHanzi) {
-    mismatch('dayMaster: the Day Master is not the stem of the day pillar', { dayMaster: dm.stemHanzi, dayStem: day.stem.character });
+  // The Day Master against its two statements. The natal answer's Day Master is
+  // the independent one; the BaZi answer's fields are copies of the day pillar
+  // for any model `buildHoroscopeModel` builds and are compared only so that a
+  // hand-built model cannot carry a Day Master the pages would contradict.
+  const day = pillars[2] as ChartPillar;
+  const bazi = model.dayMaster;
+  if (bazi.stemHanzi !== day.stem.character || bazi.stemPinyin !== day.stem.pinyin || bazi.elementDe !== day.stem.phaseLabel) {
+    mismatch('dayMaster: the BaZi Day Master is not the stem of the day pillar', { dayMaster: bazi.stemHanzi, dayStem: day.stem.character });
   }
-  if (phaseOfGerman(dm.elementDe, 'dayMaster.elementDe') !== day.stem.phase || dm.stemPinyin !== day.stem.pinyin) {
-    mismatch('dayMaster: element or pinyin differs from the day stem', { dayMaster: dm.stemHanzi });
-  }
+  const natalDm = model.natal.dayMaster;
+  if (natalDm.stemCn !== day.stem.character) mismatch('dayMaster: the natal Day Master is not the stem of the day pillar', { natal: natalDm.stemCn, dayStem: day.stem.character });
+  if (asPhase(natalDm.element, 'natal.dayMaster.element') !== day.stem.phase) mismatch('dayMaster: the natal Day Master element differs from the day stem', { natal: natalDm.element });
+  if (natalDm.polarity !== day.stem.polarity) mismatch('dayMaster: the natal Day Master polarity differs from the day stem', { natal: natalDm.polarity });
 
   const vector: Partial<Record<Phase, number>> = {};
   const suppliedKeys = Object.keys(model.wuxing.vector);
@@ -574,13 +607,21 @@ function longFormPages(content: PresentationContent, dayMaster: StemValue): Page
   return drafts;
 }
 
+function presence(pillar: ChartPillar, entry: LexiconRelation): PresenceMark {
+  const visible = pillar.tenGod !== null && pillar.tenGod.pinyin === entry.pinyin;
+  const hidden = pillar.hidden.some((hiddenStem) => hiddenStem.tenGod.pinyin === entry.pinyin);
+  if (visible && hidden) return 'both';
+  if (visible) return 'stem';
+  if (hidden) return 'hidden';
+  return null;
+}
+
 function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart: ChartValues): PageDraft[] {
   const { pillars, dayMaster, wuXing } = chart;
-  const day = pillars[2] as PillarValue;
+  const day = pillars[2] as ChartPillar;
   const fourPillarsTerm = termValue('Four Pillars / 四柱', 'fourPillars');
   const wuXingTerm = termValue('Wu Xing / 五行', 'fivePhases');
-  const pillarStrip = pillars.map((pillar) => ({ positionLabel: pillar.positionLabel, stem: pillar.stem, branch: pillar.branch }));
-  const methodPageIdentity = 'method-note';
+  const hasWarnings = model.sourceWarnings.length > 0;
 
   const front: PageDraft[] = [
     {
@@ -657,9 +698,9 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
         dayMaster,
         dayMasterLabel: label('dayMaster'),
         pillarsLabel: fourPillarsTerm,
-        pillars: pillarStrip,
+        pillars: pillars.map((pillar) => ({ positionLabel: pillar.positionLabel, stem: glyphText(pillar.stem), branch: glyphText(pillar.branch) })),
         wuXingLabel: wuXingTerm,
-        wuXing,
+        tally: wuXing.phases.map((entry) => ({ phase: entry.phase, character: entry.character, label: entry.label, valueText: entry.valueText })),
         rows: [
           { label: label('hourPillar'), value: label('hourPillarKnown') },
           { label: label('script'), value: label('scriptSimplified') },
@@ -686,7 +727,7 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
           { label: label('relation'), hanzi: '' },
         ],
         dayMasterLabel: label('dayMaster'),
-        pillars,
+        pillars: pillars.map((pillar) => ({ ...pillar, hidden: pillar.hidden.map(glyphText) })),
         legend: wuXing.phases.map((entry) => ({ phase: entry.phase, label: entry.label, character: entry.character })),
       },
     },
@@ -703,8 +744,8 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
         kicker: label('fourPillars'),
         title: label('foundationTitle'),
         characters: pillars.flatMap((pillar) => [
-          { positionLabel: pillar.positionLabel, roleLabel: label('stem'), glyph: pillar.stem, detail: pillar.stem.polarityLabel },
-          { positionLabel: pillar.positionLabel, roleLabel: label('branch'), glyph: pillar.branch, detail: pillar.branch.animalLabel },
+          { positionLabel: pillar.positionLabel, roleLabel: label('stem'), glyph: { ...glyphText(pillar.stem), phaseLabel: pillar.stem.phaseLabel }, detail: pillar.stem.polarityLabel },
+          { positionLabel: pillar.positionLabel, roleLabel: label('branch'), glyph: { ...glyphText(pillar.branch), phaseLabel: pillar.branch.phaseLabel }, detail: pillar.branch.animalLabel },
         ]),
       },
     },
@@ -728,7 +769,12 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
           { label: label('polarity'), value: dayMaster.polarityLabel },
           { label: label('dayPillar'), value: `${day.stem.pinyin} ${day.branch.pinyin}`, cjk: `${day.stem.character}${day.branch.character}` },
         ],
-        dayPillar: day,
+        dayPillar: {
+          positionLabel: day.positionLabel,
+          stem: glyphText(day.stem),
+          branch: glyphText(day.branch),
+          hidden: day.hidden.map((entry) => ({ ...glyphText(entry), phaseLabel: entry.phaseLabel, qiLabel: entry.qiLabel })),
+        },
         hiddenStemsLabel: label('hiddenStems'),
       },
     },
@@ -746,7 +792,7 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
         title: label('wuXingDistribution'),
         wuXing,
         medallion: wuXingTerm,
-        captions: [label('wuXingValuesAsSupplied'), label('wuXingZeroIsZero')],
+        captions: [label('wuXingValuesAsSupplied'), ...(wuXing.zeroPhases.length > 0 ? [label('wuXingZeroIsZero')] : [])],
       },
     },
     {
@@ -768,18 +814,8 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
           character: entry.character,
           pinyin: entry.pinyin,
           label: entry.label,
-          stems: DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'heavenly_stem' && glyph.phase === entry.phase).map((glyph) => ({
-            character: glyph.character,
-            pinyin: glyph.pinyin,
-            phase: glyph.phase,
-            phaseLabel: entry.label,
-          })),
-          branches: DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'earthly_branch' && glyph.phase === entry.phase).map((glyph) => ({
-            character: glyph.character,
-            pinyin: glyph.pinyin,
-            phase: glyph.phase,
-            phaseLabel: entry.label,
-          })),
+          stems: DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'heavenly_stem' && glyph.phase === entry.phase).map(glyphRef),
+          branches: DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'earthly_branch' && glyph.phase === entry.phase).map(glyphRef),
         })),
       },
     },
@@ -797,20 +833,11 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
         title: label('tenGodsTitle'),
         relationHeader: label('relation'),
         columns: pillars.map((pillar) => pillar.positionLabel),
-        rows: TEN_GOD_RELATION_WORDING.map((entry) => {
-          const value = tenGodValueOf(entry, '');
-          return {
-            tenGod: value,
-            marks: pillars.map((pillar) => {
-              if (pillar.tenGod !== null && pillar.tenGod.pinyin === entry.pinyin) return 'stem' as const;
-              if (pillar.hidden.some((hiddenStem) => hiddenStem.tenGod.pinyin === entry.pinyin)) return 'hidden' as const;
-              return null;
-            }),
-          };
-        }),
+        rows: TEN_GOD_RELATION_WORDING.map((entry) => ({ tenGod: tenGodEntry(entry, ''), marks: pillars.map((pillar) => presence(pillar, entry)) })),
         legend: [
           { mark: 'stem', label: label('visibleStem') },
           { mark: 'hidden', label: label('hiddenStem') },
+          { mark: 'both', label: label('visibleAndHiddenStem') },
           { mark: null, label: label('notPresent') },
         ],
       },
@@ -847,7 +874,7 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
         kicker: label('tagReading'),
         title: label('reflectionTitle'),
         charactersLabel: label('reflectionCharacters'),
-        characters: pillarStrip,
+        characters: pillars.map((pillar) => ({ positionLabel: pillar.positionLabel, stem: glyphRef(pillar.stem), branch: glyphRef(pillar.branch) })),
         questions: content.reflectionQuestions.map((text, index) => ({ number: pad2(index + 1), text })),
       },
     },
@@ -870,9 +897,10 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
             value: `${pillar.stem.pinyin} ${pillar.branch.pinyin}`,
             cjk: `${pillar.stem.character}${pillar.branch.character}`,
           })),
-          { label: label('wuXing'), value: wuXing.phases.map((entry) => `${entry.label} ${entry.valueText}`).join(' · ') },
         ],
-        dayMaster,
+        wuXingLabel: label('wuXing'),
+        tally: wuXing.phases.map((entry) => ({ phase: entry.phase, label: entry.label, valueText: entry.valueText })),
+        dayMaster: glyphText(dayMaster),
         dayMasterLabel: label('dayMaster'),
       },
     },
@@ -892,17 +920,24 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
         displayName: model.displayName,
         brand: label('brand'),
         product: label('product'),
+        pageNumberLabel: '',
       },
     },
     {
-      pageId: methodPageIdentity,
+      pageId: 'method-note',
       contractPageId: 'method-note',
       tag: null,
       chrome: true,
       slots: slotsOf('method-note'),
       section: 'closing',
       contentsTitle: label('methodNoteTitle'),
-      content: { kind: 'methodNote', kicker: label('methodNoteTitle'), title: label('methodNoteTitle'), paragraphs: [content.methodNote] },
+      content: {
+        kind: 'methodNote',
+        kicker: label('methodNoteTitle'),
+        title: label('methodNoteTitle'),
+        paragraphs: [content.methodNote],
+        dataNote: hasWarnings ? { label: label('dataNote'), text: label('dataNoteText') } : null,
+      },
     },
   ];
 
@@ -910,10 +945,10 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
 }
 
 // ---------------------------------------------------------------------------
-// customer strings
+// the strings a page prints
 // ---------------------------------------------------------------------------
 
-/** Fields that identify, classify or position - never printed. */
+/** Fields that identify, classify, position or colour - never printed. */
 const NON_PRINTED_KEYS = new Set([
   'kind',
   'phase',
@@ -924,6 +959,7 @@ const NON_PRINTED_KEYS = new Set([
   'qiRole',
   'template',
   'mark',
+  'marks',
   'transformId',
   'zeroPhases',
   'paint',
@@ -933,7 +969,6 @@ const NON_PRINTED_KEYS = new Set([
   'boxCp',
   'character',
   'tagKind',
-  'longFormStyles',
 ]);
 
 function collectStrings(value: unknown, key: string | null, out: Set<string>): void {
@@ -997,18 +1032,13 @@ export function buildPresentationProjection(input: PresentationInput): Presentat
   const content = parsed.data;
   const model = input.model;
 
-  if (
-    !model.birth.birthTimeKnown ||
-    !model.precision.birthTimeKnown ||
-    !model.natal.precision.birthTimeKnown ||
-    model.precision.provisionalFields.length > 0 ||
-    model.natal.precision.provisionalFields.length > 0
-  ) {
+  const precisions = [model.precision, model.natal.precision, model.wuxing.precision];
+  if (!model.birth.birthTimeKnown || precisions.some((precision) => !precision.birthTimeKnown || precision.provisionalFields.length > 0)) {
     throw new PresentationError('PRESENTATION_UNKNOWN_TIME_UNSUPPORTED', 'the birth time is unknown or provisional; the template defines no unknown-time rendering', {
-      provisionalFields: [...model.precision.provisionalFields],
+      provisionalFields: sortedUnique(precisions.flatMap((precision) => precision.provisionalFields)),
     });
   }
-  if (model.displayName.trim() === '' || model.displayName.trim() !== model.displayName) {
+  if (model.displayName === '' || model.displayName.trim() !== model.displayName) {
     throw new PresentationError('PRESENTATION_INPUT_INVALID', 'the display name is empty or padded', {});
   }
 
@@ -1053,32 +1083,39 @@ export function buildPresentationProjection(input: PresentationInput): Presentat
   assertReleasedTemplate(template);
   const pages: PresentationPage[] = drafts.map((draft, index) => {
     const pageNumber = index + 1;
-    const page = contractPage(draft.contractPageId);
+    const pageLabel = pad2(pageNumber);
+    const contract = contractPage(draft.contractPageId);
+    const pageContent: PageContent = draft.content.kind === 'closing' ? { ...draft.content, pageNumberLabel: pageLabel } : draft.content;
+    const chrome: PageChrome | null = draft.chrome
+      ? {
+          brand: label('brand'),
+          displayName: model.displayName,
+          tag: draft.tag === null ? null : label(draft.tag),
+          tagKind: draft.tag === null ? null : TAG_KIND[draft.tag],
+          footer: [label('brand'), label('product'), model.displayName],
+        }
+      : null;
+    const printed = new Set<string>();
+    collectStrings(pageContent, null, printed);
+    collectStrings(chrome, null, printed);
+    if (chrome !== null) printed.add(pageLabel);
     return {
       pageId: draft.pageId,
       contractPageId: draft.contractPageId,
-      family: page.family,
+      family: contract.family,
       pageNumber,
-      pageLabel: pad2(pageNumber),
-      chrome: draft.chrome
-        ? {
-            brand: label('brand'),
-            displayName: model.displayName,
-            tag: draft.tag === null ? null : label(draft.tag),
-            tagKind: draft.tag === null ? null : TAG_KIND[draft.tag],
-            footer: [label('brand'), label('product'), model.displayName],
-          }
-        : null,
+      pageLabel,
+      chrome,
       slots: draft.slots,
-      content: draft.content,
+      content: pageContent,
+      strings: sortedUnique(printed),
     };
   });
 
-  const strings = new Set<string>();
-  collectStrings(pages, null, strings);
+  const strings = new Set(pages.flatMap((page) => page.strings));
   for (const text of strings) assertCustomerText(text);
   const glyphs = new Set<string>();
-  collectGlyphs(pages, null, glyphs);
+  collectGlyphs(pages.map((page) => page.content), null, glyphs);
   const cjk = new Set<string>();
   for (const text of strings) {
     for (const character of text) {

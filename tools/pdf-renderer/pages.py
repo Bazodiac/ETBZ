@@ -3,9 +3,11 @@
 Each builder turns one page of the PresentationProjection into one A4 HTML page
 in the ETBZ-49 visual language (the page layouts of the approved customer page
 family, ported). A builder reads every value from the projection and prints
-every string in its own element: the renderer adds no text, so the QA scan can
-require every text node on the page to be a projection string. Display glyphs
-are drawn from the 27-asset vector set, never from a font.
+every string in its own element: the renderer adds no text and drops none, so
+the QA scan can require the page's text nodes to equal the page's projection
+strings exactly. Display glyphs are drawn from the 27-asset vector set, never
+from a font. Two strings that belong together (a polarity and its phase, a
+phase and its value) sit in one non-breaking group, so a wrap never splits them.
 """
 from __future__ import annotations
 
@@ -15,6 +17,8 @@ import math
 MM_PER_CP = 25.4 / 7200  # 1 cp = 1/100 pt
 
 SEP = '<span class="sep">·</span>'
+# A separator after which a line may wrap (spans sit back to back, so without it a run of pairs never breaks).
+SEP_BREAK = SEP + "<wbr>"
 
 
 def esc(text: str) -> str:
@@ -25,6 +29,11 @@ def t(text: str, cls: str = "", style: str = "") -> str:
     """One projection string in its own element."""
     attrs = (f' class="{cls}"' if cls else "") + (f' style="{style}"' if style else "")
     return f"<span{attrs}>{esc(text)}</span>"
+
+
+def pair(*spans: str) -> str:
+    """Projection strings that must stay on one line together."""
+    return f'<span class="nw">{" ".join(spans)}</span>'
 
 
 def mm(cp: int | float) -> str:
@@ -82,12 +91,12 @@ def foot(page: dict) -> str:
     return f'<div class="foot"><div>{parts}</div>{t(page["pageLabel"], "pn")}</div>'
 
 
-def rows_table(rows: list) -> str:
+def rows_table(rows: list, extra: str = "") -> str:
     out = []
     for row in rows:
         cjk = f' {t(row["cjk"], "cjk")}' if row.get("cjk") else ""
         out.append(f'<tr><td>{t(row["label"])}</td><td>{t(row["value"])}{cjk}</td></tr>')
-    return f'<table class="facts">{"".join(out)}</table>'
+    return f'<table class="facts">{"".join(out)}{extra}</table>'
 
 
 # ------------------------------------------------------------------ 01 cover
@@ -104,7 +113,7 @@ def cover(ctx: Context, page: dict, c: dict) -> str:
     <div style="position:absolute;left:16mm;top:16mm;height:3mm;color:var(--ink-900)">{ctx.wordmark(3)}</div>
     <div style="position:absolute;left:0;right:0;top:56mm;text-align:center">
       <div style="display:flex;justify-content:center">{ctx.glyph(dm["character"], 82)}</div>
-      <div class="label" style="margin-top:6mm;letter-spacing:.3em;color:var(--ink-600)">{t(c["dayMasterLabel"])}{SEP}{t(dm["pinyin"], "nocase", "color:var(--ink-900)")}{SEP}{t(dm["polarityLabel"])} {t(dm["phaseLabel"])}</div>
+      <div class="label" style="margin-top:6mm;letter-spacing:.3em;color:var(--ink-600)">{t(c["dayMasterLabel"])}{SEP}{t(dm["pinyin"], "nocase", "color:var(--ink-900)")}{SEP}{pair(t(dm["polarityLabel"]), t(dm["phaseLabel"]))}</div>
     </div>
     <div style="position:absolute;left:16mm;right:16mm;bottom:34mm;height:0.25mm;background:var(--gold-500)"></div>
     <div style="position:absolute;left:16mm;right:16mm;bottom:44mm">
@@ -164,7 +173,7 @@ def glance(ctx: Context, page: dict, c: dict) -> str:
     tally = "".join(
         f'<div style="text-align:center"><div style="display:flex;justify-content:center">{ctx.glyph(w["character"], 8, f"var(--phase-{w["phase"]}-mark)")}</div>'
         f'<div class="wx-v">{t(w["valueText"])}</div><div class="label">{t(w["label"])}</div></div>'
-        for w in c["wuXing"]["phases"])
+        for w in c["tally"])
     return f'''{head(ctx, page)}
     <div class="content">
       <div class="kicker">{t(c["kicker"])}</div>
@@ -174,7 +183,7 @@ def glance(ctx: Context, page: dict, c: dict) -> str:
           <div style="position:absolute;width:52mm;height:52mm;border-radius:50%;background:var(--phase-{dm["phase"]}-field);top:12mm"></div>
           <div style="position:relative">{ctx.glyph(dm["character"], 44)}</div>
           <div class="pinyin" style="position:relative;margin-top:4mm;font-size:12pt;font-weight:400">{t(dm["pinyin"])}</div>
-          <div class="label" style="position:relative;margin-top:1.5mm">{phase_dot(dm["phase"])}{t(dm["polarityLabel"])} {t(dm["phaseLabel"])}{SEP}{t(c["dayMasterLabel"])}</div>
+          <div class="label" style="position:relative;margin-top:1.5mm;text-align:center;padding:0 3mm">{pair(phase_dot(dm["phase"]) + t(dm["polarityLabel"]), t(dm["phaseLabel"]))}{SEP_BREAK}{t(c["dayMasterLabel"])}</div>
         </div>
         <div>
           <div class="label ink" style="margin-bottom:4mm">{t(c["pillarsLabel"]["label"])} {t(c["pillarsLabel"]["hanzi"], "cjk muted nocase", "letter-spacing:.1em;margin-left:2mm")}</div>
@@ -263,7 +272,7 @@ def day_master(ctx: Context, page: dict, c: dict) -> str:
       </div>
       <div style="position:absolute;left:0;right:0;top:110mm;text-align:center">
         <div style="font-family:var(--font-display);font-weight:300;font-size:26pt;letter-spacing:.02em">{t(dm["pinyin"])}</div>
-        <div class="label" style="margin-top:3mm;letter-spacing:.3em;color:var(--ink-600)">{t(dm["polarityLabel"])} {t(dm["phaseLabel"])}{SEP}{t(c["dayMasterLabel"])}</div>
+        <div class="label" style="margin-top:3mm;letter-spacing:.3em;color:var(--ink-600)">{pair(t(dm["polarityLabel"]), t(dm["phaseLabel"]))}{SEP_BREAK}{t(c["dayMasterLabel"])}</div>
       </div>
       <div style="position:absolute;left:12mm;right:12mm;top:146mm">{rows_table(c["rows"])}</div>
     </div>
@@ -356,12 +365,14 @@ def five_phases(ctx: Context, page: dict, c: dict) -> str:
 def ten_gods(ctx: Context, page: dict, c: dict) -> str:
     def mark(kind):
         if kind == "stem":
-            return '<span style="display:inline-block;width:2.6mm;height:2.6mm;border-radius:50%;background:var(--ink-900)"></span>'
+            return '<span class="mark stem"></span>'
         if kind == "hidden":
-            return '<span style="display:inline-block;width:2.6mm;height:2.6mm;border-radius:50%;border:0.3mm solid var(--ink-600)"></span>'
-        return '<span style="display:inline-block;width:2.6mm;height:0.25mm;background:var(--rule-200);vertical-align:middle"></span>'
+            return '<span class="mark hidden"></span>'
+        if kind == "both":
+            return '<span class="mark both"></span>'
+        return '<span class="mark none"></span>'
     rows = "".join(
-        f'<tr><td style="width:15mm">{t(r["tenGod"]["hanzi"], "cjk term")}</td><td style="width:22mm">{t(r["tenGod"]["pinyin"], "pinyin")}</td>'
+        f'<tr><td style="width:15mm">{t(r["tenGod"]["hanzi"], "cjk term")}</td><td style="width:22mm">{t(r["tenGod"]["pinyin"], "pinyin nw")}</td>'
         f'<td class="body-small" style="color:var(--ink-900)">{t(r["tenGod"]["customerLabel"])}</td>'
         + "".join(f'<td style="text-align:center;width:13mm">{mark(m)}</td>' for m in r["marks"]) + "</tr>" for r in c["rows"])
     head_cells = "".join(f'<td style="text-align:center">{t(col)}</td>' for col in c["columns"])
@@ -429,7 +440,7 @@ def reference_block(ctx: Context, ref: dict, wide: bool) -> str:
     grid = "display:grid;grid-template-columns:1fr 1fr 1fr;gap:3mm 8mm" if wide else ""
     return (f'<div style="display:flex;gap:3mm;align-items:center;margin-bottom:{5 if wide else 0}mm">'
             f'<div class="disc f-{dm["phase"]}" style="width:14mm;height:14mm;flex:none">{ctx.glyph(dm["character"], 9.5)}</div>'
-            f'<div>{t(ref["label"], "label gold", "display:block")}<div class="body-small" style="color:var(--ink-900);margin-top:1mm">{t(ref["dayMasterLabel"])}{SEP}{t(dm["pinyin"])}{SEP}{t(dm["polarityLabel"])} {t(dm["phaseLabel"])}</div></div></div>'
+            f'<div>{t(ref["label"], "label gold", "display:block")}<div class="body-small" style="color:var(--ink-900);margin-top:1mm">{t(ref["dayMasterLabel"])}{SEP_BREAK}{t(dm["pinyin"])}{SEP_BREAK}{pair(t(dm["polarityLabel"]), t(dm["phaseLabel"]))}</div></div></div>'
             f'<div class="label" style="margin:{3 if wide else 7}mm 0 2mm">{t(ref["termsLabel"])}</div><div style="{grid}">{terms}</div>')
 
 
@@ -481,12 +492,14 @@ def reflection(ctx: Context, page: dict, c: dict) -> str:
 
 def summary(ctx: Context, page: dict, c: dict) -> str:
     dm = c["dayMaster"]
+    tally = SEP_BREAK.join(pair(t(w["label"]), t(w["valueText"])) for w in c["tally"])
+    wu_xing_row = f'<tr><td>{t(c["wuXingLabel"])}</td><td>{tally}</td></tr>'
     return f'''{head(ctx, page)}
     <div class="content">
       <div class="kicker">{t(c["kicker"])}</div>
       <div class="h1 small" style="margin-top:3mm">{t(c["title"])}</div>
       <div style="display:grid;grid-template-columns:1fr 64mm;gap:12mm;margin-top:12mm;align-items:start">
-        {rows_table(c["rows"])}
+        {rows_table(c["rows"], wu_xing_row)}
         <div class="panel recessed" style="display:flex;flex-direction:column;align-items:center;padding:8mm 5mm">
           <div class="disc f-{dm["phase"]}" style="width:40mm;height:40mm">{ctx.glyph(dm["character"], 28)}</div>
           <div class="pinyin" style="margin-top:4mm;font-size:12pt;font-weight:400">{t(dm["pinyin"])}</div>
@@ -510,17 +523,21 @@ def closing(ctx: Context, page: dict, c: dict) -> str:
     </div>
     <div style="position:absolute;left:20mm;right:20mm;bottom:16mm;display:flex;justify-content:space-between;align-items:flex-end">
       <div><div style="height:3.4mm;color:var(--ink-900)">{ctx.wordmark(3.4)}</div><div class="label" style="margin-top:2mm">{t(c["product"])}</div></div>
-      <div class="label gold">{t(page["pageLabel"])}</div>
+      <div class="label gold">{t(c["pageNumberLabel"])}</div>
     </div>'''
 
 
 def method_note(ctx: Context, page: dict, c: dict) -> str:
     paragraphs = "".join(f'<p>{t(p)}</p>' for p in c["paragraphs"])
+    note = c["dataNote"]
+    data_note = "" if note is None else (
+        f'<div class="panel recessed" style="margin-top:10mm;max-width:130mm;padding:4mm 5mm">'
+        f'<div class="label ink" style="margin-bottom:1.5mm">{t(note["label"])}</div><div class="body">{t(note["text"])}</div></div>')
     return f'''{head(ctx, page)}
     <div class="content">
       <div class="kicker">{t(c["kicker"])}</div>
       <div class="h1 small" style="margin-top:3mm">{t(c["title"])}</div>
-      <div class="body" style="margin-top:10mm;max-width:130mm">{paragraphs}</div>
+      <div class="body" style="margin-top:10mm;max-width:130mm">{paragraphs}</div>{data_note}
     </div>{foot(page)}'''
 
 
@@ -538,6 +555,6 @@ def page_html(ctx: Context, page: dict) -> str:
     if builder is None:
         raise ValueError(f"UNKNOWN_PAGE_KIND {content['kind']!r}")
     inner = builder(ctx, page, content)
-    return (f'<!doctype html><html lang="de"><head><meta charset="utf-8"><title>{esc(page["pageId"])}</title>'
+    return (f'<!doctype html><html lang="de"><head><meta charset="utf-8">'
             f'<style>{ctx.tokens_css}\n{ctx.base_css}</style></head><body>{ctx.sprite}'
             f'<div class="sheet" data-page="{esc(page["pageId"])}">{inner}</div></body></html>')

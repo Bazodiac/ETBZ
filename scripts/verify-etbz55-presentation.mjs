@@ -16,16 +16,23 @@
  * times out, fails to load, or throws inside a test body is an error, not a kill.
  *
  * Every file is restored from bytes held in memory; the run fails if the tree
- * differs from before. `assertEveryWordPlaced` in the projection has no mutant:
- * it is defence in depth behind the paginator's own every-word check, whose
- * defect mutant ("the last line of a paragraph is dropped") is below.
+ * differs from before. Two guards have no mutant, by design: `assertEveryWordPlaced`
+ * in the projection is defence in depth behind the paginator's own every-word
+ * check, whose defect mutant ("the last line of a paragraph is dropped") is
+ * below; and the band flush's "no recorded line count" refusal guards a state
+ * the paginator cannot reach (every band entry is recorded before it is placed).
+ *
+ * A mutant whose name says "is not refused as <CODE>" proves only that the
+ * guard names its own code: without it the input would still fail, later and
+ * untyped. The boundary mutants create a file (and, for the sibling folder, a
+ * directory) and remove it again.
  *
  *   npm run guards:etbz55
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 const PROJECTION = 'src/application/presentation/projection.ts';
 const LONG_FORM = 'src/application/presentation/long-form.ts';
@@ -37,7 +44,12 @@ const T = {
   longForm: 'tests/unit/etbz55-long-form.test.ts',
   negative: 'tests/negative/etbz55-presentation.negative.test.ts',
   contract: 'tests/contract/etbz55-presentation-evidence.contract.test.ts',
+  architecture: 'tests/architecture/etbz55-presentation-boundary.test.ts',
+  visualBoundary: 'tests/architecture/etbz49-visual-boundary.test.ts',
+  skillBoundary: 'tests/architecture/etbz51-skill-boundary.test.ts',
 };
+
+const TEMP = '// TEMPORARY MUTATION - scripts/verify-etbz55-presentation.mjs, never committed.\n';
 
 /** [name, kind, file, find|contents, replace, tests, killer?] — kind 'text' (find occurs exactly once) or 'create'. */
 const MUTANTS = [
@@ -48,17 +60,34 @@ const MUTANTS = [
   ['CONTENT: double spaces and padding are accepted', 'text', PROJECTION,
     ' && !/ {2}/u.test(text) && text.trim() === text, {', ', {',
     [T.negative], 'refuses text the layout would have to normalise'],
-  ['CONTENT: a padded display name is accepted', 'text', PROJECTION,
-    "  if (model.displayName.trim() === '' || model.displayName.trim() !== model.displayName) {", '  if (false) {',
+  ['CONTENT: control and format characters are accepted (only layout whitespace refused, as before the review)', 'text', PROJECTION,
+    'const FORBIDDEN_CHARACTER = /[\\p{Cc}\\p{Cf}]|[^\\S ]/u;', 'const FORBIDDEN_CHARACTER = /[\\t\\n\\r\\f\\v\\u00A0\\u2028\\u2029]/u;',
+    [T.negative], 'refuses a control or format character anywhere in the payload'],
+  ['CONTENT: an empty display name is accepted', 'text', PROJECTION,
+    "  if (model.displayName === '' || model.displayName.trim() !== model.displayName) {", '  if (model.displayName.trim() !== model.displayName) {',
     [T.negative], 'refuses a padded or empty display name'],
-  ['TIME: an unknown birth time is rendered', 'text', PROJECTION,
-    '    !model.birth.birthTimeKnown ||\n    !model.precision.birthTimeKnown ||\n    !model.natal.precision.birthTimeKnown ||',
-    '    false ||',
+  ['CONTENT: a padded display name is accepted', 'text', PROJECTION,
+    "  if (model.displayName === '' || model.displayName.trim() !== model.displayName) {", "  if (model.displayName === '') {",
+    [T.negative], 'refuses a padded or empty display name'],
+  ['TIME: an unknown birth time on the input is rendered', 'text', PROJECTION,
+    '  if (!model.birth.birthTimeKnown || precisions.some(', '  if (precisions.some(',
+    [T.negative], 'refuses an unknown or provisional birth time'],
+  ['TIME: an unknown birth time in a chart answer is rendered', 'text', PROJECTION,
+    'precisions.some((precision) => !precision.birthTimeKnown || precision.provisionalFields.length > 0)', 'precisions.some((precision) => precision.provisionalFields.length > 0)',
+    [T.negative], 'refuses an unknown or provisional birth time'],
+  ['TIME: a provisional hour is rendered', 'text', PROJECTION,
+    'precisions.some((precision) => !precision.birthTimeKnown || precision.provisionalFields.length > 0)', 'precisions.some((precision) => !precision.birthTimeKnown)',
+    [T.negative], 'refuses an unknown or provisional birth time'],
+  ['TIME: the Wu Xing answer\'s precision is ignored', 'text', PROJECTION,
+    '  const precisions = [model.precision, model.natal.precision, model.wuxing.precision];', '  const precisions = [model.precision, model.natal.precision];',
     [T.negative], 'refuses an unknown or provisional birth time'],
 
   // --- chart values that disagree ------------------------------------------------------------------------------
-  ['FACT: BaZi and natal characters may differ', 'text', PROJECTION,
-    '    if (pillar.stemHanzi !== natal.stemCn || pillar.branchHanzi !== natal.branchCn) {', '    if (false) {',
+  ['FACT: BaZi and natal stems may differ', 'text', PROJECTION,
+    '    if (pillar.stemHanzi !== natal.stemCn) mismatch(', '    if (false) mismatch(',
+    [T.negative], 'refuses a pillar whose BaZi and natal characters differ'],
+  ['FACT: BaZi and natal branches may differ', 'text', PROJECTION,
+    '    if (pillar.branchHanzi !== natal.branchCn) mismatch(', '    if (false) mismatch(',
     [T.negative], 'refuses a pillar whose BaZi and natal characters differ'],
   ['FACT: the stem element may differ between BaZi and natal', 'text', PROJECTION,
     '    if (natal.stemElement !== stemPhase) mismatch(', '    if (false) mismatch(',
@@ -81,45 +110,69 @@ const MUTANTS = [
   ['FACT: a hidden-stem phase the glyph contract contradicts is accepted', 'text', PROJECTION,
     '      if (glyph.phase !== phase) mismatch(`${at}:', '      if (false) mismatch(`${at}:',
     [T.negative], 'refuses a branch phase, a hidden-stem phase, a polarity or a pinyin'],
+  ['FACT: a hidden stem the Sizhu table spells differently is accepted', 'text', PROJECTION,
+    '      if (stemFactByName(entry.stem).pinyin !== glyph.pinyin) mismatch(', '      if (false) mismatch(',
+    [T.negative], 'refuses a hidden stem the Sizhu table spells differently from the glyph contract'],
   ['FACT: a day pillar with a relation to itself is accepted', 'text', PROJECTION,
     '      if (natal.tenGod !== null) mismatch(', '      if (false) mismatch(',
     [T.negative], 'refuses a day pillar that carries a relation to itself'],
-  ['FACT: a Day Master that is not the day stem is accepted', 'text', PROJECTION,
-    '  if (dm.stemHanzi !== day.stem.character || model.natal.dayMaster.stemCn !== dm.stemHanzi) {', '  if (false) {',
+  ['FACT: a BaZi Day Master character that is not the day stem is accepted', 'text', PROJECTION,
+    '  if (bazi.stemHanzi !== day.stem.character || ', '  if (',
     [T.negative], 'a Day Master that is not the day stem'],
-  ['FACT: a Day Master element or pinyin that differs from the day stem is accepted', 'text', PROJECTION,
-    "  if (phaseOfGerman(dm.elementDe, 'dayMaster.elementDe') !== day.stem.phase || dm.stemPinyin !== day.stem.pinyin) {", '  if (false) {',
+  ['FACT: a BaZi Day Master pinyin that differs from the day stem is accepted', 'text', PROJECTION,
+    ' || bazi.stemPinyin !== day.stem.pinyin || ', ' || ',
     [T.negative], 'a Day Master that is not the day stem'],
+  ['FACT: a BaZi Day Master element that differs from the day stem is accepted', 'text', PROJECTION,
+    ' || bazi.elementDe !== day.stem.phaseLabel) {', ') {',
+    [T.negative], 'a Day Master that is not the day stem'],
+  ['FACT: a natal Day Master character that is not the day stem is accepted', 'text', PROJECTION,
+    '  if (natalDm.stemCn !== day.stem.character) mismatch(', '  if (false) mismatch(',
+    [T.negative], 'refuses a natal Day Master that differs from the day stem'],
+  ['FACT: a natal Day Master element that differs from the day stem is accepted', 'text', PROJECTION,
+    "  if (asPhase(natalDm.element, 'natal.dayMaster.element') !== day.stem.phase) mismatch(", '  if (false) mismatch(',
+    [T.negative], 'refuses a natal Day Master that differs from the day stem'],
+  ['FACT: a natal Day Master polarity that differs from the day stem is accepted', 'text', PROJECTION,
+    '  if (natalDm.polarity !== day.stem.polarity) mismatch(', '  if (false) mismatch(',
+    [T.negative], 'refuses a natal Day Master that differs from the day stem'],
 
   // --- chart values that are missing ---------------------------------------------------------------------------
   ['MISSING: a branch without its animal is accepted', 'text', PROJECTION,
     "    if (pillar.tierDe.trim() === '') missing(", '    if (false) missing(',
     [T.negative], 'refuses a pillar without hidden stems, a visible stem without its relation, and a branch without its animal'],
   ['MISSING: a pillar without hidden stems is accepted', 'text', PROJECTION,
-    '    if (natal.hiddenStems.length < 1 || natal.hiddenStems.length > 3) missing(', '    if (false) missing(',
+    '    if (natal.hiddenStems.length < 1) missing(', '    if (false) missing(',
     [T.negative], 'refuses a pillar without hidden stems, a visible stem without its relation, and a branch without its animal'],
-  ['MISSING: a visible stem without its relation is accepted', 'text', PROJECTION,
+  ['MISSING: a pillar with four hidden stems is accepted', 'text', PROJECTION,
+    '    if (natal.hiddenStems.length > 3) missing(', '    if (false) missing(',
+    [T.negative], 'refuses a pillar without hidden stems, a visible stem without its relation, and a branch without its animal'],
+  ['MISSING: a visible stem without its relation is not refused as FACT_MISSING (it would crash untyped)', 'text', PROJECTION,
     '      if (natal.tenGod === null) missing(', '      if (false) missing(',
     [T.negative], 'refuses a pillar without hidden stems, a visible stem without its relation, and a branch without its animal'],
-  ['MISSING: a Wu Xing distribution of four phases is accepted', 'text', PROJECTION,
+  ['MISSING: a four-phase Wu Xing distribution is not refused as FACT_MISSING (it would surface downstream)', 'text', PROJECTION,
     '  if (suppliedKeys.length !== PHASES.length) missing(', '  if (false) missing(',
     [T.negative], 'refuses a Wu Xing distribution of four phases'],
 
   // --- released contracts -----------------------------------------------------------------------------------------
-  ['LEXICON: a Ten-God relation without exactly one Lexicon entry is accepted', 'text', PROJECTION,
+  ['LEXICON: an unbound Ten-God relation is not refused as TEN_GOD_UNBOUND (it would crash untyped)', 'text', PROJECTION,
     '  if (matches.length !== 1) {', '  if (matches.length === 0 && false) {',
     [T.negative], 'refuses a Ten-God relation the Lexicon does not carry'],
   ['LEXICON: the traditional Hanzi form is printed instead of the simplified one', 'text', PROJECTION,
     '  return forms[forms.length - 1] ?? hanzi;', '  return forms[0] ?? hanzi;',
     [T.unit], 'names every Ten-God relation with the Lexicon Hanzi'],
+  ['TEN GODS: a relation both visible and hidden is marked visible only', 'text', PROJECTION,
+    "  if (visible && hidden) return 'both';\n", '',
+    [T.unit], 'marks all four presence states'],
   ['TEMPLATE: the released-identity check compares nothing', 'text', TEMPLATE,
     '  if (released !== binding.structuralHash) {', '  if (false) {',
     [T.negative], 'refuses a template that no longer hashes to its released identity'],
   ['TEMPLATE: a label is edited without a new template version', 'text', TEMPLATE,
     "  continued: ui('Fortsetzung'),", "  continued: ui('weiter'),",
     [T.unit], 'frozen by its released hash'],
+  ['TEMPLATE: the long-form typography is left out of the template identity', 'text', TEMPLATE,
+    '      lineToleranceCp: LINE_TOLERANCE_CP,\n', '',
+    [T.unit], 'binds the long-form typography that decides every line break'],
 
-  // --- customer text -----------------------------------------------------------------------------------------------
+  // --- customer text and the page strings ------------------------------------------------------------------------
   ['TEXT: prohibited wording is accepted', 'text', PROJECTION,
     '  if (prohibited !== null) {', '  if (false) {',
     [T.negative], 'refuses wording the Lexicon prohibits'],
@@ -129,6 +182,24 @@ const MUTANTS = [
   ['TEXT: evidence chrome is accepted', 'text', PROJECTION,
     '  assertCustomerSurfaceClean(text);\n', '  void text;\n',
     [T.negative], 'refuses evidence chrome on the customer surface'],
+  ['STRINGS: a page omits its own page number from the strings it prints', 'text', PROJECTION,
+    '    if (chrome !== null) printed.add(pageLabel);\n', '',
+    [T.unit], 'gives every page exactly the strings it prints'],
+  ['STRINGS: an identifier is listed as a printed string', 'text', PROJECTION,
+    "  'familyId',\n", '',
+    [T.unit], 'prints no identifier or classification value'],
+  ['NOTE: the method page no longer carries the data note', 'text', PROJECTION,
+    "        dataNote: hasWarnings ? { label: label('dataNote'), text: label('dataNoteText') } : null,", '        dataNote: null,',
+    [T.unit], 'which carries it'],
+  ['NOTE: the data note is printed on a chart without warnings', 'text', PROJECTION,
+    '  const hasWarnings = model.sourceWarnings.length > 0;', '  const hasWarnings = true;',
+    [T.unit], 'carries no data note when the chart has no source warning'],
+  ['NOTE: the identity page no longer points at the method page', 'text', PROJECTION,
+    '  if (model.sourceWarnings.length > 0 && identity !== undefined', '  if (false && identity !== undefined',
+    [T.unit], 'points the data note at the method page'],
+  ['WU XING: the zero caption is printed although no phase is 0', 'text', PROJECTION,
+    "...(wuXing.zeroPhases.length > 0 ? [label('wuXingZeroIsZero')] : [])", "label('wuXingZeroIsZero')",
+    [T.unit], 'prints the zero caption only when a phase is 0'],
 
   // --- the long form ---------------------------------------------------------------------------------------------------
   ['LONG FORM: the visual contract no longer judges the chapter budget', 'text', PROJECTION,
@@ -136,11 +207,8 @@ const MUTANTS = [
     [T.negative], 'refuses a chapter outside the long-form word budget'],
   ['LONG FORM: the short final page no longer receives the reference panel', 'text', PROJECTION,
     '      const shortFinal = page.pageNumber === lastPage && fill < 0.6;', '      const shortFinal = page.pageNumber === lastPage && fill < 0;',
-    [T.contract], 'regenerates the projection byte for byte'],
-  ['LONG FORM: the data note no longer points at the method page', 'text', PROJECTION,
-    '  if (model.sourceWarnings.length > 0 && identity !== undefined', '  if (false && identity !== undefined',
-    [T.unit], 'points the data note at the method page'],
-  ['MEASURE: a word wider than the measure is set anyway', 'text', MEASURE,
+    [T.unit], 'places the reference panel on a short final chapter page only'],
+  ['MEASURE: a word wider than the measure is not refused as WORD_EXCEEDS_MEASURE (it would surface downstream)', 'text', MEASURE,
     '    if (textWidth(word, styleId) > limit) {', '    if (false) {',
     [T.negative], 'refuses a word wider than its measure'],
   ['MEASURE: an unmeasurable character is measured as a CJK ideograph', 'text', MEASURE,
@@ -158,12 +226,27 @@ const MUTANTS = [
   ['MEASURE: the last line of a paragraph is dropped', 'text', MEASURE,
     "  if (current !== '') lines.push(current);\n  return lines;", '  return lines;',
     [T.longForm], 'lays out fixture-customer-chapter.json exactly'],
+  ['MEASURE: a fractional centipoint position is rounded up silently', 'text', MEASURE,
+    '  if (!Number.isInteger(valueCp)) {', '  if (false) {',
+    [T.negative], 'refuses a fractional centipoint position'],
   ['PAGINATE: the widow rule no longer keeps two lines together', 'text', LONG_FORM,
     '        if (remaining - take < 2) take = remaining - 2;', '        if (remaining - take < 0) take = remaining - 2;',
-    [T.longForm], 'reproduces the canonical layout of'],
+    [T.longForm], 'reproduces the canonical layout of widow-'],
   ['PAGINATE: a subhead no longer keeps with the next two lines', 'text', LONG_FORM,
     '          if (fit < remaining || c.bottom - (y0 + remaining * lead) < 2 * bodyLead) {', '          if (fit < remaining) {',
-    [T.longForm], 'reproduces the canonical layout of'],
+    [T.longForm], 'reproduces the canonical layout of subhead-'],
+  ['PAGINATE: the balancer may split a band right after a subhead', 'text', LONG_FORM,
+    "      if (a[1] === 'subhead') return false;\n", '',
+    [T.longForm], 'reproduces the canonical layout of band-'],
+  ['PAGINATE: a subhead inside a rebalanced band loses its space before', 'text', LONG_FORM,
+    "      let y = c.y + (c.y > bandStart && kind === 'subhead' ? spaceBefore(kind) : 0);", '      let y = c.y;',
+    [T.longForm], 'reproduces the canonical layout of band-'],
+  ['PAGINATE: a module opening a region keeps its space before', 'text', LONG_FORM,
+    '    let sb = y0 > page.top ? spaceBefore(kind) : 0;', '    let sb = spaceBefore(kind);',
+    [T.longForm], 'reproduces the canonical layout of lead-'],
+  ['PAGINATE: a module that does not fit no longer leads the next page', 'text', LONG_FORM,
+    '    if (y0 + sb + module.heightCp > CONTENT_BOTTOM) {', '    if (false) {',
+    [T.longForm], 'reproduces the canonical layout of module-'],
   ['PAGINATE: the opener band is no longer balanced around an atomic module', 'text', LONG_FORM,
     '    if (page.colmode !== 2) return;', '    return;',
     [T.longForm], 'lays out fixture-customer-chapter.json exactly'],
@@ -173,6 +256,34 @@ const MUTANTS = [
   ['PAGINATE: a layout that breaks its own geometry is returned', 'text', LONG_FORM,
     '  if (findings.length > 0) {', '  if (false) {',
     [T.negative], 'refuses a layout that breaks its own geometry'],
+  ['PAGINATE: a subhead taller than a fresh continuation column adds pages until the backstop', 'text', LONG_FORM,
+    '            if (page.colmode === 1 && c.y === c.top) {', '            if (false) {',
+    [T.negative], 'refuses a subhead taller than a fresh continuation column'],
+  ['PAGINATE: a runaway layout is returned past the page backstop', 'text', LONG_FORM,
+    '    if (pages.length >= MAX_LAYOUT_PAGES) {', '    if (false) {',
+    [T.negative], 'refuses a layout that would run past the page backstop'],
+
+  // --- the module boundary ----------------------------------------------------------------------------------------------
+  ['BOUNDARY: another application module imports the presentation module', 'create',
+    'src/application/etbz55-mutant-consumer.ts',
+    `${TEMP}import { TEMPLATE_REF } from './presentation/index.js';\nexport const ref = TEMPLATE_REF;\n`,
+    null, [T.architecture], 'is imported by no other application module'],
+  ['BOUNDARY: the presentation module escapes its folder through a ./../ specifier', 'create',
+    'src/application/presentation/etbz55-mutant-escape.ts',
+    `${TEMP}export * from './../interpretation/index.js';\n`,
+    null, [T.architecture], 'imports nothing but zod'],
+  ['BOUNDARY: the presentation module deep-imports the visual system past its index', 'create',
+    'src/application/presentation/etbz55-mutant-deep.ts',
+    `${TEMP}export { DISPLAY_GLYPH_SET } from '../visual/glyphs.js';\n`,
+    null, [T.visualBoundary], 'and there only through its index'],
+  ['BOUNDARY: a sibling folder named presentation-x consumes the skill contract', 'create',
+    'src/application/presentation-x/index.ts',
+    `${TEMP}export { CHART_TERMINOLOGY } from '../skill/index.js';\n`,
+    null, [T.skillBoundary], 'and there only through its index'],
+  ['PURITY: the presentation module reads a clock', 'create',
+    'src/application/presentation/etbz55-mutant-clock.ts',
+    `${TEMP}export const stamp = Date.now();\n`,
+    null, [T.architecture], 'does not reach for a clock'],
 
   // --- the evidence on disk ---------------------------------------------------------------------------------------------
   ['DATA: a stray file appears in the evidence folder', 'create',
@@ -249,8 +360,14 @@ for (const [name, kind, file, find, replace, tests, killer] of MUTANTS) {
         results.push([name, `SETUP_ERROR (${file} already exists)`]);
         continue;
       }
+      const folder = dirname(file);
+      const createdFolder = !existsSync(folder);
+      if (createdFolder) mkdirSync(folder, { recursive: true });
       writeFileSync(file, find);
-      restore = () => rmSync(file, { force: true });
+      restore = () => {
+        rmSync(file, { force: true });
+        if (createdFolder) rmSync(folder, { recursive: true, force: true });
+      };
     } else {
       results.push([name, `SETUP_ERROR (unknown mutation kind "${kind}")`]);
       continue;

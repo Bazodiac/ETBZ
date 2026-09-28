@@ -20,7 +20,7 @@ README on `main` still describes ETBZ-9; the code and `docs/adr/` are authoritat
 npm ci                      # deterministic install (lockfile drift fails here)
 npm run typecheck           # tsc --noEmit, strict
 npm run lint                # eslint, zero warnings: recommended rule sets + four type-aware defect rules, no formatting rules
-npm test                    # all five suites (~1570 tests on main)
+npm test                    # all five suites (1626 tests with ETBZ-55; the architecture leaf tests import dependency-direction.test.ts, so its 16 tests are also registered inside each of them)
 npm run build               # tsc -p tsconfig.build.json -> dist/
 ETBZ_ENV=local LOG_LEVEL=info npm start     # http://localhost:8120 — serves /health and /ready only
 ```
@@ -46,7 +46,7 @@ npm run guards:etbz34 | guards:etbz30a | guards:etbz30b   # slice source-mutatio
 npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55   # slice mutation proofs that ARE steps of ci-verify
 npm run build && npm run etbz51:bundle                   # print the portable Skill Contract Bundle (canonical JSON)
 npm run build && npm run etbz52:package                  # regenerate skill/bazodiac-interpretation-skill-v1/{contract-bundle,reading-schema,MANIFEST}.json
-npm run etbz55:projection                                # regenerate docs/evidence/etbz-55/presentation-projection.json
+npm run etbz55:projection                                # regenerate docs/evidence/etbz-55/presentation-projection.json (runs vite-node, which is not a declared dependency: it resolves transitively through vitest 3.2.x)
 npm run etbz55:metrics                                   # regenerate src/application/presentation/font-metrics.ts from the Inter binaries
 ```
 
@@ -170,9 +170,11 @@ paginator proven line for line against its recorded layouts and against
 `tests/support/etbz55-paginator-oracle.json` (built by the canonical Python paginator). It is the only
 consumer of `visual/` and `skill/` (both leaf tests name it), and it is itself a leaf. The PDF is drawn by the
 local renderer `tools/pdf-renderer/` (Python + Chromium, never in CI, no npm dependency), which decides nothing,
-prints only projection strings and writes the ArtifactManifest only when its QA passes; the committed PDF,
-manifest and projection under `docs/evidence/etbz-55/` are re-derived by
-`tests/contract/etbz55-presentation-evidence.contract.test.ts`.
+verifies the projection and template hashes, prints on every page exactly that page's `strings` and writes the
+ArtifactManifest only when its QA passes; `tools/pdf-renderer/qa/run_canaries.py` makes each renderer gate fail
+once and records it. The committed PDF, manifest, projection and canary record under `docs/evidence/etbz-55/`
+are re-derived by `tests/contract/etbz55-presentation-evidence.contract.test.ts`. Any change to
+`tools/pdf-renderer/*.py|*.css` changes the renderer digest: re-render and re-run the canaries.
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:

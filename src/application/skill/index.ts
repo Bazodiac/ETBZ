@@ -12,8 +12,9 @@
 //
 // The module is a CONTRACT and a GATE, not a Skill: it holds no prompt, no
 // prose of its own, calls nothing and derives no astrological fact. The Skill
-// package that consumes it lives under `skill/`;
-// `tests/architecture/etbz51-skill-boundary.test.ts` keeps this module a leaf.
+// package that consumes it lives under `skill/`. The only application module
+// that imports it is `src/application/presentation/` (ETBZ-55), through this
+// index; `tests/architecture/etbz51-skill-boundary.test.ts` enforces that.
 // =============================================================================
 
 export * from './contract-sources.js';

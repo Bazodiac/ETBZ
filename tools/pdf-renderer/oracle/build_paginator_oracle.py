@@ -10,7 +10,13 @@ requires the TypeScript port to reproduce every layout line for line.
 The chapters are built to reach the branches the two recovered fixtures never
 reach: a paragraph split whose remainder would be a widow, a subhead that fits
 but leaves fewer than two body lines below it, an atomic module that must lead
-the next page, a band below a spanning module that is too short.
+the next page, a band below a spanning module that is too short, a subhead
+inside an opener band the balancer must not split after, and a module that
+opens a region and so loses its space before.
+
+The oracle records the sha256 of every file the canonical paginator read
+(`provenance`); the unit suite re-hashes the committed files and requires the
+same digests, so an oracle produced from anything else cannot pass CI.
 
     PY=/Library/Frameworks/Python.framework/Versions/3.13/bin/python3
     "$PY" tools/pdf-renderer/oracle/build_paginator_oracle.py
@@ -19,6 +25,7 @@ Deterministic: no clock, no randomness; the word stream is a fixed cycle.
 """
 from __future__ import annotations
 
+import hashlib
 import importlib
 import json
 import pathlib
@@ -30,6 +37,15 @@ ROOT = pathlib.Path(__file__).resolve().parents[3]
 HARNESS = ROOT / "tools" / "visual-proof-harness"
 ASSETS = ROOT / "assets" / "visual-system-v1"
 OUT = ROOT / "tests" / "support" / "etbz55-paginator-oracle.json"
+# Every file paginate.py reads (its own source, the tokens, the four Inter faces it measures with).
+PROVENANCE = (
+    "tools/visual-proof-harness/build/paginate.py",
+    "assets/visual-system-v1/tokens.json",
+    "assets/visual-system-v1/fonts/Inter-Regular.ttf",
+    "assets/visual-system-v1/fonts/Inter-Medium.ttf",
+    "assets/visual-system-v1/fonts/InterDisplay-Light.ttf",
+    "assets/visual-system-v1/fonts/InterDisplay-Regular.ttf",
+)
 
 WORDS = ("Stamm Zweig Phase Säule Tagesmeister Verteilung Wandlung Beziehung Ausdruck Anforderung Rückhalt "
          "Unterstützung innen außen sichtbar verborgen zugleich zwei Orten gelesen werden kann eine mögliche "
@@ -66,7 +82,30 @@ def chapters() -> list:
                   {"id": "p3", "kind": "paragraph", "text": words(n + 9, 80 + n * 11)}]
         out.append({"id": f"module-{n}", "header": [{"id": "k", "kind": "kicker", "text": "KAPITEL 03"}, {"id": "t", "kind": "sectionTitle", "text": words(n + 5, 7)},
                                                    {"id": "s", "kind": "standfirst", "text": words(n + 9, 18)}], "blocks": blocks})
+    # D: a subhead inside the opener band a spanning module rebalances - the balancer must not split
+    # right after the subhead, and a subhead below the band top keeps its space before.
+    for n in range(12):
+        blocks = [{"id": "p0", "kind": "paragraph", "text": words(n, 14 + n * 5)},
+                  {"id": "s0", "kind": "subhead", "text": words(n + 3, 3)},
+                  {"id": "p1", "kind": "paragraph", "text": words(n + 6, 22 + (n % 4) * 6)},
+                  {"id": "q0", "kind": "pullQuote", "text": words(n + 8, 16)},
+                  {"id": "p2", "kind": "paragraph", "text": words(n + 10, 180)},
+                  {"id": "p3", "kind": "paragraph", "text": words(n + 12, 140)}]
+        out.append({"id": f"band-{n}", "header": [{"id": "k", "kind": "kicker", "text": "KAPITEL 04"}, {"id": "t", "kind": "sectionTitle", "text": words(n + 4, 5)}], "blocks": blocks})
+    # E: a module that opens a region - first block of the opener, or first block of a continuation page -
+    # sets no space before, without the overflow path.
+    for n in range(4):
+        lead = {"id": "q0", "kind": "pullQuote", "text": words(n, 12 + n)} if n % 2 == 0 else {"id": "k0", "kind": "keyInsight", "title": "Kernaussage", "text": words(n, 24 + n * 4)}
+        blocks = [lead,
+                  {"id": "p0", "kind": "paragraph", "text": words(n + 3, 200 + n * 10)},
+                  {"id": "p1", "kind": "paragraph", "text": words(n + 5, 160)},
+                  {"id": "p2", "kind": "paragraph", "text": words(n + 7, 120)}]
+        out.append({"id": f"lead-{n}", "header": [{"id": "k", "kind": "kicker", "text": "KAPITEL 05"}, {"id": "t", "kind": "sectionTitle", "text": words(n + 2, 4)}], "blocks": blocks})
     return out
+
+
+def provenance() -> dict:
+    return {path: "sha256:" + hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in PROVENANCE}
 
 
 def main() -> int:
@@ -91,7 +130,7 @@ def main() -> int:
             layout.pop("structuralSha256", None)
             results.append({"id": chapter["id"], "header": chapter["header"], "blocks": chapter["blocks"], "headerHeightCp": header_h, "layout": layout})
     OUT.write_text(json.dumps({"oracleVersion": "etbz55-paginator-oracle@1", "source": "tools/visual-proof-harness/build/paginate.py (canonical ETBZ-49 paginator)",
-                               "generator": "tools/pdf-renderer/oracle/build_paginator_oracle.py", "chapters": results},
+                               "generator": "tools/pdf-renderer/oracle/build_paginator_oracle.py", "provenance": provenance(), "chapters": results},
                               ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"{OUT.relative_to(ROOT)}: {len(results)} chapters")
     return 0

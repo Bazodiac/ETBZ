@@ -4,9 +4,14 @@
  * CI cannot run the local renderer, so it verifies everything that does not need
  * a browser: the projection regenerates byte for byte from the fixtures; the
  * metrics module regenerates byte for byte from the committed Inter binaries;
- * and every hash the ArtifactManifest states is re-derived here - the PDF, the
- * contact sheet, the projection file, the template, the renderer sources, the
- * fonts. A manifest that claims what the files do not carry fails this suite.
+ * every digest the ArtifactManifest states for a committed file is re-derived
+ * here - the PDF, the contact sheet, the projection file, the template and its
+ * four drawing assets, the renderer sources, the Inter faces; and the committed
+ * canary record proves that every renderer gate has failed once, on the same
+ * renderer sources. Not re-derivable in CI, and stated as such: the
+ * informational CJK face (a pinned literal - the TTC is a host font, not
+ * committed), the per-page image digests of the QA report (the page images are
+ * not committed), and the engine versions (a declaration).
  */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -36,7 +41,7 @@ interface Manifest {
   contactSheetSha256: string;
   input: Record<string, unknown>;
   presentation: { projectionVersion: string; structuralHash: string; fileSha256: string };
-  template: { ref: string; structuralHash: string };
+  template: Record<string, unknown>;
   renderer: { ref: string; sourceSha256: string; engine: Record<string, unknown> };
   fonts: { role: string; family: string; file: string; sha256: string; licence: string }[];
   qa: { status: string; state: string; checks: { id: string; result: string }[] };
@@ -55,6 +60,7 @@ describe('ETBZ-55: the evidence folder', () => {
       'contact-sheet.png',
       'presentation-projection.json',
       'qa-report.json',
+      'renderer-canaries.json',
     ]);
   });
 
@@ -84,7 +90,16 @@ describe('ETBZ-55: the ArtifactManifest states what the files carry', () => {
     expect(manifest.state).toBe('ARTIFACT_READY');
     expect(manifest.qa.status).toBe('PASSED');
     expect(manifest.qa.state).toBe('QA_PASSED');
-    expect(manifest.qa.checks.map((check) => check.id)).toEqual(['PROJECTION_VERSION', 'FONT_PINS', 'GLYPHS_AND_CJK', 'PAGE_QA', 'PDF_READBACK', 'DETERMINISM']);
+    expect(manifest.qa.checks.map((check) => check.id)).toEqual([
+      'PROJECTION_VERSION',
+      'PROJECTION_IDENTITY',
+      'FONT_PINS',
+      'TEMPLATE_ASSET_PINS',
+      'GLYPHS_AND_CJK',
+      'PAGE_QA',
+      'PDF_READBACK',
+      'DETERMINISM',
+    ]);
     for (const check of manifest.qa.checks) expect(check.result, check.id).toBe('PASS');
   });
 
@@ -109,9 +124,28 @@ describe('ETBZ-55: the ArtifactManifest states what the files carry', () => {
       structuralHash: projection.structuralHash,
       fileSha256: sha256Of(evidence('presentation-projection.json')),
     });
-    expect(manifest.template.ref).toBe('bazodiac-final-template@1.0.0');
-    expect(manifest.template.structuralHash).toBe(templateBinding().structuralHash);
-    expect(manifest.template.structuralHash).toBe(RELEASED_TEMPLATE_HASHES['1.0.0']);
+    const binding = templateBinding();
+    const index = JSON.parse(readFileSync(resolve(ROOT, 'assets/visual-system-v1/ASSET-INTEGRITY.json'), 'utf8')) as { files: { path: string; sha256: string }[] };
+    const assets = ['tokens.css', 'glyphs/sprite.svg', 'brand/wordmark.svg', 'glyphs/manifest.json'].map((path) => {
+      const sha256 = sha256Of(readFileSync(resolve(ROOT, 'assets/visual-system-v1', path)));
+      expect(index.files.find((entry) => entry.path === path)?.sha256, path).toBe(sha256);
+      return { path: `assets/visual-system-v1/${path}`, sha256 };
+    });
+    expect(manifest.template).toEqual({
+      ref: 'bazodiac-final-template@1.0.0',
+      structuralHash: RELEASED_TEMPLATE_HASHES['1.0.0'],
+      designSystem: binding.designSystem,
+      decisionSource: binding.decisionSource,
+      glyphManifestSha256: binding.glyphManifestSha256,
+      wordmarkSha256: binding.wordmarkSha256,
+      assets,
+    });
+    expect(binding.structuralHash).toBe(RELEASED_TEMPLATE_HASHES['1.0.0']);
+  });
+
+  it('pins the released template identity in the renderer, which refuses any other', () => {
+    const source = readFileSync(join(RENDERER, 'render_pdf.py'), 'utf8');
+    expect(/^TEMPLATE_STRUCTURAL_HASH = "(sha256:[0-9a-f]{64})"$/mu.exec(source)?.[1]).toBe(RELEASED_TEMPLATE_HASHES['1.0.0']);
   });
 
   it('binds the renderer sources it was produced by', () => {
@@ -154,9 +188,92 @@ describe('ETBZ-55: the QA report', () => {
     expect(report.status).toBe('PASSED');
     expect(report.projectionStructuralHash).toBe(projection.structuralHash);
     expect(report.pages.map((page) => page.pageId)).toEqual(projection.pages.map((page) => page.pageId));
+    const pinned = ['Inter-Regular', 'Inter-Medium', 'Inter-SemiBold', 'InterDisplay-Light', 'InterDisplay-Regular', 'NotoSansCJKsc-Regular'];
     for (const page of report.pages) {
       expect(page.findings, page.pageId).toEqual([]);
-      for (const face of page.platformFonts) expect(face.split('|')[1], `${page.pageId}: ${face}`).toMatch(/^(Inter-|InterDisplay-|NotoSansCJKsc-)/u);
+      for (const face of page.platformFonts) expect(pinned, `${page.pageId}: ${face}`).toContain(face.split('|')[1]);
     }
+  });
+});
+
+describe('ETBZ-55: every renderer gate has failed once, on these renderer sources', () => {
+  interface Canary {
+    id: string;
+    expectedCheck: string;
+    expectedCode: string | null;
+    observed: { exitCode: number; status: string; check: string; codes: string[] };
+    pdfWritten: boolean;
+    manifestWritten: boolean;
+    verdict: string;
+  }
+  const record = json('renderer-canaries.json') as {
+    canaryVersion: string;
+    renderer: { ref: string; sourceSha256: string };
+    projectionStructuralHash: string;
+    summary: { canaries: number; blockedAsExpected: number };
+    canaries: Canary[];
+  };
+
+  it('ran against the renderer and the projection the manifest binds', () => {
+    expect(record.canaryVersion).toBe('bazodiac-renderer-canaries.v1');
+    expect(record.renderer).toEqual({ ref: manifest.renderer.ref, sourceSha256: manifest.renderer.sourceSha256 });
+    expect(record.projectionStructuralHash).toBe(projection.structuralHash);
+  });
+
+  it('covers every gate: identity, pins, glyphs, CJK, page build, page QA, PDF readback, determinism', () => {
+    expect(record.canaries.map((canary) => canary.id)).toEqual([
+      'projection-version',
+      'projection-hash',
+      'template-hash',
+      'font-pin',
+      'template-asset-pin',
+      'cjk-face-pin',
+      'cjk-face-ambiguous',
+      'glyph-out-of-contract',
+      'cjk-uncovered',
+      'page-build',
+      'text-injected',
+      'text-dropped',
+      'glyph-not-in-projection',
+      'generated-content',
+      'invisible-text',
+      'clipped-by-ancestor',
+      'overflows-container',
+      'outside-sheet',
+      'line-exceeds-measure',
+      'overlap',
+      'wu-xing-medallion',
+      'unpinned-face',
+      'font-load-failed',
+      'pdf-page-count',
+      'determinism',
+    ]);
+    // Each check of a passing render, and the refusals that prove it can fail.
+    const provenBy: Readonly<Record<string, readonly string[]>> = {
+      PROJECTION_VERSION: ['PROJECTION_VERSION'],
+      PROJECTION_IDENTITY: ['PROJECTION_HASH', 'TEMPLATE_HASH'],
+      FONT_PINS: ['FONT_PIN', 'CJK_FACE_PIN', 'CJK_FACE_AMBIGUOUS'],
+      TEMPLATE_ASSET_PINS: ['TEMPLATE_ASSET_PIN'],
+      GLYPHS_AND_CJK: ['GLYPH_OUT_OF_CONTRACT', 'CJK_GLYPH_UNCOVERED'],
+      PAGE_QA: ['PAGE_BUILD', 'PAGE_QA'],
+      PDF_READBACK: ['PDF_READBACK'],
+      DETERMINISM: ['DETERMINISM'],
+    };
+    expect(Object.keys(provenBy)).toEqual(manifest.qa.checks.map((entry) => entry.id));
+    const refusals = new Set(record.canaries.map((canary) => canary.expectedCheck));
+    for (const [check, ids] of Object.entries(provenBy)) for (const id of ids) expect(refusals, `${check} <- ${id}`).toContain(id);
+  });
+
+  it('blocked every canary at the expected check, with the expected finding, exit 1, and no PDF or manifest', () => {
+    for (const canary of record.canaries) {
+      expect(canary.verdict, canary.id).toBe('BLOCKED_AS_EXPECTED');
+      expect(canary.observed.exitCode, canary.id).toBe(1);
+      expect(canary.observed.status, canary.id).toBe('BLOCKED');
+      expect(canary.observed.check, canary.id).toBe(canary.expectedCheck);
+      if (canary.expectedCode !== null) expect(canary.observed.codes, canary.id).toContain(canary.expectedCode);
+      expect(canary.pdfWritten, canary.id).toBe(false);
+      expect(canary.manifestWritten, canary.id).toBe(false);
+    }
+    expect(record.summary).toEqual({ canaries: record.canaries.length, blockedAsExpected: record.canaries.length });
   });
 });

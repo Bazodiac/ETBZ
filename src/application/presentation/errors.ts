@@ -10,9 +10,9 @@
 // =============================================================================
 
 export const PRESENTATION_ERROR_CODES = [
-  /** The content payload or the projection options are not the declared shape. */
+  /** The content payload is not the declared shape, the display name is padded or empty, or the template no longer hashes to its released identity. */
   'PRESENTATION_INPUT_INVALID',
-  /** The birth time is unknown; the template defines no unknown-time rendering, so nothing is guessed. */
+  /** The birth time is unknown or provisional in any of the chart's three answers; the template defines no unknown-time rendering, so nothing is guessed. */
   'PRESENTATION_UNKNOWN_TIME_UNSUPPORTED',
   /** A value the template must show is absent from the validated chart. */
   'PRESENTATION_FACT_MISSING',
@@ -24,7 +24,7 @@ export const PRESENTATION_ERROR_CODES = [
   'PRESENTATION_TEXT_UNMEASURABLE',
   /** One word is wider than the measure it must be set in. */
   'PRESENTATION_WORD_EXCEEDS_MEASURE',
-  /** The long-form layout broke one of its own geometric rules. */
+  /** The long-form layout broke one of its own geometric rules, or reached a state in which no layout exists (a subhead taller than a fresh continuation column). */
   'PRESENTATION_LAYOUT_FINDING',
   /** A customer string carries wording the Lexicon prohibits or a method the profile defers. */
   'PRESENTATION_CUSTOMER_TEXT_REFUSED',

@@ -18,7 +18,7 @@
 // =============================================================================
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { extractImportSpecifiers } from './dependency-direction.test.js';
 
@@ -82,10 +82,11 @@ describe('ETBZ-49: the visual system is a leaf, reachable from no served path', 
     let presentationUses = 0;
     const presentationRoot = join(SRC_ROOT, 'application', 'presentation');
     for (const file of listTypeScriptFiles(join(SRC_ROOT, 'application'))) {
-      if (file.startsWith(VISUAL_ROOT)) continue;
+      if (file.startsWith(VISUAL_ROOT + sep)) continue;
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (!referencesVisual(specifier)) continue;
-        if (file.startsWith(presentationRoot) && specifier === '../visual/index.js') {
+        // Whole path segments: a sibling such as application/presentation-x/ is not the consumer.
+        if (file.startsWith(presentationRoot + sep) && specifier === '../visual/index.js') {
           presentationUses += 1;
           continue;
         }

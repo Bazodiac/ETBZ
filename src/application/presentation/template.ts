@@ -10,13 +10,22 @@
 // skill contract bundle.
 //
 // The labels are the ONLY customer text the template itself contributes. Every
-// label is either a verbatim part of a released Lexicon term's German customer
-// wording (`lexiconTerm` names the term; a test proves the containment) or a
-// plain interface label (`source: 'template'`) that names a page, a column or a
-// presentation convention. Labels address the customer informally (du), in
-// the register of the Lens reflection patterns and of the reading itself. None explains the classical system, none interprets
-// a chart - the harness pages' English education copy is deliberately not
-// carried over.
+// label is one of three kinds:
+//  - `lexicon`: a verbatim part of a released Lexicon term's German customer
+//    wording (`lexiconTerm` names the term; a test proves the containment);
+//  - `terminology`: the German name of one FuFirE enum value the chart carries
+//    (`fufireValue` names it) for which Lexicon v1 has no wording - today only
+//    the three Qi roles of a hidden stem (ADR 0012 limitation 5);
+//  - `template`: a plain interface label that names a page, a column or a
+//    presentation convention.
+// Labels address the customer informally (du), in the register of the Lens
+// reflection patterns and of the reading itself. None explains the classical
+// system, none interprets a chart - the harness pages' English education copy
+// is deliberately not carried over.
+//
+// The long-form typography (text styles, line tolerance, continuation column,
+// CJK advance, the Inter advance tables) decides every line break, so it is
+// part of the template identity too.
 // =============================================================================
 
 import {
@@ -33,6 +42,10 @@ import {
 } from '../visual/index.js';
 import { structuralHash } from '../../domain/structural-hash.js';
 import { PresentationError } from './errors.js';
+import { FONT_METRICS } from './font-metrics.js';
+import { CONTINUATION_COLUMN_CP, RUNNING_HEAD_CP } from './long-form.js';
+import { CJK_IDEOGRAPH_ADVANCE_EM, LINE_TOLERANCE_CP, TEXT_STYLES } from './text-measure.js';
+import type { TextStyle, TextStyleId } from './text-measure.js';
 
 export const TEMPLATE_ID = 'bazodiac-final-template' as const;
 export const TEMPLATE_VERSION = '1.0.0' as const;
@@ -41,12 +54,14 @@ export const TEMPLATE_LANGUAGE = 'de' as const;
 
 export interface TemplateLabel {
   readonly text: string;
-  /** `lexicon` - a verbatim part of `lexiconTerm`'s customerDe wording; `template` - an interface label. */
-  readonly source: 'lexicon' | 'template';
+  /** `lexicon` - a verbatim part of `lexiconTerm`'s customerDe wording; `terminology` - the German name of `fufireValue`; `template` - an interface label. */
+  readonly source: 'lexicon' | 'terminology' | 'template';
   readonly lexiconTerm?: string;
+  readonly fufireValue?: string;
 }
 
 const lex = (text: string, lexiconTerm: string): TemplateLabel => ({ text, source: 'lexicon', lexiconTerm });
+const term = (text: string, fufireValue: string): TemplateLabel => ({ text, source: 'terminology', fufireValue });
 const ui = (text: string): TemplateLabel => ({ text, source: 'template' });
 
 /**
@@ -86,13 +101,14 @@ export const TEMPLATE_LABELS = {
   polarity: ui('Polarität'),
   dayPillar: ui('Tagessäule'),
   relation: ui('Beziehung zum Tagesmeister'),
-  qiPrincipal: ui('Haupt-Qi'),
-  qiCentral: ui('Mittleres Qi'),
-  qiResidual: ui('Rest-Qi'),
+  qiPrincipal: term('Haupt-Qi', 'natal.pillars[].hiddenStems[].qi = principal'),
+  qiCentral: term('Mittleres Qi', 'natal.pillars[].hiddenStems[].qi = central'),
+  qiResidual: term('Rest-Qi', 'natal.pillars[].hiddenStems[].qi = residual'),
   stems: ui('Stämme'),
   branches: ui('Zweige'),
   visibleStem: ui('Sichtbarer Stamm'),
   hiddenStem: ui('Verborgener Stamm'),
+  visibleAndHiddenStem: ui('Sichtbar und verborgen'),
   notPresent: ui('Nicht vorhanden'),
 
   documentKicker: ui('Dieses Dokument'),
@@ -106,6 +122,7 @@ export const TEMPLATE_LABELS = {
   chartValuesSource: ui('Validierte Chart-Berechnung'),
   dataNote: ui('Datenhinweis'),
   dataNoteSeeMethod: ui('Siehe Methodenhinweis, Seite'),
+  dataNoteText: ui('Zu diesem Chart liegt ein Datenhinweis der Chart-Berechnung vor.'),
 
   contents: ui('Inhalt'),
   contentsKicker: ui('Das Reading'),
@@ -150,6 +167,14 @@ export interface TemplateBinding {
   readonly geometry: typeof GEOMETRY_CENTIPOINTS;
   readonly paginationRules: typeof PAGINATION_RULES;
   readonly labels: typeof TEMPLATE_LABELS;
+  readonly typography: Readonly<{
+    textStyles: Readonly<Record<TextStyleId, TextStyle>>;
+    lineToleranceCp: number;
+    runningHeadCp: number;
+    continuationColumnCp: number;
+    cjkIdeographAdvanceEm: number;
+    fontMetricsStructuralHash: string;
+  }>;
   /** The build-time record of the glyph-style decision (ETBZ-49 ADR 0009 limitation 3), carried as-is. */
   readonly glyphStyleApprovalRecord: typeof HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED;
   readonly structuralHash: string;
@@ -172,6 +197,14 @@ export function templateBinding(): TemplateBinding {
     geometry: GEOMETRY_CENTIPOINTS,
     paginationRules: PAGINATION_RULES,
     labels: TEMPLATE_LABELS,
+    typography: {
+      textStyles: TEXT_STYLES,
+      lineToleranceCp: LINE_TOLERANCE_CP,
+      runningHeadCp: RUNNING_HEAD_CP,
+      continuationColumnCp: CONTINUATION_COLUMN_CP,
+      cjkIdeographAdvanceEm: CJK_IDEOGRAPH_ADVANCE_EM,
+      fontMetricsStructuralHash: structuralHash(FONT_METRICS),
+    },
     glyphStyleApprovalRecord: HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED,
   };
   return { ...core, structuralHash: structuralHash(core) };
@@ -182,7 +215,7 @@ export function templateBinding(): TemplateBinding {
  * to a label is a new template version, never an edit of this one.
  */
 export const RELEASED_TEMPLATE_HASHES: Readonly<Record<string, string>> = {
-  '1.0.0': 'sha256:5c401d0bf5c4987f99dd7016e1adaf55cfae8ec6da23b26262ec088bb61b49d7',
+  '1.0.0': 'sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6',
 };
 
 export function assertReleasedTemplate(binding: TemplateBinding): void {

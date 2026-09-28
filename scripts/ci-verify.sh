@@ -178,7 +178,7 @@ if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: ETBZ-52 skill reading boundary (acceptance + package mutation proofs)" run_etbz52_skill_reading_guard
 fi
 if [ "${RUN_MUTATIONS}" -eq 1 ]; then
-  etbz_step "guards :: ETBZ-55 presentation projection (projection + paginator + template mutation proofs)" run_etbz55_presentation_guard
+  etbz_step "guards :: ETBZ-55 presentation projection (projection + paginator + template + boundary mutation proofs)" run_etbz55_presentation_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan

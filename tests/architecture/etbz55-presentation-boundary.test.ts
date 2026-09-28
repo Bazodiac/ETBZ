@@ -16,7 +16,7 @@
 // =============================================================================
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { extractImportSpecifiers } from './dependency-direction.test.js';
 
@@ -47,18 +47,31 @@ function codeOnly(source: string): string {
 }
 
 const PRESENTATION_FILES = listFiles(PRESENTATION_ROOT, '.ts');
-const referencesPresentation = (specifier: string): boolean =>
-  specifier.includes('application/presentation') || specifier.includes('/presentation/') || specifier.endsWith('/presentation');
 
-const ALLOWED_IMPORTS = new Set([
-  'zod',
-  '../visual/index.js',
-  '../skill/index.js',
-  '../horoscope-model.js',
-  '../ports/fufire-gateway.js',
-  '../../domain/structural-hash.js',
-  '../../domain/sizhu.js',
-]);
+/** True when `path` is `root` itself or lies inside it - whole path segments, never a name prefix. */
+const within = (path: string, root: string): boolean => path === root || path.startsWith(root + sep);
+
+/** The file a relative specifier names, or null for a bare package specifier. */
+const target = (file: string, specifier: string): string | null => (specifier.startsWith('.') ? resolve(dirname(file), specifier) : null);
+
+const referencesPresentation = (file: string, specifier: string): boolean => {
+  const resolved = target(file, specifier);
+  if (resolved !== null) return within(resolved.replace(/\.js$/u, ''), PRESENTATION_ROOT) || within(resolved, PRESENTATION_ROOT);
+  return specifier.includes('application/presentation');
+};
+
+const ALLOWED_PACKAGES = new Set(['zod']);
+/** The only files outside the module it may import, by resolved path. */
+const ALLOWED_TARGETS = new Set(
+  [
+    'application/visual/index.js',
+    'application/skill/index.js',
+    'application/horoscope-model.js',
+    'application/ports/fufire-gateway.js',
+    'domain/structural-hash.js',
+    'domain/sizhu.js',
+  ].map((path) => join(SRC_ROOT, path)),
+);
 
 describe('ETBZ-55: the presentation projection is a pure leaf', () => {
   it('ships the declared modules', () => {
@@ -75,13 +88,32 @@ describe('ETBZ-55: the presentation projection is a pure leaf', () => {
 
   it('imports nothing but zod, its own modules, the two contracts it consumes, the chart model types and the domain primitives', () => {
     const offenders: string[] = [];
+    let own = 0;
     for (const file of PRESENTATION_FILES) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
-        if (specifier.startsWith('./') || ALLOWED_IMPORTS.has(specifier)) continue;
-        offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
+        const resolved = target(file, specifier);
+        if (resolved === null) {
+          if (!ALLOWED_PACKAGES.has(specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
+          continue;
+        }
+        if (within(resolved, PRESENTATION_ROOT) && resolved !== PRESENTATION_ROOT) {
+          own += 1;
+          continue;
+        }
+        if (!ALLOWED_TARGETS.has(resolved)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }
     expect(offenders, offenders.join('\n')).toEqual([]);
+    expect(own).toBeGreaterThan(0);
+  });
+
+  it('resolves specifiers instead of trusting their spelling (guard self-check)', () => {
+    const file = join(PRESENTATION_ROOT, 'projection.ts');
+    expect(target(file, './../interpretation/index.js')).toBe(join(SRC_ROOT, 'application', 'interpretation', 'index.js'));
+    expect(within(join(SRC_ROOT, 'application', 'presentation-x', 'a.ts'), PRESENTATION_ROOT)).toBe(false);
+    expect(within(join(PRESENTATION_ROOT, 'a.ts'), PRESENTATION_ROOT)).toBe(true);
+    expect(referencesPresentation(join(SRC_ROOT, 'application', 'x.ts'), './presentation/index.js')).toBe(true);
+    expect(referencesPresentation(join(SRC_ROOT, 'application', 'x.ts'), './presentation-x/index.js')).toBe(false);
   });
 
   it.each(['app', 'http', 'adapters', 'domain'])('is imported by no module under src/%s', (directory) => {
@@ -90,7 +122,7 @@ describe('ETBZ-55: the presentation projection is a pure leaf', () => {
     const offenders: string[] = [];
     for (const file of listFiles(root, '.ts')) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
-        if (referencesPresentation(specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
+        if (referencesPresentation(file, specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }
     expect(offenders, offenders.join('\n')).toEqual([]);
@@ -99,12 +131,12 @@ describe('ETBZ-55: the presentation projection is a pure leaf', () => {
   it('is imported by no other application module', () => {
     const offenders: string[] = [];
     for (const file of listFiles(join(SRC_ROOT, 'application'), '.ts')) {
-      if (file.startsWith(PRESENTATION_ROOT)) continue;
+      if (within(file, PRESENTATION_ROOT)) continue;
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
-        if (referencesPresentation(specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
+        if (referencesPresentation(file, specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }
-    expect(offenders).toEqual([]);
+    expect(offenders, offenders.join('\n')).toEqual([]);
   });
 
   it.each([
@@ -134,7 +166,7 @@ describe('ETBZ-55: the presentation projection is a pure leaf', () => {
   it('detects impurity and a document when present (guard self-check)', () => {
     expect(/\bDate\s*\.\s*now\b/.test('const stamp = Date.now();')).toBe(true);
     expect(/<svg[\s>]|<!DOCTYPE|%PDF-|<html/i.test("const page = '<!doctype html>';")).toBe(true);
-    expect(referencesPresentation('../application/presentation/index.js')).toBe(true);
+    expect(referencesPresentation(join(SRC_ROOT, 'http', 'x.ts'), '../application/presentation/index.js')).toBe(true);
   });
 });
 
@@ -146,8 +178,8 @@ describe('ETBZ-55: the renderer is local tooling behind the projection', () => {
     expect(readme).toContain('Nothing here runs in CI');
   });
 
-  it('contains no TypeScript, and tsconfig includes no tools/ path', () => {
-    expect(readdirSync(RENDERER_ROOT).filter((entry) => entry.endsWith('.ts'))).toEqual([]);
+  it('contains no TypeScript at any depth, and tsconfig includes no tools/ path', () => {
+    expect(listFiles(RENDERER_ROOT, '.ts').map((file) => relative(REPO_ROOT, file))).toEqual([]);
     const tsconfig = JSON.parse(readFileSync(resolve(REPO_ROOT, 'tsconfig.json'), 'utf8')) as { include?: string[] };
     expect((tsconfig.include ?? []).filter((entry) => entry.startsWith('tools'))).toEqual([]);
   });

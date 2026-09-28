@@ -152,6 +152,10 @@ export function ascentOf(styleId: TextStyleId): number {
   return roundHalfEven((metrics.ascender * style.sizeCp) / metrics.unitsPerEm);
 }
 
+/** The next baseline at or below `valueCp`; integer centipoints only (the original's `((v+BL-1)//BL)*BL`). */
 export function ceilToBaseline(valueCp: number): number {
+  if (!Number.isInteger(valueCp)) {
+    throw new PresentationError('PRESENTATION_LAYOUT_FINDING', `ceilToBaseline takes integer centipoints, got ${String(valueCp)}`, { valueCp });
+  }
   return Math.ceil(valueCp / BASELINE_CP) * BASELINE_CP;
 }

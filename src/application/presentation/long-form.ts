@@ -14,10 +14,20 @@
 // key insight are atomic; the opener page sets two balanced columns, every
 // continuation page one 104 mm column beside a 60 mm sidebar.
 //
-// Differences from the Python original, both fail-closed: a character the
-// pinned face does not carry is refused rather than measured as '?', and a
-// geometric finding throws `PRESENTATION_LAYOUT_FINDING` instead of being
-// written into a report.
+// Differences from the Python original:
+//  1. a character the pinned Inter faces do not carry is refused rather than
+//     measured as '?' (fail-closed);
+//  2. a geometric finding throws `PRESENTATION_LAYOUT_FINDING` instead of being
+//     written into a report (fail-closed), and so do the two states in which
+//     the original loops forever or raises: a subhead with its keep-with-next
+//     lines taller than a fresh continuation column, and a band entry without
+//     a recorded line count; a layout past `MAX_LAYOUT_PAGES` is refused as a
+//     runaway backstop;
+//  3. a CJK ideograph is measured at one em (`CJK_IDEOGRAPH_ADVANCE_EM`) - the
+//     advance the renderer's QA proves for the pinned Noto Sans CJK SC face;
+//     the original measured every character against Inter only.
+// No input of the two recorded layouts or of the 31 oracle chapters reaches a
+// difference; the unit suite proves that line for line.
 // =============================================================================
 
 import { GEOMETRY_CENTIPOINTS, PAGINATION_RULES } from '../visual/index.js';
@@ -36,6 +46,8 @@ export const RUNNING_HEAD_CP = 4 * BASELINE_CP;
 const MIN_BAND_LINES = PAGINATION_RULES.minBandLines;
 /** The continuation column: 104 mm, as the canonical build compiles it. */
 export const CONTINUATION_COLUMN_CP = Math.round((104 / 25.4) * 72 * 100);
+/** A runaway backstop far above any chapter the visual contract admits (at most three pages). */
+export const MAX_LAYOUT_PAGES = 64;
 
 export type LongFormHeaderBlock = Readonly<{ id: string; kind: 'kicker' | 'sectionTitle' | 'standfirst'; text: string }>;
 
@@ -275,6 +287,9 @@ export function paginateLongForm(blocks: readonly LongFormBlock[], headerHeightC
   };
 
   const newPage = (): void => {
+    if (pages.length >= MAX_LAYOUT_PAGES) {
+      throw new PresentationError('PRESENTATION_LAYOUT_FINDING', `the layout needs more than ${String(MAX_LAYOUT_PAGES)} pages`, { pages: pages.length });
+    }
     page = makePage(pages.length + 1, 0);
     pages.push(page);
     ci = 0;
@@ -364,7 +379,9 @@ export function paginateLongForm(blocks: readonly LongFormBlock[], headerHeightC
       const baseline = firstBaseline(styleId);
       let y = c.y + (c.y > bandStart && kind === 'subhead' ? spaceBefore(kind) : 0);
       if (c.y > bandStart && kind === 'paragraph' && (current[0] as (typeof entries)[number])[4] === 0) y = c.y + BASELINE_CP;
-      const count = blockLineCounts.find((entry) => entry[0] === blockId)?.[1] ?? 0;
+      const recorded = blockLineCounts.find((entry) => entry[0] === blockId);
+      if (recorded === undefined) throw new PresentationError('PRESENTATION_LAYOUT_FINDING', `band entry ${blockId} has no recorded line count`, { blockId });
+      const count = recorded[1];
       const last = current[current.length - 1] as (typeof entries)[number];
       const fragment: LayoutFragment = {
         blockId,
@@ -425,6 +442,13 @@ export function paginateLongForm(blocks: readonly LongFormBlock[], headerHeightC
         if (kind === 'subhead') {
           const bodyLead = TEXT_STYLES.body.leadingCp;
           if (fit < remaining || c.bottom - (y0 + remaining * lead) < 2 * bodyLead) {
+            if (page.colmode === 1 && c.y === c.top) {
+              // A fresh continuation column is the tallest column there is: moving on cannot help.
+              throw new PresentationError('PRESENTATION_LAYOUT_FINDING', `subhead ${block.id} with its keep-with-next lines exceeds a fresh continuation column`, {
+                blockId: block.id,
+                lines: lines.length,
+              });
+            }
             nextColumn();
             continue;
           }

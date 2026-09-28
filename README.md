@@ -95,7 +95,8 @@ the shared prefix; the guard matches whole path segments.
 | `src/adapters/` | Outbound infrastructure. Empty in ETBZ-9. |
 | `src/http/` | Thin Express 5 inbound adapter: routes, middleware, errors. |
 | `src/app/` | Composition root: configuration, logging, readiness, build info, server. |
-| `src/application/visual/` | Bazodiac Visual System v1 (ETBZ-49): the design contract as values. A leaf — nothing imports it until the renderer arrives with ETBZ-55. |
+| `src/application/visual/` | Bazodiac Visual System v1 (ETBZ-49): the design contract as values. Consumed only by `src/application/presentation/` (ETBZ-55), through its index. |
+| `src/application/presentation/` | PresentationProjection v1 (ETBZ-55): the chart and a text payload as the complete page model of `bazodiac-final-template@1.0.0`. Drawn by the local renderer in `tools/pdf-renderer/`. |
 | `contracts/` | Cross-boundary data contracts. **No business schema in ETBZ-9.** |
 | `openapi/` | The public HTTP surface contract. |
 | `assets/visual-system-v1/` | The recovered visual artefacts the contract is a projection of: tokens, 27 glyph assets, wordmark, structures, fixtures, fonts. |

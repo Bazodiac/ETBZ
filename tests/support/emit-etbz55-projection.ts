@@ -4,7 +4,9 @@
  * The fixture chain is reachable only through the test toolchain, so the
  * projection the renderer draws is emitted by this file under `vite-node`
  * (`npm run etbz55:projection`) and required byte-identical by
- * `tests/contract/etbz55-presentation.contract.test.ts`. Not a test file.
+ * `tests/contract/etbz55-presentation-evidence.contract.test.ts`. Not a test
+ * file. `vite-node` is not a declared dependency: it resolves transitively
+ * through vitest 3.2.x (see CLAUDE.md).
  */
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';

@@ -11,19 +11,26 @@ places, draws and checks.
     $PY tools/pdf-renderer/render_pdf.py --projection docs/evidence/etbz-55/presentation-projection.json \
         --out .etbz-verify/pdf-render --executed-at 2026-09-28 --repository-head <sha>
 
-Steps: (1) environment and font pins — the five Inter faces equal the committed
-asset digests, the informational CJK face equals the pinned Noto Sans CJK TTC;
-(2) glyph and CJK checks — every display glyph is one of the 27, every CJK
-character is covered by the pinned SC face and is one em wide (the advance the
-long-form layout measured); (3) render every page through Chromium in
-deterministic mode, `--runs` times; (4) QA per page — every text node is a
-projection string, every display glyph is a projection glyph, nothing outside
-the sheet, no line wider than its measure, no overlap, the Wu Xing medallion
-clear, every web font loaded; (5) merge deterministically, read the PDF back —
+Steps: (0) the projection hashes to its own `structuralHash`, and its template
+to its own hash and to the released template identity pinned below; (1)
+environment and pins — the five Inter faces and the four template assets the
+pages are drawn from (tokens, glyph sprite, wordmark, glyph manifest) equal the
+committed asset digests, the informational CJK face equals the pinned Noto Sans
+CJK TTC, and no other file in the font directories provides that family; (2)
+glyph and CJK checks — every display glyph is one of the 27, every CJK character
+is covered by the pinned SC face and is one em wide (the advance the long-form
+layout measured); (3) render every page through Chromium in deterministic mode,
+`--runs` times; (4) QA per page — the printed text equals the page's projection
+strings exactly (nothing added, nothing missing), no generated content, no
+invisible text, every display glyph is a projection glyph, nothing outside the
+sheet or clipped, no line wider than its measure, no overlap, the Wu Xing
+medallion clear, every web font loaded, and every face that set text is one of
+the six pinned PostScript faces; (5) merge deterministically, read the PDF back —
 MIME magic, page count, A4 media boxes, only the pinned faces embedded; (6) the
 last two runs must be byte-identical; (7) only then write the PDF, the contact
 sheet, the QA report and the manifest. A failed check writes the QA report with
-`BLOCKED` and no PDF — there is no partial artefact.
+`BLOCKED` and no PDF — there is no partial artefact. `qa/run_canaries.py` makes
+every gate fail once on purpose and records that it did.
 
 Local only: Python 3 with playwright (Chromium), pikepdf, fontTools, Pillow.
 Nothing here runs in CI; CI verifies the projection and the committed evidence.
@@ -41,7 +48,7 @@ import tempfile
 from importlib.metadata import version as pkg_version
 
 import pikepdf
-from fontTools.ttLib import TTCollection
+from fontTools.ttLib import TTCollection, TTFont
 from PIL import Image, ImageDraw, ImageFont
 from playwright.sync_api import sync_playwright
 
@@ -54,6 +61,8 @@ RENDERER_REF = "bazodiac-pdf-renderer@1.0.0"
 MANIFEST_VERSION = "bazodiac-artifact-manifest.v1"
 QA_REPORT_VERSION = "bazodiac-pdf-qa-report.v1"
 PROJECTION_VERSION = "bazodiac-presentation-projection.v1"
+# RELEASED_TEMPLATE_HASHES['1.0.0'] of src/application/presentation/template.ts; the contract suite requires equality.
+TEMPLATE_STRUCTURAL_HASH = "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -64,6 +73,8 @@ A4_PT = (595.2756, 841.8898)
 SEPARATORS = {"·"}
 
 INTER_FILES = ["Inter-Regular.ttf", "Inter-Medium.ttf", "Inter-SemiBold.ttf", "InterDisplay-Light.ttf", "InterDisplay-Regular.ttf"]
+# The template assets the pages are drawn from, each pinned in ASSET-INTEGRITY.json.
+TEMPLATE_ASSETS = ["tokens.css", "glyphs/sprite.svg", "brand/wordmark.svg", "glyphs/manifest.json"]
 CJK_FACE = {
     "family": "Noto Sans CJK SC",
     "file": "NotoSansCJK-Regular.ttc",
@@ -75,9 +86,11 @@ CJK_FACE = {
 CJK_DIRS = [pathlib.Path.home() / "Library" / "Fonts", pathlib.Path("/Library/Fonts"), pathlib.Path("/usr/share/fonts/opentype/noto"),
             pathlib.Path("/usr/share/fonts/noto-cjk"), pathlib.Path("/usr/local/share/fonts"), pathlib.Path.home() / ".fonts",
             pathlib.Path.home() / ".local" / "share" / "fonts"]
-EMBEDDED_FONT_PATTERN = ("Inter-", "InterDisplay-", "NotoSansCJKsc-")
-# The faces Chromium may actually use to set text, by PostScript name: the committed Inter faces (web fonts) and the pinned SC face.
-ALLOWED_POSTSCRIPT_PREFIXES = ("Inter-", "InterDisplay-", "NotoSansCJKsc-")
+INTER_POSTSCRIPT_NAMES = {"Inter-Regular", "Inter-Medium", "Inter-SemiBold", "InterDisplay-Light", "InterDisplay-Regular"}
+CJK_POSTSCRIPT_NAME = "NotoSansCJKsc-Regular"
+# The faces Chromium may use to set text, by exact PostScript name: the committed Inter faces (web fonts) and the pinned SC face.
+ALLOWED_POSTSCRIPT_NAMES = INTER_POSTSCRIPT_NAMES | {CJK_POSTSCRIPT_NAME}
+FONT_SUFFIXES = (".ttf", ".otf", ".ttc", ".otc")
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -95,17 +108,95 @@ class Blocked(Exception):
         self.detail = detail
 
 
+# ------------------------------------------------------------------ structural hash (mirror of src/domain/canonical-json.ts)
+
+def js_number(value: float) -> str:
+    """ECMAScript Number::toString for a finite double - what JSON.stringify prints."""
+    if value != value or value in (float("inf"), float("-inf")):
+        raise ValueError("canonical JSON has no NaN or Infinity")
+    if value == 0:
+        return "0"
+    sign = "-" if value < 0 else ""
+    text = repr(abs(value))
+    mantissa, _, exponent = text.partition("e")
+    whole, _, fraction = mantissa.partition(".")
+    shift = int(exponent) if exponent else 0
+    if whole.strip("0"):
+        point = len(whole.lstrip("0")) + shift
+    else:
+        point = shift - (len(fraction) - len(fraction.lstrip("0")))
+    digits = (whole + fraction).strip("0") or "0"
+    k, n = len(digits), point
+    if k <= n <= 21:
+        return sign + digits + "0" * (n - k)
+    if 0 < n <= 21:
+        return sign + digits[:n] + "." + digits[n:]
+    if -6 < n <= 0:
+        return sign + "0." + "0" * (-n) + digits
+    e = n - 1
+    return sign + digits[0] + ("." + digits[1:] if k > 1 else "") + "e" + ("+" if e >= 0 else "-") + str(abs(e))
+
+
+def canonical_json(value) -> str:
+    if value is None:
+        return "null"
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return js_number(value)
+    if isinstance(value, str):
+        return json.dumps(value, ensure_ascii=False)
+    if isinstance(value, list):
+        return "[" + ",".join(canonical_json(entry) for entry in value) + "]"
+    if isinstance(value, dict):
+        keys = sorted(value, key=lambda key: key.encode("utf-16-be"))
+        return "{" + ",".join(json.dumps(key, ensure_ascii=False) + ":" + canonical_json(value[key]) for key in keys) + "}"
+    raise TypeError(f"not JSON-representable: {type(value).__name__}")
+
+
+def structural_hash(value) -> str:
+    return "sha256:" + sha256_bytes(canonical_json(value).encode("utf-8"))
+
+
+def check_projection_identity(projection: dict) -> dict:
+    stated = projection.get("structuralHash")
+    actual = structural_hash({k: v for k, v in projection.items() if k != "structuralHash"})
+    if actual != stated:
+        raise Blocked("PROJECTION_HASH", {"stated": stated, "actual": actual})
+    template = projection["template"]
+    template_actual = structural_hash({k: v for k, v in template.items() if k != "structuralHash"})
+    if template_actual != template.get("structuralHash") or template_actual != TEMPLATE_STRUCTURAL_HASH:
+        raise Blocked("TEMPLATE_HASH", {"stated": template.get("structuralHash"), "actual": template_actual, "released": TEMPLATE_STRUCTURAL_HASH})
+    return {"projection": actual, "template": template_actual}
+
+
 # ------------------------------------------------------------------ DOM QA (runs in the page)
 
 DOM_QA = """
 (allowed) => {
   const W = 793.7, H = 1122.5, MM = 96 / 25.4, CP = 96 / 7200, findings = [];
-  const allowedSet = new Set(allowed.strings), glyphSet = new Set(allowed.glyphs);
+  const pageSet = new Set(allowed.strings), glyphSet = new Set(allowed.glyphs), separators = new Set(allowed.separators);
   const sheet = document.querySelector('.sheet');
-  const texts = []; const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT); let n;
+  const alpha = (color) => { const m = /rgba?\\(([^)]*)\\)/.exec(color); if (!m) return 1; const p = m[1].split(/[ ,\\/]+/).filter(Boolean); return p.length > 3 ? parseFloat(p[3]) : 1; };
+  const opacity = (el) => { let o = 1; for (let a = el; a && a !== document.documentElement; a = a.parentElement) o *= parseFloat(getComputedStyle(a).opacity); return o; };
+  // (1) the printed text equals the page's projection strings: nothing added, nothing missing, nothing invisible.
+  const printed = new Set(); let textCount = 0; const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT); let n;
   while ((n = walker.nextNode())) { const s = n.textContent.trim(); if (s.length === 0) continue;
-    if (n.parentElement && n.parentElement.closest('title')) { if (!allowedSet.has(s)) findings.push({code: 'TEXT_NOT_IN_PROJECTION', text: s.slice(0, 60)}); continue; }
-    texts.push(s); if (!allowedSet.has(s) && !allowed.separators.includes(s)) findings.push({code: 'TEXT_NOT_IN_PROJECTION', text: s.slice(0, 60)}); }
+    textCount += 1; if (separators.has(s)) continue; printed.add(s);
+    if (!pageSet.has(s)) findings.push({code: 'TEXT_NOT_IN_PROJECTION', text: s.slice(0, 60)});
+    const el = n.parentElement; if (!el || el.closest('title')) continue;  // the wordmark's accessible name
+    const cs = getComputedStyle(el);
+    if (cs.visibility !== 'visible' || alpha(cs.color) === 0 || alpha(cs.webkitTextFillColor || cs.color) === 0 || opacity(el) === 0 || parseFloat(cs.fontSize) < 4)
+      findings.push({code: 'TEXT_INVISIBLE', text: s.slice(0, 60)}); }
+  for (const s of pageSet) if (!printed.has(s)) findings.push({code: 'TEXT_MISSING_FROM_PAGE', text: s.slice(0, 60)});
+  // (2) no generated content: the stylesheet declares no ::before / ::after text.
+  for (const el of [sheet, ...sheet.querySelectorAll('*')]) for (const pseudo of ['::before', '::after']) {
+    const content = getComputedStyle(el, pseudo).content;
+    if (content && content !== 'none' && content !== 'normal') findings.push({code: 'PSEUDO_CONTENT', pseudo, content: content.slice(0, 60), on: (el.className && el.className.baseVal === undefined ? el.className : el.tagName)}); }
   const glyphs = Array.from(sheet.querySelectorAll('svg.disp')).map(g => String.fromCodePoint(parseInt(g.dataset.glyph.slice(2), 16)));
   for (const g of glyphs) if (!glyphSet.has(g)) findings.push({code: 'GLYPH_NOT_IN_PROJECTION', glyph: g});
   const els = []; const walk = (node) => { for (const c of node.children) walk(c);
@@ -116,6 +207,18 @@ DOM_QA = """
   for (const b of boxes) {
     if (b.r.left < -0.5 || b.r.top < -0.5 || b.r.right > W + 0.5 || b.r.bottom > H + 0.5) findings.push({code: 'OUTSIDE_SHEET', text: b.e.textContent.trim().slice(0, 40)});
     if (b.e.scrollWidth > b.e.clientWidth + 1 && getComputedStyle(b.e).overflow !== 'visible') findings.push({code: 'CLIPPED', text: b.e.textContent.trim().slice(0, 40)});
+    // (3) the box stays inside its nearest painted container (a panel, a tag, a disc, a cell): text that runs out of
+    // its panel is a layout failure even where nothing clips it.
+    for (let a = b.e.parentElement; a && a !== sheet; a = a.parentElement) { const s = getComputedStyle(a);
+      if (alpha(s.backgroundColor) === 0 && s.backgroundImage === 'none') continue; const q = a.getBoundingClientRect();
+      if (b.r.left < q.left - 0.5 || b.r.top < q.top - 0.5 || b.r.right > q.right + 0.5 || b.r.bottom > q.bottom + 0.5)
+        findings.push({code: 'OVERFLOWS_CONTAINER', text: b.e.textContent.trim().slice(0, 40), container: String(a.className && a.className.baseVal === undefined ? a.className : a.tagName).slice(0, 40)});
+      break; }
+    // (4) no ancestor clips the box: every ancestor that does not let overflow show must contain it whole.
+    for (let a = b.e.parentElement; a && a !== document.body; a = a.parentElement) { const s = getComputedStyle(a);
+      if (s.overflowX === 'visible' && s.overflowY === 'visible') continue; const q = a.getBoundingClientRect();
+      if (b.r.left < q.left - 0.5 || b.r.top < q.top - 0.5 || b.r.right > q.right + 0.5 || b.r.bottom > q.bottom + 0.5) {
+        findings.push({code: 'CLIPPED_BY_ANCESTOR', text: b.e.textContent.trim().slice(0, 40)}); break; } }
     if (b.e.classList.contains('longline')) { const measure = parseInt(b.e.dataset.measureCp, 10) * CP;
       if (b.r.width > measure + 0.5) findings.push({code: 'LINE_EXCEEDS_MEASURE', text: b.e.textContent.slice(0, 40), widthPx: +b.r.width.toFixed(2), measurePx: +measure.toFixed(2)}); }
   }
@@ -125,7 +228,7 @@ DOM_QA = """
     const y = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
     if (x > 1.5 && y > 1.5) findings.push({code: 'OVERLAP', a: a.e.textContent.trim().slice(0, 30), b: b.e.textContent.trim().slice(0, 30)});
   }
-  return {findings, textCount: texts.length, glyphCount: glyphs.length};
+  return {findings, textCount, glyphCount: glyphs.length};
 }
 """
 
@@ -168,15 +271,50 @@ def check_environment() -> dict:
             raise Blocked("FONT_PIN", {"file": name, "expected": digests.get(f"fonts/{name}"), "actual": actual})
         fonts.append({"role": "text", "family": "Inter Display" if name.startswith("InterDisplay") else "Inter", "file": f"assets/visual-system-v1/fonts/{name}",
                       "sha256": f"sha256:{actual}", "licence": "SIL Open Font License 1.1", "licenceFile": "assets/visual-system-v1/fonts/OFL.txt"})
+    assets = []
+    for name in TEMPLATE_ASSETS:
+        actual = sha256_file(ASSETS / name)
+        if digests.get(name) != actual:
+            raise Blocked("TEMPLATE_ASSET_PIN", {"file": name, "expected": digests.get(name), "actual": actual})
+        assets.append({"path": f"assets/visual-system-v1/{name}", "sha256": f"sha256:{actual}"})
     cjk_path = next((d / CJK_FACE["file"] for d in CJK_DIRS if (d / CJK_FACE["file"]).is_file()), None)
     if cjk_path is None:
         raise Blocked("CJK_FACE_MISSING", {"file": CJK_FACE["file"], "searched": [str(d) for d in CJK_DIRS]})
     cjk_sha = sha256_file(cjk_path)
     if cjk_sha != CJK_FACE["sha256"]:
         raise Blocked("CJK_FACE_PIN", {"file": str(cjk_path), "expected": CJK_FACE["sha256"], "actual": cjk_sha})
+    rivals = rival_cjk_faces(cjk_path)
+    if rivals:
+        raise Blocked("CJK_FACE_AMBIGUOUS", {"pinned": str(cjk_path), "alsoProvidingTheFamily": rivals})
     fonts.append({"role": "informational-cjk", "family": CJK_FACE["family"], "file": CJK_FACE["file"], "sha256": f"sha256:{cjk_sha}",
                   "upstream": CJK_FACE["upstream"], "licence": CJK_FACE["licence"], "licenceFile": CJK_FACE["licenceFile"], "installedAt": "host font directory"})
-    return {"fonts": fonts, "cjkPath": cjk_path}
+    return {"fonts": fonts, "assets": assets, "cjkPath": cjk_path}
+
+
+def rival_cjk_faces(pinned: pathlib.Path) -> list:
+    """Every other font file in the font directories that provides the pinned family or PostScript name.
+
+    The platform-font scan proves a face by PostScript name; a second file carrying the same name (another
+    version, a subset, a renamed face) would pass it, so its mere presence blocks. A byte-identical copy of the
+    pinned file is the same face and does not. An unreadable font file blocks too - it cannot be ruled out.
+    """
+    rivals = []
+    for directory in CJK_DIRS:
+        if not directory.is_dir():
+            continue
+        for path in sorted(directory.rglob("*")):
+            if not path.is_file() or path.suffix.lower() not in FONT_SUFFIXES or path.resolve() == pinned.resolve():
+                continue
+            try:
+                faces = TTCollection(str(path), lazy=True).fonts if path.suffix.lower() in (".ttc", ".otc") else [TTFont(str(path), lazy=True)]
+                names = {(f["name"].getDebugName(1), f["name"].getDebugName(16), f["name"].getDebugName(6)) for f in faces}
+            except Exception as error:  # noqa: BLE001 - any unreadable font is a face we cannot rule out
+                rivals.append({"file": str(path), "unreadable": f"{type(error).__name__}: {error}"})
+                continue
+            if any(CJK_FACE["family"] in (family, typographic) or (ps or "").startswith("NotoSansCJKsc") for family, typographic, ps in names):
+                if sha256_file(path) != CJK_FACE["sha256"]:
+                    rivals.append({"file": str(path), "names": sorted({n for triple in names for n in triple if n})})
+    return rivals
 
 
 def check_glyphs_and_cjk(projection: dict, cjk_path: pathlib.Path, glyph_manifest: dict) -> dict:
@@ -202,10 +340,17 @@ def check_glyphs_and_cjk(projection: dict, cjk_path: pathlib.Path, glyph_manifes
 
 # ------------------------------------------------------------------ render
 
+def build_page(ctx: P.Context, entry: dict) -> str:
+    """A page the builders cannot build (unknown kind, a missing field, a glyph outside the contract) blocks the render."""
+    try:
+        return P.page_html(ctx, entry)
+    except (ValueError, KeyError, TypeError) as error:
+        raise Blocked("PAGE_BUILD", {"page": entry.get("pageId"), "error": f"{type(error).__name__}: {error}"}) from error
+
+
 def render_run(projection: dict, ctx: P.Context, work: pathlib.Path) -> dict:
     pages_dir = work / "pages"
     pages_dir.mkdir(parents=True)
-    allowed = {"strings": projection["customerStrings"], "glyphs": projection["displayGlyphs"], "separators": sorted(SEPARATORS)}
     entries = []
     with sync_playwright() as pw:
         browser = pw.chromium.launch(args=CHROMIUM_ARGS)
@@ -215,7 +360,7 @@ def render_run(projection: dict, ctx: P.Context, work: pathlib.Path) -> dict:
         page.set_viewport_size({"width": A4_PX[0], "height": A4_PX[1]})
         for entry in projection["pages"]:
             html_path = pages_dir / f"{entry['pageLabel']}-{entry['pageId']}.html"
-            html_path.write_text(P.page_html(ctx, entry), encoding="utf-8")
+            html_path.write_text(build_page(ctx, entry), encoding="utf-8")
             page.goto(html_path.as_uri())
             page.wait_for_load_state("networkidle")
             fonts = page.evaluate(FONT_STATUS)
@@ -227,13 +372,13 @@ def render_run(projection: dict, ctx: P.Context, work: pathlib.Path) -> dict:
             page.screenshot(path=str(png), clip={"x": 0, "y": 0, "width": A4_PX[0], "height": A4_PX[1]})
             page.pdf(path=str(pdf), width="210mm", height="297mm", print_background=True, margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
                      prefer_css_page_size=True)
-            dom = page.evaluate(DOM_QA, allowed)
+            dom = page.evaluate(DOM_QA, {"strings": entry["strings"], "glyphs": projection["displayGlyphs"], "separators": sorted(SEPARATORS)})
             used_fonts = platform_fonts(context, page)
             wx = page.evaluate(WX_QA) if entry["content"]["kind"] == "wuXing" else []
             # "unloaded" is a declared face the page never asked for; "error" is a face that failed and fell back.
             failed = [f for f in fonts if f["status"] == "error"]
             findings = dom["findings"] + wx + ([{"code": "FONT_LOAD_FAILED", "fonts": failed}] if failed else [])
-            foreign = sorted(f"{family}|{ps}" for family, ps in used_fonts if not ps.startswith(ALLOWED_POSTSCRIPT_PREFIXES))
+            foreign = sorted(f"{family}|{ps}" for family, ps in used_fonts if ps not in ALLOWED_POSTSCRIPT_NAMES)
             if foreign:
                 findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign})
             entries.append({"pageId": entry["pageId"], "pageLabel": entry["pageLabel"], "png": png, "pdf": pdf, "pngSha256": sha256_file(png),
@@ -272,7 +417,8 @@ def pdf_qa(pdf_path: pathlib.Path, projection: dict) -> list:
             collect_fonts(page.obj, fonts, findings, index + 1, set())
         for name in sorted(fonts):
             base = name.split("+", 1)[-1]
-            if name != "Type3" and not base.startswith(EMBEDDED_FONT_PATTERN):
+            # Inter embeds as a named TrueType subset; the CFF CJK face as Type3, proven by the platform-font scan.
+            if name != "Type3" and base not in INTER_POSTSCRIPT_NAMES:
                 findings.append({"code": "PDF_FONT_NOT_PINNED", "font": name})
     return findings, sorted(fonts)
 
@@ -376,6 +522,13 @@ def main() -> int:
     projection = json.loads(projection_bytes)
     checks = []
     staging = pathlib.Path(tempfile.mkdtemp(prefix="bazodiac-pdf-"))
+    try:
+        return render(args, out_dir, projection, projection_bytes, checks, staging)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+
+
+def render(args, out_dir: pathlib.Path, projection: dict, projection_bytes: bytes, checks: list, staging: pathlib.Path) -> int:
     status = "BLOCKED"
     manifest = None
     runs = []
@@ -383,8 +536,10 @@ def main() -> int:
         if projection.get("projectionVersion") != PROJECTION_VERSION:
             raise Blocked("PROJECTION_VERSION", projection.get("projectionVersion"))
         checks.append({"id": "PROJECTION_VERSION", "result": "PASS", "detail": PROJECTION_VERSION})
+        checks.append({"id": "PROJECTION_IDENTITY", "result": "PASS", "detail": check_projection_identity(projection)})
         env = check_environment()
         checks.append({"id": "FONT_PINS", "result": "PASS", "detail": [f["file"] for f in env["fonts"]]})
+        checks.append({"id": "TEMPLATE_ASSET_PINS", "result": "PASS", "detail": [a["path"] for a in env["assets"]]})
         glyph_manifest = json.loads((ASSETS / "glyphs" / "manifest.json").read_text())
         checks.append({"id": "GLYPHS_AND_CJK", "result": "PASS", "detail": check_glyphs_and_cjk(projection, env["cjkPath"], glyph_manifest)})
 
@@ -426,7 +581,8 @@ def main() -> int:
                              "fileSha256": f"sha256:{sha256_bytes(projection_bytes)}"},
             "template": {"ref": projection["template"]["ref"], "structuralHash": projection["template"]["structuralHash"],
                          "designSystem": projection["template"]["designSystem"], "decisionSource": projection["template"]["decisionSource"],
-                         "glyphManifestSha256": projection["template"]["glyphManifestSha256"]},
+                         "glyphManifestSha256": projection["template"]["glyphManifestSha256"], "wordmarkSha256": projection["template"]["wordmarkSha256"],
+                         "assets": env["assets"]},
             "renderer": {"ref": RENDERER_REF, "sourceSha256": renderer_source_digest(),
                          "engine": {"browser": "chromium", "version": last["chromium"], "flags": CHROMIUM_ARGS, "playwright": pkg_version("playwright"),
                                     "python": platform.python_version(), "pikepdf": pkg_version("pikepdf"), "fonttools": pkg_version("fonttools"),
@@ -460,7 +616,6 @@ def main() -> int:
         diagnostics.mkdir()
         for e in runs[-1]["entries"]:
             shutil.copy2(e["png"], diagnostics / e["png"].name)
-    shutil.rmtree(staging, ignore_errors=True)
     print(json.dumps({"status": status, "out": str(out_dir), "checks": [(c["id"], c["result"]) for c in checks]}, ensure_ascii=False))
     if status != "PASSED":
         print(json.dumps(checks[-1], ensure_ascii=False, indent=1)[:4000], file=sys.stderr)

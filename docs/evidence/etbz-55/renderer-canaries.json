@@ -1,0 +1,450 @@
+{
+ "canaries": [
+  {
+   "expectedCheck": "PROJECTION_VERSION",
+   "expectedCode": null,
+   "gate": "projection identity",
+   "id": "projection-version",
+   "manifestWritten": false,
+   "mutation": "the projection declares another projection version (rehashed)",
+   "observed": {
+    "check": "PROJECTION_VERSION",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PROJECTION_HASH",
+   "expectedCode": null,
+   "gate": "projection identity",
+   "id": "projection-hash",
+   "manifestWritten": false,
+   "mutation": "a cover string is edited without rehashing the projection",
+   "observed": {
+    "check": "PROJECTION_HASH",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "TEMPLATE_HASH",
+   "expectedCode": null,
+   "gate": "template identity",
+   "id": "template-hash",
+   "manifestWritten": false,
+   "mutation": "a template label is edited; the projection is rehashed, the template is not",
+   "observed": {
+    "check": "TEMPLATE_HASH",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "FONT_PIN",
+   "expectedCode": null,
+   "gate": "font pins",
+   "id": "font-pin",
+   "manifestWritten": false,
+   "mutation": "the committed Inter-Regular digest no longer matches",
+   "observed": {
+    "check": "FONT_PIN",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "TEMPLATE_ASSET_PIN",
+   "expectedCode": null,
+   "gate": "template asset pins",
+   "id": "template-asset-pin",
+   "manifestWritten": false,
+   "mutation": "the committed glyph sprite digest no longer matches",
+   "observed": {
+    "check": "TEMPLATE_ASSET_PIN",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "CJK_FACE_PIN",
+   "expectedCode": null,
+   "gate": "font pins",
+   "id": "cjk-face-pin",
+   "manifestWritten": false,
+   "mutation": "the pinned Noto Sans CJK digest no longer matches the host file",
+   "observed": {
+    "check": "CJK_FACE_PIN",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "CJK_FACE_AMBIGUOUS",
+   "expectedCode": null,
+   "gate": "font pins",
+   "id": "cjk-face-ambiguous",
+   "manifestWritten": false,
+   "mutation": "a second font file naming itself Noto Sans CJK SC sits in a font directory",
+   "observed": {
+    "check": "CJK_FACE_AMBIGUOUS",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "GLYPH_OUT_OF_CONTRACT",
+   "expectedCode": null,
+   "gate": "glyphs",
+   "id": "glyph-out-of-contract",
+   "manifestWritten": false,
+   "mutation": "the projection lists a display glyph outside the 27 (rehashed)",
+   "observed": {
+    "check": "GLYPH_OUT_OF_CONTRACT",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "CJK_GLYPH_UNCOVERED",
+   "expectedCode": null,
+   "gate": "CJK coverage",
+   "id": "cjk-uncovered",
+   "manifestWritten": false,
+   "mutation": "the projection lists a character the pinned SC face does not cover (rehashed)",
+   "observed": {
+    "check": "CJK_GLYPH_UNCOVERED",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_BUILD",
+   "expectedCode": null,
+   "gate": "page build",
+   "id": "page-build",
+   "manifestWritten": false,
+   "mutation": "a page of a kind no builder knows (rehashed)",
+   "observed": {
+    "check": "PAGE_BUILD",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_NOT_IN_PROJECTION",
+   "gate": "renderer adds no text",
+   "id": "text-injected",
+   "manifestWritten": false,
+   "mutation": "the method-note builder prints a sentence the projection does not carry",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_NOT_IN_PROJECTION"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_MISSING_FROM_PAGE",
+   "gate": "renderer drops no text",
+   "id": "text-dropped",
+   "manifestWritten": false,
+   "mutation": "the summary builder leaves out its last fact row",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_NOT_IN_PROJECTION",
+   "gate": "glyphs",
+   "id": "glyph-not-in-projection",
+   "manifestWritten": false,
+   "mutation": "a page draws a display glyph the projection does not list (rehashed)",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_NOT_IN_PROJECTION"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PSEUDO_CONTENT",
+   "gate": "renderer adds no text",
+   "id": "generated-content",
+   "manifestWritten": false,
+   "mutation": "the stylesheet adds text through ::after",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PSEUDO_CONTENT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "invisible-text",
+   "manifestWritten": false,
+   "mutation": "the method note is set in a transparent colour",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_INVISIBLE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "CLIPPED_BY_ANCESTOR",
+   "gate": "no content cut",
+   "id": "clipped-by-ancestor",
+   "manifestWritten": false,
+   "mutation": "the method note is cut to 6 mm by its container",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "CLIPPED_BY_ANCESTOR",
+     "OVERLAP"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "OVERFLOWS_CONTAINER",
+   "gate": "no content cut",
+   "id": "overflows-container",
+   "manifestWritten": false,
+   "mutation": "separators lose their break opportunity; the sidebar line runs out of its panel",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "OVERFLOWS_CONTAINER"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "OUTSIDE_SHEET",
+   "gate": "no content cut",
+   "id": "outside-sheet",
+   "manifestWritten": false,
+   "mutation": "the method note is 5,900 characters long (rehashed)",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "CLIPPED_BY_ANCESTOR",
+     "OUTSIDE_SHEET",
+     "OVERLAP"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "LINE_EXCEEDS_MEASURE",
+   "gate": "long-form measure",
+   "id": "line-exceeds-measure",
+   "manifestWritten": false,
+   "mutation": "long-form body text is set one point larger than it was measured",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "LINE_EXCEEDS_MEASURE",
+     "OVERLAP"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "OVERLAP",
+   "gate": "no overlap",
+   "id": "overlap",
+   "manifestWritten": false,
+   "mutation": "the method note is pulled up over the page title",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "OVERLAP"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "WX_DISC_INTRUDES",
+   "gate": "Wu Xing medallion",
+   "id": "wu-xing-medallion",
+   "manifestWritten": false,
+   "mutation": "the medallion is drawn 100 mm wide",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "WX_DISC_INTRUDES",
+     "WX_PHASE_BLOCK_INTRUDES"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_SET_IN_UNPINNED_FACE",
+   "gate": "font pins",
+   "id": "unpinned-face",
+   "manifestWritten": false,
+   "mutation": "every page is set in a host face",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_SET_IN_UNPINNED_FACE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "FONT_LOAD_FAILED",
+   "gate": "font pins",
+   "id": "font-load-failed",
+   "manifestWritten": false,
+   "mutation": "the Inter web fonts point at a missing directory",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "FONT_LOAD_FAILED",
+     "OVERLAP"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_READBACK",
+   "expectedCode": "PDF_PAGE_COUNT",
+   "gate": "PDF readback",
+   "id": "pdf-page-count",
+   "manifestWritten": false,
+   "mutation": "the projection states one page more than it has (rehashed)",
+   "observed": {
+    "check": "PDF_READBACK",
+    "codes": [
+     "PDF_PAGE_COUNT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "DETERMINISM",
+   "expectedCode": null,
+   "gate": "determinism",
+   "id": "determinism",
+   "manifestWritten": false,
+   "mutation": "every run draws one marker pixel at a different place",
+   "observed": {
+    "check": "DETERMINISM",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  }
+ ],
+ "canaryVersion": "bazodiac-renderer-canaries.v1",
+ "executedAt": "2026-09-28",
+ "host": "Darwin arm64",
+ "projectionStructuralHash": "sha256:3cfcb2bc0a3680c42b4522a5831a54e0c1646a481d3eee74792d8c0dc18d35e3",
+ "renderer": {
+  "ref": "bazodiac-pdf-renderer@1.0.0",
+  "sourceSha256": "sha256:e8f14f5c5ecf5fe45ebac445dfd438a9041b2844c5acf7a8112507e539a8dfac"
+ },
+ "summary": {
+  "blockedAsExpected": 25,
+  "canaries": 25
+ }
+}

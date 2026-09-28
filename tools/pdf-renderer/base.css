@@ -82,3 +82,9 @@ table.tg tbody tr:last-child td{border-bottom:0.25mm solid var(--rule-200)}
 .wx-v{font-size:14pt;font-weight:300;margin-top:1.5mm;font-family:var(--font-display)}
 .wx-big{font-family:var(--font-display);font-weight:300;font-size:18pt;line-height:20pt;font-variant-numeric:tabular-nums}
 .longline{font-kerning:none;font-variant-ligatures:none;font-feature-settings:"kern" 0,"liga" 0,"calt" 0;white-space:nowrap;position:absolute}
+.nw{white-space:nowrap}
+.mark{display:inline-block;width:2.6mm;height:2.6mm;border-radius:50%;vertical-align:middle}
+.mark.stem{background:var(--ink-900)}
+.mark.hidden{border:0.3mm solid var(--ink-600)}
+.mark.both{background:var(--ink-900);box-shadow:0 0 0 0.45mm var(--paper-000),0 0 0 0.75mm var(--ink-600)}
+.mark.none{height:0.25mm;border-radius:0;background:var(--rule-200)}

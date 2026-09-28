@@ -18,9 +18,13 @@ import {
   templateBinding,
 } from '../../src/application/presentation/index.js';
 import type { PageContent, PillarValue, PresentationPage, PresentationProjection } from '../../src/application/presentation/index.js';
+import { FONT_METRICS } from '../../src/application/presentation/font-metrics.js';
+import { CONTINUATION_COLUMN_CP, RUNNING_HEAD_CP } from '../../src/application/presentation/long-form.js';
+import { CJK_IDEOGRAPH_ADVANCE_EM, LINE_TOLERANCE_CP, TEXT_STYLES } from '../../src/application/presentation/text-measure.js';
+import { structuralHash } from '../../src/domain/structural-hash.js';
 import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
 import { CHART_TERMINOLOGY, findProhibitedWording, findUnsupportedMethodTerm } from '../../src/application/skill/index.js';
-import { DISPLAY_GLYPH_SET, PAGE_FAMILY, findEvidenceChrome } from '../../src/application/visual/index.js';
+import { DISPLAY_GLYPH_SET, GEOMETRY_CENTIPOINTS, PAGE_FAMILY, findEvidenceChrome } from '../../src/application/visual/index.js';
 import { presentationFixture } from '../support/presentationFixture.js';
 
 // Loaded per describe block that needs it: a projection that refuses to build must fail the
@@ -52,27 +56,71 @@ describe('ETBZ-55: the template', () => {
     expect(binding.pageFamily).toHaveLength(PAGE_FAMILY.length);
   });
 
-  it('takes every Lexicon label verbatim from the released Lexicon term it names', () => {
+  it('binds the long-form typography that decides every line break', () => {
+    expect(templateBinding().typography).toEqual({
+      textStyles: TEXT_STYLES,
+      lineToleranceCp: LINE_TOLERANCE_CP,
+      runningHeadCp: RUNNING_HEAD_CP,
+      continuationColumnCp: CONTINUATION_COLUMN_CP,
+      cjkIdeographAdvanceEm: CJK_IDEOGRAPH_ADVANCE_EM,
+      fontMetricsStructuralHash: structuralHash(FONT_METRICS),
+    });
+  });
+
+  it('classifies every label: Lexicon labels verbatim from their term, terminology labels by the FuFirE value they name', () => {
+    const sources = new Set<string>();
     for (const [id, entry] of Object.entries(TEMPLATE_LABELS)) {
+      sources.add(entry.source);
       const lexiconTerm = 'lexiconTerm' in entry ? entry.lexiconTerm : undefined;
-      if (entry.source !== 'lexicon') {
+      const fufireValue = 'fufireValue' in entry ? entry.fufireValue : undefined;
+      if (entry.source === 'template') {
         expect(lexiconTerm, id).toBeUndefined();
+        expect(fufireValue, id).toBeUndefined();
         continue;
       }
+      if (entry.source === 'terminology') {
+        expect(lexiconTerm, id).toBeUndefined();
+        expect(fufireValue, id).toMatch(/^natal\.pillars\[\]\.hiddenStems\[\]\.qi = (principal|central|residual)$/u);
+        continue;
+      }
+      expect(fufireValue, id).toBeUndefined();
       const term = CHART_TERMINOLOGY.find((candidate) => candidate.term === lexiconTerm);
       expect(term, `${id}: Lexicon term ${String(lexiconTerm)}`).toBeDefined();
       expect(term?.customerDe, id).toContain(entry.text);
     }
+    expect([...sources].sort()).toEqual(['lexicon', 'template', 'terminology']);
+    const terminology = Object.entries(TEMPLATE_LABELS).filter(([, entry]) => entry.source === 'terminology').map(([id]) => id);
+    expect(terminology).toEqual(['qiPrincipal', 'qiCentral', 'qiResidual']);
   });
 
-  it('carries no label that is prohibited wording, a deferred method or evidence chrome, and leaves none unused', () => {
-    load();
-    const printed = projection.customerStrings.map((text) => text.toLowerCase());
+  it('carries no label that is prohibited wording, a deferred method or evidence chrome', () => {
     for (const [id, entry] of Object.entries(TEMPLATE_LABELS)) {
       expect(findProhibitedWording(entry.text), id).toBeNull();
       expect(findUnsupportedMethodTerm(entry.text), id).toBeNull();
       expect(findEvidenceChrome(entry.text), id).toEqual([]);
-      expect(printed.some((text) => text.includes(entry.text.toLowerCase())), `${id} is printed somewhere`).toBe(true);
+    }
+  });
+
+  it('prints every label as a string of its own, except the three composed forms and the one conditional caption', () => {
+    load();
+    const composed: Readonly<Record<string, readonly string[]>> = {
+      chapter: ['KAPITEL 01', 'KAPITEL 07'],
+      continued: ['KAPITEL 01 · FORTSETZUNG'],
+      dataNoteSeeMethod: ['Siehe Methodenhinweis, Seite 29'],
+    };
+    const conditional = new Set(['wuXingZeroIsZero']);
+    for (const [id, entry] of Object.entries(TEMPLATE_LABELS)) {
+      const forms = composed[id];
+      if (forms !== undefined) {
+        for (const form of forms) expect(projection.customerStrings, `${id} as "${form}"`).toContain(form);
+        expect(projection.customerStrings, `${id} is never printed bare`).not.toContain(entry.text);
+        continue;
+      }
+      if (conditional.has(id)) {
+        expect(projection.customerStrings, `${id} is printed only when a phase is 0`).not.toContain(entry.text);
+        continue;
+      }
+      expect(projection.customerStrings, `${id} is printed as "${entry.text}"`).toContain(entry.text);
     }
   });
 });
@@ -118,7 +166,50 @@ describe('ETBZ-55: the page model', () => {
     });
   });
 
-  it('derives the contents from its own pages and points the data note at the method page', () => {
+  it('prints no identifier or classification value: relation codes, Lexicon families, phases, roles, kinds', () => {
+    // An independent list of the fields that identify, classify, position or colour - never printed.
+    const identifying = new Set(['kind', 'phase', 'polarity', 'position', 'code', 'familyId', 'qiRole', 'template', 'mark', 'marks', 'transformId', 'zeroPhases', 'blockId', 'styleId', 'tagKind']);
+    const values = new Set<string>();
+    const walk = (value: unknown, key: string | null): void => {
+      if (typeof value === 'string') {
+        if (key !== null && identifying.has(key) && value !== '') values.add(value);
+        return;
+      }
+      if (Array.isArray(value)) {
+        for (const entry of value) walk(entry, key);
+        return;
+      }
+      if (typeof value === 'object' && value !== null) for (const [child, entry] of Object.entries(value)) walk(entry, child);
+    };
+    walk(projection.pages, null);
+    for (const expected of ['RobWealth', 'PEER', 'metal', 'principal', 'tenGods', 'opener']) expect(values, expected).toContain(expected);
+    for (const page of projection.pages) {
+      const printed = page.strings.filter((text) => values.has(text));
+      expect(printed, page.pageId).toEqual([]);
+    }
+  });
+
+  it('places the reference panel on a short final chapter page only, below its text and instead of the sidebar', () => {
+    let panels = 0;
+    const chapters = new Set(projection.pages.flatMap((page) => (page.content.kind === 'longForm' ? [page.content.chapterNumber] : [])));
+    for (const chapterNumber of chapters) {
+      const pages = projection.pages.flatMap((page) => (page.content.kind === 'longForm' && page.content.chapterNumber === chapterNumber ? [page.content] : []));
+      pages.forEach((page, index) => {
+        const bottom = Math.max(...page.fragments.map((fragment) => fragment.topCp + fragment.heightCp));
+        const fill = (bottom - GEOMETRY_CENTIPOINTS.marginTop) / GEOMETRY_CENTIPOINTS.contentH;
+        const shortFinal = index === pages.length - 1 && fill < 0.6;
+        expect(page.referencePanel !== null, `chapter ${String(chapterNumber)} page ${String(page.chapterPage)} fill ${fill.toFixed(3)}`).toBe(shortFinal);
+        if (page.referencePanel !== null) {
+          panels += 1;
+          expect(page.sidebar).toBeNull();
+          expect(page.referencePanel.yCp).toBeGreaterThan(bottom);
+        }
+      });
+    }
+    expect(panels).toBeGreaterThan(0);
+  });
+
+  it('derives the contents from its own pages and points the data note at the method page, which carries it', () => {
     const contents = contentOf('contents');
     const entries = contents.sections.flatMap((section) => section.entries);
     expect(entries).toHaveLength(22);
@@ -130,6 +221,47 @@ describe('ETBZ-55: the page model', () => {
     expect(model.sourceWarnings).toEqual(['DAY_ANCHOR_UNVERIFIED']);
     expect(identity.rows.at(-1)).toEqual({ label: 'Datenhinweis', value: 'Siehe Methodenhinweis, Seite 29' });
     expect(projection.pages[28]?.content.kind).toBe('methodNote');
+    expect(contentOf('methodNote').dataNote).toEqual({ label: 'Datenhinweis', text: 'Zu diesem Chart liegt ein Datenhinweis der Chart-Berechnung vor.' });
+  });
+
+  it('carries no data note when the chart has no source warning', () => {
+    const quiet = buildPresentationProjection({ model: { ...model, sourceWarnings: [] }, content });
+    const method = quiet.pages.find((page) => page.content.kind === 'methodNote')?.content;
+    expect(method?.kind === 'methodNote' ? method.dataNote : 'missing').toBeNull();
+    const identity = quiet.pages.find((page) => page.content.kind === 'identity')?.content;
+    expect(identity?.kind === 'identity' ? identity.rows.map((row) => row.label) : []).not.toContain('Datenhinweis');
+    expect(quiet.customerStrings).not.toContain('Datenhinweis');
+  });
+
+  it('prints the zero caption only when a phase is 0', () => {
+    expect(contentOf('wuXing').captions).toEqual([TEMPLATE_LABELS.wuXingValuesAsSupplied.text]);
+    const zero = buildPresentationProjection({ model: { ...model, wuxing: { ...model.wuxing, vector: { ...model.wuxing.vector, Holz: 0 } } }, content });
+    const wuXing = zero.pages.find((page) => page.content.kind === 'wuXing')?.content;
+    expect(wuXing?.kind === 'wuXing' ? wuXing.captions : []).toEqual([TEMPLATE_LABELS.wuXingValuesAsSupplied.text, TEMPLATE_LABELS.wuXingZeroIsZero.text]);
+    expect(zero.customerStrings).toContain(TEMPLATE_LABELS.wuXingZeroIsZero.text);
+  });
+
+  it('gives every page exactly the strings it prints, and the inventory is their union', () => {
+    const internal = new Set(projection.pages.flatMap((page) => [page.pageId, page.contractPageId, page.family, ...page.slots]));
+    for (const page of projection.pages) {
+      expect([...page.strings].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), page.pageId).toEqual(page.strings);
+      expect(new Set(page.strings).size, page.pageId).toBe(page.strings.length);
+      for (const text of page.strings) expect(internal.has(text), `${page.pageId}: "${text}" is an identifier`).toBe(false);
+      for (const mark of ['stem', 'hidden', 'both']) expect(page.strings, page.pageId).not.toContain(mark);
+      if (page.chrome === null) {
+        // Cover and closing carry no running chrome; only the closing page prints its number.
+        if (page.content.kind === 'closing') expect(page.strings, page.pageId).toContain(page.pageLabel);
+        else expect(page.strings, page.pageId).not.toContain(page.pageLabel);
+      } else {
+        expect(page.strings, page.pageId).toContain(page.pageLabel);
+        expect(page.strings, page.pageId).toContain(page.chrome.brand);
+        expect(page.strings, page.pageId).toContain(page.chrome.displayName);
+      }
+    }
+    const closing = contentOf('closing');
+    expect(closing.pageNumberLabel).toBe('28');
+    const union = [...new Set(projection.pages.flatMap((page) => page.strings))].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+    expect(projection.customerStrings).toEqual(union);
   });
 
   it('leaves the two Day-Master content slots empty rather than filling them with stock copy', () => {
@@ -164,12 +296,44 @@ describe('ETBZ-55 AC2: Four Pillars and Wu Xing equal the chart exactly', () => 
       expect(pillar.branch.phase).toBe(natal.branchElement);
       expect(pillar.branch.animalLabel).toBe(chart.tierDe);
       expect(pillar.branch.animalLabel).toBe(factValue(`chart.pillar.${pillar.position}.tier`));
-      expect(pillar.hidden.map((hidden) => [hidden.character, hidden.phase, hidden.qiRole])).toEqual(
-        natal.hiddenStems.map((hidden) => [hidden.stemCn, hidden.element, hidden.qi]),
-      );
+      expect(pillar.hidden.map((hidden) => [hidden.character, hidden.phase])).toEqual(natal.hiddenStems.map((hidden) => [hidden.stemCn, hidden.element]));
       expect(pillar.tenGod?.code ?? null).toBe(natal.tenGod?.name ?? null);
+      expect(pillar.tenGod?.code ?? null).toBe(factValue(`chart.natal.pillar.${pillar.position}.tenGod`) ?? null);
       expect(pillar.isDayMaster).toBe(pillar.position === 'day');
     }
+  });
+
+  it('shows every hidden stem, its Qi role and its Ten-God relation as the natal chart and the Skill fact set state them', () => {
+    const rows = contentOf('hiddenStems').rows;
+    expect(rows).toHaveLength(4);
+    let compared = 0;
+    rows.forEach((row, index) => {
+      const position = (['year', 'month', 'day', 'hour'] as const)[index] as 'year' | 'month' | 'day' | 'hour';
+      const natal = model.natal.pillars[position];
+      expect(row.hidden).toHaveLength(natal.hiddenStems.length);
+      row.hidden.forEach((hidden, at) => {
+        const fact = natal.hiddenStems[at];
+        const prefix = `chart.natal.pillar.${position}.hiddenStem.${String(at)}`;
+        expect(hidden.character).toBe(fact?.stemCn);
+        expect(hidden.phase).toBe(fact?.element);
+        expect(hidden.phase).toBe(factValue(`${prefix}.element`));
+        expect(hidden.qiRole).toBe(fact?.qi);
+        expect(hidden.qiRole).toBe(factValue(`${prefix}.qi`));
+        expect(hidden.tenGod.code).toBe(fact?.tenGod.name);
+        expect(hidden.tenGod.code).toBe(factValue(`${prefix}.tenGod`));
+        compared += 1;
+      });
+    });
+    expect(compared).toBe(9);
+  });
+
+  it('checks the Day Master against the natal answer, not against a copy of itself', () => {
+    const dm = contentOf('dayMaster').dayMaster;
+    expect(dm.character).toBe(model.natal.dayMaster.stemCn);
+    expect(dm.phase).toBe(model.natal.dayMaster.element);
+    expect(dm.polarity).toBe(model.natal.dayMaster.polarity);
+    expect(dm.character).toBe(factValue('chart.dayMaster.stemHanzi'));
+    expect(dm.pinyin).toBe(factValue('chart.dayMaster.stemPinyin'));
   });
 
   it('colours one region per phase and never a whole pillar', () => {
@@ -193,19 +357,25 @@ describe('ETBZ-55 AC2: Four Pillars and Wu Xing equal the chart exactly', () => 
       expect(entry.value).toBe(model.wuxing.vector[entry.label]);
       expect(entry.valueText).toBe(factValue(`chart.wuxing.weight.${entry.label}`));
     }
-    expect(JSON.stringify(projection)).not.toContain(model.wuxing.dominant === 'Feuer' ? '"dominant"' : '__never__');
+    expect(JSON.stringify(projection.pages)).not.toMatch(/"dominan/iu);
+    for (const text of projection.customerStrings) expect(text, text).not.toMatch(/dominan/iu);
   });
 
-  it('names every Ten-God relation with the Lexicon Hanzi, pinyin and German wording', () => {
+  it('names every Ten-God relation with the Lexicon Hanzi, pinyin and German wording, and marks all four presence states', () => {
     const tenGods = contentOf('tenGods');
     expect(tenGods.rows).toHaveLength(10);
-    const year = pillars[0]?.tenGod;
-    expect(year).toMatchObject({ code: 'RobWealth', hanzi: '劫财', pinyin: 'Jié Cái', familyId: 'PEER' });
-    expect(year?.customerLabel).toBe('wettbewerbliche Peer-Dynamik; Spannung um gemeinsamen Raum/Ressourcen');
+    expect(pillars[0]?.tenGod).toEqual({ code: 'RobWealth', hanzi: '劫财', pinyin: 'Jié Cái' });
+    const rob = tenGods.rows.find((row) => row.tenGod.hanzi === '劫财')?.tenGod;
+    expect(rob).toMatchObject({ familyId: 'PEER', customerLabel: 'wettbewerbliche Peer-Dynamik; Spannung um gemeinsamen Raum/Ressourcen' });
     const marks = Object.fromEntries(tenGods.rows.map((row) => [row.tenGod.hanzi, row.marks]));
     expect(marks['劫财']).toEqual(['stem', null, null, null]);
     expect(marks['伤官']).toEqual([null, 'stem', 'hidden', null]);
     expect(marks['七杀']).toEqual(['hidden', 'hidden', null, 'hidden']);
+    expect(marks['偏财']).toEqual([null, null, null, 'both']);
+    expect(marks['偏印']).toEqual(['hidden', 'hidden', null, 'hidden']);
+    expect(marks['正财']).toEqual([null, null, 'hidden', null]);
+    expect(tenGods.legend.map((entry) => entry.mark)).toEqual(['stem', 'hidden', 'both', null]);
+    expect(tenGods.legend.find((entry) => entry.mark === 'both')?.label).toBe('Sichtbar und verborgen');
   });
 });
 

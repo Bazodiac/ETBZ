@@ -1,7 +1,7 @@
 {
- "artifactId": "bazodiac-reading-e9a3506125e239bf",
- "byteLength": 1908692,
- "contactSheetSha256": "sha256:68441dcbb30d214f943de0fb865169d35132d9e7c8a0a8d532082d68e5475c73",
+ "artifactId": "bazodiac-reading-7ae43ef3e8559673",
+ "byteLength": 1913531,
+ "contactSheetSha256": "sha256:0369cd26c529582eedda19657d45364f9e81c26525015d46f3d3cdd592cbbdca",
  "fonts": [
   {
    "family": "Inter",
@@ -58,7 +58,7 @@
   "declared": true,
   "executedAt": "2026-09-28",
   "host": "Darwin arm64",
-  "repositoryHead": "c801f383797c308b35a8c0848d116f395e765128"
+  "repositoryHead": "85761db22a12a86391f6ddbb376d9c55ada0223e"
  },
  "input": {
   "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
@@ -73,15 +73,23 @@
  "mimeType": "application/pdf",
  "pageCount": 29,
  "presentation": {
-  "fileSha256": "sha256:4dab7784efdd4f6a6b94b5e86d2509db5518bec5ca7e96028e8dd17d2a609ffd",
+  "fileSha256": "sha256:96b519e7d8c4161f8c9fcd1992bb6d4f6c88c59cfd69cff91b06f8886debb57d",
   "projectionVersion": "bazodiac-presentation-projection.v1",
-  "structuralHash": "sha256:5d9b3450c9d8ea93d8b269d5b679770845bc81e69c2be5215c462077218c3bad"
+  "structuralHash": "sha256:3cfcb2bc0a3680c42b4522a5831a54e0c1646a481d3eee74792d8c0dc18d35e3"
  },
  "qa": {
   "checks": [
    {
     "detail": "bazodiac-presentation-projection.v1",
     "id": "PROJECTION_VERSION",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "projection": "sha256:3cfcb2bc0a3680c42b4522a5831a54e0c1646a481d3eee74792d8c0dc18d35e3",
+     "template": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
+    },
+    "id": "PROJECTION_IDENTITY",
     "result": "PASS"
    },
    {
@@ -97,6 +105,16 @@
     "result": "PASS"
    },
    {
+    "detail": [
+     "assets/visual-system-v1/tokens.css",
+     "assets/visual-system-v1/glyphs/sprite.svg",
+     "assets/visual-system-v1/brand/wordmark.svg",
+     "assets/visual-system-v1/glyphs/manifest.json"
+    ],
+    "id": "TEMPLATE_ASSET_PINS",
+    "result": "PASS"
+   },
+   {
     "detail": {
      "cjkCharacters": 31,
      "displayGlyphs": 27,
@@ -109,7 +127,7 @@
     "detail": {
      "displayGlyphs": 116,
      "pages": 29,
-     "textNodes": 1593
+     "textNodes": 1638
     },
     "id": "PAGE_QA",
     "result": "PASS"
@@ -138,7 +156,7 @@
       3
      ],
      "pages": 29,
-     "pdfSha256": "sha256:e9a3506125e239bfa1c93235e06aade5e71a773a8f38362f267400d675be9f1e"
+     "pdfSha256": "sha256:7ae43ef3e855967323d015332299028380ae6c914c20eb1ad7e69773d17c67a8"
     },
     "id": "DETERMINISM",
     "result": "PASS"
@@ -164,11 +182,29 @@
    "version": "136.0.7103.25"
   },
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:3049d559b5ef3ba82bbbc2bd11c1d5b7afbf6d9c59123a626f0998d25feb244b"
+  "sourceSha256": "sha256:e8f14f5c5ecf5fe45ebac445dfd438a9041b2844c5acf7a8112507e539a8dfac"
  },
- "sha256": "sha256:e9a3506125e239bfa1c93235e06aade5e71a773a8f38362f267400d675be9f1e",
+ "sha256": "sha256:7ae43ef3e855967323d015332299028380ae6c914c20eb1ad7e69773d17c67a8",
  "state": "ARTIFACT_READY",
  "template": {
+  "assets": [
+   {
+    "path": "assets/visual-system-v1/tokens.css",
+    "sha256": "sha256:66c737ec031a4a679a4545e44170eef3de054a6ec0690f3e7e0fde0d0b63fe50"
+   },
+   {
+    "path": "assets/visual-system-v1/glyphs/sprite.svg",
+    "sha256": "sha256:6a1851ac6da6d0b15a6ce6f58f938c70a0d1dacd9ed16ce722cf6f74417a4cba"
+   },
+   {
+    "path": "assets/visual-system-v1/brand/wordmark.svg",
+    "sha256": "sha256:c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1"
+   },
+   {
+    "path": "assets/visual-system-v1/glyphs/manifest.json",
+    "sha256": "sha256:a0c63cc99c1a9fb898255a807022a2e7d34eedb743e47d2736dfef86ab145c4c"
+   }
+  ],
   "decisionSource": {
    "pageId": "66650114",
    "system": "confluence",
@@ -181,6 +217,7 @@
   },
   "glyphManifestSha256": "sha256:54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
   "ref": "bazodiac-final-template@1.0.0",
-  "structuralHash": "sha256:5c401d0bf5c4987f99dd7016e1adaf55cfae8ec6da23b26262ec088bb61b49d7"
+  "structuralHash": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6",
+  "wordmarkSha256": "sha256:c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1"
  }
 }
