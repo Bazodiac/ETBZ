@@ -129,6 +129,10 @@ run_etbz49_visual_guard() { node "${REPO_ROOT}/scripts/verify-etbz49-visual-syst
 # way: weaken each one, require the suites to turn red.
 run_etbz51_skill_guard() { node "${REPO_ROOT}/scripts/verify-etbz51-skill-contract-bundle.mjs"; }
 
+# ETBZ-52 accepts or refuses the reading a Skill runtime hands back. Its guards
+# are the product: a weakened one lets an unsupported claim through unseen.
+run_etbz52_skill_reading_guard() { node "${REPO_ROOT}/scripts/verify-etbz52-skill-reading.mjs"; }
+
 # --- 7. secret gate -----------------------------------------------------------
 run_secret_gate() { bash "${REPO_ROOT}/scripts/secret-scan.sh"; }
 
@@ -164,6 +168,9 @@ if [ "${RUN_MUTATIONS}" -eq 1 ]; then
 fi
 if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: ETBZ-51 skill contract bundle (binding + precedence + boundary mutation proofs)" run_etbz51_skill_guard
+fi
+if [ "${RUN_MUTATIONS}" -eq 1 ]; then
+  etbz_step "guards :: ETBZ-52 skill reading boundary (acceptance + package mutation proofs)" run_etbz52_skill_reading_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan

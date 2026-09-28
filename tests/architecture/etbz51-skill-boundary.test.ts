@@ -108,6 +108,9 @@ describe('ETBZ-51: the skill contract bundle is pure and binds rather than execu
       'individuality-contract.ts',
       'semantic-envelope.ts',
       'skill-contract-bundle.ts',
+      'skill-package.ts',
+      'skill-reading.ts',
+      'skill-run-errors.ts',
       'wording-boundaries.ts',
     ]);
   });
