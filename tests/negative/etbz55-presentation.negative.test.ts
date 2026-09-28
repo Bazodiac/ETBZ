@@ -1,0 +1,197 @@
+/**
+ * ETBZ-55 — the refusals of the PresentationProjection.
+ *
+ * Pattern: the valid fixture (D4 chart + ETBZ-52 German payload) is the green
+ * baseline; each test changes as little of a deep copy as its refusal needs.
+ * A refusal the ETBZ-49 visual contract owns surfaces as `VisualContractError`;
+ * every other one is a `PresentationError` with its code. Nothing partial is
+ * returned.
+ */
+import { describe, expect, it } from 'vitest';
+import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
+import {
+  PresentationError,
+  assertReleasedTemplate,
+  buildPresentationProjection,
+  paginateLongForm,
+  templateBinding,
+} from '../../src/application/presentation/index.js';
+import type { PresentationErrorCode } from '../../src/application/presentation/index.js';
+import { VisualContractError } from '../../src/application/visual/index.js';
+import type { VisualContractErrorCode } from '../../src/application/visual/index.js';
+import { presentationFixture } from '../support/presentationFixture.js';
+
+type Mutable<T> = { -readonly [K in keyof T]: Mutable<T[K]> };
+type Content = { title: string; chapters: { title: string; paragraphs: string[] }[]; reflectionQuestions: string[]; methodNote: string };
+
+const fixture = presentationFixture();
+
+function modelWith(edit: (model: Mutable<HoroscopeModel>) => void): HoroscopeModel {
+  const copy = structuredClone(fixture.model) as Mutable<HoroscopeModel>;
+  edit(copy);
+  return copy;
+}
+
+function contentWith(edit: (content: Content) => void): unknown {
+  const copy = structuredClone(fixture.content) as Content;
+  edit(copy);
+  return copy;
+}
+
+function thrown(action: () => unknown): unknown {
+  let caught: unknown;
+  try {
+    action();
+  } catch (error) {
+    caught = error;
+  }
+  return caught;
+}
+
+function expectPresentationRefusal(action: () => unknown, code: PresentationErrorCode): PresentationError {
+  const caught = thrown(action);
+  expect(caught, 'expected a PresentationError').toBeInstanceOf(PresentationError);
+  expect((caught as PresentationError).code).toBe(code);
+  return caught as PresentationError;
+}
+
+function expectVisualRefusal(action: () => unknown, code: VisualContractErrorCode): VisualContractError {
+  const caught = thrown(action);
+  expect(caught, 'expected a VisualContractError').toBeInstanceOf(VisualContractError);
+  expect((caught as VisualContractError).code).toBe(code);
+  return caught as VisualContractError;
+}
+
+const project = (model: HoroscopeModel, content: unknown = fixture.content) => buildPresentationProjection({ model, content });
+
+describe('N0: the baseline is green', () => {
+  it('projects the fixture', () => {
+    expect(project(fixture.model).pageCount).toBe(29);
+  });
+});
+
+describe('N1: the content payload', () => {
+  it('refuses a missing title, an extra key and an empty chapter list', () => {
+    expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { delete (c as Partial<Content>).title; })), 'PRESENTATION_INPUT_INVALID');
+    expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { (c as Record<string, unknown>)['layout'] = 'wide'; })), 'PRESENTATION_INPUT_INVALID');
+    expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.chapters = []; })), 'PRESENTATION_INPUT_INVALID');
+  });
+
+  it('refuses text the layout would have to normalise: a double space, a newline, a leading space', () => {
+    const refusal = expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.chapters[0]!.paragraphs[0] += '  Ende.'; })), 'PRESENTATION_INPUT_INVALID');
+    expect(refusal.detail).toEqual({ path: 'chapters.0.paragraphs.0' });
+    expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.reflectionQuestions[0] = 'Eine\nFrage?'; })), 'PRESENTATION_INPUT_INVALID');
+    expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.methodNote = ` ${c.methodNote}`; })), 'PRESENTATION_INPUT_INVALID');
+  });
+
+  it('refuses a padded or empty display name', () => {
+    expectPresentationRefusal(() => project(modelWith((m) => { m.displayName = ' Musterkundin A'; })), 'PRESENTATION_INPUT_INVALID');
+  });
+});
+
+describe('N2: time', () => {
+  it('refuses an unknown or provisional birth time rather than rendering a guess', () => {
+    expectPresentationRefusal(() => project(modelWith((m) => { m.birth.birthTimeKnown = false; })), 'PRESENTATION_UNKNOWN_TIME_UNSUPPORTED');
+    expectPresentationRefusal(() => project(modelWith((m) => { m.precision.provisionalFields = ['hour']; })), 'PRESENTATION_UNKNOWN_TIME_UNSUPPORTED');
+    expectPresentationRefusal(() => project(modelWith((m) => { m.natal.precision.birthTimeKnown = false; })), 'PRESENTATION_UNKNOWN_TIME_UNSUPPORTED');
+  });
+});
+
+describe('N3: chart values that disagree', () => {
+  it('refuses a stem phase the glyph contract does not give that character', () => {
+    const refusal = expectPresentationRefusal(() => project(modelWith((m) => { m.pillars.year.stemElementDe = 'Holz'; m.natal.pillars.year.stemElement = 'wood'; })), 'PRESENTATION_FACT_MISMATCH');
+    expect(refusal.detail).toMatchObject({ where: 'pillars.year.stem', character: '庚', chart: 'wood', glyph: 'metal' });
+  });
+
+  it('refuses a stem element that differs between the BaZi and natal answers', () => {
+    expectPresentationRefusal(() => project(modelWith((m) => { m.natal.pillars.month.stemElement = 'fire'; })), 'PRESENTATION_FACT_MISMATCH');
+  });
+
+  it('refuses a branch phase, a hidden-stem phase, a polarity or a pinyin the glyph contract contradicts', () => {
+    expectPresentationRefusal(() => project(modelWith((m) => { m.natal.pillars.day.branchElement = 'fire'; })), 'PRESENTATION_FACT_MISMATCH');
+    expectPresentationRefusal(() => project(modelWith((m) => { (m.natal.pillars.hour.hiddenStems[0] as { element: string }).element = 'water'; })), 'PRESENTATION_FACT_MISMATCH');
+    expectPresentationRefusal(() => project(modelWith((m) => { m.natal.pillars.year.polarity = 'yin'; })), 'PRESENTATION_FACT_MISMATCH');
+    expectPresentationRefusal(() => project(modelWith((m) => { m.pillars.year.stemPinyin = 'geng'; })), 'PRESENTATION_FACT_MISMATCH');
+    expectPresentationRefusal(() => project(modelWith((m) => { m.pillars.year.branchPinyin = 'wu'; })), 'PRESENTATION_FACT_MISMATCH');
+  });
+
+  it('refuses a pillar whose BaZi and natal characters differ, and a Day Master that is not the day stem', () => {
+    expectPresentationRefusal(() => project(modelWith((m) => { m.natal.pillars.hour.branchCn = '申'; })), 'PRESENTATION_FACT_MISMATCH');
+    expectPresentationRefusal(() => project(modelWith((m) => { m.dayMaster.stemHanzi = '庚'; })), 'PRESENTATION_FACT_MISMATCH');
+    expectPresentationRefusal(() => project(modelWith((m) => { m.dayMaster.elementDe = 'Wasser'; })), 'PRESENTATION_FACT_MISMATCH');
+  });
+
+  it('refuses a day pillar that carries a relation to itself', () => {
+    expectPresentationRefusal(() => project(modelWith((m) => { m.natal.pillars.day.tenGod = m.natal.pillars.year.tenGod; })), 'PRESENTATION_FACT_MISMATCH');
+  });
+});
+
+describe('N4: chart values that are missing', () => {
+  it('refuses a pillar without hidden stems, a visible stem without its relation, and a branch without its animal', () => {
+    expectPresentationRefusal(() => project(modelWith((m) => { m.natal.pillars.month.hiddenStems = []; })), 'PRESENTATION_FACT_MISSING');
+    expectPresentationRefusal(() => project(modelWith((m) => { m.natal.pillars.hour.tenGod = null; })), 'PRESENTATION_FACT_MISSING');
+    expectPresentationRefusal(() => project(modelWith((m) => { m.pillars.day.tierDe = ' '; })), 'PRESENTATION_FACT_MISSING');
+  });
+
+  it('refuses a Wu Xing distribution of four phases and an element label the vocabulary does not know', () => {
+    expectPresentationRefusal(() => project(modelWith((m) => { delete (m.wuxing.vector as Record<string, number>)['Holz']; })), 'PRESENTATION_FACT_MISSING');
+    expectPresentationRefusal(() => project(modelWith((m) => { m.pillars.day.stemElementDe = 'Luft'; })), 'PRESENTATION_FACT_MISSING');
+  });
+});
+
+describe('N5: bindings to the released contracts', () => {
+  it('refuses a Ten-God relation the Lexicon does not carry', () => {
+    const refusal = expectPresentationRefusal(
+      () => project(modelWith((m) => { (m.natal.pillars.year.tenGod as { pinyin: string }).pinyin = 'Xyz Abc'; })),
+      'PRESENTATION_TEN_GOD_UNBOUND',
+    );
+    expect(refusal.detail).toMatchObject({ where: 'pillars.year.tenGod', matches: 0 });
+  });
+
+  it('refuses a character outside the 27 display glyphs through the visual contract', () => {
+    expectVisualRefusal(() => project(modelWith((m) => { m.pillars.hour.branchHanzi = '天'; m.natal.pillars.hour.branchCn = '天'; })), 'DISPLAY_GLYPH_OUT_OF_CONTRACT');
+  });
+
+  it('refuses a negative Wu Xing count through the visual contract', () => {
+    expectVisualRefusal(() => project(modelWith((m) => { (m.wuxing.vector as Record<string, number>)['Erde'] = -1; })), 'WU_XING_VECTOR_INVALID');
+  });
+
+  it('refuses a template that no longer hashes to its released identity', () => {
+    const binding = templateBinding();
+    expect(() => assertReleasedTemplate(binding)).not.toThrow();
+    expectPresentationRefusal(() => assertReleasedTemplate({ ...binding, structuralHash: `sha256:${'0'.repeat(64)}` }), 'PRESENTATION_INPUT_INVALID');
+  });
+});
+
+describe('N6: the long form', () => {
+  it('refuses a character the pinned face cannot measure', () => {
+    const refusal = expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.chapters[0]!.paragraphs[0] += ' Pfeil → hier.'; })), 'PRESENTATION_TEXT_UNMEASURABLE');
+    expect(refusal.detail).toMatchObject({ codepoint: 'U+2192' });
+  });
+
+  it('refuses a word wider than its measure instead of hyphenating or shrinking it', () => {
+    expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.chapters[1]!.paragraphs[1] += ` ${'Wort'.repeat(30)}`; })), 'PRESENTATION_WORD_EXCEEDS_MEASURE');
+  });
+
+  it('refuses a chapter outside the long-form word budget through the visual contract', () => {
+    expectVisualRefusal(() => project(fixture.model, contentWith((c) => { c.chapters[2]!.paragraphs = c.chapters[2]!.paragraphs.slice(0, 1); })), 'LONG_FORM_BUDGET_OUT_OF_CONTRACT');
+  });
+
+  it('refuses a layout that breaks its own geometry: an atomic module taller than a page', () => {
+    const tall = Array.from({ length: 900 }, (_, index) => `Wort${String(index)}`).join(' ');
+    const refusal = expectPresentationRefusal(() => paginateLongForm([{ id: 'k', kind: 'keyInsight', title: 'Titel', text: tall }], 0), 'PRESENTATION_LAYOUT_FINDING');
+    expect((refusal.detail['findings'] as readonly unknown[]).length).toBeGreaterThan(0);
+  });
+});
+
+describe('N7: customer text', () => {
+  it('refuses wording the Lexicon prohibits and a method the profile defers', () => {
+    const prohibited = expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.reflectionQuestions[1] = 'Du solltest das ändern.'; })), 'PRESENTATION_CUSTOMER_TEXT_REFUSED');
+    expect(prohibited.detail).toMatchObject({ classId: 'ADVICE_PREDICTION' });
+    expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.methodNote += ' Die Glückssäulen fehlen.'; })), 'PRESENTATION_CUSTOMER_TEXT_REFUSED');
+  });
+
+  it('refuses evidence chrome on the customer surface through the visual contract', () => {
+    expectVisualRefusal(() => project(fixture.model, contentWith((c) => { c.title = 'Reading sha256:abc'; })), 'EVIDENCE_CHROME_IN_CUSTOMER_SURFACE');
+  });
+});

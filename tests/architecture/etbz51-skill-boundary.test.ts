@@ -76,15 +76,28 @@ describe('ETBZ-51: the skill contract bundle is a leaf, reachable from no served
     ).toEqual([]);
   });
 
-  it('is imported by no OTHER application module either', () => {
+  // ETBZ-55 (ADR 0012) widens this leaf by exactly one consumer: the presentation
+  // projection reads the released Lexicon wording and the wording gates, and
+  // only through the module's index. Any other application module, or a deep
+  // import, is still an offender.
+  it('is imported by no OTHER application module than the presentation projection, and there only through its index', () => {
     const offenders: string[] = [];
+    let presentationUses = 0;
+    const presentationRoot = join(SRC_ROOT, 'application', 'presentation');
     for (const file of listFiles(join(SRC_ROOT, 'application'), '.ts')) {
       if (file.startsWith(SKILL_ROOT)) continue;
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
-        if (referencesSkill(specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
+        if (!referencesSkill(specifier)) continue;
+        if (file.startsWith(presentationRoot) && specifier === '../skill/index.js') {
+          presentationUses += 1;
+          continue;
+        }
+        offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }
     expect(offenders).toEqual([]);
+    // The allowance is used - otherwise it is a hole, not a decision.
+    expect(presentationUses).toBeGreaterThan(0);
   });
 
   it('detects the import it forbids (guard self-check)', () => {
