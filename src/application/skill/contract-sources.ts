@@ -57,10 +57,14 @@ export interface ContractSource {
   readonly confluencePageVersion: string;
   /** Only CURRENT authorises anything; the schema admits DRAFT solely to refuse it. */
   readonly status: ContractStatus;
-  /** Decision / release date as the page states it. */
+  /** The page's own "Decision date" line, `YYYY-MM-DD` - never a page-version timestamp. */
   readonly releasedOn: string;
   readonly owns: readonly ContractDomain[];
-  /** The contracts this page names as its own normative dependencies, by key. */
+  /**
+   * The contracts this page lists under "Normative dependencies", by key. A
+   * page that lists none, or lists another page only as "Related", has an
+   * empty list here.
+   */
   readonly dependsOn: readonly ContractKey[];
 }
 
@@ -81,9 +85,9 @@ export const RELEASED_CONTRACT_SOURCES: readonly ContractSource[] = [
     confluencePageId: '63012866',
     confluencePageVersion: '5',
     status: 'CURRENT',
-    releasedOn: '2026-09-18',
+    releasedOn: '2026-09-17',
     owns: ['SYMBOLIC_OPERATIONS'],
-    dependsOn: ['LONG_FORM'],
+    dependsOn: [],
   },
   {
     key: 'LONG_FORM',
@@ -92,7 +96,7 @@ export const RELEASED_CONTRACT_SOURCES: readonly ContractSource[] = [
     confluencePageId: '57802765',
     confluencePageVersion: '2',
     status: 'CURRENT',
-    releasedOn: '2026-09-18',
+    releasedOn: '2026-09-13',
     owns: ['NARRATIVE_STRUCTURE'],
     dependsOn: [],
   },

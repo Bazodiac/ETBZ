@@ -63,7 +63,8 @@ describe('ETBZ-51: the skill contract bundle is a leaf, reachable from no served
   it.each(['app', 'http', 'adapters', 'domain'])('is imported by no module under src/%s', (directory) => {
     const offenders: string[] = [];
     const root = join(SRC_ROOT, directory);
-    if (!existsSync(root)) return;
+    // Every layer this guard covers exists; a missing one would make the check vacuous.
+    expect(existsSync(root), `src/${directory} exists`).toBe(true);
     for (const file of listFiles(root, '.ts')) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (referencesSkill(specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);

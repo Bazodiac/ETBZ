@@ -114,7 +114,7 @@ export const TEN_GOD_VARIANTS: readonly TenGodVariantEnvelope[] = [
 ];
 /** Section 4.2 item 2 and section 6: the LLM never re-derives a Ten God from a polarity slogan. */
 export const VARIANT_HARD_RULE =
-  'no universal "Direct = opposite polarity / Indirect = same polarity" shortcut is allowed across all Ten Gods; each validated relation/variant is treated by its actual identity';
+  'No universal "Direct = opposite polarity / Indirect = same polarity" shortcut is allowed across all Ten Gods. Peer and Output pairs do not use Zheng/Pian labels in that uniform way. Each validated relation/variant is treated by its actual identity; the LLM never re-derives a Ten God from a generic polarity slogan.';
 
 export interface DepthOperator {
   readonly operatorId: string;

@@ -22,11 +22,13 @@ import {
   assertRunEvidenceBound,
   buildSkillContractBundle,
   contractBindingRef,
+  contractByKey,
   renderPortableSkillContractBundle,
   resolveContract,
   validateSkillContractBundleCore,
 } from '../../src/application/skill/index.js';
 import type {
+  ContractDomain,
   ContractKey,
   ContractSource,
   SkillContractBundle,
@@ -437,5 +439,160 @@ describe('N16: a bundle that is not the released content', () => {
     const candidate: SkillContractBundle = { ...core, structuralHash: structuralHash(core) };
     const error = expectRefusal(() => assertReleasedSkillContractBundle(candidate), 'BUNDLE_NOT_RELEASED');
     expect(error.message).toContain('not a released version');
+  });
+});
+
+describe('N17: guards the released content never exercises, on a crafted core', () => {
+  const validate = (core: SkillContractBundleCore): void => validateSkillContractBundleCore(core, BAZI_METHOD_REGISTRY_V1);
+
+  it('refuses a bundle version that is not a semver', () => {
+    const core = { ...coreOf(bundle), bundleVersion: '1.0', bundleRef: 'bazodiac-skill-contract-bundle@1.0' };
+    expectRefusal(() => validate(core), 'BUNDLE_SCHEMA_INVALID');
+  });
+
+  it('refuses a contract key nothing released', () => {
+    const stray = {
+      ...contractByKey(bundle, 'TERMINOLOGY_LEXICON'),
+      key: 'SKILL_OUTPUT', identity: null, confluencePageId: '1', owns: [], dependsOn: [],
+    } as unknown as ContractSource;
+    const core = withContracts(coreOf(bundle), [...bundle.contracts, stray]);
+    const error = expectRefusal(() => validate(core), 'BUNDLE_SCHEMA_INVALID');
+    expect(error.detail).toEqual({ key: 'SKILL_OUTPUT' });
+  });
+
+  it('refuses a contract that occurs twice', () => {
+    const core = withContracts(coreOf(bundle), [...bundle.contracts, { ...contractByKey(bundle, 'INTERPRETATION_LENS') }]);
+    const error = expectRefusal(() => validate(core), 'BUNDLE_SCHEMA_INVALID');
+    expect(error.message).toContain('occurs twice');
+  });
+
+  it('refuses a page id that is not a page reference', () => {
+    const core = replaceContract(coreOf(bundle), 'ANTI_BOILERPLATE', { confluencePageId: 'page-72056833' });
+    const error = expectRefusal(() => validate(core), 'BUNDLE_SCHEMA_INVALID');
+    expect(error.message).toContain('not a page reference');
+  });
+
+  it('refuses a decision date that is not YYYY-MM-DD, and an empty title', () => {
+    const dated = expectRefusal(() => validate(replaceContract(coreOf(bundle), 'INTERPRETATION_LENS', { releasedOn: '21.09.2026' })), 'BUNDLE_SCHEMA_INVALID');
+    expect(dated.message).toContain('no decision date');
+    expectRefusal(() => validate(replaceContract(coreOf(bundle), 'INTERPRETATION_LENS', { title: '   ' })), 'BUNDLE_SCHEMA_INVALID');
+  });
+
+  it('refuses a domain nothing defines', () => {
+    const owns = ['CROSS_READING_INDIVIDUALITY', 'PROSE_STYLE'] as unknown as readonly ContractDomain[];
+    const error = expectRefusal(() => validate(replaceContract(coreOf(bundle), 'ANTI_BOILERPLATE', { owns })), 'BUNDLE_SCHEMA_INVALID');
+    expect(error.message).toContain('unknown domain');
+  });
+
+  it('refuses a contract that depends on itself or on a contract not bound', () => {
+    expectRefusal(() => validate(replaceContract(coreOf(bundle), 'INTERPRETATION_LENS', { dependsOn: ['INTERPRETATION_LENS'] })), 'BUNDLE_SCHEMA_INVALID');
+    const unbound = ['SKILL_OUTPUT'] as unknown as readonly ContractKey[];
+    expectRefusal(() => validate(replaceContract(coreOf(bundle), 'INTERPRETATION_LENS', { dependsOn: unbound })), 'BUNDLE_SCHEMA_INVALID');
+  });
+
+  it('refuses a dependency cycle between contracts', () => {
+    const core = replaceContract(coreOf(bundle), 'INTERPRETATION_LENS', { dependsOn: ['METHOD_PROFILE', 'LONG_FORM', 'TERMINOLOGY_LEXICON'] });
+    const error = expectRefusal(() => validate(core), 'PRECEDENCE_CONFLICT');
+    expect(error.message).toContain('cycle');
+  });
+
+  it('refuses an empty precedence tier', () => {
+    const core = { ...coreOf(bundle), precedenceTiers: [...bundle.precedenceTiers, []] };
+    const error = expectRefusal(() => validate(core), 'PRECEDENCE_CONFLICT');
+    expect(error.message).toContain('empty');
+  });
+
+  it('refuses a tier that names a contract the bundle does not carry', () => {
+    const stray = ['SKILL_OUTPUT'] as unknown as readonly ContractKey[];
+    const core = { ...coreOf(bundle), precedenceTiers: [...bundle.precedenceTiers, stray] };
+    const error = expectRefusal(() => validate(core), 'PRECEDENCE_CONFLICT');
+    expect(error.detail).toEqual({ key: 'SKILL_OUTPUT' });
+  });
+
+  it('refuses a core validated against a registry that is not released, before any field comparison', () => {
+    const unreleased: MethodRegistry = { ...BAZI_METHOD_REGISTRY_V1, profileVersion: '1.0.1' };
+    const error = expectRefusal(() => validateSkillContractBundleCore(coreOf(bundle), unreleased), 'BUNDLE_BINDING_MISMATCH');
+    expect(error.message).toContain('not the released one');
+    expect(error.detail).toEqual({});
+  });
+
+  it('refuses a method reference that is not a string', () => {
+    const base = coreOf(bundle);
+    const core = {
+      ...base,
+      semanticEnvelope: {
+        ...base.semanticEnvelope,
+        nearNeighbourFeatures: [...base.semanticEnvelope.nearNeighbourFeatures, { feature: 'a coerced id', methodRefs: [{ toString: () => 'ten_gods' }] }],
+      },
+    } as unknown as SkillContractBundleCore;
+    const error = expectRefusal(() => validate(core), 'BUNDLE_SCHEMA_INVALID');
+    expect(error.message).toContain('not a method id string');
+  });
+
+  it('refuses contractByKey for a contract the core does not carry', () => {
+    const core = withContracts(coreOf(bundle), bundle.contracts.filter((source) => source.key !== 'INTERPRETATION_LENS'));
+    expectRefusal(() => contractByKey(core, 'INTERPRETATION_LENS'), 'REQUIRED_CONTRACT_MISSING');
+  });
+});
+
+describe('N18: a portable copy edited below the top level, and reference forms', () => {
+  it('refuses an extra key inside a vocabulary block, naming the path', () => {
+    const copy = portableCopy();
+    (copy['semanticEnvelope'] as Record<string, unknown>)['extraGuidance'] = 'be warmer';
+    const error = expectRefusal(() => acceptPortableSkillContractBundle(copy), 'CONTRACT_OVERRIDE_REFUSED');
+    expect(error.detail).toEqual({ path: 'bundle.semanticEnvelope.extraGuidance' });
+    expect(error.message).not.toContain('be warmer');
+  });
+
+  it('refuses an extra object inside a vocabulary block', () => {
+    const copy = portableCopy();
+    (copy['individuality'] as Record<string, unknown>)['pilot'] = { threshold: 'high' };
+    const error = expectRefusal(() => acceptPortableSkillContractBundle(copy), 'CONTRACT_OVERRIDE_REFUSED');
+    expect(error.detail).toEqual({ path: 'bundle.individuality.pilot' });
+  });
+
+  it('refuses a missing key inside a vocabulary block', () => {
+    const copy = portableCopy();
+    const wording = { ...(copy['wordingBoundaries'] as Record<string, unknown>) };
+    delete wording['metaphorConditions'];
+    copy['wordingBoundaries'] = wording;
+    const error = expectRefusal(() => acceptPortableSkillContractBundle(copy), 'CONTRACT_OVERRIDE_REFUSED');
+    expect(error.detail).toEqual({ path: 'bundle.wordingBoundaries.metaphorConditions' });
+  });
+
+  it.each(['__proto__', 'constructor', 'prototype'])('refuses the prototype key "%s" wherever it appears', (key) => {
+    // Injected as JSON text so that JSON.parse makes it an OWN property, the
+    // form in which it reaches a consumer.
+    const rendered = renderPortableSkillContractBundle(bundle);
+    expect(rendered.split('"individuality":{').length).toBe(2);
+    const copy = JSON.parse(rendered.replace('"individuality":{', `"individuality":{"${key}":{"polluted":"yes"},`)) as Record<string, unknown>;
+    const error = expectRefusal(() => acceptPortableSkillContractBundle(copy), 'BUNDLE_SCHEMA_INVALID');
+    expect(error.detail).toEqual({ path: `bundle.individuality.${key}` });
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+  });
+
+  it('refuses a page address for a page that released an identity - the wrong form, not another version', () => {
+    expectRefusal(() => resolveContract(bundle, 'confluence:67371029@1'), 'UNKNOWN_CONTRACT_IDENTITY');
+    const evidence = evidenceOf(bundle);
+    const wrongForm = {
+      ...evidence,
+      contracts: evidence.contracts.map((binding) =>
+        binding.contractRef === 'grounded-reflective-synthesis-lens@1.0.0'
+          ? { contractRef: 'confluence:67371029@1', confluencePageId: '67371029', confluencePageVersion: '1' }
+          : binding,
+      ),
+    };
+    expectRefusal(() => assertRunEvidenceBound(bundle, wrongForm), 'UNKNOWN_CONTRACT_IDENTITY');
+  });
+
+  it('refuses run evidence that binds a contract twice, even identically', () => {
+    const evidence = evidenceOf(bundle);
+    const lexicon = evidence.contracts.find((binding) => binding.contractRef === 'terminology-wording-lexicon@1.0.0');
+    if (lexicon === undefined) throw new Error('fixture: lexicon binding missing');
+    const error = expectRefusal(
+      () => assertRunEvidenceBound(bundle, { ...evidence, contracts: [...evidence.contracts, { ...lexicon }] }),
+      'BUNDLE_SCHEMA_INVALID',
+    );
+    expect(error.detail).toEqual({ key: 'TERMINOLOGY_LEXICON' });
   });
 });

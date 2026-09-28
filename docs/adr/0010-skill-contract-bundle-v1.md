@@ -42,7 +42,7 @@ source of truth as an unversioned text dump and without any new BaZi rule.
 `RELEASED_BUNDLE_HASHES` freezes the content per released version:
 
 ```
-1.0.0   sha256:0654a7e0c3b6ce62411c481428db4a718351e7d030a8de334b5129f3eca09039
+1.0.0   sha256:1c8f80c38b57748e65035a6bd2d671604fb19574cdf3355326352fbe0e19564e
 ```
 
 `assertReleasedSkillContractBundle` refuses any other content (`BUNDLE_NOT_RELEASED`).
@@ -60,11 +60,15 @@ The pattern is exactly the Method Registry's (ADR 0006).
 | `TERMINOLOGY_LEXICON` | `terminology-wording-lexicon@1.0.0` | 67600385 | 1 | CUSTOMER_WORDING |
 | `ANTI_BOILERPLATE` | `cross-reading-individuality-contract@1.0.0` | 72056833 | 1 | CROSS_READING_INDIVIDUALITY |
 
-Every value was read back from Confluence on 2026-09-28 before it was written
-here. A run's evidence references a contract by its released identity, or — for
-the Long-Form Contract, which released none — by the repository address
+Every page id and version was read back from Confluence on 2026-09-28 before it
+was written here. Each entry also carries the page's own **Decision date** line as
+`releasedOn` (2026-09-17, 2026-09-13, 2026-09-21, 2026-09-21, 2026-09-28 — never a
+page-version timestamp) and the page's **Normative dependencies** list as
+`dependsOn` (a page that lists another only as "Related" depends on nothing here).
+A run's evidence references a contract by its released identity, or — for the
+Long-Form Contract, which released none — by the repository address
 `confluence:57802765@2`. That address is a pin, not a claim that the page released
-an identity.
+an identity, and it is the wrong reference form for any page that did release one.
 
 The bundle also pins what the repository already binds and refuses to disagree
 with it (`BUNDLE_BINDING_MISMATCH`): `METHOD_PROFILE_REF`, the released registry
@@ -76,10 +80,21 @@ registry fails with the registry's own `REGISTRY_NOT_RELEASED`.
 
 ### 3. Precedence is domain-scoped
 
-The pages define precedence in three clauses that a single total order would
-misstate: the Lens yields to a released terminology contract, the Lexicon yields
-to the Lens, and both yield to the Method Profile and the Long-Form Contract. The
-bundle therefore records **tiers** and **owned domains**:
+The pages define precedence in four clauses that a single total order would
+misstate. The Lens: "If this page conflicts with the current Rebaseline, Method
+Profile, Long-Form Contract, FuFirE facts, or a released terminology contract, the
+higher-authority contract wins." The Lexicon: "Where this page conflicts with FuFirE
+validated facts, the Method Profile, the Interpretation Lens, the Long-Form Contract,
+or the current Rebaseline, the higher-authority contract wins." The Anti-Boilerplate
+contract: "Where this page conflicts with FuFirE validated facts, the Method
+Profile, the Long-Form Contract, the Interpretation Lens, the Lexicon or the current
+Rebaseline, the higher-authority contract wins." Each of the three names the other
+two as higher authority; what resolves that is **ownership**, which the pages also
+state — the Lens "defines semantic permission, not final copy" and names ETBZ-37 as
+owning "cross-reading uniqueness/evaluation policy" (Lens section 20), the Lexicon
+"owns customer terminology and wording boundaries only", the Anti-Boilerplate
+contract "owns cross-reading individuality … and nothing else". The bundle
+therefore records **tiers** and **owned domains**:
 
 ```
 tier 1  METHOD_PROFILE                                   decides everything below
@@ -106,10 +121,18 @@ represents. This is the executable representation the Method Profile already
 established for itself: Confluence owns the text, the code carries the closed sets
 a machine can hold a run to, and the hash freezes them together.
 
-The modules carry **no sentence to reuse** — the Lexicon is a semantic constraint,
-not a phrase bank (67600385 section 14) — and **no number**: the bundle refuses a
-numeric value anywhere in its contract data (`BUNDLE_SCHEMA_INVALID`), so no
-threshold, weight or score can enter through a contract file.
+The modules carry **no customer sentence beyond the Lexicon's own preferred
+patterns** (67600385 sections 7 and 8, which the page itself marks "Preferred") —
+the Lexicon is a semantic constraint, not a phrase bank (section 14) — and **no
+number**: the bundle refuses a numeric value anywhere in its contract data
+(`BUNDLE_SCHEMA_INVALID`), so no threshold, weight or score can enter through a
+contract file. Where a page names no method, none is bound: the terminology matrix
+binds a `methodRef` only on the five rows whose MethodRef column names one, and
+carries that column verbatim on the other nine. The Lens's near-neighbour features
+and the two policy-method references (`provisionality_unknown_time`,
+`source_warnings`) are repository-derived readings of the registry's own operation
+descriptions, not page-stated mappings; every such reference must still be an
+approved registry method (section 5).
 
 ### 5. A contract file holds no symbolic authority
 
@@ -117,19 +140,24 @@ Every `methodRefs` entry in the bundle must be an approved method of the release
 registry (`METHOD_REF_OUT_OF_PROFILE`), and the bundle names the whole minimum
 sellable core. Contract data that carries `methods`, `facts`, `factKinds`,
 `operations`, `enabledSets` or a deterministic mapping under any key is refused
-outright (`SYMBOLIC_AUTHORITY_REFUSED`). The registry stays the only place a
-method or a fact kind exists.
+outright (`SYMBOLIC_AUTHORITY_REFUSED`). That key list is a denylist and defence in
+depth only; the gate that cannot be talked around is the content equality with the
+repository bundle plus the frozen hash. The registry stays the only place a method
+or a fact kind exists.
 
 ### 6. The portable copy is a carrier, never an authority
 
 `renderPortableSkillContractBundle` emits the canonical JSON a Skill package ships
 beside its prompt; `npm run etbz51:bundle` prints it from the compiled module.
 `acceptPortableSkillContractBundle` takes such a copy back and returns **the
-repository's bundle**, never the copy: a copy with an extra key
-(`BUNDLE_SCHEMA_INVALID`), a `DRAFT` status (`DRAFT_CONTRACT_REFUSED`), a changed
-page version or a widened list even with a recomputed hash
+repository's bundle**, never the copy: a copy with a prototype key at any depth or
+an extra top-level key (`BUNDLE_SCHEMA_INVALID`), a `DRAFT` status
+(`DRAFT_CONTRACT_REFUSED`), an extra or missing key inside a vocabulary block, a
+changed page version or a widened list even with a recomputed hash
 (`CONTRACT_OVERRIDE_REFUSED`), or a different published hash
 (`BUNDLE_NOT_RELEASED`) is refused with the path that differs and never the value.
+Equality is canonical-content equality: a copy whose keys are merely reordered is
+the same content.
 
 ### 7. Drift test for a run
 
@@ -150,6 +178,7 @@ that nothing under `src/` imports the bundle until ETBZ-52 does.
 `scripts/verify-etbz51-skill-contract-bundle.mjs` (`npm run guards:etbz51`, part of
 `ci-verify.sh`) weakens each guard in turn with the ETBZ-30B kill semantics — a
 named killer test must fail an assertion — and requires the suites to turn red.
+Every `throw` site of the bundle module has a mutant and a test that names it.
 
 ## Consequences
 

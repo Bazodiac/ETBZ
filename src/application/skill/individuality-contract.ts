@@ -94,12 +94,12 @@ export interface GoldenRunMinimumItem {
 
 /** Section 8: what a Golden Product Proof must record to be bound to this contract. */
 export const GOLDEN_RUN_MINIMUM: readonly GoldenRunMinimumItem[] = [
-  { itemId: '8.1', checkIds: ['6.1'], requirement: 'one near-neighbour case with Δ named, one distant foil named, the claim-graph and plan differences by claim id and plan element, and the blind-attribution outcome against both foils' },
-  { itemId: '8.2', checkIds: ['6.3', '6.4'], requirement: 'one fact-mutation case and one fact-removal case, each with the cone listed before the run and the in-cone / out-of-cone outcome after it, including the provisionality direction' },
-  { itemId: '8.3', checkIds: ['6.5'], requirement: 'one anchor-ablation reading of at least one central-motif passage, quoting the residue' },
-  { itemId: '8.4', checkIds: ['6.2'], requirement: 'the swap re-validation of the Golden Reading against the near-neighbour chart and the distant foil' },
-  { itemId: '8.5', checkIds: ['6.7'], requirement: 'the cross-reading reuse scan over the Golden Reading and the near-neighbour reading' },
-  { itemId: '8.6', checkIds: [], requirement: 'every reason code raised, with the passages or claim ids it cites, and - for BLOCKING codes - the proposed smallest repair' },
+  { itemId: '8.1', checkIds: ['6.1'], requirement: 'one near-neighbour case (6.1) with Δ named, one distant foil D named, the claim-graph and plan differences listed by claim id and plan element, and the blind-attribution outcome against both foils' },
+  { itemId: '8.2', checkIds: ['6.3', '6.4'], requirement: 'one fact-mutation case (6.3) and one fact-removal case (6.4) — Lens §17 B requires both — each with the cone listed before the run and the in-cone / out-of-cone outcome after it, including the provisionality direction' },
+  { itemId: '8.3', checkIds: ['6.5'], requirement: 'one anchor-ablation reading (6.5) of at least one central-motif passage, quoting the residue' },
+  { itemId: '8.4', checkIds: ['6.2'], requirement: 'the swap re-validation (6.2) of the Golden Reading against the near-neighbour chart N and the distant foil D' },
+  { itemId: '8.5', checkIds: ['6.7'], requirement: 'the cross-reading reuse scan (6.7) over the Golden Reading and the near-neighbour reading — Lens §17 C: boilerplate reuse is measured' },
+  { itemId: '8.6', checkIds: [], requirement: 'every reason code raised, with the passages or claim ids it cites, and — for BLOCKING codes — the proposed smallest repair' },
 ];
 export const GOLDEN_RUN_MINIMUM_SOURCE = contract('8');
 

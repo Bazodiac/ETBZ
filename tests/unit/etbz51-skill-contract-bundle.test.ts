@@ -69,21 +69,46 @@ describe('ETBZ-51: the released bundle', () => {
     expect(bundle.bundleRef).toBe(SKILL_CONTRACT_BUNDLE_REF);
     const { structuralHash: published, ...core } = bundle;
     expect(published).toBe(structuralHash(core));
+    // The released hash, stated in full: a changed vocabulary, date or page
+    // version is a new bundle, and this literal is what makes that visible.
+    expect(published).toBe('sha256:1c8f80c38b57748e65035a6bd2d671604fb19574cdf3355326352fbe0e19564e');
     expect(RELEASED_BUNDLE_HASHES['1.0.0']).toBe(published);
     expect(() => assertReleasedSkillContractBundle(bundle)).not.toThrow();
   });
 
   it('binds exactly the five released contract sources by page id and released page version', () => {
-    const table = bundle.contracts.map((source) => [
-      source.key, source.identity, source.confluencePageId, source.confluencePageVersion, source.status,
-    ]);
     // Each value read back from Confluence on 2026-09-28; none is derived here.
-    expect(table).toEqual([
-      ['METHOD_PROFILE', 'bazi-method-profile@1.0.0', '63012866', '5', 'CURRENT'],
-      ['LONG_FORM', null, '57802765', '2', 'CURRENT'],
-      ['INTERPRETATION_LENS', 'grounded-reflective-synthesis-lens@1.0.0', '67371029', '1', 'CURRENT'],
-      ['TERMINOLOGY_LEXICON', 'terminology-wording-lexicon@1.0.0', '67600385', '1', 'CURRENT'],
-      ['ANTI_BOILERPLATE', 'cross-reading-individuality-contract@1.0.0', '72056833', '1', 'CURRENT'],
+    // `releasedOn` is the page's own "Decision date" line, never a page-version
+    // timestamp; `dependsOn` is the page's "Normative dependencies" list.
+    expect(bundle.contracts).toEqual([
+      {
+        key: 'METHOD_PROFILE', title: 'ETBZ — BaZi Method Profile v1', identity: 'bazi-method-profile@1.0.0',
+        confluencePageId: '63012866', confluencePageVersion: '5', status: 'CURRENT', releasedOn: '2026-09-17',
+        owns: ['SYMBOLIC_OPERATIONS'], dependsOn: [],
+      },
+      {
+        key: 'LONG_FORM', title: 'ETBZ — Long-Form Meta-Narrative Contract v1', identity: null,
+        confluencePageId: '57802765', confluencePageVersion: '2', status: 'CURRENT', releasedOn: '2026-09-13',
+        owns: ['NARRATIVE_STRUCTURE'], dependsOn: [],
+      },
+      {
+        key: 'INTERPRETATION_LENS', title: 'ETBZ — Grounded Reflective Synthesis Interpretation Lens v1',
+        identity: 'grounded-reflective-synthesis-lens@1.0.0',
+        confluencePageId: '67371029', confluencePageVersion: '1', status: 'CURRENT', releasedOn: '2026-09-21',
+        owns: ['SEMANTIC_ENVELOPE'], dependsOn: ['METHOD_PROFILE', 'LONG_FORM'],
+      },
+      {
+        key: 'TERMINOLOGY_LEXICON', title: 'ETBZ — Terminology & Wording Lexicon v1',
+        identity: 'terminology-wording-lexicon@1.0.0',
+        confluencePageId: '67600385', confluencePageVersion: '1', status: 'CURRENT', releasedOn: '2026-09-21',
+        owns: ['CUSTOMER_WORDING'], dependsOn: ['METHOD_PROFILE', 'LONG_FORM', 'INTERPRETATION_LENS'],
+      },
+      {
+        key: 'ANTI_BOILERPLATE', title: 'ETBZ — Cross-Reading Individuality / Anti-Boilerplate Contract v1',
+        identity: 'cross-reading-individuality-contract@1.0.0',
+        confluencePageId: '72056833', confluencePageVersion: '1', status: 'CURRENT', releasedOn: '2026-09-28',
+        owns: ['CROSS_READING_INDIVIDUALITY'], dependsOn: ['METHOD_PROFILE', 'LONG_FORM', 'INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON'],
+      },
     ]);
     expect(bundle.contracts.map((source) => source.key)).toEqual([...CONTRACT_KEYS]);
     expect(bundle.parentDecision).toEqual({
@@ -172,12 +197,15 @@ describe('ETBZ-51: the released bundle', () => {
     }
   });
 
-  it('publishes no number and carries no prose field', () => {
+  it('publishes no number and no prompt, prose, statement, paragraph or sentence field', () => {
+    // Normative rule text (`text`, `requirement`, the Lexicon's own preferred
+    // patterns) is contract data the pages state; what must be absent is a
+    // field a Skill could read as prose to emit or a prompt to run.
     const numbers: string[] = [];
     const proseKeys: string[] = [];
     walk(bundle, (path, key, entry) => {
       if (typeof entry === 'number') numbers.push(path);
-      if (key !== null && /^(prompt|prose|statement|paragraph|sentence)$/u.test(key)) proseKeys.push(path);
+      if (key !== null && /^(prompt|prompts|prose|statement|paragraph|sentence|template)$/u.test(key)) proseKeys.push(path);
     });
     expect(numbers).toEqual([]);
     expect(proseKeys).toEqual([]);
@@ -215,7 +243,8 @@ describe('ETBZ-51: the Interpretation Lens as values (67371029 v1)', () => {
       expect(family.methodRefs).toEqual(['ten_gods']);
       expect(family.source.section).toMatch(/^5\.\d$/u);
     }
-    expect(envelope.variantHardRule).toContain('no universal');
+    expect(envelope.variantHardRule).toContain('No universal');
+    expect(envelope.variantHardRule).toContain('never re-derives a Ten God');
   });
 
   it('carries the depth operators, claim types, dimensions, Barnum patterns and near-neighbour features', () => {
@@ -249,6 +278,16 @@ describe('ETBZ-51: the Terminology & Wording Lexicon as values (67600385 v1)', (
       expect(term.sourceTreatment.length).toBeGreaterThan(0);
     }
     expect(wording.chartTerminology.find((term) => term.term.startsWith('Day Master'))?.methodRefs).toEqual(['day_master']);
+    // A method is bound only where the page's MethodRef column names one; the
+    // other nine rows carry that column verbatim and bind nothing.
+    const bound = wording.chartTerminology.filter((term) => term.methodRefs.length > 0).map((term) => [term.term, term.methodRefs]);
+    expect(bound).toEqual([
+      ['Four Pillars / 四柱', ['four_pillars']],
+      ['Day Master / 日主', ['day_master']],
+      ['Hidden Stems / 藏干', ['hidden_stems']],
+      ['positional context', ['positional_context']],
+      ['recurrence / identity observation', ['fact_relations']],
+    ]);
   });
 
   it('carries the Ten-God wording for five families and ten relations, in both languages', () => {

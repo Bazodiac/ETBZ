@@ -15,9 +15,10 @@
 //  - it defines no method, fact kind, operation or mapping - every `methodRefs`
 //    entry must be an approved method of the released registry, and a bundle
 //    that carries `methods`, `facts` or a mapping is refused outright;
-//  - it holds no customer prose and no prompt - it is what a prompt is bound to;
+//  - it holds no prompt and no customer prose beyond the Lexicon's own
+//    "preferred pattern" entries - it is what a prompt is bound to;
 //  - it is never read from disk - a portable copy is a carrier that must equal
-//    the repository's bundle byte for byte, or it is refused.
+//    the repository's bundle in canonical content, or it is refused.
 //
 // Every refusal is a `SkillContractError` with a named code (see errors.ts);
 // the first violation throws and no partial bundle exists.
@@ -110,7 +111,7 @@ export interface SkillRunContractEvidence {
  * a new hash and a Confluence re-binding - never an in-place edit.
  */
 export const RELEASED_BUNDLE_HASHES: Readonly<Record<string, string>> = {
-  '1.0.0': 'sha256:0654a7e0c3b6ce62411c481428db4a718351e7d030a8de334b5129f3eca09039',
+  '1.0.0': 'sha256:1c8f80c38b57748e65035a6bd2d671604fb19574cdf3355326352fbe0e19564e',
 };
 
 // -----------------------------------------------------------------------------
@@ -119,18 +120,49 @@ export const RELEASED_BUNDLE_HASHES: Readonly<Record<string, string>> = {
 
 const IDENTITY_PATTERN = /^[a-z][a-z0-9-]*@\d+\.\d+\.\d+$/u;
 const PAGE_ID_PATTERN = /^\d+$/u;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const HASH_PATTERN = /^sha256:[0-9a-f]{64}$/u;
 
 /**
  * Keys under which a contract file would be carrying symbolic authority. The
  * registry is the only place methods, facts, operations and mappings exist;
- * a bundle naming them anywhere in its contract data is refused.
+ * a bundle naming them anywhere in its contract data is refused. This is a
+ * name denylist and defence in depth only: the gate that cannot be talked
+ * around is the content equality with the repository bundle plus the frozen
+ * hash - a synonym slips past this list and still fails those.
  */
 const SYMBOLIC_AUTHORITY_KEYS: ReadonlySet<string> = new Set([
   'methods', 'method', 'factKinds', 'factKind', 'facts', 'fact', 'factRefs',
   'operations', 'operation', 'approvedDeterministicMappings', 'deterministicMappings',
   'mappings', 'mapping', 'lookupTable', 'lookup', 'enabledSets',
 ]);
+
+/**
+ * Keys a parsed JSON document may carry as OWN properties that a later
+ * assignment would turn into prototype manipulation. `JSON.parse` keeps them
+ * as data; zod's record output does not. They are refused on the raw input,
+ * before any parsing, so no copy can smuggle one past the comparison.
+ */
+const DANGEROUS_KEYS: ReadonlySet<string> = new Set(['__proto__', 'constructor', 'prototype']);
+
+function refuseDangerousKeys(value: unknown, path: string): void {
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => refuseDangerousKeys(entry, `${path}[${index}]`));
+    return;
+  }
+  if (value !== null && typeof value === 'object') {
+    for (const key of Object.keys(value)) {
+      if (DANGEROUS_KEYS.has(key)) {
+        throw new SkillContractError(
+          'BUNDLE_SCHEMA_INVALID',
+          `${path}.${key}: a prototype key is not contract data`,
+          { path: `${path}.${key}` },
+        );
+      }
+      refuseDangerousKeys((value as Record<string, unknown>)[key], `${path}.${key}`);
+    }
+  }
+}
 
 function refuseSymbolicAuthority(value: unknown, path: string): void {
   if (typeof value === 'number') {
@@ -169,7 +201,14 @@ function collectMethodRefs(core: SkillContractBundleCore): readonly { path: stri
       for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
         if (key === 'methodRefs' && Array.isArray(entry)) {
           entry.forEach((methodId, index) => {
-            found.push({ path: `${path}.methodRefs[${index}]`, methodId: String(methodId) });
+            if (typeof methodId !== 'string') {
+              throw new SkillContractError(
+                'BUNDLE_SCHEMA_INVALID',
+                `${path}.methodRefs[${index}] is not a method id string`,
+                { path: `${path}.methodRefs[${index}]` },
+              );
+            }
+            found.push({ path: `${path}.methodRefs[${index}]`, methodId });
           });
         } else {
           walk(entry, `${path}.${key}`);
@@ -238,6 +277,9 @@ export function validateSkillContractBundleCore(core: SkillContractBundleCore, r
     if (!PAGE_ID_PATTERN.test(source.confluencePageId) || !PAGE_ID_PATTERN.test(source.confluencePageVersion)) {
       throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${source.key}" page id or page version is not a page reference`, { key: source.key });
     }
+    if (source.title.trim() === '' || !DATE_PATTERN.test(source.releasedOn)) {
+      throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${source.key}" has no title or no decision date`, { key: source.key });
+    }
     for (const domain of source.owns) {
       if (!(CONTRACT_DOMAINS as readonly string[]).includes(domain)) {
         throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${source.key}" owns unknown domain "${domain}"`, { key: source.key });
@@ -249,10 +291,27 @@ export function validateSkillContractBundleCore(core: SkillContractBundleCore, r
       }
     }
   }
+  // A dependency cycle would make "the higher-authority contract wins" undecidable.
+  const visiting = new Set<ContractKey>();
+  const settled = new Set<ContractKey>();
+  const visit = (key: ContractKey, trail: readonly ContractKey[]): void => {
+    if (settled.has(key)) return;
+    if (visiting.has(key)) {
+      throw new SkillContractError('PRECEDENCE_CONFLICT', `contract dependencies form a cycle: ${[...trail, key].join(' -> ')}`, { cycle: [...trail, key] });
+    }
+    visiting.add(key);
+    for (const dependency of byKey.get(key)?.dependsOn ?? []) visit(dependency, [...trail, key]);
+    visiting.delete(key);
+    settled.add(key);
+  };
+  for (const key of CONTRACT_KEYS) visit(key, []);
 
   // 3. Precedence: every contract in exactly one tier; every domain exactly one owner.
   const tierOf = new Map<ContractKey, number>();
   core.precedenceTiers.forEach((tier, index) => {
+    if (tier.length === 0) {
+      throw new SkillContractError('PRECEDENCE_CONFLICT', 'a precedence tier is empty; a rank nothing holds decides nothing');
+    }
     for (const key of tier) {
       if (!byKey.has(key)) {
         throw new SkillContractError('PRECEDENCE_CONFLICT', `precedence names "${key}", which the bundle does not carry`, { key });
@@ -404,7 +463,7 @@ export function buildSkillContractBundle(registry: MethodRegistry = BAZI_METHOD_
   return { ...core, structuralHash: structuralHash(core) };
 }
 
-/** Fails closed unless `bundle` is, byte for byte, a released bundle version. */
+/** Fails closed unless `bundle` is, in canonical content, a released bundle version. */
 export function assertReleasedSkillContractBundle(bundle: SkillContractBundle): void {
   const actual = structuralHash(coreOf(bundle));
   const released = RELEASED_BUNDLE_HASHES[bundle.bundleVersion];
@@ -436,7 +495,9 @@ function classifyRef(bundle: SkillContractBundleCore, ref: string): RefClassific
     if (identityName !== null && source.identity !== null && source.identity.startsWith(`${identityName}@`)) {
       return { kind: 'OTHER_VERSION', source };
     }
-    if (pageMatch !== null && source.confluencePageId === pageMatch[1]) {
+    // A page address is the reference form ONLY for a page that released no
+    // identity; for any other page it is the wrong form, not another version.
+    if (pageMatch !== null && source.identity === null && source.confluencePageId === pageMatch[1]) {
       return { kind: 'OTHER_VERSION', source };
     }
   }
@@ -444,9 +505,11 @@ function classifyRef(bundle: SkillContractBundleCore, ref: string): RefClassific
 }
 
 /**
- * The released contract a reference names - a released identity or a
- * `confluence:<page>@<version>` address. Anything else is unknown: a name at
- * another version is a different contract, not this one.
+ * The released contract a reference names - a released identity, or the
+ * `confluence:<page>@<version>` address of a page that released no identity.
+ * Anything else is unknown: a name at another version is a different
+ * contract, not this one, and a page address for an identity-bearing page is
+ * the wrong reference form.
  */
 export function resolveContract(bundle: SkillContractBundleCore, ref: string): ContractSource {
   const found = classifyRef(bundle, ref);
@@ -513,6 +576,13 @@ export function assertRunEvidenceBound(bundle: SkillContractBundleCore, evidence
       );
     }
     const source = assertContractSource(bundle, binding);
+    if (seen.has(source.key)) {
+      throw new SkillContractError(
+        'BUNDLE_SCHEMA_INVALID',
+        `the run's evidence binds "${source.key}" twice; nothing here deduplicates`,
+        { key: source.key },
+      );
+    }
     seen.add(source.key);
   }
   for (const key of CONTRACT_KEYS) {
@@ -576,6 +646,11 @@ const portableSchema = z.strictObject({
 });
 
 function firstDifference(expected: unknown, actual: unknown, path: string): string | null {
+  // A key present on one side only: the difference IS the path, and there is
+  // nothing to canonicalise (canonicalJson refuses `undefined`).
+  if (expected === undefined || actual === undefined) {
+    return expected === actual ? null : path;
+  }
   if (Array.isArray(expected) || Array.isArray(actual)) {
     if (!Array.isArray(expected) || !Array.isArray(actual)) return path;
     if (expected.length !== actual.length) return `${path}.length`;
@@ -599,16 +674,18 @@ function firstDifference(expected: unknown, actual: unknown, path: string): stri
 }
 
 /**
- * Accepts a portable copy ONLY if it is exactly the bundle this repository
- * binds. The copy is never returned: the repository's bundle is. A copy that
- * carries a draft, an extra key, a changed page version, an added method or a
- * different hash is refused with the reason - a carrier cannot become an
- * authority by being edited.
+ * Accepts a portable copy ONLY if it equals, in canonical content, the bundle
+ * this repository binds. The copy is never returned: the repository's bundle
+ * is. A copy that carries a prototype key, a draft, an extra or missing key at
+ * any depth, a changed page version, an added method or a different hash is
+ * refused with the reason and the path - a carrier cannot become an authority
+ * by being edited.
  */
 export function acceptPortableSkillContractBundle(
   input: unknown,
   registry: MethodRegistry = BAZI_METHOD_REGISTRY_V1,
 ): SkillContractBundle {
+  refuseDangerousKeys(input, 'bundle');
   const parsed = portableSchema.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];

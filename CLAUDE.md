@@ -144,7 +144,7 @@ ETBZ-51 adds `src/application/skill/`: the Skill Contract Bundle
 page version, carries the Lens / Lexicon / Anti-Boilerplate vocabularies as values, pins the
 repository's own version markers and is frozen by `RELEASED_BUNDLE_HASHES` like the registry. It is a
 leaf until ETBZ-52 consumes it (`tests/architecture/etbz51-skill-boundary.test.ts`); a portable copy is
-accepted only if it equals the repository bundle byte for byte, and a run's recorded contract set is
+accepted only if it equals the repository bundle in canonical content, and a run's recorded contract set is
 checked against it by `assertRunEvidenceBound`.
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
