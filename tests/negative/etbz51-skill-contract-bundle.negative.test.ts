@@ -478,6 +478,26 @@ describe('N17: guards the released content never exercises, on a crafted core', 
     expectRefusal(() => validate(replaceContract(coreOf(bundle), 'INTERPRETATION_LENS', { title: '   ' })), 'BUNDLE_SCHEMA_INVALID');
   });
 
+  it.each(['2026-99-99', '2026-02-30', '2026-13-01', '2026-00-10', '2025-02-29', '2026-04-31'])(
+    'refuses a decision date that has the shape but is no calendar date: %s',
+    (releasedOn) => {
+      const error = expectRefusal(() => validate(replaceContract(coreOf(bundle), 'INTERPRETATION_LENS', { releasedOn })), 'BUNDLE_SCHEMA_INVALID');
+      expect(error.message).toContain('no decision date');
+    },
+  );
+
+  it('accepts the leap day that exists (guard self-check)', () => {
+    // The released content never carries one; a crafted core proves the check reads the calendar, not just the shape.
+    const core = replaceContract(coreOf(bundle), 'INTERPRETATION_LENS', { releasedOn: '2024-02-29' });
+    expect(() => validate(core)).not.toThrow();
+  });
+
+  it('refuses a dependency listed twice', () => {
+    const core = replaceContract(coreOf(bundle), 'INTERPRETATION_LENS', { dependsOn: ['METHOD_PROFILE', 'LONG_FORM', 'METHOD_PROFILE'] });
+    const error = expectRefusal(() => validate(core), 'BUNDLE_SCHEMA_INVALID');
+    expect(error.message).toContain('lists a dependency twice');
+  });
+
   it('refuses a domain nothing defines', () => {
     const owns = ['CROSS_READING_INDIVIDUALITY', 'PROSE_STYLE'] as unknown as readonly ContractDomain[];
     const error = expectRefusal(() => validate(replaceContract(coreOf(bundle), 'ANTI_BOILERPLATE', { owns })), 'BUNDLE_SCHEMA_INVALID');

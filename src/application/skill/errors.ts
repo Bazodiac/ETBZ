@@ -22,7 +22,7 @@ export const SKILL_CONTRACT_ERROR_CODES = [
   'CONTRACT_OVERRIDE_REFUSED',
   /** Two contracts claim one domain, a contract sits in no tier or two tiers, or a domain has no owner. */
   'PRECEDENCE_CONFLICT',
-  /** A portable bundle that is not the declared shape (path and code only, never the value). */
+  /** A bundle core, a portable copy or a run-evidence record that is not the declared shape (path and code only, never the value). */
   'BUNDLE_SCHEMA_INVALID',
   /** The bundle content is not the hash frozen for its version. */
   'BUNDLE_NOT_RELEASED',

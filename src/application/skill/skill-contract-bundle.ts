@@ -123,6 +123,17 @@ const PAGE_ID_PATTERN = /^\d+$/u;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const HASH_PATTERN = /^sha256:[0-9a-f]{64}$/u;
 
+/** A real calendar date in `YYYY-MM-DD`, checked without a clock: shape, month range and month length. */
+function isCalendarDate(text: string): boolean {
+  if (!DATE_PATTERN.test(text)) return false;
+  const [year, month, day] = text.split('-').map((part) => Number.parseInt(part, 10));
+  if (year === undefined || month === undefined || day === undefined) return false;
+  if (month < 1 || month > 12 || day < 1) return false;
+  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  const lengths = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return day <= (lengths[month - 1] ?? 0);
+}
+
 /**
  * Keys under which a contract file would be carrying symbolic authority. The
  * registry is the only place methods, facts, operations and mappings exist;
@@ -277,8 +288,11 @@ export function validateSkillContractBundleCore(core: SkillContractBundleCore, r
     if (!PAGE_ID_PATTERN.test(source.confluencePageId) || !PAGE_ID_PATTERN.test(source.confluencePageVersion)) {
       throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${source.key}" page id or page version is not a page reference`, { key: source.key });
     }
-    if (source.title.trim() === '' || !DATE_PATTERN.test(source.releasedOn)) {
+    if (source.title.trim() === '' || !isCalendarDate(source.releasedOn)) {
       throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${source.key}" has no title or no decision date`, { key: source.key });
+    }
+    if (new Set(source.dependsOn).size !== source.dependsOn.length) {
+      throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${source.key}" lists a dependency twice`, { key: source.key });
     }
     for (const domain of source.owns) {
       if (!(CONTRACT_DOMAINS as readonly string[]).includes(domain)) {
