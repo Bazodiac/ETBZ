@@ -35,3 +35,4 @@ assets
 vitest.config.ts
 eslint.config.js
 README.md
+CLAUDE.md
