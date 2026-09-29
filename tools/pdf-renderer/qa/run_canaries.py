@@ -774,6 +774,60 @@ def c_mark_col_rebound(work):
     wrap_builder("tenGods", rebind)
 
 
+# Review round 7: print-only CSS, images that carry text, covers drawn as a border or a stroke, a field repainted by an
+# inset shadow, and the mark looks round 7 tightened.
+INVENTED_IMAGE = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='24'%3E"
+                  "%3Ctext x='0' y='18' font-size='16'%3EErfundener Satz%3C/text%3E%3C/svg%3E")
+
+
+def c_print_only_hide(work):
+    # A rule that applies only when printing hides the page titles in the PDF.
+    inject_css("@media print{.sheet .h1{visibility:hidden}}")
+
+
+def c_svg_image(work):
+    append_to("methodNote", f'<svg style="position:absolute;left:20mm;top:250mm;width:60mm;height:6mm"><image href="{INVENTED_IMAGE}" width="240" height="24"/></svg>')
+
+
+def c_css_background_url(work):
+    inject_css(f'.content{{background-image:url("{INVENTED_IMAGE}")}}')
+
+
+def c_content_url(work):
+    inject_css(f'.kicker{{content:url("{INVENTED_IMAGE}")}}')
+
+
+def c_partial_top_border(work):
+    # The partial-top cover drawn as a zero-height box with a paper-coloured top border.
+    cover = '<div style="position:absolute;left:30mm;top:0;width:15mm;height:0;border-top:3mm solid var(--paper-000);z-index:1"></div>'
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('margin-top:10mm;max-width:130mm">', f'margin-top:10mm;max-width:130mm;position:relative">{cover}', 1))
+
+
+def c_partial_top_stroke(work):
+    # The partial-top cover drawn as a paper-coloured SVG stroke.
+    cover = ('<svg style="position:absolute;left:30mm;top:0;width:15mm;height:3mm;z-index:1" viewBox="0 0 15 3" preserveAspectRatio="none">'
+             '<line x1="0" y1="1.5" x2="15" y2="1.5" style="fill:none;stroke:var(--paper-000);stroke-width:3"/></svg>')
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('margin-top:10mm;max-width:130mm">', f'margin-top:10mm;max-width:130mm;position:relative">{cover}', 1))
+
+
+def c_phase_inset_shadow(work):
+    # Every metal disc is repainted in the water field colour by an inset shadow; its computed background stays metal.
+    inject_css(".f-metal{box-shadow:inset 0 0 0 30mm var(--phase-water-field)}")
+
+
+def c_mark_hidden_halo(work):
+    inject_css(".mark.hidden{box-shadow:0 0 0 0.45mm var(--ink-600)}")
+
+
+def c_mark_none_ring(work):
+    inject_css(".mark.none{border:0.2mm solid var(--ink-600)}")
+
+
+def c_stem_bgimage_ring(work):
+    # A stem dot hollowed into a ring by a background image: it reads as "hidden".
+    inject_css(".mark.stem{background-image:radial-gradient(circle, var(--paper-000) 0 50%, transparent 52%)}")
+
+
 def c_phase_token_unresolved(work):
     # A phase token the QA cannot resolve to a colour: every paint of that phase would go unmeasured.
     inject_css(":root{--phase-wood-field:rgb(231,236,227) !important}")
@@ -911,6 +965,16 @@ CANARIES = {
     "partial-top-box": ("no hidden text", "a paper-coloured box covers the upper part of a few characters", "PAGE_QA", "TEXT_OCCLUDED", c_partial_top_box),
     "partial-top-svg": ("no hidden text", "a paper-coloured SVG shape covers the upper part of a few characters", "PAGE_QA", "TEXT_OCCLUDED", c_partial_top_svg),
     "mark-col-rebound": ("fact in its slot", "a mark moves into the next column's cell and names that column", "PAGE_QA", "MARK_OFF_COLUMN", c_mark_col_rebound),
+    "print-only-hide": ("no hidden text", "a print-only rule hides the page titles in the PDF", "PAGE_QA", "TEXT_INVISIBLE", c_print_only_hide),
+    "svg-image": ("renderer adds no text", "an SVG image carrying a sentence is placed on the page", "PAGE_QA", "FORBIDDEN_ELEMENT", c_svg_image),
+    "css-background-url": ("renderer adds no text", "an image carrying a sentence is painted as a background", "PAGE_QA", "FORBIDDEN_ELEMENT", c_css_background_url),
+    "content-url": ("renderer adds no text", "an element's content is replaced by an image carrying a sentence", "PAGE_QA", "FORBIDDEN_ELEMENT", c_content_url),
+    "partial-top-border": ("no hidden text", "a paper-coloured border covers the upper part of a few characters", "PAGE_QA", "TEXT_OCCLUDED", c_partial_top_border),
+    "partial-top-stroke": ("no hidden text", "a paper-coloured SVG stroke covers the upper part of a few characters", "PAGE_QA", "TEXT_OCCLUDED", c_partial_top_stroke),
+    "phase-inset-shadow": ("fact in its slot", "every metal disc is repainted in the water colour by an inset shadow", "PAGE_QA", "PHASE_INK_NOT_ITS_COLOUR", c_phase_inset_shadow),
+    "mark-hidden-halo": ("fact in its slot", "hidden-stem rings gain a halo and read as both", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_mark_hidden_halo),
+    "mark-none-ring": ("fact in its slot", "the absent marks gain a ring", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_mark_none_ring),
+    "stem-bgimage-ring": ("fact in its slot", "stem dots are hollowed into rings by a background image", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_stem_bgimage_ring),
     "unknown-text-style": ("page build", "no long-form style is known to the line builder", "PAGE_BUILD", None, c_unknown_text_style),
     "sheet-escape-element": ("renderer adds no text", "an element is placed beside the sheet", "PAGE_QA", "SHEET_ESCAPED", c_sheet_escape_element),
     "pdf-page-count": ("PDF readback", "the projection states one page more than it has (rehashed)", "PDF_READBACK", "PDF_PAGE_COUNT", c_pdf_page_count),

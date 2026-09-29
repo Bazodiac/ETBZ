@@ -352,6 +352,16 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     ['partial-top-box', 'PAGE_QA', 'TEXT_OCCLUDED'],
     ['partial-top-svg', 'PAGE_QA', 'TEXT_OCCLUDED'],
     ['mark-col-rebound', 'PAGE_QA', 'MARK_OFF_COLUMN'],
+    ['print-only-hide', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['svg-image', 'PAGE_QA', 'FORBIDDEN_ELEMENT'],
+    ['css-background-url', 'PAGE_QA', 'FORBIDDEN_ELEMENT'],
+    ['content-url', 'PAGE_QA', 'FORBIDDEN_ELEMENT'],
+    ['partial-top-border', 'PAGE_QA', 'TEXT_OCCLUDED'],
+    ['partial-top-stroke', 'PAGE_QA', 'TEXT_OCCLUDED'],
+    ['phase-inset-shadow', 'PAGE_QA', 'PHASE_INK_NOT_ITS_COLOUR'],
+    ['mark-hidden-halo', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
+    ['mark-none-ring', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
+    ['stem-bgimage-ring', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
     ['unknown-text-style', 'PAGE_BUILD', null],
     ['sheet-escape-element', 'PAGE_QA', 'SHEET_ESCAPED'],
     ['pdf-page-count', 'PDF_READBACK', 'PDF_PAGE_COUNT'],
@@ -414,10 +424,13 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     // Every place the renderer sets a code is a literal the derivation below reads, in any quoting (code: 'X',
     // "code": "X", 'code': 'X', code="X", Blocked("X")), or one of the two INK_RULES variables, whose values are
     // literals too. A code built at run time would be a code no canary is required for.
-    const setters = [...source.matchAll(/["']?\bcode["']?\s*[:=]\s*([^,}\s)]+)/gu)].map((match) => match[1] as string);
+    // The whole value is captured, up to the next comma, brace or line end, so a conditional expression or a
+    // concatenation is not mistaken for its first literal; a JavaScript shorthand `{code}` sets no literal at all.
+    const setters = [...source.matchAll(/["']?\bcode["']?\s*[:=]\s*([^,}\n]+?)\s*(?=[,}\n])/gu)].map((match) => match[1] as string);
     expect(setters.length).toBeGreaterThan(40);
     expect(setters.filter((value) => !/^["'][A-Z][A-Z_0-9]+["']$/u.test(value) && !['too_little', 'too_much'].includes(value))).toEqual([]);
-    const raised = [...source.matchAll(/\bBlocked\(\s*([^,)]+)/gu)].map((match) => match[1] as string).filter((value) => value !== 'Exception');
+    expect([...source.matchAll(/[{,]\s*code\s*[,}]/gu)].map((match) => match[0])).toEqual([]);
+    const raised = [...source.matchAll(/\bBlocked\(\s*([^,)]+)/gu)].map((match) => (match[1] as string).trim()).filter((value) => value !== 'Exception');
     expect(raised.length).toBeGreaterThan(5);
     expect(raised.filter((value) => !/^["'][A-Z][A-Z_0-9]+["']$/u.test(value))).toEqual([]);
     const patterns = [/["']?\bcode["']?\s*[:=]\s*["']([A-Z][A-Z_0-9]+)["']/gu, /Blocked\(\s*["']([A-Z][A-Z_0-9]+)["']/gu, /["']([A-Z]+_(?:NOT|OVER)_INKED)["']/gu];

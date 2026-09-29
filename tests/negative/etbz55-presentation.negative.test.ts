@@ -116,8 +116,9 @@ describe('N1: the content payload', () => {
     }
   });
 
-  it('refuses an animal label the Sizhu table does not give the branch (a hand-built model): another animal, Cyrillic, an emoji', () => {
-    for (const text of ['Einhorn', String.fromCodePoint(0x0416), String.fromCodePoint(0x1f40e)]) {
+  it('refuses an animal label the Sizhu table does not give the branch (a hand-built model): another branch\'s animal, an animal of no branch, Cyrillic, an emoji', () => {
+    // The day branch is 亥 (Schwein): the rat belongs to 子, the horse to this chart's year and month branch 午.
+    for (const text of ['Ratte', 'Pferd', 'Einhorn', String.fromCodePoint(0x0416), String.fromCodePoint(0x1f40e)]) {
       const refusal = expectPresentationRefusal(() => project(modelWith((m) => { m.pillars.day.tierDe = text; })), 'PRESENTATION_FACT_MISMATCH');
       expect(refusal.detail).toMatchObject({ where: 'pillars.day' });
     }

@@ -212,6 +212,13 @@ def phase_dot(phase: str) -> str:
     return f'<span class="dot m-{phase}"{phase_attrs(phase)}></span>'
 
 
+def bar_fill(w: dict, phase: str, attrs: str) -> str:
+    """The Wu Xing bar's fill; a phase of 0 draws none (an empty track), not a fill of zero width."""
+    if w["ratio"] == 0:
+        return ""
+    return f'<div{attrs} style="width:{w["ratio"]*100:.1f}%;height:100%;background:var(--phase-{phase}-mark);border-radius:1mm"></div>'
+
+
 def disc(ctx: Context, glyph: dict, circle_mm: float, glyph_mm: float) -> str:
     return (f'<div class="disc f-{glyph["phase"]}"{slot(glyph)}{phase_attrs(glyph["phase"])} style="width:{circle_mm}mm;height:{circle_mm}mm">'
             f'{ctx.glyph(glyph["character"], glyph_mm)}</div>')
@@ -465,7 +472,7 @@ def wu_xing(ctx: Context, page: dict, c: dict) -> str:
                   f'<div data-wx="phase-block"{ring_phase}{slot(w)} style="position:absolute;left:{x-bw/2:.2f}mm;top:{y+bdy:.2f}mm;width:{bw}mm;text-align:center">'
                   f'<div data-wx="value" class="wx-big">{t(w["valueText"])}</div>'
                   f'<div class="pinyin" style="margin-top:0.5mm;line-height:11pt">{t(w["pinyin"])}</div><div class="label">{t(w["label"])}</div>'
-                  f'<div data-wx="bar" style="margin:1.8mm auto 0;width:26mm;height:0.7mm;background:var(--rule-200);border-radius:1mm"><div{ring_phase} style="width:{w["ratio"]*100:.1f}%;height:100%;background:var(--phase-{k}-mark);border-radius:1mm"></div></div></div>')
+                  f'<div data-wx="bar" style="margin:1.8mm auto 0;width:26mm;height:0.7mm;background:var(--rule-200);border-radius:1mm">{bar_fill(w, k, ring_phase)}</div></div>')
     table = "".join(
         f'<div{slot(w)} style="border-top:0.25mm solid var(--rule-200);padding-top:2.5mm;display:flex;align-items:center;gap:2mm">{ctx.glyph(w["character"], 4.5, phase=w["phase"])}'
         f'<div class="body-small" style="color:var(--ink-900)">{t(w["label"])}{SEP}{t(w["valueText"])}</div></div>'

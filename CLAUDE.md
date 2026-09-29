@@ -164,7 +164,7 @@ rule treats the branch name `You` as a chart symbol, so English second-person pr
 ETBZ-55 adds `src/application/presentation/` (ADR 0012): `buildPresentationProjection({ model, content })`
 turns the validated `HoroscopeModel` and a text-only payload into the complete page model of the one
 template `bazodiac-final-template@1.0.0` (the ETBZ-49 visual system in German, frozen by
-`RELEASED_TEMPLATE_HASHES`) — every value cross-checked against the glyph contract, every Ten-God relation
+`RELEASED_TEMPLATE_HASHES`) — every value a second source defines cross-checked against it (glyph contract, Sizhu table), every Ten-God relation
 bound to the Lexicon, every long-form line break computed by `long-form.ts`, a port of the canonical ETBZ-49
 paginator proven line for line against its recorded layouts and against
 `tests/support/etbz55-paginator-oracle.json` (built by the canonical Python paginator). It is the only

@@ -323,7 +323,8 @@
      "CLIPPED_BY_ANCESTOR",
      "OUTSIDE_SHEET",
      "OVERLAP",
-     "TEXT_NOT_INKED"
+     "TEXT_NOT_INKED",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -361,7 +362,8 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "OVERLAP"
+     "OVERLAP",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -597,6 +599,7 @@
      "OVERFLOWS_CONTAINER",
      "OVERLAP",
      "TEXT_MISSING_FROM_PAGE",
+     "TEXT_OCCLUDED",
      "TEXT_OUT_OF_SLOT"
     ],
     "exitCode": 1,
@@ -1247,7 +1250,8 @@
     "check": "PAGE_QA",
     "codes": [
      "CHARACTER_NOT_INKED",
-     "TEXT_NOT_INKED"
+     "TEXT_NOT_INKED",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -2066,6 +2070,192 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   },
   {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "print-only-hide",
+   "manifestWritten": false,
+   "mutation": "a print-only rule hides the page titles in the PDF",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "FORBIDDEN_ELEMENT",
+   "gate": "renderer adds no text",
+   "id": "svg-image",
+   "manifestWritten": false,
+   "mutation": "an SVG image carrying a sentence is placed on the page",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "FORBIDDEN_ELEMENT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "FORBIDDEN_ELEMENT",
+   "gate": "renderer adds no text",
+   "id": "css-background-url",
+   "manifestWritten": false,
+   "mutation": "an image carrying a sentence is painted as a background",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "FORBIDDEN_ELEMENT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "FORBIDDEN_ELEMENT",
+   "gate": "renderer adds no text",
+   "id": "content-url",
+   "manifestWritten": false,
+   "mutation": "an element's content is replaced by an image carrying a sentence",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "FORBIDDEN_ELEMENT",
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OCCLUDED",
+   "gate": "no hidden text",
+   "id": "partial-top-border",
+   "manifestWritten": false,
+   "mutation": "a paper-coloured border covers the upper part of a few characters",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_OCCLUDED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OCCLUDED",
+   "gate": "no hidden text",
+   "id": "partial-top-stroke",
+   "manifestWritten": false,
+   "mutation": "a paper-coloured SVG stroke covers the upper part of a few characters",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_OCCLUDED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_INK_NOT_ITS_COLOUR",
+   "gate": "fact in its slot",
+   "id": "phase-inset-shadow",
+   "manifestWritten": false,
+   "mutation": "every metal disc is repainted in the water colour by an inset shadow",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_INK_NOT_ITS_COLOUR"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_NOT_ITS_LOOK",
+   "gate": "fact in its slot",
+   "id": "mark-hidden-halo",
+   "manifestWritten": false,
+   "mutation": "hidden-stem rings gain a halo and read as both",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_NOT_ITS_LOOK"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_NOT_ITS_LOOK",
+   "gate": "fact in its slot",
+   "id": "mark-none-ring",
+   "manifestWritten": false,
+   "mutation": "the absent marks gain a ring",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_NOT_ITS_LOOK"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_NOT_ITS_LOOK",
+   "gate": "fact in its slot",
+   "id": "stem-bgimage-ring",
+   "manifestWritten": false,
+   "mutation": "stem dots are hollowed into rings by a background image",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_NOT_ITS_LOOK"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
    "expectedCheck": "PAGE_BUILD",
    "expectedCode": null,
    "gate": "page build",
@@ -2134,7 +2324,7 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   }
  ],
- "canarySourceSha256": "sha256:f3d63ff3c8c449048b159f0990e39ce9879834c32d9bb1051feefa406a2e260c",
+ "canarySourceSha256": "sha256:9c38a7f0f5f3f3c0ff86a30d8d545cf0930e5f52e587c704c8cf0693cdf4d1cd",
  "canaryVersion": "bazodiac-renderer-canaries.v1",
  "canonicalJsonMirror": {
   "equal": true,
@@ -2149,10 +2339,10 @@
  "projectionStructuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
  "renderer": {
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:200622fda4d6ed7a485ce0cad83a1629fb4f9ef00456e9d165c43be1e2ccafd0"
+  "sourceSha256": "sha256:23e21335afc5cf356ad330f857ab569752eb251742c48125adfe938c877f48a8"
  },
  "summary": {
-  "blockedAsExpected": 115,
-  "canaries": 115
+  "blockedAsExpected": 125,
+  "canaries": 125
  }
 }

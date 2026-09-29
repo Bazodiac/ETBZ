@@ -47,7 +47,8 @@ and a separator after which a line may wrap carries a `<wbr>`.
    yield exactly the page's `strings` (`PAGE_STRINGS`). A page no builder can build (an
    unknown kind, a missing field, an unbound value, a glyph outside the contract) blocks
    as `PAGE_BUILD`.
-5. **Page QA** (per page, in Chromium, light colour scheme pinned):
+5. **Page QA** (per page, in Chromium, light colour scheme pinned, print media emulated so
+   the QA sees the rendering the PDF is made from):
    - binding: every text node, glyph, presence mark and phase colour is the projection
      value at its path, and text only at the paths the page prints (never an identifier
      it carries); every enclosing `data-slot` is a prefix of that path and every entry of
@@ -65,25 +66,27 @@ and a separator after which a line may wrap carries a `<wbr>`.
      phase-coloured glyph) computes one of its phase's two tokens resolved on the page,
      carries no background image, shows its own token most among the five phases' in
      the page image (exact pixels), and holds only its own entry's values; each presence
-     mark has its value's look in its computed style (a background image counts as a
-     fill, a shadow or an outline as a halo) — so a wrong phase colour, a CSS-remapped
-     phase class (on the element, a glyph's `<use>` or a background image), the
-     Day-Master field painting a pillar's phase and a mark drawn with another value's
-     look all block;
+     mark has its value's look in its computed style (a shadow or an outline counts as a
+     halo; a background image, which no template mark uses, is refused) — so a wrong
+     phase colour, a CSS-remapped phase class (on the element, a glyph's `<use>`, a
+     background image or an inset shadow), the Day-Master field painting a pillar's phase
+     and a mark drawn with another value's look all block. A phase of 0 draws an empty bar
+     track, no fill;
    - visibility, for text and glyphs alike: no box, hidden, faint (effective alpha
      below 0.5), clipped, masked, filtered, scaled down, covered at the centre of any
-     character by an element painting a background or an SVG shape with a fill
+     character by an element painting a background or a visible border, or by an SVG
+     shape's fill or stroke
      (hit-testing is forced on per element, so an overlay with `pointer-events:none`,
      even inline `!important`, counts), rendered below 11 px on either axis, or below a
      1.5 contrast ratio of the composited colour against the surface under it; presence
      marks and phase paints visible; no `::before`/`::after`/`::marker` content on any
-     element, root and body included; no image, form control, list or SVG text on the
-     page; nothing outside the sheet; no non-breaking pair split across lines;
+     element, root and body included; no image, form control, list, SVG text or SVG image
+     on the page, and no image painted by CSS (background, border image, replaced
+     content); nothing outside the sheet; no non-breaking pair split across lines;
    - ink, on the screenshot: every printed string (each line box, and each character in
      its own box), glyph, presence mark and phase paint leaves pixels of its own colour
      inside its own box, within a band — so an SVG shape, a border or a shadow painted
-     over it, even over a single character, blocks too, and so does a cover in its own
-     colour
+     over it, over a whole character, blocks too, and so does a cover in its own colour
      (floors text 0.03, glyph 0.06, mark 0.05, phase 0.2, character 0.005; ceilings text
      0.5, glyph 0.75, mark 0.92, character 0.6, none for the solid phase fields; the QA
      report records the band each kind left, and the contract suite pins it);
@@ -113,7 +116,7 @@ blocked `RENDERER_ERROR` check, not only as a trace.
 `qa/run_canaries.py` breaks each gate once — the projection, a pin, the host fonts or
 one page builder — and runs the real renderer against it in a child process; six codes
 that need a doctored font or PDF writer have no canary (ADR 0012 limitation 8). Each of
-the 115 canaries must end `BLOCKED` at the expected check with the expected finding (the
+the 125 canaries must end `BLOCKED` at the expected check with the expected finding (the
 `partial-write` canary instead proves that no `--out` directory appears),
 exit 1, and leave no PDF and no manifest. The results go to
 `docs/evidence/etbz-55/renderer-canaries.json`, bound to the renderer source digest and

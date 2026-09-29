@@ -238,16 +238,24 @@ DOM_QA = r"""
   // shape, its fill alpha times its fill-opacity (a gradient fill counts as opaque).
   const isShape = (el) => typeof SVGGeometryElement !== 'undefined' && el instanceof SVGGeometryElement;
   const paint = (el) => { const s = getComputedStyle(el);
-    if (isShape(el)) { if (!s.fill || s.fill === 'none') return 0; const f = parse(s.fill); return (f === null ? 1 : f.a) * parseFloat(s.fillOpacity || '1') * opacityOf(el); }
+    if (isShape(el)) { // hit-testing already limits a shape to where it paints, its fill or its stroke
+      const alphaOf = (v, o) => { if (!v || v === 'none') return 0; const f = parse(v); return (f === null ? 1 : f.a) * parseFloat(o || '1'); };
+      return Math.max(alphaOf(s.fill, s.fillOpacity), alphaOf(s.stroke, s.strokeOpacity)) * opacityOf(el); }
     const c = parse(s.backgroundColor);
     const cover = s.backgroundImage !== 'none' ? 1 : (c === null ? 0 : c.a); return cover * opacityOf(el); };
   const surfaceColour = (el) => parse(isShape(el) ? getComputedStyle(el).fill : getComputedStyle(el).backgroundColor);
   // The first painted surface under (x, y) for el: its own background counts (a tag), its descendants do not.
   const backdrop = (el, x, y) => { for (const hit of document.elementsFromPoint(x, y)) { if (hit !== el && el.contains(hit)) continue;
     if (paint(hit) >= VISIBLE) { const c = surfaceColour(hit); if (c && c.a > 0) return c; } } return {r: 255, g: 255, b: 255, a: 1}; };
+  // Whether (x, y) falls on a visible border of el (its border box outside its padding box).
+  const onBorder = (el, x, y) => { if (isShape(el)) return false; const s = getComputedStyle(el), r = el.getBoundingClientRect();
+    const side = (w, c) => { const width = parseFloat(w) || 0, colour = parse(c); return width > 0 && colour !== null && colour.a * opacityOf(el) >= VISIBLE ? width : 0; };
+    const t = side(s.borderTopWidth, s.borderTopColor), b = side(s.borderBottomWidth, s.borderBottomColor);
+    const l = side(s.borderLeftWidth, s.borderLeftColor), rt = side(s.borderRightWidth, s.borderRightColor);
+    return (y < r.top + t) || (y > r.bottom - b) || (x < r.left + l) || (x > r.right - rt); };
   // A painted element above el at (x, y) - pointer-events are forced on for the QA, so overlays with none are seen.
   const occluderAt = (el, x, y) => { for (const hit of document.elementsFromPoint(x, y)) {
-    if (hit === el || el.contains(hit) || hit.contains(el)) return null; if (paint(hit) >= VISIBLE) return hit; } return null; };
+    if (hit === el || el.contains(hit) || hit.contains(el)) return null; if (paint(hit) >= VISIBLE || onBorder(hit, x, y)) return hit; } return null; };
   // Binding: every enclosing slot is a prefix of the path, every entry of the path has a slot around it; inside a
   // page label only a page-level value may sit.
   const PAGE_LEVEL = /^(content|chrome)\.[A-Za-z]+$/;
@@ -360,10 +368,11 @@ DOM_QA = r"""
     if (!(mr.width > 0.5 && mr.height > 0.5) || !shown(el) || opacityOf(el) < VISIBLE || effectsOf(el) !== null || paintColor === null || paintColor.a < VISIBLE) {
       findings.push({code: 'MARK_INVISIBLE', path}); continue; }
     // The look of its value, as painted: stem filled, hidden a ring, both filled with a halo, none a bar.
-    const filled = (mbg !== null && mbg.a >= VISIBLE) || ms.backgroundImage !== 'none', ring = parseFloat(ms.borderTopWidth) > 0;
+    // No template mark paints a background image, so one is refused whatever it draws (a ring inside a dot, a fill in a ring).
+    const filled = mbg !== null && mbg.a >= VISIBLE, ring = parseFloat(ms.borderTopWidth) > 0, imaged = ms.backgroundImage !== 'none';
     const halo = ms.boxShadow !== 'none' || (ms.outlineStyle !== 'none' && parseFloat(ms.outlineWidth) > 0);
-    const look = expected === 'stem' ? filled && !ring && !halo : expected === 'hidden' ? !filled && ring && !halo : expected === 'both' ? filled && halo
-      : filled && !ring && !halo && mr.height < 2 && mr.width > 2 * mr.height;
+    const look = !imaged && (expected === 'stem' ? filled && !ring && !halo : expected === 'hidden' ? !filled && ring && !halo : expected === 'both' ? filled && halo
+      : filled && !ring && !halo && mr.height < 2 && mr.width > 2 * mr.height);
     if (!look) { findings.push({code: 'MARK_NOT_ITS_LOOK', path, value: expected}); continue; }
     // A table mark (a path ending in marks.<j>) names its own column <j> and stands under that column's header.
     const tableIndex = /\.marks\.(\d+)$/.exec(path);
@@ -429,8 +438,12 @@ DOM_QA = r"""
   for (const el of [document.documentElement, document.body, sheet, ...sheet.querySelectorAll('*')]) for (const pseudo of ['::before', '::after', '::marker']) {
     const content = getComputedStyle(el, pseudo).content;
     if (content && content !== 'none' && content !== 'normal') findings.push({code: 'PSEUDO_CONTENT', pseudo, content: content.slice(0, 60), on: name(el)}); }
-  for (const el of sheet.querySelectorAll('img,picture,input,textarea,select,button,canvas,video,iframe,object,embed,ol,ul,li,foreignObject,svg text'))
+  for (const el of sheet.querySelectorAll('img,picture,input,textarea,select,button,canvas,video,iframe,object,embed,ol,ul,li,foreignObject,svg text,svg image'))
     findings.push({code: 'FORBIDDEN_ELEMENT', element: el.tagName});
+  // An image can carry text of its own however it is painted: as a background, a border image or replaced content.
+  for (const el of [document.documentElement, document.body, sheet, ...sheet.querySelectorAll('*')]) { const s = getComputedStyle(el);
+    if (/url\(/.test(s.backgroundImage) || /url\(/.test(s.borderImageSource || '')) findings.push({code: 'FORBIDDEN_ELEMENT', element: 'an image painted by CSS', on: name(el)});
+    if (s.content && s.content !== 'normal' && s.content !== 'none') findings.push({code: 'FORBIDDEN_ELEMENT', element: 'replaced content', on: name(el)}); }
   for (const el of sheet.querySelectorAll('.nw')) { const range = document.createRange(); range.selectNodeContents(el);
     const tops = Array.from(range.getClientRects()).filter((r) => r.width > 0.5 && r.height > 0.5).map((r) => r.top);
     const fontPx = parseFloat(getComputedStyle(el).fontSize);
@@ -704,6 +717,9 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
         # The tokens redefine every colour under prefers-color-scheme: dark; the document is always the light one.
         context = browser.new_context(device_scale_factor=2, color_scheme="light")
         page = context.new_page()
+        # The QA must see the rendering the PDF prints: print media for the screenshot and the DOM checks too, so a
+        # print-only rule cannot change the PDF behind the QA's back.
+        page.emulate_media(media="print", color_scheme="light")
         page.set_viewport_size({"width": A4_PX[0], "height": A4_PX[1]})
         for entry, binding in zip(projection["pages"], bindings):
             html_path = pages_dir / f"{entry['pageLabel']}-{entry['pageId']}.html"
