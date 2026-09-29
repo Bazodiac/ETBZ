@@ -136,6 +136,11 @@ describe('ETBZ-55: the presentation projection is a pure leaf', () => {
     expect(offenders, offenders.join('\n')).toEqual([]);
   });
 
+  it('scans every src directory there is (a new directory must join the scans below)', () => {
+    const directories = readdirSync(SRC_ROOT).filter((entry) => statSync(join(SRC_ROOT, entry)).isDirectory()).sort();
+    expect(directories).toEqual(['adapters', 'app', 'application', 'domain', 'http']);
+  });
+
   it.each(['app', 'http', 'adapters', 'domain'])('is imported by no module under src/%s', (directory) => {
     const root = join(SRC_ROOT, directory);
     expect(existsSync(root), `src/${directory} exists`).toBe(true);

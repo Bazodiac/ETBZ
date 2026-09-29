@@ -653,6 +653,81 @@ def c_mark_over_inked(work):
                          '<rect width="10" height="10" style="fill:var(--ink-900)"/></svg>')
 
 
+# Review round 5: a cover over a few words of one line (the reviewers' probe, 30 x 12 mm on the method note's
+# disclaimer), in the paper colour as a painted box and as an SVG shape, and in the text's own colour.
+PARTIAL_COVER = "position:absolute;left:45mm;top:71mm;width:30mm;height:12mm"
+
+
+def c_partial_bg_word(work):
+    append_to("methodNote", f'<div style="{PARTIAL_COVER};background:var(--paper-000)"></div>')
+
+
+def c_partial_svg_word(work):
+    append_to("methodNote", f'<svg style="{PARTIAL_COVER}" viewBox="0 0 10 10" preserveAspectRatio="none"><rect width="10" height="10" style="fill:var(--paper-000)"/></svg>')
+
+
+def c_partial_ink_word(work):
+    # Inside the method note's body block, so currentColor is the text's own colour; about a fifth of the first line.
+    cover = ('<svg style="position:absolute;left:25mm;top:0.5mm;width:25mm;height:4mm;z-index:1" viewBox="0 0 10 10" preserveAspectRatio="none">'
+             '<rect width="10" height="10" style="fill:currentColor"/></svg>')
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('margin-top:10mm;max-width:130mm">', f'margin-top:10mm;max-width:130mm;position:relative">{cover}', 1))
+
+
+def c_body_pseudo_content(work):
+    inject_css("body::after{content:'Zusatz des Renderers'}")
+
+
+def c_css_reorder(work):
+    # The year pillar is moved behind the hour pillar by CSS; the DOM keeps its order.
+    inject_css(".pillar:nth-child(2){order:9}")
+
+
+def c_css_offset(work):
+    # The year pillar's pinyin is shifted by CSS into the month column; the DOM keeps it in its own slot.
+    inject_css(".pillar:nth-child(2) .cell .pinyin{position:relative;left:40mm}")
+
+
+def c_phase_colour_remap(work):
+    # Every metal disc paints the water field colour; its class and binding still say metal.
+    inject_css(".f-metal{background:var(--phase-water-field) !important}")
+
+
+def c_glyph_phase_colour(work):
+    # Every metal-coloured glyph paints the water mark colour; its binding still says metal.
+    inject_css('svg.disp[data-phase="metal"]{color:var(--phase-water-mark) !important}')
+
+
+def c_mark_look(work):
+    # Stem marks drawn with the hidden-stem look (a ring); class and binding still say stem.
+    inject_css(".mark.stem{background:transparent !important;border:0.3mm solid var(--ink-600) !important}")
+
+
+def c_dm_field_branch_phase(work):
+    # The round-4 probe: the Day-Master field paints and binds the day branch's phase instead of the Day Master's.
+    def change(c):
+        c["dayMaster"]["phase"] = c["dayPillar"]["branch"]["phase"]
+    edit_builder("dayMaster", change)
+
+
+def c_mark_no_column(work):
+    # The table marks stop naming their column: the column rule must not fall silent.
+    wrap_builder("tenGods", lambda html, ctx, page, c: html.replace(' data-col="', ' data-kol="'))
+
+
+def c_unknown_text_style(work):
+    # No long-form style is known to the line builder: it refuses instead of setting a default.
+    P.LONG_STYLE_CSS.clear()
+
+
+def c_sheet_escape_element(work):
+    wrap_page_html(lambda html, page: html.replace("</body>", '<div style="width:10mm;height:10mm"></div></body>', 1))
+
+
+def c_phase_token_unresolved(work):
+    # A phase token the QA cannot resolve to a colour: every paint of that phase would go unmeasured.
+    inject_css(":root{--phase-wood-field:rgb(231,236,227) !important}")
+
+
 def c_pdf_page_count(work):
     p = load()
     p["pageCount"] = p["pageCount"] + 1
@@ -766,6 +841,20 @@ CANARIES = {
     "text-over-inked": ("no hidden text", "an SVG shape in the text's own colour covers the method note", "PAGE_QA", "TEXT_OVER_INKED", c_text_over_inked),
     "glyph-over-inked": ("glyphs", "a shape in the glyph's own colour covers the summary's first display glyph", "PAGE_QA", "GLYPH_OVER_INKED", c_glyph_over_inked),
     "mark-over-inked": ("fact in its slot", "an SVG shape in the stem marks' colour covers the presence-mark columns", "PAGE_QA", "MARK_OVER_INKED", c_mark_over_inked),
+    "partial-bg-word": ("no hidden text", "a paper-coloured box covers a few words of one line", "PAGE_QA", "CHARACTER_NOT_INKED", c_partial_bg_word),
+    "partial-svg-word": ("no hidden text", "a paper-coloured SVG shape covers a few words of one line", "PAGE_QA", "CHARACTER_NOT_INKED", c_partial_svg_word),
+    "partial-ink-word": ("no hidden text", "an SVG shape in the text's own colour covers a few words of one line", "PAGE_QA", "CHARACTER_OVER_INKED", c_partial_ink_word),
+    "body-pseudo-content": ("renderer adds no text", "the body prints generated text after the sheet", "PAGE_QA", "PSEUDO_CONTENT", c_body_pseudo_content),
+    "css-reorder": ("fact in its slot", "CSS moves the year pillar behind the hour pillar", "PAGE_QA", "SLOT_OUT_OF_ORDER", c_css_reorder),
+    "css-offset": ("fact in its slot", "CSS shifts the year pillar's pinyin into the month column", "PAGE_QA", "TEXT_OUT_OF_SLOT", c_css_offset),
+    "phase-colour-remap": ("fact in its slot", "every metal disc paints the water colour", "PAGE_QA", "PHASE_NOT_ITS_COLOUR", c_phase_colour_remap),
+    "glyph-phase-colour": ("glyphs", "every metal-coloured glyph paints the water colour", "PAGE_QA", "PHASE_NOT_ITS_COLOUR", c_glyph_phase_colour),
+    "mark-look": ("fact in its slot", "stem marks are drawn with the hidden-stem look", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_mark_look),
+    "dm-field-branch-phase": ("fact in its slot", "the Day-Master field paints the day branch's phase", "PAGE_QA", "PHASE_NOT_ITS_ENTRY", c_dm_field_branch_phase),
+    "phase-token-unresolved": ("fact in its slot", "a phase token is not a colour the QA can resolve", "PAGE_QA", "PHASE_TOKENS_UNRESOLVED", c_phase_token_unresolved),
+    "mark-no-column": ("fact in its slot", "the table marks do not name their column", "PAGE_QA", "MARK_OFF_COLUMN", c_mark_no_column),
+    "unknown-text-style": ("page build", "no long-form style is known to the line builder", "PAGE_BUILD", None, c_unknown_text_style),
+    "sheet-escape-element": ("renderer adds no text", "an element is placed beside the sheet", "PAGE_QA", "SHEET_ESCAPED", c_sheet_escape_element),
     "pdf-page-count": ("PDF readback", "the projection states one page more than it has (rehashed)", "PDF_READBACK", "PDF_PAGE_COUNT", c_pdf_page_count),
     "determinism": ("determinism", "every run draws one marker pixel at a different place", "DETERMINISM", None, c_determinism),
 }

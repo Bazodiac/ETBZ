@@ -23,9 +23,9 @@
  * the paginator cannot reach (every band entry is recorded before it is placed).
  *
  * A mutant whose name says "is not refused as <CODE>" proves only that the
- * guard names its own code: without it the input would still fail, later and
- * untyped. The boundary mutants create a file (and, for the sibling folder, a
- * directory) and remove it again.
+ * guard names its own code: without it the input would still fail, later,
+ * untyped or under another code. The boundary mutants create a file (and, for
+ * the sibling folder or a new src directory, a directory) and remove it again.
  *
  *   npm run guards:etbz55
  */
@@ -50,6 +50,7 @@ const T = {
   dependency: 'tests/architecture/dependency-direction.test.ts',
 };
 const DEPENDENCY = 'tests/architecture/dependency-direction.test.ts';
+const RENDERER_PY = 'tools/pdf-renderer/render_pdf.py';
 
 const TEMP = '// TEMPORARY MUTATION - scripts/verify-etbz55-presentation.mjs, never committed.\n';
 
@@ -73,16 +74,16 @@ const MUTANTS = [
     [T.negative], 'refuses a control or format character anywhere in the payload'],
   ['CONTENT: the title is not held to the pinned faces', 'text', PROJECTION,
     "  assertMeasurable(content.title, 'title');\n", '',
-    [T.negative], 'refuses a character the pinned faces cannot set in the texts the long form does not measure'],
+    [T.negative], 'refuses a character outside the pinned Inter advance tables (and not a CJK ideograph) in the texts the long form does not measure'],
   ['CONTENT: the reflection questions are not held to the pinned faces', 'text', PROJECTION,
     '  content.reflectionQuestions.forEach((question, index) => assertMeasurable(question, `reflectionQuestions.${String(index)}`));\n', '',
-    [T.negative], 'refuses a character the pinned faces cannot set in the texts the long form does not measure'],
+    [T.negative], 'refuses a character outside the pinned Inter advance tables (and not a CJK ideograph) in the texts the long form does not measure'],
   ['CONTENT: the method note is not held to the pinned faces', 'text', PROJECTION,
     "  assertMeasurable(content.methodNote, 'methodNote');\n", '',
-    [T.negative], 'refuses a character the pinned faces cannot set in the texts the long form does not measure'],
+    [T.negative], 'refuses a character outside the pinned Inter advance tables (and not a CJK ideograph) in the texts the long form does not measure'],
   ['CONTENT: the display name is not held to the pinned faces', 'text', PROJECTION,
     "  assertMeasurable(model.displayName, 'displayName');\n", '',
-    [T.negative], 'refuses a character the pinned faces cannot set in the texts the long form does not measure'],
+    [T.negative], 'refuses a character outside the pinned Inter advance tables (and not a CJK ideograph) in the texts the long form does not measure'],
   ['CONTENT: an empty display name is accepted', 'text', PROJECTION,
     "  if (model.displayName === '' || model.displayName.trim()", '  if (model.displayName.trim()',
     [T.negative], 'refuses a padded or empty display name'],
@@ -366,6 +367,34 @@ const MUTANTS = [
     'src/etbz55-mutant-root.ts',
     `${TEMP}export { CHART_TERMINOLOGY } from './application/skill/index.js';\n`,
     null, [T.skillBoundary], 'is imported by no top-level src module'],
+  ['BOUNDARY: a module in a new src directory imports the presentation module', 'create',
+    'src/etbz55-mutant-dir/probe.ts',
+    `${TEMP}export { TEMPLATE_REF } from '../application/presentation/index.js';\n`,
+    null, [T.architecture], 'scans every src directory there is'],
+  ['BOUNDARY: a top-level src .mts module imports the presentation module', 'create',
+    'src/etbz55-mutant-root.mts',
+    `${TEMP}export { TEMPLATE_REF } from './application/presentation/index.js';\n`,
+    null, [T.architecture], 'is imported by no top-level src module'],
+  ['BOUNDARY: a module in a new src directory imports the visual system', 'create',
+    'src/etbz55-mutant-dir/probe.ts',
+    `${TEMP}export { DISPLAY_GLYPH_SET } from '../application/visual/index.js';\n`,
+    null, [T.visualBoundary], 'scans every src directory there is'],
+  ['BOUNDARY: a top-level src .mts module imports the visual system', 'create',
+    'src/etbz55-mutant-root.mts',
+    `${TEMP}export { DISPLAY_GLYPH_SET } from './application/visual/index.js';\n`,
+    null, [T.visualBoundary], 'is imported by no top-level src module'],
+  ['BOUNDARY: a module in a new src directory imports the skill contract', 'create',
+    'src/etbz55-mutant-dir/probe.ts',
+    `${TEMP}export { CHART_TERMINOLOGY } from '../application/skill/index.js';\n`,
+    null, [T.skillBoundary], 'scans every src directory there is'],
+  ['BOUNDARY: a top-level src .mts module imports the skill contract', 'create',
+    'src/etbz55-mutant-root.mts',
+    `${TEMP}export { CHART_TERMINOLOGY } from './application/skill/index.js';\n`,
+    null, [T.skillBoundary], 'is imported by no top-level src module'],
+  ['BOUNDARY: an application .mts module imports the skill contract', 'create',
+    'src/application/etbz55-mutant-app.mts',
+    `${TEMP}export { CHART_TERMINOLOGY } from './skill/index.js';\n`,
+    null, [T.skillBoundary], 'is imported by no OTHER application module'],
   ['BOUNDARY: a served .mts module imports the visual system', 'create',
     'src/http/etbz55-mutant-visual.mts',
     `${TEMP}export { DISPLAY_GLYPH_SET } from '../application/visual/index.js';\n`,
@@ -399,6 +428,13 @@ const MUTANTS = [
     null, [T.architecture], 'does not reach for a clock'],
 
   // --- the evidence on disk ---------------------------------------------------------------------------------------------
+  ['MEASURE: a printed model value outside the advance tables is accepted', 'text', PROJECTION,
+    "    assertCustomerText(text);\n    assertMeasurable(text, 'customerStrings');\n", '    assertCustomerText(text);\n',
+    [T.negative], 'refuses a printed model value outside the pinned Inter advance tables'],
+  ['COVERAGE: the renderer gains a finding code no canary observes', 'text', RENDERER_PY,
+    'findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign})',
+    'findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign} if foreign else {"code": "ETBZ55_MUTANT_UNCANARIED"})',
+    [T.contract], 'covers every check id and finding code the renderer can emit'],
   ['DATA: a stray file appears in the evidence folder', 'create',
     'docs/evidence/etbz-55/NOTES.md',
     '# TEMPORARY MUTATION - scripts/verify-etbz55-presentation.mjs, never committed.\n',

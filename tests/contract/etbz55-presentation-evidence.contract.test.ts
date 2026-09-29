@@ -8,7 +8,7 @@
  * here - the PDF, the contact sheet, the projection file, the template and its
  * four drawing assets, the renderer sources, the Inter faces; and the committed
  * canary record proves that every renderer gate has failed once, on the same
- * renderer sources. Not re-derivable in CI, and stated as such: the
+ * renderer sources, except the six codes ADR 0012 limitation 8 names. Not re-derivable in CI, and stated as such: the
  * informational CJK face (a pinned literal - the TTC is a host font, not
  * committed), the per-page image digests of the QA report (the page images are
  * not committed), and the engine versions (a declaration).
@@ -209,9 +209,36 @@ describe('ETBZ-55: the QA report', () => {
       for (const face of page.platformFonts) expect(pinned, `${page.pageId}: ${face}`).toContain(face.split('|')[1]);
     }
   });
+
+  it('records the ink band the floors and ceilings were calibrated on, and each sits where ADR 0012 section 6 says', () => {
+    interface Band { items: number; lowest: number; highest: number; floor: number; ceiling: number | null }
+    const ink = (json('qa-report.json') as { ink: Record<string, Band> }).ink;
+    expect(ink).toEqual({
+      text: { items: 1470, lowest: 0.0833, highest: 0.1901, floor: 0.03, ceiling: 0.5 },
+      glyph: { items: 116, lowest: 0.192, highest: 0.4482, floor: 0.06, ceiling: 0.75 },
+      mark: { items: 44, lowest: 0.1619, highest: 0.6905, floor: 0.05, ceiling: 0.92 },
+      phase: { items: 92, lowest: 0.474, highest: 0.9789, floor: 0.2, ceiling: null },
+      character: { items: 33256, lowest: 0.0151, highest: 0.2627, floor: 0.005, ceiling: 0.6 },
+    });
+    // Floors at 30 to 45 % of the lowest share observed; ceilings above 1.3 times the highest and below a solid box;
+    // the character band wider still (a third of the lowest, more than twice the highest).
+    for (const kind of ['text', 'glyph', 'mark', 'phase']) {
+      const band = ink[kind] as Band;
+      expect(band.floor / band.lowest, kind).toBeGreaterThan(0.3);
+      expect(band.floor / band.lowest, kind).toBeLessThan(0.45);
+      if (band.ceiling !== null) {
+        expect(band.ceiling, kind).toBeGreaterThan(1.3 * band.highest);
+        expect(band.ceiling, kind).toBeLessThan(1);
+      }
+    }
+    const character = ink['character'] as Band;
+    expect(character.floor / character.lowest).toBeLessThan(0.35);
+    expect(character.ceiling).toBeGreaterThan(2 * character.highest);
+    expect(character.ceiling).toBeLessThan(1);
+  });
 });
 
-describe('ETBZ-55: every renderer gate has failed once, on these renderer sources', () => {
+describe('ETBZ-55: every renderer gate has failed once, on these renderer sources (six codes aside, ADR 0012 limitation 8)', () => {
   // The canary contract, pinned here rather than read from the record: which check and finding each canary must end at.
   const EXPECTED: readonly (readonly [string, string, string | null])[] = [
     ['projection-version', 'PROJECTION_VERSION', null],
@@ -306,6 +333,20 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     ['text-over-inked', 'PAGE_QA', 'TEXT_OVER_INKED'],
     ['glyph-over-inked', 'PAGE_QA', 'GLYPH_OVER_INKED'],
     ['mark-over-inked', 'PAGE_QA', 'MARK_OVER_INKED'],
+    ['partial-bg-word', 'PAGE_QA', 'CHARACTER_NOT_INKED'],
+    ['partial-svg-word', 'PAGE_QA', 'CHARACTER_NOT_INKED'],
+    ['partial-ink-word', 'PAGE_QA', 'CHARACTER_OVER_INKED'],
+    ['body-pseudo-content', 'PAGE_QA', 'PSEUDO_CONTENT'],
+    ['css-reorder', 'PAGE_QA', 'SLOT_OUT_OF_ORDER'],
+    ['css-offset', 'PAGE_QA', 'TEXT_OUT_OF_SLOT'],
+    ['phase-colour-remap', 'PAGE_QA', 'PHASE_NOT_ITS_COLOUR'],
+    ['glyph-phase-colour', 'PAGE_QA', 'PHASE_NOT_ITS_COLOUR'],
+    ['mark-look', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
+    ['dm-field-branch-phase', 'PAGE_QA', 'PHASE_NOT_ITS_ENTRY'],
+    ['phase-token-unresolved', 'PAGE_QA', 'PHASE_TOKENS_UNRESOLVED'],
+    ['mark-no-column', 'PAGE_QA', 'MARK_OFF_COLUMN'],
+    ['unknown-text-style', 'PAGE_BUILD', null],
+    ['sheet-escape-element', 'PAGE_QA', 'SHEET_ESCAPED'],
     ['pdf-page-count', 'PDF_READBACK', 'PDF_PAGE_COUNT'],
     ['determinism', 'DETERMINISM', null],
   ];
@@ -363,7 +404,9 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
   it('covers every check id and finding code the renderer can emit, except the six codes ADR 0012 limitation 8 names', () => {
     const source = readFileSync(join(RENDERER, 'render_pdf.py'), 'utf8');
     const emitted = new Set<string>(['RENDERER_ERROR']);
-    const patterns = [/code: '([A-Z_0-9]+)'/gu, /"code": "([A-Z_0-9]+)"/gu, /Blocked\("([A-Z_0-9]+)"/gu, /"([A-Z]+_(?:NOT|OVER)_INKED)"/gu];
+    // Every code is a literal (the derivation reads literals), in any quoting: code: 'X', "code": "X", code="X", Blocked("X").
+    expect(source).not.toMatch(/["']?\bcode["']?\s*[:=]\s*(?:f["']|`)/u);
+    const patterns = [/["']?\bcode["']?\s*[:=]\s*["']([A-Z][A-Z_0-9]+)["']/gu, /Blocked\(\s*["']([A-Z][A-Z_0-9]+)["']/gu, /["']([A-Z]+_(?:NOT|OVER)_INKED)["']/gu];
     for (const pattern of patterns) for (const match of source.matchAll(pattern)) emitted.add(match[1] as string);
     expect(['TEXT_OVER_INKED', 'PHASE_NOT_INKED'].every((code) => emitted.has(code))).toBe(true);
     expect(emitted.size).toBeGreaterThan(60);

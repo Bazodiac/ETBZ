@@ -30,7 +30,8 @@ MIME magic, page count, A4 media boxes, only the pinned faces embedded; (6) the
 last two runs must be byte-identical; (7) only then write the PDF, the contact
 sheet, the QA report and the manifest. A failed check writes the QA report with
 `BLOCKED` and no PDF — there is no partial artefact. `qa/run_canaries.py` makes
-every gate fail once on purpose and records that it did.
+every gate fail once on purpose and records that it did, except six codes that need a
+doctored font or PDF writer (ADR 0012 limitation 8).
 
 Local only: Python 3 with playwright (Chromium), pikepdf, fontTools, Pillow.
 Nothing here runs in CI; CI verifies the projection and the committed evidence.
@@ -100,11 +101,14 @@ FONT_SUFFIXES = (".ttf", ".otf", ".ttc", ".otc")
 # were text 0.190, glyph 0.448, mark 0.691; each ceiling sits well above that and below a solid box (about 1.0).
 # Phase paints are solid fields by design and have no ceiling. The phase fields are pale tints close to the paper
 # colours, so their colour tolerance is 4 (grey-scaled difference): a field covered by paper-200 (difference about
-# 6) no longer counts.
+# 6) no longer counts. Every printed character is also checked in its own box (33,256 characters): the lowest share
+# observed was 0.0151 (a hyphen), the highest 0.263; a character under a cover in another colour leaves (close to)
+# nothing, one under a cover in its own colour about 1.0.
 INK_TEXT_MIN, INK_TEXT_MAX = 0.03, 0.5
 INK_GLYPH_MIN, INK_GLYPH_MAX = 0.06, 0.75
 INK_MARK_MIN, INK_MARK_MAX = 0.05, 0.92
 INK_PHASE_MIN = 0.2
+INK_CHARACTER_MIN, INK_CHARACTER_MAX = 0.005, 0.6
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -211,6 +215,13 @@ DOM_QA = r"""
     if (child.nodeType === 1 && !(child.tagName.toLowerCase() === 'svg' && child === document.body.querySelector('svg'))) findings.push({code: 'SHEET_ESCAPED', element: child.tagName});
   }
   const has = (p) => Object.prototype.hasOwnProperty.call(values, p);
+  // The colours a phase may paint: its field and mark tokens, resolved on the page (the pinned light scheme).
+  const PHASES = ['wood', 'fire', 'earth', 'metal', 'water'], rootStyle = getComputedStyle(document.documentElement);
+  const hex = (v) => { const m = /^#([0-9a-f]{6})$/i.exec(String(v).trim()); return m ? {r: parseInt(m[1].slice(0, 2), 16), g: parseInt(m[1].slice(2, 4), 16), b: parseInt(m[1].slice(4, 6), 16)} : null; };
+  const phaseTokens = Object.fromEntries(PHASES.map((p) => [p, ['field', 'mark'].map((k) => hex(rootStyle.getPropertyValue(`--phase-${p}-${k}`))).filter(Boolean)]));
+  for (const p of PHASES) if (phaseTokens[p].length !== 2) findings.push({code: 'PHASE_TOKENS_UNRESOLVED', phase: p});
+  const sameColour = (a, b) => Math.abs(a.r - b.r) <= 1 && Math.abs(a.g - b.g) <= 1 && Math.abs(a.b - b.b) <= 1;
+  const phasesOfColour = (c) => PHASES.filter((p) => phaseTokens[p].some((token) => sameColour(token, c)));
   const parse = (color) => { const m = /rgba?\(([^)]*)\)/.exec(color || ''); if (!m) return null;
     const p = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number); return {r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1}; };
   const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
@@ -236,12 +247,22 @@ DOM_QA = r"""
   // page label only a page-level value may sit.
   const PAGE_LEVEL = /^(content|chrome)\.[A-Za-z]+$/;
   const entriesOf = (p) => { const parts = p.split('.'), out = []; for (let i = 1; i < parts.length; i++) if (/^\d+$/.test(parts[i])) out.push(parts.slice(0, i + 1).join('.')); return out; };
-  const slotsOf = (el) => { const out = []; for (let a = el; a && a !== sheet.parentElement; a = a.parentElement) if (a.dataset && a.dataset.slot !== undefined) out.push(a.dataset.slot); return out; };
+  const slotElementsOf = (el) => { const out = []; for (let a = el; a && a !== sheet.parentElement; a = a.parentElement) if (a.dataset && a.dataset.slot !== undefined) out.push(a); return out; };
+  // A slot that draws a box (not display:contents, not empty) must hold, on the page too, the centre of what is bound
+  // inside it, so a CSS offset cannot move a value into another entry's place. The centre, not the whole box: a
+  // font's content area may overhang its line box by a few pixels, which is typography, not placement.
+  const SLOT_TOLERANCE = 1;
+  const boxOfSlot = (s) => { if (getComputedStyle(s).display === 'contents') return null; const r = s.getBoundingClientRect(); return r.width > 0.5 && r.height > 0.5 ? r : null; };
   const placement = (el, path) => {
     if (el.closest('[data-page-label]')) return PAGE_LEVEL.test(path) ? null : 'an entry value in a page label';
-    const slots = slotsOf(el);
+    const slotEls = slotElementsOf(el), slots = slotEls.map((s) => s.dataset.slot);
     for (const s of slots) if (!(path === s || path.startsWith(s + '.'))) return `outside slot ${s}`;
     for (const entry of entriesOf(path)) if (!slots.includes(entry)) return `entry ${entry} has no slot around it`;
+    const own = el.getBoundingClientRect();
+    if (own.width > 0.5 && own.height > 0.5) for (const s of slotEls) { if (s === el) continue; const r = boxOfSlot(s); if (r === null) continue;
+      const cx = (own.left + own.right) / 2, cy = (own.top + own.bottom) / 2;
+      const out = Math.max(r.left - cx, cx - r.right, r.top - cy, cy - r.bottom);
+      if (out > SLOT_TOLERANCE) return `centre outside the box of slot ${s.dataset.slot} by ${out.toFixed(1)} px`; }
     return null; };
 
   // (1) Text: the value at its path, in its slots, visible, readable; every required path printed.
@@ -281,7 +302,14 @@ DOM_QA = r"""
     const r0 = rects[0], under = backdrop(el, r0.left + r0.width / 2, r0.top + r0.height / 2);
     const ratio = contrast(mix(fill, under, alpha), under);
     if (ratio < 1.5) findings.push({code: 'TEXT_LOW_CONTRAST', path, ratio: +ratio.toFixed(2), text: s.slice(0, 40)});
-    ink.push({kind: 'text', path, color: rgb(fill), rects: rects.map(box), text: s.slice(0, 40)});
+    // Every character on its own too, so a cover over a few words of a long line cannot average out.
+    const chars = [], whole = n.textContent, one = document.createRange();
+    for (let i = 0; i < whole.length;) { const cp = whole.codePointAt(i), len = cp > 0xffff ? 2 : 1, ch = String.fromCodePoint(cp);
+      if (!/\s/u.test(ch)) { one.setStart(n, i); one.setEnd(n, i + len);
+        const cr = Array.from(one.getClientRects()).filter((r) => r.width > 0.5 && r.height > 0.5); if (cr.length > 0) chars.push({...box(cr[0]), ch}); }
+      i += len; }
+    // The colour the pixels carry: the fill composited over its backdrop (text at opacity 0.7 is lighter on the page).
+    ink.push({kind: 'text', path, color: rgb(mix(fill, under, alpha)), rects: rects.map(box), chars, text: s.slice(0, 40)});
     printed.add(path);
   }
   for (const p of q.required) if (!printed.has(p)) findings.push({code: 'TEXT_MISSING_FROM_PAGE', path: p, text: String(values[p]).slice(0, 60)});
@@ -303,6 +331,8 @@ DOM_QA = r"""
     if (occluder !== null) findings.push({code: 'GLYPH_OCCLUDED', path, by: name(occluder), glyph: ch});
     const under = backdrop(g, r.left + r.width / 2, r.top + r.height / 2), ratio = contrast(mix(gc, under, ga), under);
     if (ratio < 1.5) findings.push({code: 'GLYPH_LOW_CONTRAST', path, ratio: +ratio.toFixed(2), glyph: ch});
+    if (g.dataset.phase !== undefined) { const shows = phasesOfColour(gc);
+      if (!(shows.length === 1 && shows[0] === g.dataset.phase)) findings.push({code: 'PHASE_NOT_ITS_COLOUR', path: g.dataset.phaseP, declared: g.dataset.phase, painted: shows.join('|') || 'no phase token', on: 'glyph'}); }
     ink.push({kind: 'glyph', path, color: rgb(gc), rects: [box(r)], text: ch});
     drawn.add(path);
   }
@@ -323,7 +353,17 @@ DOM_QA = r"""
     const paintColor = mbg !== null && mbg.a >= VISIBLE ? mbg : (parseFloat(ms.borderTopWidth) > 0 && mborder !== null ? mborder : null);
     if (!(mr.width > 0.5 && mr.height > 0.5) || !shown(el) || opacityOf(el) < VISIBLE || effectsOf(el) !== null || paintColor === null || paintColor.a < VISIBLE) {
       findings.push({code: 'MARK_INVISIBLE', path}); continue; }
-    if (el.dataset.col !== undefined) {
+    // The look of its value, as painted: stem filled, hidden a ring, both filled with a halo, none a bar.
+    const filled = mbg !== null && mbg.a >= VISIBLE, ring = parseFloat(ms.borderTopWidth) > 0, halo = ms.boxShadow !== 'none';
+    const look = expected === 'stem' ? filled && !ring && !halo : expected === 'hidden' ? !filled && ring : expected === 'both' ? filled && halo
+      : filled && mr.height < 2 && mr.width > 2 * mr.height;
+    if (!look) { findings.push({code: 'MARK_NOT_ITS_LOOK', path, value: expected}); continue; }
+    // A table mark (a path ending in marks.<j>) names its own column <j> and stands under that column's header.
+    const tableIndex = /\.marks\.(\d+)$/.exec(path);
+    if (tableIndex !== null || el.dataset.col !== undefined) {
+      const columnIndex = el.dataset.col === undefined ? null : /\.(\d+)$/.exec(el.dataset.col);
+      if (tableIndex === null || columnIndex === null || columnIndex[1] !== tableIndex[1]) {
+        findings.push({code: 'MARK_OFF_COLUMN', path, column: el.dataset.col ?? null, reason: 'not bound to its own column'}); continue; }
       const header = Array.from(sheet.querySelectorAll('[data-slot]')).find((h) => h.dataset.slot === el.dataset.col);
       const hr = header ? header.getBoundingClientRect() : null, cx = mr.left + mr.width / 2;
       if (hr === null || cx < hr.left || cx > hr.right) { findings.push({code: 'MARK_OFF_COLUMN', path, column: el.dataset.col}); continue; }
@@ -350,20 +390,34 @@ DOM_QA = r"""
       const pr = el.getBoundingClientRect(), pbg = parse(getComputedStyle(el).backgroundColor);
       if (!(pr.width > 0.5 && pr.height > 0.5) || !shown(el) || pbg === null || pbg.a * opacityOf(el) < VISIBLE || effectsOf(el) !== null) {
         findings.push({code: 'PHASE_INVISIBLE', path, on: name(el)}); continue; }
+      const shows = phasesOfColour(pbg);
+      if (!(shows.length === 1 && shows[0] === declared)) { findings.push({code: 'PHASE_NOT_ITS_COLOUR', path, declared, painted: shows.join('|') || 'no phase token', on: name(el)}); continue; }
       ink.push({kind: 'phase', path, color: rgb(pbg), rects: [box(pr)], text: declared});
     }
+    // A phase paint holds only its own entry's values (a page label aside): the Day-Master field paints the Day
+    // Master's phase, not another pillar's.
+    const entry = path.replace(/\.[^.]+$/, '');
+    for (const inner of el.querySelectorAll('[data-p]')) { if (inner.closest('[data-page-label]')) continue; const ip = inner.dataset.p;
+      if (!(ip === entry || ip.startsWith(entry + '.'))) { findings.push({code: 'PHASE_NOT_ITS_ENTRY', path, holds: ip}); break; } }
   }
-  const lastIndex = new Map();
+  // List order in the DOM and on the page: an entry never sits wholly above the one before it, nor wholly left of
+  // it on the same row.
+  const lastIndex = new Map(), lastBox = new Map();
   for (const el of sheet.querySelectorAll('[data-slot]')) {
     if (el.closest('[data-slot-order="template"]')) continue;
     const m = /^(.*)\.(\d+)$/.exec(el.dataset.slot); if (!m) continue;
     const list = m[1], index = Number(m[2]), last = lastIndex.get(list);
     if (last !== undefined && index < last) findings.push({code: 'SLOT_OUT_OF_ORDER', list, index, after: last});
     lastIndex.set(list, index);
+    const r = boxOfSlot(el), prev = lastBox.get(list); if (r === null) continue;
+    if (prev !== undefined) { const cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2, px = (prev.left + prev.right) / 2, py = (prev.top + prev.bottom) / 2;
+      const sameRow = (cy > prev.top && cy < prev.bottom) || (py > r.top && py < r.bottom);
+      if ((!sameRow && cy < prev.top) || (sameRow && cx < prev.left)) findings.push({code: 'SLOT_OUT_OF_ORDER', list, index, reason: 'before the previous entry on the page'}); }
+    lastBox.set(list, r);
   }
 
   // (4) No generated content, no element that can carry text of its own, no broken pair.
-  for (const el of [sheet, ...sheet.querySelectorAll('*')]) for (const pseudo of ['::before', '::after', '::marker']) {
+  for (const el of [document.documentElement, document.body, sheet, ...sheet.querySelectorAll('*')]) for (const pseudo of ['::before', '::after', '::marker']) {
     const content = getComputedStyle(el, pseudo).content;
     if (content && content !== 'none' && content !== 'normal') findings.push({code: 'PSEUDO_CONTENT', pseudo, content: content.slice(0, 60), on: name(el)}); }
   for (const el of sheet.querySelectorAll('img,picture,input,textarea,select,button,canvas,video,iframe,object,embed,ol,ul,li,foreignObject,svg text'))
@@ -542,6 +596,18 @@ INK_RULES = {"text": (40, INK_TEXT_MIN, INK_TEXT_MAX, "TEXT_NOT_INKED", "TEXT_OV
              "phase": (4, INK_PHASE_MIN, None, "PHASE_NOT_INKED", None)}
 
 
+def ink_share(image, scale: float, rect: dict, colour: tuple, threshold: int) -> float:
+    """The share of the rect's pixels within `threshold` (grey-scaled difference) of `colour`."""
+    left, top = max(0, int(rect["x"] * scale)), max(0, int(rect["y"] * scale))
+    right = min(image.width, int(math.ceil((rect["x"] + rect["w"]) * scale)))
+    bottom = min(image.height, int(math.ceil((rect["y"] + rect["h"]) * scale)))
+    if right <= left or bottom <= top:
+        return 0.0
+    crop = image.crop((left, top, right, bottom))
+    difference = ImageChops.difference(crop, Image.new("RGB", crop.size, colour)).convert("L")
+    return sum(difference.histogram()[:threshold]) / (crop.width * crop.height)
+
+
 def ink_check(png: pathlib.Path, items: list, stats: list) -> list:
     image = Image.open(png).convert("RGB")
     scale = image.width / A4_PX[0]
@@ -550,19 +616,24 @@ def ink_check(png: pathlib.Path, items: list, stats: list) -> list:
         threshold, minimum, maximum, too_little, too_much = INK_RULES[item["kind"]]
         colour = tuple(int(round(item["color"][k])) for k in ("r", "g", "b"))
         # Every box on its own (each line of a wrapped text): hiding part of a paragraph must not average out.
-        shares = []
-        for rect in item["rects"]:
-            left, top = max(0, int(rect["x"] * scale)), max(0, int(rect["y"] * scale))
-            right = min(image.width, int(math.ceil((rect["x"] + rect["w"]) * scale)))
-            bottom = min(image.height, int(math.ceil((rect["y"] + rect["h"]) * scale)))
-            if right <= left or bottom <= top:
-                shares.append(0.0)
-                continue
-            crop = image.crop((left, top, right, bottom))
-            difference = ImageChops.difference(crop, Image.new("RGB", crop.size, colour)).convert("L")
-            shares.append(sum(difference.histogram()[:threshold]) / (crop.width * crop.height))
+        shares = [ink_share(image, scale, rect, colour, threshold) for rect in item["rects"]]
         lowest, highest = (min(shares), max(shares)) if shares else (0.0, 0.0)
-        stats.append({"kind": item["kind"], "path": item["path"], "share": round(lowest, 4), "highest": round(highest, 4), "boxes": len(shares)})
+        # And every printed character on its own, so a cover over a few words of one line cannot average out either.
+        characters = [ink_share(image, scale, rect, colour, threshold) for rect in item.get("chars", [])]
+        if characters:
+            low_char, high_char = min(characters), max(characters)
+            if low_char < INK_CHARACTER_MIN:
+                at = characters.index(low_char)
+                findings.append({"code": "CHARACTER_NOT_INKED", "path": item["path"], "share": round(low_char, 4), "character": item["chars"][at]["ch"],
+                                 "at": at, "text": item["text"]})
+            if high_char > INK_CHARACTER_MAX:
+                at = characters.index(high_char)
+                findings.append({"code": "CHARACTER_OVER_INKED", "path": item["path"], "share": round(high_char, 4), "character": item["chars"][at]["ch"],
+                                 "at": at, "text": item["text"]})
+        stats.append({"kind": item["kind"], "path": item["path"], "share": round(lowest, 4), "highest": round(highest, 4), "boxes": len(shares),
+                      **({"charLow": round(min(characters), 4), "charHigh": round(max(characters), 4), "chars": len(characters),
+                          "charLowAt": item["chars"][characters.index(min(characters))]["ch"],
+                          "charHighAt": item["chars"][characters.index(max(characters))]["ch"]} if characters else {})})
         if lowest < minimum:
             findings.append({"code": too_little, "path": item["path"], "share": round(lowest, 4),
                              "box": shares.index(lowest), "boxes": len(shares), "text": item["text"]})
@@ -643,8 +714,20 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
     out.save(merged, deterministic_id=True, fix_metadata_version=True)
     for source in sources:
         source.close()
-    (work / "ink-stats.json").write_text(json.dumps(ink_stats), encoding="utf-8")
     return {"entries": entries, "pdf": merged, "pdfSha256": sha256_file(merged), "chromium": chromium_version, "inkStats": ink_stats}
+
+
+def ink_band(stats: list) -> dict:
+    """The lowest and highest share each kind left on the page, beside its floor and ceiling (recorded in the QA report)."""
+    band = {}
+    for kind, (_, floor, ceiling, _, _) in INK_RULES.items():
+        shares = [s for s in stats if s["kind"] == kind]
+        band[kind] = {"items": len(shares), "lowest": min((s["share"] for s in shares), default=None),
+                      "highest": max((s["highest"] for s in shares), default=None), "floor": floor, "ceiling": ceiling}
+    characters = [s for s in stats if "charLow" in s]
+    band["character"] = {"items": sum(s["chars"] for s in characters), "lowest": min((s["charLow"] for s in characters), default=None),
+                         "highest": max((s["charHigh"] for s in characters), default=None), "floor": INK_CHARACTER_MIN, "ceiling": INK_CHARACTER_MAX}
+    return band
 
 
 def projection_title(projection: dict) -> str:
@@ -879,6 +962,7 @@ def render(args, out_dir: pathlib.Path, projection: dict, projection_bytes: byte
 
     report = {"reportVersion": QA_REPORT_VERSION, "status": status, "state": "QA_PASSED" if status == "PASSED" else "BLOCKED",
               "projectionStructuralHash": projection.get("structuralHash"), "checks": checks,
+              "ink": ink_band(runs[-1]["inkStats"]) if runs else None,
               "pages": [{"pageLabel": e["pageLabel"], "pageId": e["pageId"], "pngSha256": f"sha256:{e['pngSha256']}", "textNodes": e["textNodes"],
                          "displayGlyphs": e["glyphs"], "platformFonts": e["platformFonts"], "findings": e["findings"]} for e in (runs[-1]["entries"] if runs else [])]}
     # Everything is written into a hidden sibling first and renamed into place last (one rename on one file

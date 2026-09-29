@@ -277,6 +277,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "CLIPPED_BY_ANCESTOR",
      "OVERLAP",
      "TEXT_NOT_INKED",
@@ -298,7 +299,9 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "OVERFLOWS_CONTAINER"
+     "OVERFLOWS_CONTAINER",
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_OUT_OF_SLOT"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -316,6 +319,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "CLIPPED_BY_ANCESTOR",
      "OUTSIDE_SHEET",
      "OVERLAP",
@@ -472,6 +476,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "PHASE_NOT_ITS_ENTRY",
      "TEXT_MISSING_FROM_PAGE",
      "TEXT_OUT_OF_SLOT"
     ],
@@ -492,7 +497,8 @@
     "check": "PAGE_QA",
     "codes": [
      "GLYPH_MISSING_FROM_PAGE",
-     "GLYPH_OUT_OF_SLOT"
+     "GLYPH_OUT_OF_SLOT",
+     "PHASE_NOT_ITS_ENTRY"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -588,7 +594,9 @@
      "GROUP_WRAPPED",
      "MARK_OVER_INKED",
      "OVERFLOWS_CONTAINER",
-     "OVERLAP"
+     "OVERLAP",
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_OUT_OF_SLOT"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -606,6 +614,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "TEXT_NOT_INKED",
      "TEXT_OCCLUDED"
     ],
@@ -625,6 +634,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_OVER_INKED",
      "TEXT_LOW_CONTRAST",
      "TEXT_OVER_INKED"
     ],
@@ -662,6 +672,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "TEXT_TOO_SMALL"
     ],
     "exitCode": 1,
@@ -795,6 +806,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "TEXT_NOT_INKED",
      "TEXT_OCCLUDED"
     ],
@@ -1193,6 +1205,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "TEXT_NOT_INKED"
     ],
     "exitCode": 1,
@@ -1211,6 +1224,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "TEXT_NOT_INKED"
     ],
     "exitCode": 1,
@@ -1229,6 +1243,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "TEXT_NOT_INKED"
     ],
     "exitCode": 1,
@@ -1247,6 +1262,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "TEXT_TOO_SMALL"
     ],
     "exitCode": 1,
@@ -1265,6 +1281,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "TEXT_NOT_INKED",
      "TEXT_OCCLUDED"
     ],
@@ -1559,6 +1576,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "MARK_NOT_INKED"
     ],
     "exitCode": 1,
@@ -1596,6 +1614,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "CLIPPED",
      "TEXT_NOT_INKED"
     ],
@@ -1634,6 +1653,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_OVER_INKED",
      "TEXT_OVER_INKED"
     ],
     "exitCode": 1,
@@ -1670,8 +1690,265 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "CHARACTER_NOT_INKED",
      "MARK_NOT_INKED",
      "MARK_OVER_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "CHARACTER_NOT_INKED",
+   "gate": "no hidden text",
+   "id": "partial-bg-word",
+   "manifestWritten": false,
+   "mutation": "a paper-coloured box covers a few words of one line",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "CHARACTER_NOT_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "CHARACTER_NOT_INKED",
+   "gate": "no hidden text",
+   "id": "partial-svg-word",
+   "manifestWritten": false,
+   "mutation": "a paper-coloured SVG shape covers a few words of one line",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "CHARACTER_NOT_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "CHARACTER_OVER_INKED",
+   "gate": "no hidden text",
+   "id": "partial-ink-word",
+   "manifestWritten": false,
+   "mutation": "an SVG shape in the text's own colour covers a few words of one line",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "CHARACTER_OVER_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PSEUDO_CONTENT",
+   "gate": "renderer adds no text",
+   "id": "body-pseudo-content",
+   "manifestWritten": false,
+   "mutation": "the body prints generated text after the sheet",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PSEUDO_CONTENT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "SLOT_OUT_OF_ORDER",
+   "gate": "fact in its slot",
+   "id": "css-reorder",
+   "manifestWritten": false,
+   "mutation": "CSS moves the year pillar behind the hour pillar",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "SLOT_OUT_OF_ORDER"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OUT_OF_SLOT",
+   "gate": "fact in its slot",
+   "id": "css-offset",
+   "manifestWritten": false,
+   "mutation": "CSS shifts the year pillar's pinyin into the month column",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "OVERFLOWS_CONTAINER",
+     "OVERLAP",
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_OUT_OF_SLOT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_NOT_ITS_COLOUR",
+   "gate": "fact in its slot",
+   "id": "phase-colour-remap",
+   "manifestWritten": false,
+   "mutation": "every metal disc paints the water colour",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_NOT_ITS_COLOUR"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_NOT_ITS_COLOUR",
+   "gate": "glyphs",
+   "id": "glyph-phase-colour",
+   "manifestWritten": false,
+   "mutation": "every metal-coloured glyph paints the water colour",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_NOT_ITS_COLOUR"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_NOT_ITS_LOOK",
+   "gate": "fact in its slot",
+   "id": "mark-look",
+   "manifestWritten": false,
+   "mutation": "stem marks are drawn with the hidden-stem look",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_NOT_ITS_LOOK"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_NOT_ITS_ENTRY",
+   "gate": "fact in its slot",
+   "id": "dm-field-branch-phase",
+   "manifestWritten": false,
+   "mutation": "the Day-Master field paints the day branch's phase",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_NOT_ITS_ENTRY"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_TOKENS_UNRESOLVED",
+   "gate": "fact in its slot",
+   "id": "phase-token-unresolved",
+   "manifestWritten": false,
+   "mutation": "a phase token is not a colour the QA can resolve",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_NOT_ITS_COLOUR",
+     "PHASE_TOKENS_UNRESOLVED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_OFF_COLUMN",
+   "gate": "fact in its slot",
+   "id": "mark-no-column",
+   "manifestWritten": false,
+   "mutation": "the table marks do not name their column",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_OFF_COLUMN"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_BUILD",
+   "expectedCode": null,
+   "gate": "page build",
+   "id": "unknown-text-style",
+   "manifestWritten": false,
+   "mutation": "no long-form style is known to the line builder",
+   "observed": {
+    "check": "PAGE_BUILD",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "SHEET_ESCAPED",
+   "gate": "renderer adds no text",
+   "id": "sheet-escape-element",
+   "manifestWritten": false,
+   "mutation": "an element is placed beside the sheet",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "SHEET_ESCAPED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -1714,7 +1991,7 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   }
  ],
- "canarySourceSha256": "sha256:80589a225ed5dd0fbb1356a922d8413515f18d17b73a9b311c3405e077077f78",
+ "canarySourceSha256": "sha256:6e0f9ac61deb21c1078a0d483df9951c4b00f0a72685f2f79f09756cb19d801e",
  "canaryVersion": "bazodiac-renderer-canaries.v1",
  "canonicalJsonMirror": {
   "equal": true,
@@ -1729,10 +2006,10 @@
  "projectionStructuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
  "renderer": {
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:94a04a5dddb7c070404705762d36b51c0f4cb56ca742535b1770ded3f7894228"
+  "sourceSha256": "sha256:826dfdeab6d5b3a29d1eb4f823005b281b0f7c7aaec0a170015617e1cf8966fa"
  },
  "summary": {
-  "blockedAsExpected": 94,
-  "canaries": 94
+  "blockedAsExpected": 108,
+  "canaries": 108
  }
 }

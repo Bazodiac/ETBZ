@@ -1020,8 +1020,9 @@ function assertCustomerText(text: string): void {
 }
 
 /**
- * The texts the long form does not measure (title, reflection questions, method note, display name) are held to
- * the coverage the paragraphs already meet: every character is in the pinned Inter tables or is a CJK ideograph.
+ * The texts the long form does not measure (title, reflection questions, method note, display name, and every other
+ * printed string) are held to the coverage the paragraphs already meet: every character is in the pinned Inter
+ * tables or is a CJK ideograph.
  * A blank that is not a space (a Braille blank), a decomposed umlaut or an emoji is refused, not printed.
  */
 function assertMeasurable(text: string, where: string): void {
@@ -1135,7 +1136,12 @@ export function buildPresentationProjection(input: PresentationInput): Presentat
   });
 
   const strings = new Set(pages.flatMap((page) => page.strings));
-  for (const text of strings) assertCustomerText(text);
+  // Every printed string, model values included (an animal label), is in the pinned advance tables or CJK (ADR 0012
+  // limitation 9) - not only the texts the long form measures and the four checked above.
+  for (const text of strings) {
+    assertCustomerText(text);
+    assertMeasurable(text, 'customerStrings');
+  }
   const glyphs = new Set<string>();
   collectGlyphs(pages.map((page) => page.content), null, glyphs);
   const cjk = new Set<string>();

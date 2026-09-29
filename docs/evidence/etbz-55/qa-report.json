@@ -93,6 +93,43 @@
    "result": "PASS"
   }
  ],
+ "ink": {
+  "character": {
+   "ceiling": 0.6,
+   "floor": 0.005,
+   "highest": 0.2627,
+   "items": 33256,
+   "lowest": 0.0151
+  },
+  "glyph": {
+   "ceiling": 0.75,
+   "floor": 0.06,
+   "highest": 0.4482,
+   "items": 116,
+   "lowest": 0.192
+  },
+  "mark": {
+   "ceiling": 0.92,
+   "floor": 0.05,
+   "highest": 0.6905,
+   "items": 44,
+   "lowest": 0.1619
+  },
+  "phase": {
+   "ceiling": null,
+   "floor": 0.2,
+   "highest": 0.9789,
+   "items": 92,
+   "lowest": 0.474
+  },
+  "text": {
+   "ceiling": 0.5,
+   "floor": 0.03,
+   "highest": 0.1901,
+   "items": 1470,
+   "lowest": 0.0833
+  }
+ },
  "pages": [
   {
    "displayGlyphs": 1,
