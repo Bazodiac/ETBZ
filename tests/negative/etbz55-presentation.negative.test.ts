@@ -102,7 +102,7 @@ describe('N1: the content payload', () => {
     }
   });
 
-  it('refuses a character the pinned faces cannot set in the texts the long form does not measure: a Braille blank, a decomposed umlaut, an emoji', () => {
+  it('refuses a character the pinned faces cannot set in the texts the long form does not measure (outside the pinned Inter advance tables and not a CJK ideograph): a Braille blank, a decomposed umlaut, an emoji', () => {
     const unmeasurable = [String.fromCodePoint(0x2800), `a${String.fromCodePoint(0x0308)}`, String.fromCodePoint(0x1f469)];
     for (const text of unmeasurable) {
       const title = expectPresentationRefusal(() => project(fixture.model, contentWith((c) => { c.title = `Dein ${text} Reading`; })), 'PRESENTATION_TEXT_UNMEASURABLE');

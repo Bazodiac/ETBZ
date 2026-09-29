@@ -279,6 +279,7 @@
     "codes": [
      "CLIPPED_BY_ANCESTOR",
      "OVERLAP",
+     "TEXT_NOT_INKED",
      "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
@@ -317,7 +318,8 @@
     "codes": [
      "CLIPPED_BY_ANCESTOR",
      "OUTSIDE_SHEET",
-     "OVERLAP"
+     "OVERLAP",
+     "TEXT_NOT_INKED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -392,6 +394,7 @@
     "check": "PAGE_QA",
     "codes": [
      "LATIN_SET_IN_CJK_FACE",
+     "MARK_OVER_INKED",
      "TEXT_SET_IN_UNPINNED_FACE"
     ],
     "exitCode": 1,
@@ -413,6 +416,7 @@
      "FONT_LOAD_FAILED",
      "GROUP_WRAPPED",
      "LATIN_SET_IN_CJK_FACE",
+     "MARK_OVER_INKED",
      "OVERLAP"
     ],
     "exitCode": 1,
@@ -582,6 +586,7 @@
     "check": "PAGE_QA",
     "codes": [
      "GROUP_WRAPPED",
+     "MARK_OVER_INKED",
      "OVERFLOWS_CONTAINER",
      "OVERLAP"
     ],
@@ -601,6 +606,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "TEXT_NOT_INKED",
      "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
@@ -619,7 +625,8 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "TEXT_LOW_CONTRAST"
+     "TEXT_LOW_CONTRAST",
+     "TEXT_OVER_INKED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -788,6 +795,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "TEXT_NOT_INKED",
      "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
@@ -1015,7 +1023,9 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "GLYPH_OCCLUDED"
+     "GLYPH_NOT_INKED",
+     "GLYPH_OCCLUDED",
+     "PHASE_NOT_INKED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -1156,6 +1166,520 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   },
   {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_NOT_IN_PROJECTION",
+   "gate": "renderer adds no text",
+   "id": "identifier-printed",
+   "manifestWritten": false,
+   "mutation": "the year pillar's relation code (an identifier) is printed",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_NOT_IN_PROJECTION"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_NOT_INKED",
+   "gate": "no hidden text",
+   "id": "svg-overlay",
+   "manifestWritten": false,
+   "mutation": "an SVG rectangle in the paper colour covers the method note",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_NOT_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_NOT_INKED",
+   "gate": "no hidden text",
+   "id": "shadow-overlay",
+   "manifestWritten": false,
+   "mutation": "a box shadow in the paper colour covers the method note",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_NOT_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_NOT_INKED",
+   "gate": "no hidden text",
+   "id": "border-overlay",
+   "manifestWritten": false,
+   "mutation": "a thick border in the paper colour covers the method note",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_NOT_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_TOO_SMALL",
+   "gate": "no hidden text",
+   "id": "scalex-text",
+   "manifestWritten": false,
+   "mutation": "the method note is squeezed to 30 % of its width",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_TOO_SMALL"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OCCLUDED",
+   "gate": "no hidden text",
+   "id": "important-overlay",
+   "manifestWritten": false,
+   "mutation": "an opaque panel with inline pointer-events:none !important covers the method note",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_NOT_INKED",
+     "TEXT_OCCLUDED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "SHEET_ESCAPED",
+   "gate": "renderer adds no text",
+   "id": "sheet-escape",
+   "manifestWritten": false,
+   "mutation": "a sentence is printed beside the sheet",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "SHEET_ESCAPED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_INVISIBLE",
+   "gate": "fact in its slot",
+   "id": "mark-invisible",
+   "manifestWritten": false,
+   "mutation": "every presence mark is drawn at opacity 0",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_INVISIBLE",
+     "MARK_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_OFF_COLUMN",
+   "gate": "fact in its slot",
+   "id": "mark-off-column",
+   "manifestWritten": false,
+   "mutation": "one row's presence marks shift one column to the right",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_OFF_COLUMN"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_OUT_OF_SLOT",
+   "gate": "fact in its slot",
+   "id": "mark-out-of-slot",
+   "manifestWritten": false,
+   "mutation": "a presence mark sits in another row's mark slot",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_OUT_OF_SLOT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_INVISIBLE",
+   "gate": "fact in its slot",
+   "id": "phase-invisible",
+   "manifestWritten": false,
+   "mutation": "every phase disc loses its colour",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_INVISIBLE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "RENDERER_ERROR",
+   "expectedCode": null,
+   "gate": "no partial artefact",
+   "id": "renderer-error",
+   "manifestWritten": false,
+   "mutation": "an unexpected error after the QA passed (the contact sheet)",
+   "observed": {
+    "check": "RENDERER_ERROR",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "CJK_FACE_MISSING",
+   "expectedCode": null,
+   "gate": "font pins",
+   "id": "cjk-face-missing",
+   "manifestWritten": false,
+   "mutation": "the pinned Noto Sans CJK face is not installed",
+   "observed": {
+    "check": "CJK_FACE_MISSING",
+    "codes": [],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_LOW_CONTRAST",
+   "gate": "glyphs",
+   "id": "glyph-low-contrast",
+   "manifestWritten": false,
+   "mutation": "the Day-Master glyph is drawn in its disc's own colour",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_LOW_CONTRAST",
+     "GLYPH_OVER_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "LINE_UNPLACEABLE",
+   "gate": "fact in its slot",
+   "id": "line-unplaceable",
+   "manifestWritten": false,
+   "mutation": "a long-form line claims a line the fragment does not have",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "LINE_UNPLACEABLE",
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_NOT_IN_PROJECTION"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "WX_MEDALLION_MISSING",
+   "gate": "Wu Xing medallion",
+   "id": "wx-medallion-missing",
+   "manifestWritten": false,
+   "mutation": "the Wu Xing medallion is missing",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "WX_MEDALLION_MISSING"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "WX_PHASE_BLOCK_COUNT",
+   "gate": "Wu Xing medallion",
+   "id": "wx-phase-block-count",
+   "manifestWritten": false,
+   "mutation": "one Wu Xing phase block is not marked as such",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "WX_PHASE_BLOCK_COUNT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "WX_LABEL_OUTSIDE_CIRCLE",
+   "gate": "Wu Xing medallion",
+   "id": "wx-label-outside-circle",
+   "manifestWritten": false,
+   "mutation": "the medallion label is set too large for the circle",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "OVERLAP",
+     "WX_LABEL_OUTSIDE_CIRCLE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OUT_OF_SLOT",
+   "gate": "fact in its slot",
+   "id": "page-label-entry",
+   "manifestWritten": false,
+   "mutation": "the day pillar's page label shows the year position label",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_OUT_OF_SLOT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OUT_OF_SLOT",
+   "gate": "fact in its slot",
+   "id": "second-copy-outside",
+   "manifestWritten": false,
+   "mutation": "a second copy of the year stem's pinyin is printed outside every slot",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_OUT_OF_SLOT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_NOT_INKED",
+   "gate": "glyphs",
+   "id": "glyph-not-inked",
+   "manifestWritten": false,
+   "mutation": "an SVG shape covers the summary's Day-Master glyph",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_NOT_INKED",
+     "PHASE_UNBOUND"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_NOT_INKED",
+   "gate": "fact in its slot",
+   "id": "mark-not-inked",
+   "manifestWritten": false,
+   "mutation": "an SVG shape covers the presence-mark columns on the page",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_NOT_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_NOT_INKED",
+   "gate": "fact in its slot",
+   "id": "phase-not-inked",
+   "manifestWritten": false,
+   "mutation": "an SVG shape covers the summary's Day-Master disc on the page",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_NOT_INKED",
+     "PHASE_NOT_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "CLIPPED",
+   "gate": "no content cut",
+   "id": "self-clipped",
+   "manifestWritten": false,
+   "mutation": "the page titles are cut to 10 mm by their own box",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "CLIPPED",
+     "TEXT_NOT_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "squashed-text",
+   "manifestWritten": false,
+   "mutation": "the method note is squashed to 30 % of its height",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OVER_INKED",
+   "gate": "no hidden text",
+   "id": "text-over-inked",
+   "manifestWritten": false,
+   "mutation": "an SVG shape in the text's own colour covers the method note",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_OVER_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_OVER_INKED",
+   "gate": "glyphs",
+   "id": "glyph-over-inked",
+   "manifestWritten": false,
+   "mutation": "a shape in the glyph's own colour covers the summary's first display glyph",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_OVER_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_OVER_INKED",
+   "gate": "fact in its slot",
+   "id": "mark-over-inked",
+   "manifestWritten": false,
+   "mutation": "an SVG shape in the stem marks' colour covers the presence-mark columns",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_NOT_INKED",
+     "MARK_OVER_INKED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
    "expectedCheck": "PDF_READBACK",
    "expectedCode": "PDF_PAGE_COUNT",
    "gate": "PDF readback",
@@ -1190,7 +1714,7 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   }
  ],
- "canarySourceSha256": "sha256:57a423a5625fe6f6095d8237a11806b8be79fe68c832cfd6e1e6611646c51f73",
+ "canarySourceSha256": "sha256:80589a225ed5dd0fbb1356a922d8413515f18d17b73a9b311c3405e077077f78",
  "canaryVersion": "bazodiac-renderer-canaries.v1",
  "canonicalJsonMirror": {
   "equal": true,
@@ -1200,15 +1724,15 @@
   "sha256": "sha256:09191c36aa9c3e0f2d4fea4a43cfb0b98e595e61d07b3e593de85fdb3e8ab5d4",
   "strings": 9
  },
- "executedAt": "2026-09-28",
+ "executedAt": "2026-09-29",
  "host": "Darwin arm64",
  "projectionStructuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
  "renderer": {
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:f857cdf5f498f0a2e4f396591c14e7b9c48846746e07ea8b4c2c8d0984050af9"
+  "sourceSha256": "sha256:94a04a5dddb7c070404705762d36b51c0f4cb56ca742535b1770ded3f7894228"
  },
  "summary": {
-  "blockedAsExpected": 66,
-  "canaries": 66
+  "blockedAsExpected": 94,
+  "canaries": 94
  }
 }

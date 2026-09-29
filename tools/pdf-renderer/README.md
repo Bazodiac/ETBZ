@@ -49,21 +49,31 @@ and a separator after which a line may wrap carries a `<wbr>`.
    as `PAGE_BUILD`.
 5. **Page QA** (per page, in Chromium, light colour scheme pinned):
    - binding: every text node, glyph, presence mark and phase colour is the projection
-     value at its path; every enclosing `data-slot` is a prefix of that path and every
-     entry of the path has a slot around it; a page label (`data-page-label`) carries
-     only a page-level value; the entries of a list appear in list order (the Wu Xing
-     ring keeps its template order, and each ring position must show its own phase);
-     long-form lines stand at the positions the projection computed; every path the
-     page must print, draw or mark appears — so a wrong key, a value or sub-entry in
-     another entry's slot, two entries trading places, a dropped copy, a mark in the
-     wrong column and a wrong phase colour all block;
+     value at its path, and text only at the paths the page prints (never an identifier
+     it carries); every enclosing `data-slot` is a prefix of that path and every entry of
+     the path has a slot around it; a page label (`data-page-label`) carries only a
+     page-level value; the entries of a list appear in list order (the Wu Xing ring
+     keeps its template order, and each ring position must show its own phase);
+     long-form lines stand at the positions the projection computed; each table mark
+     stands under its own column header; every path the page must print, draw or mark
+     appears — so a key printed in place of another, a value or sub-entry in another
+     entry's slot, two entries trading places, a dropped copy, a printed identifier, a
+     mark under another column and a wrong phase colour all block. Two keys of one entry
+     trading places is layout (template code), not caught;
    - visibility, for text and glyphs alike: no box, hidden, faint (effective alpha
-     below 0.5), clipped, masked, filtered, scaled down, covered by a painted element
-     (hit-testing is forced on, so an overlay with `pointer-events:none` counts),
-     rendered below 11 px, or below a 1.5 contrast ratio of the composited colour
-     against the surface under it; no `::before`/`::after`/`::marker` content; no image,
-     form control, list or SVG text on the page; no non-breaking pair split across
-     lines;
+     below 0.5), clipped, masked, filtered, scaled down, covered by an element painting
+     a background (hit-testing is forced on per element, so an overlay with
+     `pointer-events:none`, even inline `!important`, counts), rendered below 11 px on
+     either axis, or below a 1.5 contrast ratio of the composited colour against the
+     surface under it; presence marks and phase paints visible; no
+     `::before`/`::after`/`::marker` content; no image, form control, list or SVG text
+     on the page; nothing outside the sheet; no non-breaking pair split across lines;
+   - ink, on the screenshot: every printed string (each line box on its own), glyph,
+     presence mark and phase paint leaves pixels of its own colour inside its own box,
+     within a band — so an SVG shape, a border or a shadow painted over it blocks too,
+     and so does a cover in its own colour (floors calibrated on the evidence document:
+     text 0.03, glyph 0.06, mark 0.05, phase 0.2; ceilings text 0.5, glyph 0.75, mark
+     0.92, none for the solid phase fields);
    - geometry: nothing leaves the sheet, is clipped by an ancestor or runs out of its
      painted container; no long-form line is wider than its measure; no two text boxes
      overlap; the Wu Xing medallion stays clear; no web font failed;
@@ -89,7 +99,7 @@ blocked `RENDERER_ERROR` check, not only as a trace.
 
 `qa/run_canaries.py` breaks each gate once — the projection, a pin, the host fonts or
 one page builder — and runs the real renderer against it in a child process. Each of
-the 66 canaries must end `BLOCKED` at the expected check with the expected finding (the
+the 94 canaries must end `BLOCKED` at the expected check with the expected finding (the
 `partial-write` canary instead proves that no `--out` directory appears),
 exit 1, and leave no PDF and no manifest. The results go to
 `docs/evidence/etbz-55/renderer-canaries.json`, bound to the renderer source digest and

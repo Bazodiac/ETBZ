@@ -278,6 +278,34 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     ['unknown-tag-kind', 'PAGE_BUILD', null],
     ['lone-surrogate', 'PROJECTION_HASH', null],
     ['partial-write', 'NO_RESULT_DIRECTORY', null],
+    ['identifier-printed', 'PAGE_QA', 'TEXT_NOT_IN_PROJECTION'],
+    ['svg-overlay', 'PAGE_QA', 'TEXT_NOT_INKED'],
+    ['shadow-overlay', 'PAGE_QA', 'TEXT_NOT_INKED'],
+    ['border-overlay', 'PAGE_QA', 'TEXT_NOT_INKED'],
+    ['scalex-text', 'PAGE_QA', 'TEXT_TOO_SMALL'],
+    ['important-overlay', 'PAGE_QA', 'TEXT_OCCLUDED'],
+    ['sheet-escape', 'PAGE_QA', 'SHEET_ESCAPED'],
+    ['mark-invisible', 'PAGE_QA', 'MARK_INVISIBLE'],
+    ['mark-off-column', 'PAGE_QA', 'MARK_OFF_COLUMN'],
+    ['mark-out-of-slot', 'PAGE_QA', 'MARK_OUT_OF_SLOT'],
+    ['phase-invisible', 'PAGE_QA', 'PHASE_INVISIBLE'],
+    ['renderer-error', 'RENDERER_ERROR', null],
+    ['cjk-face-missing', 'CJK_FACE_MISSING', null],
+    ['glyph-low-contrast', 'PAGE_QA', 'GLYPH_LOW_CONTRAST'],
+    ['line-unplaceable', 'PAGE_QA', 'LINE_UNPLACEABLE'],
+    ['wx-medallion-missing', 'PAGE_QA', 'WX_MEDALLION_MISSING'],
+    ['wx-phase-block-count', 'PAGE_QA', 'WX_PHASE_BLOCK_COUNT'],
+    ['wx-label-outside-circle', 'PAGE_QA', 'WX_LABEL_OUTSIDE_CIRCLE'],
+    ['page-label-entry', 'PAGE_QA', 'TEXT_OUT_OF_SLOT'],
+    ['second-copy-outside', 'PAGE_QA', 'TEXT_OUT_OF_SLOT'],
+    ['glyph-not-inked', 'PAGE_QA', 'GLYPH_NOT_INKED'],
+    ['mark-not-inked', 'PAGE_QA', 'MARK_NOT_INKED'],
+    ['phase-not-inked', 'PAGE_QA', 'PHASE_NOT_INKED'],
+    ['self-clipped', 'PAGE_QA', 'CLIPPED'],
+    ['squashed-text', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['text-over-inked', 'PAGE_QA', 'TEXT_OVER_INKED'],
+    ['glyph-over-inked', 'PAGE_QA', 'GLYPH_OVER_INKED'],
+    ['mark-over-inked', 'PAGE_QA', 'MARK_OVER_INKED'],
     ['pdf-page-count', 'PDF_READBACK', 'PDF_PAGE_COUNT'],
     ['determinism', 'DETERMINISM', null],
   ];
@@ -330,6 +358,23 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     expect(Object.keys(provenBy)).toEqual(manifest.qa.checks.map((entry) => entry.id));
     const refusals = new Set(record.canaries.map((canary) => canary.expectedCheck));
     for (const [check, ids] of Object.entries(provenBy)) for (const id of ids) expect(refusals, `${check} <- ${id}`).toContain(id);
+  });
+
+  it('covers every check id and finding code the renderer can emit, except the six codes ADR 0012 limitation 8 names', () => {
+    const source = readFileSync(join(RENDERER, 'render_pdf.py'), 'utf8');
+    const emitted = new Set<string>(['RENDERER_ERROR']);
+    const patterns = [/code: '([A-Z_0-9]+)'/gu, /"code": "([A-Z_0-9]+)"/gu, /Blocked\("([A-Z_0-9]+)"/gu, /"([A-Z]+_(?:NOT|OVER)_INKED)"/gu];
+    for (const pattern of patterns) for (const match of source.matchAll(pattern)) emitted.add(match[1] as string);
+    expect(['TEXT_OVER_INKED', 'PHASE_NOT_INKED'].every((code) => emitted.has(code))).toBe(true);
+    expect(emitted.size).toBeGreaterThan(60);
+    const observed = new Set<string>();
+    for (const canary of record.canaries) {
+      observed.add(canary.observed.check);
+      for (const code of canary.observed.codes) observed.add(code);
+    }
+    const declared = ['CJK_ADVANCE_NOT_ONE_EM', 'PDF_FONT_NOT_EMBEDDED', 'PDF_FONT_NOT_PINNED', 'PDF_MAGIC', 'PDF_MEDIA_BOX', 'PDF_TYPE3_WITHOUT_TOUNICODE'];
+    const neverFailed = [...emitted].filter((code) => !observed.has(code)).sort();
+    expect(neverFailed).toEqual(declared);
   });
 
   it('blocked every canary at the expected check, with the expected finding, exit 1, and no PDF or manifest', () => {

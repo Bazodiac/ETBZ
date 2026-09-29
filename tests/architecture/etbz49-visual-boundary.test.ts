@@ -56,6 +56,18 @@ const referencesVisual = (specifier: string): boolean =>
 // -----------------------------------------------------------------------------
 
 describe('ETBZ-49: the visual system is a leaf, reachable from no served path', () => {
+  it('is imported by no top-level src module (the server entry, the attestation script)', () => {
+    const references = (specifier: string): boolean => referencesVisual(specifier);
+    const roots = readdirSync(SRC_ROOT).filter((entry) => !statSync(join(SRC_ROOT, entry)).isDirectory() && TYPESCRIPT_EXTENSIONS.some((extension) => entry.endsWith(extension)));
+    expect(roots.length, 'top-level src modules exist').toBeGreaterThan(0);
+    const offenders: string[] = [];
+    for (const entry of roots) {
+      const path = join(SRC_ROOT, entry);
+      for (const specifier of extractImportSpecifiers(readFileSync(path, 'utf8'), path)) if (references(specifier)) offenders.push(`src/${entry} -> ${specifier}`);
+    }
+    expect(offenders, offenders.join('\n')).toEqual([]);
+  });
+
   it.each(['app', 'http', 'adapters', 'domain'])(
     'is imported by no module under src/%s',
     (directory) => {

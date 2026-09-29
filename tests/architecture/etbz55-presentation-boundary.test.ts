@@ -124,6 +124,18 @@ describe('ETBZ-55: the presentation projection is a pure leaf', () => {
     expect(referencesPresentation(join(SRC_ROOT, 'http', 'x.ts'), UNRESOLVABLE_DYNAMIC_IMPORT)).toBe(true);
   });
 
+  it('is imported by no top-level src module (the server entry, the attestation script)', () => {
+    const references = (specifier: string, file: string): boolean => referencesPresentation(file, specifier);
+    const roots = readdirSync(SRC_ROOT).filter((entry) => !statSync(join(SRC_ROOT, entry)).isDirectory() && TYPESCRIPT_EXTENSIONS.some((extension) => entry.endsWith(extension)));
+    expect(roots.length, 'top-level src modules exist').toBeGreaterThan(0);
+    const offenders: string[] = [];
+    for (const entry of roots) {
+      const path = join(SRC_ROOT, entry);
+      for (const specifier of extractImportSpecifiers(readFileSync(path, 'utf8'), path)) if (references(specifier, path)) offenders.push(`src/${entry} -> ${specifier}`);
+    }
+    expect(offenders, offenders.join('\n')).toEqual([]);
+  });
+
   it.each(['app', 'http', 'adapters', 'domain'])('is imported by no module under src/%s', (directory) => {
     const root = join(SRC_ROOT, directory);
     expect(existsSync(root), `src/${directory} exists`).toBe(true);

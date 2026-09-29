@@ -511,6 +511,148 @@ def c_partial_write(work):
     R.shutil.copy2 = copy2
 
 
+def append_to(kind: str, fragment: str) -> None:
+    wrap_builder(kind, lambda html, ctx, page, c: html + fragment)
+
+
+def c_identifier_printed(work):
+    # The relation code of the year pillar (a non-printed identifier the page carries) printed as text.
+    append_to("fourPillars", '<span data-p="content.pillars.0.tenGod.code" style="position:absolute;left:20mm;top:262mm">RobWealth</span>')
+
+
+def c_svg_overlay(work):
+    append_to("methodNote", '<svg style="position:absolute;left:18mm;top:60mm;width:160mm;height:60mm" viewBox="0 0 10 10" preserveAspectRatio="none">'
+                            '<rect width="10" height="10" style="fill:var(--paper-000)"/></svg>')
+
+
+def c_shadow_overlay(work):
+    append_to("methodNote", '<div style="position:absolute;left:100mm;top:90mm;width:1mm;height:1mm;box-shadow:0 0 0 60mm var(--paper-000)"></div>')
+
+
+def c_border_overlay(work):
+    append_to("methodNote", '<div style="position:absolute;left:18mm;top:60mm;width:160mm;height:60mm;box-sizing:border-box;border:30mm solid var(--paper-000)"></div>')
+
+
+def c_scalex_text(work):
+    style_method_note("transform:scaleX(.3);transform-origin:0 0")
+
+
+def c_important_overlay(work):
+    append_to("methodNote", '<div style="position:absolute;left:20mm;top:70mm;width:150mm;height:40mm;background:var(--paper-000);pointer-events:none !important"></div>')
+
+
+def c_sheet_escape(work):
+    wrap_page_html(lambda html, page: html.replace("</body>", "Ein Satz neben dem Blatt</body>", 1))
+
+
+def c_mark_invisible(work):
+    inject_css(".mark{opacity:0}")
+
+
+def c_mark_off_column(work):
+    wrap_builder("tenGods", lambda html, ctx, page, c: html.replace('<td style="text-align:center;width:13mm">', '<td style="width:13mm"></td><td style="text-align:center;width:13mm">', 1))
+
+
+def c_mark_out_of_slot(work):
+    wrap_builder("tenGods", lambda html, ctx, page, c: html.replace('data-slot="content.rows.1.marks.0"', 'data-slot="content.rows.2.marks.0"', 1))
+
+
+def c_phase_invisible(work):
+    inject_css(".disc{background:transparent !important}")
+
+
+def c_renderer_error(work):
+    def fail(entries, target):
+        raise RuntimeError("canary: the contact sheet cannot be written")
+    R.contact_sheet = fail
+
+
+def c_cjk_face_missing(work):
+    R.CJK_DIRS = []
+
+
+def c_glyph_low_contrast(work):
+    inject_css('svg.disp[data-p="content.dayMaster.character"]{color:var(--phase-metal-field) !important}')
+
+
+def c_line_unplaceable(work):
+    wrap_builder("longForm", lambda html, ctx, page, c: html.replace('data-p="content.fragments.0.lines.0.text"', 'data-p="content.fragments.0.lines.999.text"', 1))
+
+
+def c_wx_medallion_missing(work):
+    wrap_builder("wuXing", lambda html, ctx, page, c: html.replace('id="wx-medallion"', 'id="wx-medallion-gone"', 1))
+
+
+def c_wx_phase_block_count(work):
+    wrap_builder("wuXing", lambda html, ctx, page, c: html.replace('data-wx="phase-block"', 'data-wx="phase-blok"', 1))
+
+
+def c_wx_label_outside_circle(work):
+    wrap_builder("wuXing", lambda html, ctx, page, c: html.replace("font-size:8.5pt;max-width:34mm", "font-size:22pt;max-width:90mm", 1))
+
+
+def c_page_label_entry(work):
+    def change(c):
+        c["dayMasterLabel"] = c["pillars"][0]["positionLabel"]
+    edit_builder("fourPillars", change)
+
+
+def c_second_copy_outside(work):
+    def extra(html, ctx, page, c):
+        pinyin = c["pillars"][0]["stem"]["pinyin"]
+        return html + f'<span data-p="{pinyin.path}" style="position:absolute;left:20mm;top:262mm">{pinyin}</span>'
+    wrap_builder("fourPillars", extra)
+
+
+def c_glyph_not_inked(work):
+    cover = ('<svg style="position:absolute;left:0;top:0;width:40mm;height:40mm;z-index:1" viewBox="0 0 10 10">'
+             '<rect width="10" height="10" style="fill:var(--phase-metal-field)"/></svg>')
+    wrap_builder("summary", lambda html, ctx, page, c: html.replace('style="width:40mm;height:40mm">', f'style="width:40mm;height:40mm;position:relative">{cover}', 1))
+
+
+def c_mark_not_inked(work):
+    # An SVG shape (no background, so no occluder by paint) in the paper colour covers the presence-mark columns.
+    append_to("tenGods", '<svg style="position:absolute;left:150mm;top:60mm;width:45mm;height:170mm" viewBox="0 0 10 10" preserveAspectRatio="none">'
+                         '<rect width="10" height="10" style="fill:var(--paper-000)"/></svg>')
+
+
+def c_phase_not_inked(work):
+    # The disc keeps its colour in the DOM, but an SVG shape in the paper colour covers it on the page.
+    cover = ('<svg style="position:absolute;left:0;top:0;width:40mm;height:40mm;z-index:1" viewBox="0 0 10 10">'
+             '<rect width="10" height="10" style="fill:var(--paper-200)"/></svg>')
+    wrap_builder("summary", lambda html, ctx, page, c: html.replace('style="width:40mm;height:40mm">', f'style="width:40mm;height:40mm;position:relative">{cover}', 1))
+
+
+def c_self_clipped(work):
+    inject_css(".sheet .h1 span{display:inline-block;width:10mm;overflow:hidden;white-space:nowrap}")
+
+
+def c_squashed_text(work):
+    style_method_note("transform:scaleY(.3);transform-origin:0 0")
+
+
+def c_text_over_inked(work):
+    # An SVG shape in the text's own colour (currentColor inside the method note's body block) covers the block.
+    cover = ('<svg style="position:absolute;left:0;top:0;width:100%;height:100%;z-index:1" viewBox="0 0 10 10" preserveAspectRatio="none">'
+             '<rect width="10" height="10" style="fill:currentColor"/></svg>')
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('margin-top:10mm;max-width:130mm">', f'margin-top:10mm;max-width:130mm;position:relative">{cover}', 1))
+
+
+def c_glyph_over_inked(work):
+    # The first display glyph on the summary page is covered, inside its own SVG, by a shape in its own colour that
+    # fills exactly the glyph's view box.
+    def cover(html, ctx, page, c):
+        x, y, w, h = ctx.view_box.split()
+        return html.replace('<use href="#g-', f'<rect x="{x}" y="{y}" width="{w}" height="{h}" style="fill:currentColor"/><use href="#g-', 1)
+    wrap_builder("summary", cover)
+
+
+def c_mark_over_inked(work):
+    # An SVG shape in the stem marks' own colour (ink-900) covers the presence-mark columns on the page.
+    append_to("tenGods", '<svg style="position:absolute;left:150mm;top:60mm;width:45mm;height:170mm" viewBox="0 0 10 10" preserveAspectRatio="none">'
+                         '<rect width="10" height="10" style="fill:var(--ink-900)"/></svg>')
+
+
 def c_pdf_page_count(work):
     p = load()
     p["pageCount"] = p["pageCount"] + 1
@@ -596,6 +738,34 @@ CANARIES = {
     "unknown-tag-kind": ("page build", "a page's running head declares a tag kind no map knows (rehashed)", "PAGE_BUILD", None, c_unknown_tag_kind),
     "lone-surrogate": ("projection identity", "the projection carries a lone surrogate: it is not well-formed text", "PROJECTION_HASH", None, c_lone_surrogate),
     "partial-write": ("no partial artefact", "the PDF copy into the output fails after a passing render", "NO_RESULT_DIRECTORY", None, c_partial_write),
+    "identifier-printed": ("renderer adds no text", "the year pillar's relation code (an identifier) is printed", "PAGE_QA", "TEXT_NOT_IN_PROJECTION", c_identifier_printed),
+    "svg-overlay": ("no hidden text", "an SVG rectangle in the paper colour covers the method note", "PAGE_QA", "TEXT_NOT_INKED", c_svg_overlay),
+    "shadow-overlay": ("no hidden text", "a box shadow in the paper colour covers the method note", "PAGE_QA", "TEXT_NOT_INKED", c_shadow_overlay),
+    "border-overlay": ("no hidden text", "a thick border in the paper colour covers the method note", "PAGE_QA", "TEXT_NOT_INKED", c_border_overlay),
+    "scalex-text": ("no hidden text", "the method note is squeezed to 30 % of its width", "PAGE_QA", "TEXT_TOO_SMALL", c_scalex_text),
+    "important-overlay": ("no hidden text", "an opaque panel with inline pointer-events:none !important covers the method note", "PAGE_QA", "TEXT_OCCLUDED", c_important_overlay),
+    "sheet-escape": ("renderer adds no text", "a sentence is printed beside the sheet", "PAGE_QA", "SHEET_ESCAPED", c_sheet_escape),
+    "mark-invisible": ("fact in its slot", "every presence mark is drawn at opacity 0", "PAGE_QA", "MARK_INVISIBLE", c_mark_invisible),
+    "mark-off-column": ("fact in its slot", "one row's presence marks shift one column to the right", "PAGE_QA", "MARK_OFF_COLUMN", c_mark_off_column),
+    "mark-out-of-slot": ("fact in its slot", "a presence mark sits in another row's mark slot", "PAGE_QA", "MARK_OUT_OF_SLOT", c_mark_out_of_slot),
+    "phase-invisible": ("fact in its slot", "every phase disc loses its colour", "PAGE_QA", "PHASE_INVISIBLE", c_phase_invisible),
+    "renderer-error": ("no partial artefact", "an unexpected error after the QA passed (the contact sheet)", "RENDERER_ERROR", None, c_renderer_error),
+    "cjk-face-missing": ("font pins", "the pinned Noto Sans CJK face is not installed", "CJK_FACE_MISSING", None, c_cjk_face_missing),
+    "glyph-low-contrast": ("glyphs", "the Day-Master glyph is drawn in its disc's own colour", "PAGE_QA", "GLYPH_LOW_CONTRAST", c_glyph_low_contrast),
+    "line-unplaceable": ("fact in its slot", "a long-form line claims a line the fragment does not have", "PAGE_QA", "LINE_UNPLACEABLE", c_line_unplaceable),
+    "wx-medallion-missing": ("Wu Xing medallion", "the Wu Xing medallion is missing", "PAGE_QA", "WX_MEDALLION_MISSING", c_wx_medallion_missing),
+    "wx-phase-block-count": ("Wu Xing medallion", "one Wu Xing phase block is not marked as such", "PAGE_QA", "WX_PHASE_BLOCK_COUNT", c_wx_phase_block_count),
+    "wx-label-outside-circle": ("Wu Xing medallion", "the medallion label is set too large for the circle", "PAGE_QA", "WX_LABEL_OUTSIDE_CIRCLE", c_wx_label_outside_circle),
+    "page-label-entry": ("fact in its slot", "the day pillar's page label shows the year position label", "PAGE_QA", "TEXT_OUT_OF_SLOT", c_page_label_entry),
+    "second-copy-outside": ("fact in its slot", "a second copy of the year stem's pinyin is printed outside every slot", "PAGE_QA", "TEXT_OUT_OF_SLOT", c_second_copy_outside),
+    "glyph-not-inked": ("glyphs", "an SVG shape covers the summary's Day-Master glyph", "PAGE_QA", "GLYPH_NOT_INKED", c_glyph_not_inked),
+    "mark-not-inked": ("fact in its slot", "an SVG shape covers the presence-mark columns on the page", "PAGE_QA", "MARK_NOT_INKED", c_mark_not_inked),
+    "phase-not-inked": ("fact in its slot", "an SVG shape covers the summary's Day-Master disc on the page", "PAGE_QA", "PHASE_NOT_INKED", c_phase_not_inked),
+    "self-clipped": ("no content cut", "the page titles are cut to 10 mm by their own box", "PAGE_QA", "CLIPPED", c_self_clipped),
+    "squashed-text": ("no hidden text", "the method note is squashed to 30 % of its height", "PAGE_QA", "TEXT_INVISIBLE", c_squashed_text),
+    "text-over-inked": ("no hidden text", "an SVG shape in the text's own colour covers the method note", "PAGE_QA", "TEXT_OVER_INKED", c_text_over_inked),
+    "glyph-over-inked": ("glyphs", "a shape in the glyph's own colour covers the summary's first display glyph", "PAGE_QA", "GLYPH_OVER_INKED", c_glyph_over_inked),
+    "mark-over-inked": ("fact in its slot", "an SVG shape in the stem marks' colour covers the presence-mark columns", "PAGE_QA", "MARK_OVER_INKED", c_mark_over_inked),
     "pdf-page-count": ("PDF readback", "the projection states one page more than it has (rehashed)", "PDF_READBACK", "PDF_PAGE_COUNT", c_pdf_page_count),
     "determinism": ("determinism", "every run draws one marker pixel at a different place", "DETERMINISM", None, c_determinism),
 }

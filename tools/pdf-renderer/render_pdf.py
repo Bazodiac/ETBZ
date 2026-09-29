@@ -40,6 +40,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import pathlib
 import platform
 import shutil
@@ -49,7 +50,7 @@ from importlib.metadata import version as pkg_version
 
 import pikepdf
 from fontTools.ttLib import TTCollection, TTFont
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 from playwright.sync_api import sync_playwright
 
 # The renderer writes nothing into the repository - not even a bytecode cache beside its sources.
@@ -91,6 +92,19 @@ CJK_POSTSCRIPT_NAME = "NotoSansCJKsc-Regular"
 # The faces Chromium may use to set text, by exact PostScript name: the committed Inter faces (web fonts) and the pinned SC face.
 ALLOWED_POSTSCRIPT_NAMES = INTER_POSTSCRIPT_NAMES | {CJK_POSTSCRIPT_NAME}
 FONT_SUFFIXES = (".ttf", ".otf", ".ttc", ".otc")
+# The share of a box's pixels (each line box on its own) that carry the item's colour must lie within a band.
+# Calibrated on the evidence document (2026-09-29, 1470 text items, 116 glyphs, 44 marks, 92 phase paints).
+# Floor: a hidden item, or one covered in another colour, leaves (close to) no pixels of its colour. The lowest
+# shares observed were text 0.083, glyph 0.192, mark 0.162, phase 0.474; each floor sits at a third to under half of
+# that. Ceiling: a box (almost) solid in the item's colour is a cover in that colour. The highest shares observed
+# were text 0.190, glyph 0.448, mark 0.691; each ceiling sits well above that and below a solid box (about 1.0).
+# Phase paints are solid fields by design and have no ceiling. The phase fields are pale tints close to the paper
+# colours, so their colour tolerance is 4 (grey-scaled difference): a field covered by paper-200 (difference about
+# 6) no longer counts.
+INK_TEXT_MIN, INK_TEXT_MAX = 0.03, 0.5
+INK_GLYPH_MIN, INK_GLYPH_MAX = 0.06, 0.75
+INK_MARK_MIN, INK_MARK_MAX = 0.05, 0.92
+INK_PHASE_MIN = 0.2
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -183,8 +197,19 @@ def check_projection_identity(projection: dict) -> dict:
 DOM_QA = r"""
 (q) => {
   const W = 793.7, H = 1122.5, CP = 96 / 7200, MIN_FONT_PX = 11, VISIBLE = 0.5, findings = [];
-  const values = q.values, glyphSet = new Set(q.displayGlyphs), separators = new Set(q.separators);
+  const values = q.values, glyphSet = new Set(q.displayGlyphs), separators = new Set(q.separators), requiredSet = new Set(q.required);
   const sheet = document.querySelector('.sheet');
+  // What the rendered page image must show: each printed string, glyph, mark and phase paint leaves pixels of its
+  // colour inside its own box. Python checks these against the screenshot (the ink check), whatever hides them.
+  const ink = [];
+  const box = (r) => ({x: r.left, y: r.top, w: r.width, h: r.height});
+  const rgb = (c) => ({r: c.r, g: c.g, b: c.b});
+  // (0) Nothing outside the sheet: the body holds the glyph sprite and the one sheet, and no text of its own.
+  for (const child of document.body.childNodes) {
+    if (child === sheet) continue;
+    if (child.nodeType === 3) { if (child.textContent.trim().length > 0) findings.push({code: 'SHEET_ESCAPED', text: child.textContent.trim().slice(0, 60)}); continue; }
+    if (child.nodeType === 1 && !(child.tagName.toLowerCase() === 'svg' && child === document.body.querySelector('svg'))) findings.push({code: 'SHEET_ESCAPED', element: child.tagName});
+  }
   const has = (p) => Object.prototype.hasOwnProperty.call(values, p);
   const parse = (color) => { const m = /rgba?\(([^)]*)\)/.exec(color || ''); if (!m) return null;
     const p = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number); return {r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1}; };
@@ -231,6 +256,7 @@ DOM_QA = r"""
     if (path === null) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'unbound', text: s.slice(0, 60)}); continue; }
     if (!has(path)) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'unknown path', path, text: s.slice(0, 60)}); continue; }
     if (values[path] !== s) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'not the value at its path', path, text: s.slice(0, 60)}); continue; }
+    if (!requiredSet.has(path)) { findings.push({code: 'TEXT_NOT_IN_PROJECTION', reason: 'not a printed field (an identifier or classification)', path, text: s.slice(0, 60)}); continue; }
     const why = placement(host, path);
     if (why !== null) { findings.push({code: 'TEXT_OUT_OF_SLOT', path, reason: why, text: s.slice(0, 60)}); continue; }
     const range = document.createRange(); range.selectNodeContents(n);
@@ -246,7 +272,8 @@ DOM_QA = r"""
     else if (Math.max(...rects.map((r) => r.height)) < 0.5 * fontPx) invisible = 'scaled down';
     if (invisible !== null) { findings.push({code: 'TEXT_INVISIBLE', reason: invisible, path, text: s.slice(0, 60)}); continue; }
     // The size the reader sees: the computed font size times the scale any transform applies (rendered / layout height).
-    const box = el.getBoundingClientRect(), scale = el.offsetHeight > 0 ? box.height / el.offsetHeight : 1, renderedPx = fontPx * scale;
+    const own = el.getBoundingClientRect();
+    const scale = Math.min(el.offsetHeight > 0 ? own.height / el.offsetHeight : 1, el.offsetWidth > 0 ? own.width / el.offsetWidth : 1), renderedPx = fontPx * scale;
     if (fontPx < MIN_FONT_PX || renderedPx < MIN_FONT_PX - 0.25) findings.push({code: 'TEXT_TOO_SMALL', path, fontPx, renderedPx: +renderedPx.toFixed(2), text: s.slice(0, 40)});
     let occluder = null;
     for (const r of rects) for (const fx of [0.15, 0.5, 0.85]) occluder = occluder || occluderAt(el, r.left + r.width * fx, r.top + r.height / 2);
@@ -254,6 +281,7 @@ DOM_QA = r"""
     const r0 = rects[0], under = backdrop(el, r0.left + r0.width / 2, r0.top + r0.height / 2);
     const ratio = contrast(mix(fill, under, alpha), under);
     if (ratio < 1.5) findings.push({code: 'TEXT_LOW_CONTRAST', path, ratio: +ratio.toFixed(2), text: s.slice(0, 40)});
+    ink.push({kind: 'text', path, color: rgb(fill), rects: rects.map(box), text: s.slice(0, 40)});
     printed.add(path);
   }
   for (const p of q.required) if (!printed.has(p)) findings.push({code: 'TEXT_MISSING_FROM_PAGE', path: p, text: String(values[p]).slice(0, 60)});
@@ -275,6 +303,7 @@ DOM_QA = r"""
     if (occluder !== null) findings.push({code: 'GLYPH_OCCLUDED', path, by: name(occluder), glyph: ch});
     const under = backdrop(g, r.left + r.width / 2, r.top + r.height / 2), ratio = contrast(mix(gc, under, ga), under);
     if (ratio < 1.5) findings.push({code: 'GLYPH_LOW_CONTRAST', path, ratio: +ratio.toFixed(2), glyph: ch});
+    ink.push({kind: 'glyph', path, color: rgb(gc), rects: [box(r)], text: ch});
     drawn.add(path);
   }
   for (const p of q.glyphs) if (!drawn.has(p)) findings.push({code: 'GLYPH_MISSING_FROM_PAGE', path: p, glyph: values[p]});
@@ -290,6 +319,16 @@ DOM_QA = r"""
     if (el.dataset.mark !== expected || drawnClass.length !== 1 || drawnClass[0] !== expected) { findings.push({code: 'MARK_NOT_ITS_VALUE', path, drawn: drawnClass.join('|'), value: expected}); continue; }
     const why = placement(el, path);
     if (why !== null) { findings.push({code: 'MARK_OUT_OF_SLOT', path, reason: why}); continue; }
+    const mr = el.getBoundingClientRect(), ms = getComputedStyle(el), mbg = parse(ms.backgroundColor), mborder = parse(ms.borderTopColor);
+    const paintColor = mbg !== null && mbg.a >= VISIBLE ? mbg : (parseFloat(ms.borderTopWidth) > 0 && mborder !== null ? mborder : null);
+    if (!(mr.width > 0.5 && mr.height > 0.5) || !shown(el) || opacityOf(el) < VISIBLE || effectsOf(el) !== null || paintColor === null || paintColor.a < VISIBLE) {
+      findings.push({code: 'MARK_INVISIBLE', path}); continue; }
+    if (el.dataset.col !== undefined) {
+      const header = Array.from(sheet.querySelectorAll('[data-slot]')).find((h) => h.dataset.slot === el.dataset.col);
+      const hr = header ? header.getBoundingClientRect() : null, cx = mr.left + mr.width / 2;
+      if (hr === null || cx < hr.left || cx > hr.right) { findings.push({code: 'MARK_OFF_COLUMN', path, column: el.dataset.col}); continue; }
+    }
+    ink.push({kind: 'mark', path, color: rgb(paintColor), rects: [box(mr)], text: expected});
     marked.add(path);
   }
   for (const p of q.marks) if (!marked.has(p)) findings.push({code: 'MARK_MISSING_FROM_PAGE', path: p});
@@ -304,7 +343,15 @@ DOM_QA = r"""
     if (!has(path) || values[path] !== declared) { findings.push({code: 'PHASE_NOT_ITS_VALUE', path, declared, value: has(path) ? values[path] : null}); continue; }
     const wrong = Array.from(painted).filter((p) => p !== declared);
     if (wrong.length > 0) { findings.push({code: 'PHASE_NOT_ITS_VALUE', path, declared, painted: wrong.join('|')}); continue; }
-    const why = placement(el, path); if (why !== null) findings.push({code: 'PHASE_OUT_OF_SLOT', path, reason: why});
+    const why = placement(el, path); if (why !== null) { findings.push({code: 'PHASE_OUT_OF_SLOT', path, reason: why}); continue; }
+    // A phase paint (a field, a mark colour) must be visible and leave its colour on the page. Glyph colours are
+    // checked with the glyphs; an element that declares a phase but paints none (a ring track, a block) is bound only.
+    if (painted.size > 0 && el.tagName.toLowerCase() !== 'svg') {
+      const pr = el.getBoundingClientRect(), pbg = parse(getComputedStyle(el).backgroundColor);
+      if (!(pr.width > 0.5 && pr.height > 0.5) || !shown(el) || pbg === null || pbg.a * opacityOf(el) < VISIBLE || effectsOf(el) !== null) {
+        findings.push({code: 'PHASE_INVISIBLE', path, on: name(el)}); continue; }
+      ink.push({kind: 'phase', path, color: rgb(pbg), rects: [box(pr)], text: declared});
+    }
   }
   const lastIndex = new Map();
   for (const el of sheet.querySelectorAll('[data-slot]')) {
@@ -365,7 +412,7 @@ DOM_QA = r"""
     const y = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
     if (x > 1.5 && y > 1.5) findings.push({code: 'OVERLAP', a: a.e.textContent.trim().slice(0, 30), b: b.e.textContent.trim().slice(0, 30)});
   }
-  return {findings, textCount, glyphCount: glyphEls.length};
+  return {findings, textCount, glyphCount: glyphEls.length, ink};
 }
 """
 
@@ -485,6 +532,46 @@ def build_page(ctx: P.Context, entry: dict) -> str:
         raise Blocked("PAGE_BUILD", {"page": entry.get("pageId"), "error": f"{type(error).__name__}: {error}"}) from error
 
 
+# The ink check: every printed string, glyph, presence mark and phase paint must leave pixels close to its own
+# colour inside its own box in the page screenshot, within a band. Too few is a hidden item or one covered in another
+# colour (an SVG, a border, a shadow, a blend); too many is a cover in its own colour.
+# kind: (colour tolerance, floor, ceiling, finding below the floor, finding above the ceiling)
+INK_RULES = {"text": (40, INK_TEXT_MIN, INK_TEXT_MAX, "TEXT_NOT_INKED", "TEXT_OVER_INKED"),
+             "glyph": (40, INK_GLYPH_MIN, INK_GLYPH_MAX, "GLYPH_NOT_INKED", "GLYPH_OVER_INKED"),
+             "mark": (24, INK_MARK_MIN, INK_MARK_MAX, "MARK_NOT_INKED", "MARK_OVER_INKED"),
+             "phase": (4, INK_PHASE_MIN, None, "PHASE_NOT_INKED", None)}
+
+
+def ink_check(png: pathlib.Path, items: list, stats: list) -> list:
+    image = Image.open(png).convert("RGB")
+    scale = image.width / A4_PX[0]
+    findings = []
+    for item in items:
+        threshold, minimum, maximum, too_little, too_much = INK_RULES[item["kind"]]
+        colour = tuple(int(round(item["color"][k])) for k in ("r", "g", "b"))
+        # Every box on its own (each line of a wrapped text): hiding part of a paragraph must not average out.
+        shares = []
+        for rect in item["rects"]:
+            left, top = max(0, int(rect["x"] * scale)), max(0, int(rect["y"] * scale))
+            right = min(image.width, int(math.ceil((rect["x"] + rect["w"]) * scale)))
+            bottom = min(image.height, int(math.ceil((rect["y"] + rect["h"]) * scale)))
+            if right <= left or bottom <= top:
+                shares.append(0.0)
+                continue
+            crop = image.crop((left, top, right, bottom))
+            difference = ImageChops.difference(crop, Image.new("RGB", crop.size, colour)).convert("L")
+            shares.append(sum(difference.histogram()[:threshold]) / (crop.width * crop.height))
+        lowest, highest = (min(shares), max(shares)) if shares else (0.0, 0.0)
+        stats.append({"kind": item["kind"], "path": item["path"], "share": round(lowest, 4), "highest": round(highest, 4), "boxes": len(shares)})
+        if lowest < minimum:
+            findings.append({"code": too_little, "path": item["path"], "share": round(lowest, 4),
+                             "box": shares.index(lowest), "boxes": len(shares), "text": item["text"]})
+        if maximum is not None and highest > maximum:
+            findings.append({"code": too_much, "path": item["path"], "share": round(highest, 4),
+                             "box": shares.index(highest), "boxes": len(shares), "text": item["text"]})
+    return findings
+
+
 def page_bindings(projection: dict) -> list:
     """What each page must show, by path - and the proof that it is exactly the page's `strings`."""
     bindings = []
@@ -503,6 +590,7 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
     pages_dir.mkdir(parents=True)
     entries = []
     ascent = {style_id: style["ascentCp"] for style_id, style in projection["longFormStyles"].items()}
+    ink_stats: list = []
     with sync_playwright() as pw:
         browser = pw.chromium.launch(args=CHROMIUM_ARGS)
         chromium_version = browser.version
@@ -525,8 +613,8 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
             page.pdf(path=str(pdf), width="210mm", height="297mm", print_background=True, margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
                      prefer_css_page_size=True)
             # After the screenshot and the PDF: every element becomes hit-testable for the QA, so an overlay with
-            # pointer-events:none (the atmosphere blobs use it) still counts when it covers text.
-            page.add_style_tag(content=".sheet, .sheet * { pointer-events: auto !important; }")
+            # pointer-events:none (the atmosphere blobs use it, inline !important included) still counts when it covers text.
+            page.evaluate("for (const e of document.querySelectorAll('.sheet, .sheet *')) e.style.setProperty('pointer-events', 'auto', 'important')")
             dom = page.evaluate(DOM_QA, {"values": binding["values"], "required": binding["required"], "glyphs": binding["glyphs"],
                                          "marks": binding["marks"], "displayGlyphs": projection["displayGlyphs"],
                                          "separators": sorted(SEPARATORS), "ascent": ascent})
@@ -535,6 +623,7 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
             # "unloaded" is a declared face the page never asked for; "error" is a face that failed and fell back.
             failed = [f for f in fonts if f["status"] == "error"]
             findings = dom["findings"] + wx + ([{"code": "FONT_LOAD_FAILED", "fonts": failed}] if failed else [])
+            findings += ink_check(png, dom["ink"], ink_stats)
             foreign = sorted(f"{family}|{ps}" for family, ps in used_fonts if ps not in ALLOWED_POSTSCRIPT_NAMES)
             if foreign:
                 findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign})
@@ -554,7 +643,8 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
     out.save(merged, deterministic_id=True, fix_metadata_version=True)
     for source in sources:
         source.close()
-    return {"entries": entries, "pdf": merged, "pdfSha256": sha256_file(merged), "chromium": chromium_version}
+    (work / "ink-stats.json").write_text(json.dumps(ink_stats), encoding="utf-8")
+    return {"entries": entries, "pdf": merged, "pdfSha256": sha256_file(merged), "chromium": chromium_version, "inkStats": ink_stats}
 
 
 def projection_title(projection: dict) -> str:
@@ -783,6 +873,8 @@ def render(args, out_dir: pathlib.Path, projection: dict, projection_bytes: byte
     except Blocked as blocked:
         checks.append({"id": blocked.check, "result": "BLOCKED", "detail": blocked.detail})
     except Exception as error:  # noqa: BLE001 - an unexpected failure is a blocked render with a report, never a trace only
+        # Even after every check passed (a failure while assembling the manifest): the run is BLOCKED, nothing is written.
+        status, manifest = "BLOCKED", None
         checks.append({"id": "RENDERER_ERROR", "result": "BLOCKED", "detail": f"{type(error).__name__}: {error}"})
 
     report = {"reportVersion": QA_REPORT_VERSION, "status": status, "state": "QA_PASSED" if status == "PASSED" else "BLOCKED",

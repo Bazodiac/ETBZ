@@ -130,6 +130,11 @@ export function extractImportSpecifiers(source: string, fileName = 'source.ts'):
       ts.isStringLiteral(node.moduleReference.expression)
     ) {
       specifiers.push(node.moduleReference.expression.text);
+    } else if (ts.isImportTypeNode(node)) {
+      // A type-position import (`type P = import('...').X`, `typeof import('...')`) couples modules too.
+      const argument = node.argument;
+      if (ts.isLiteralTypeNode(argument) && ts.isStringLiteral(argument.literal)) specifiers.push(argument.literal.text);
+      else specifiers.push(UNRESOLVABLE_DYNAMIC_IMPORT);
     } else if (ts.isCallExpression(node)) {
       const isDynamicImport = node.expression.kind === ts.SyntaxKind.ImportKeyword;
       const isRequire =
@@ -272,6 +277,7 @@ describe('AC4: inner layers stay free of frameworks and drivers', () => {
       [UNRESOLVABLE_DYNAMIC_IMPORT],
     ],
     ['template-literal dynamic import', 'await import(`express`);', ['express']],
+    ['type-position import', "type App = import('express').Express;", ['express']],
     [
       'computed require',
       'const name = `ex`; const e = require(`${name}press`);',

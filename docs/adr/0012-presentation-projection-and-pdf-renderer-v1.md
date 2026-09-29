@@ -166,22 +166,36 @@ Before it writes a PDF it checks:
 - slot binding: the page is bound before it is built, so every text node carries the path
   of the projection value it prints, every glyph the path of its character, every presence
   mark the path of its value and every phase-coloured element the path of the phase it
-  paints. The QA requires each to equal the value at its path; every enclosing slot to be a
-  prefix of the path and every entry of the path (each indexed step, such as
+  paints. The QA requires each to equal the value at its path, and printed text only at the
+  paths the page prints (never an identifier or classification it carries); every enclosing
+  slot to be a prefix of the path and every entry of the path (each indexed step, such as
   `content.pillars.0`) to have a slot around it; the entries of one list to appear in list
   order; every long-form line at the centipoint position the projection computed for it;
-  and every path the page must print, draw or mark to appear. A page-level label shown
-  inside an entry may carry only a page-level value. A wrong key, a value or a whole
-  sub-entry shown in another entry's slot, two entries trading places, a dropped copy of a
-  repeated value, a presence mark in the wrong column, a disc in another phase's colour and
-  a Wu Xing ring position showing another phase all block;
+  every table presence mark under its own column header; and every path the page must
+  print, draw or mark to appear. A page-level label shown inside an entry may carry only a
+  page-level value. A key printed in place of another (the other then missing), a value or
+  a whole sub-entry shown in another entry's slot, two entries trading places, a dropped
+  copy of a repeated value, a printed identifier, a presence mark under another column, a
+  disc in another phase's colour and a Wu Xing ring position showing another phase all
+  block. Two keys of one entry trading places, or a page label moved on its page, is
+  layout: template code (limitation 8);
 - visibility, for text and glyphs alike: no box, hidden, faint (effective alpha below 0.5),
-  clipped, masked, filtered, scaled down, covered by a painted element (an overlay with
-  `pointer-events:none` included, since the QA forces hit-testing on), a rendered size
-  below 11 px, or below a 1.5 contrast ratio of the composited colour against the surface
-  under it; no generated `::before`/`::after`/`::marker` content; no element that can carry
-  text of its own (images, form controls, lists, SVG text); no non-breaking pair split
-  across lines;
+  clipped, masked, filtered, scaled down, covered by an element painting a background (an
+  overlay with `pointer-events:none` included, since the QA forces hit-testing on per
+  element), a rendered size below 11 px (either axis of a transform), or below a 1.5
+  contrast ratio of the composited colour against the surface under it; presence marks and
+  phase paints must be visible too; no generated `::before`/`::after`/`::marker` content;
+  no element that can carry text of its own (images, form controls, lists, SVG text); no
+  text or element outside the sheet; no non-breaking pair split across lines;
+- ink, on the page image: every printed string (each line box on its own), glyph, presence
+  mark and phase paint must leave pixels close to its own colour inside its own box in the
+  screenshot, within a band. Too few is a hidden item or one covered in another colour (an
+  SVG shape, a border, a shadow, a blend); the floors are calibrated on the evidence
+  document at a third to under half of the lowest share observed (text 0.03 of 0.083,
+  glyph 0.06 of 0.192, mark 0.05 of 0.162, phase paint 0.2 of 0.474). Too many is a cover
+  in the item's own colour; the ceilings sit well above the highest share observed and
+  below a solid box (text 0.5 over 0.190, glyph 0.75 over 0.448, mark 0.92 over 0.691;
+  phase paints are solid fields and have none);
 - geometry: nothing outside the sheet, clipped by an ancestor or out of its painted
   container, no line wider than its measure, no overlap, the Wu Xing medallion clear, every
   web font loaded; the running head and foot paint above the atmosphere blobs;
@@ -200,11 +214,13 @@ a PDF, and every run writes into a hidden sibling directory that is renamed into
 only when complete.
 `tools/pdf-renderer/qa/run_canaries.py` breaks every gate in its table at least once,
 runs the real renderer against it, and records the result in `renderer-canaries.json`:
-66 canaries, each of
-which must end BLOCKED at the expected check with the expected finding, exit 1 and no
-PDF or manifest. The record is bound to the renderer source digest and to the digest of
-the canary source; the contract suite pins every canary's expected check and finding,
-and requires every canary to hold on the same renderer digest the manifest states. The
+94 canaries, each of which must end BLOCKED at the expected check with the expected
+finding, exit 1 and no PDF or manifest; the `partial-write` canary instead proves that a
+failure after a passing render leaves no `--out` directory at all. The record is bound
+to the renderer source digest and to the digest of the canary source; the contract
+suite pins every canary's expected check and finding, requires every canary to hold on
+the same renderer digest the manifest states, and requires every code the renderer can
+emit to appear in the record except the six limitation 8 names. The
 same record carries the differential test of the Python hash mirror against the
 repository's TypeScript `canonicalJson` on a fixed value set.
 
@@ -289,9 +305,24 @@ are a declaration.
    block (the ring order `WX_RING`, the grid of each page); an edit there that keeps every
    value, order and colour consistent is invisible to the QA. Colour classes come from the
    entry's phase, not from the projection's `paint`, which the renderer does not read.
-   Three renderer checks have no canary: the one-em CJK advance, the PDF readback checks
-   other than the page count, and the light colour-scheme pin.
-9. **The rival-face scan covers the listed font directories.** A face with the pinned
+   Three groups of renderer checks have no canary, because breaking them needs a doctored
+   font or PDF writer rather than a doctored page: the one-em CJK advance
+   (`CJK_ADVANCE_NOT_ONE_EM`), the PDF readback checks other than the page count
+   (`PDF_MAGIC`, `PDF_MEDIA_BOX`, `PDF_FONT_NOT_EMBEDDED`, `PDF_FONT_NOT_PINNED`,
+   `PDF_TYPE3_WITHOUT_TOUNICODE`), and the light colour-scheme pin (no QA check at all).
+   Every other check id and finding code has at least one canary in the committed record; the
+   evidence contract test derives the renderer's codes from its source and pins exactly these
+   six as the ones no canary observed. The ink check proves a band of the item's own colour
+   in its box, not legibility: a cover that reproduces an item's own ink density (a pattern
+   in its colour) passes it.
+9. **Customer text is limited to the pinned advance tables.** Every text the document sets
+   must be in the Inter advance tables the long form measures with (Basic Latin, Latin-1,
+   Latin Extended-A/B, the listed punctuation, the euro sign) or be a CJK ideograph. So a
+   display name or payload in Vietnamese, Cyrillic or Greek is refused
+   (`PRESENTATION_TEXT_UNMEASURABLE`) although the Inter faces carry those letters.
+   Widening the tables changes the font metrics and the released template hash; it is a
+   Product Owner decision for a new template version.
+10. **The rival-face scan covers the listed font directories.** A face with the pinned
    PostScript name in `/System/Library/Fonts` or activated by a font manager would not be
    detected; on the measured host none exists.
 

@@ -517,18 +517,19 @@ def five_phases(ctx: Context, page: dict, c: dict) -> str:
 TEN_GOD_MARK = {"stem": "stem", "hidden": "hidden", "both": "both", None: "none"}
 
 
-def mark(kind, path: str, own_slot: bool) -> str:
-    """A presence mark bound to the path of its value (null is drawn as 'none')."""
+def mark(kind, path: str, own_slot: bool, column: str | None = None) -> str:
+    """A presence mark bound to the path of its value (null is drawn as 'none') and, in the table, to its column header."""
     drawn = choose(TEN_GOD_MARK, kind, "TEN_GOD_MARK")
     bound = html.escape(path, quote=True)
-    return f'<span class="mark {drawn}" data-p="{bound}" data-mark="{drawn}"' + (f' data-slot="{bound}"' if own_slot else "") + '></span>'
+    return (f'<span class="mark {drawn}" data-p="{bound}" data-mark="{drawn}"' + (f' data-slot="{bound}"' if own_slot else "")
+            + (f' data-col="{html.escape(column, quote=True)}"' if column is not None else "") + '></span>')
 
 
 def ten_gods(ctx: Context, page: dict, c: dict) -> str:
     rows = "".join(
         f'<tr{slot(r)}><td style="width:15mm">{t(r["tenGod"]["hanzi"], "cjk term")}</td><td style="width:22mm">{t(r["tenGod"]["pinyin"], "pinyin nw")}</td>'
         f'<td class="body-small" style="color:var(--ink-900)">{t(r["tenGod"]["customerLabel"])}</td>'
-        + "".join(f'<td style="text-align:center;width:13mm">{mark(m, f"{path_of(r["marks"], "MARKS")}.{j}", True)}</td>' for j, m in enumerate(r["marks"])) + "</tr>" for r in c["rows"])
+        + "".join(f'<td style="text-align:center;width:13mm">{mark(m, f"{path_of(r["marks"], "MARKS")}.{j}", True, f"{path_of(c["columns"], "COLUMNS")}.{j}")}</td>' for j, m in enumerate(r["marks"])) + "</tr>" for r in c["rows"])
     head_cells = "".join(f'<td{slot(col)} style="text-align:center">{t(col)}</td>' for col in c["columns"])
     legend = "".join(f'<div class="i"{slot(l)}>{mark(l["mark"], f"{path_of(l, "LEGEND")}.mark", False)} {t(l["label"])}</div>' for l in c["legend"])
     return f'''{head(ctx, page)}
