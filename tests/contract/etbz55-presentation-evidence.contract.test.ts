@@ -345,6 +345,13 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     ['dm-field-branch-phase', 'PAGE_QA', 'PHASE_NOT_ITS_ENTRY'],
     ['phase-token-unresolved', 'PAGE_QA', 'PHASE_TOKENS_UNRESOLVED'],
     ['mark-no-column', 'PAGE_QA', 'MARK_OFF_COLUMN'],
+    ['glyph-use-colour', 'PAGE_QA', 'PHASE_INK_NOT_ITS_COLOUR'],
+    ['phase-gradient', 'PAGE_QA', 'PHASE_NOT_ITS_COLOUR'],
+    ['mark-outline-both', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
+    ['mark-bgimage-hidden', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
+    ['partial-top-box', 'PAGE_QA', 'TEXT_OCCLUDED'],
+    ['partial-top-svg', 'PAGE_QA', 'TEXT_OCCLUDED'],
+    ['mark-col-rebound', 'PAGE_QA', 'MARK_OFF_COLUMN'],
     ['unknown-text-style', 'PAGE_BUILD', null],
     ['sheet-escape-element', 'PAGE_QA', 'SHEET_ESCAPED'],
     ['pdf-page-count', 'PDF_READBACK', 'PDF_PAGE_COUNT'],
@@ -404,8 +411,15 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
   it('covers every check id and finding code the renderer can emit, except the six codes ADR 0012 limitation 8 names', () => {
     const source = readFileSync(join(RENDERER, 'render_pdf.py'), 'utf8');
     const emitted = new Set<string>(['RENDERER_ERROR']);
-    // Every code is a literal (the derivation reads literals), in any quoting: code: 'X', "code": "X", code="X", Blocked("X").
-    expect(source).not.toMatch(/["']?\bcode["']?\s*[:=]\s*(?:f["']|`)/u);
+    // Every place the renderer sets a code is a literal the derivation below reads, in any quoting (code: 'X',
+    // "code": "X", 'code': 'X', code="X", Blocked("X")), or one of the two INK_RULES variables, whose values are
+    // literals too. A code built at run time would be a code no canary is required for.
+    const setters = [...source.matchAll(/["']?\bcode["']?\s*[:=]\s*([^,}\s)]+)/gu)].map((match) => match[1] as string);
+    expect(setters.length).toBeGreaterThan(40);
+    expect(setters.filter((value) => !/^["'][A-Z][A-Z_0-9]+["']$/u.test(value) && !['too_little', 'too_much'].includes(value))).toEqual([]);
+    const raised = [...source.matchAll(/\bBlocked\(\s*([^,)]+)/gu)].map((match) => match[1] as string).filter((value) => value !== 'Exception');
+    expect(raised.length).toBeGreaterThan(5);
+    expect(raised.filter((value) => !/^["'][A-Z][A-Z_0-9]+["']$/u.test(value))).toEqual([]);
     const patterns = [/["']?\bcode["']?\s*[:=]\s*["']([A-Z][A-Z_0-9]+)["']/gu, /Blocked\(\s*["']([A-Z][A-Z_0-9]+)["']/gu, /["']([A-Z]+_(?:NOT|OVER)_INKED)["']/gu];
     for (const pattern of patterns) for (const match of source.matchAll(pattern)) emitted.add(match[1] as string);
     expect(['TEXT_OVER_INKED', 'PHASE_NOT_INKED'].every((code) => emitted.has(code))).toBe(true);

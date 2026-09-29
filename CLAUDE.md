@@ -172,7 +172,7 @@ consumer of `visual/` and `skill/` (both leaf tests name it), and it is itself a
 local renderer `tools/pdf-renderer/` (Python + Chromium, never in CI, no npm dependency), which decides nothing,
 verifies the projection and template hashes, binds every printed string, drawn glyph, presence mark and phase colour
 to its projection path (the QA requires each to be the value at its path, inside its entry's slots on the page too, in
-list order, painted as its value, visible in the page image down to each character, and every required path to
+list order, painted as its value, present and inked in the page image down to each character, and every required path to
 appear) and writes the ArtifactManifest only when its QA passes; `tools/pdf-renderer/qa/run_canaries.py` makes every
 gate in its table fail at least once and records it (six codes that need a doctored font or PDF writer aside, ADR
 0012 limitation 8). The committed PDF, manifest, projection and canary record under `docs/evidence/etbz-55/`

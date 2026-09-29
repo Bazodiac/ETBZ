@@ -55,7 +55,7 @@ import {
 } from '../skill/index.js';
 import type { HoroscopeModel, PillarName } from '../horoscope-model.js';
 import type { FufireTenGodFact } from '../ports/fufire-gateway.js';
-import { elementDeByEn, stemFactByName } from '../../domain/sizhu.js';
+import { TWELVE_BRANCHES, elementDeByEn, stemFactByName } from '../../domain/sizhu.js';
 import { structuralHash, structuralHashOfCanonicalText } from '../../domain/structural-hash.js';
 import { PresentationError } from './errors.js';
 import { CONTENT_W, blockWords, headerHeight, layoutHeader, paginateLongForm } from './long-form.js';
@@ -420,6 +420,10 @@ function chartValues(model: HoroscopeModel): ChartValues {
     }
     if (branchGlyph.pinyin !== pillar.branchPinyin) mismatch(`${where}: the branch pinyin differs from the glyph contract`, { where });
     if (pillar.tierDe.trim() === '') missing(`${where}: no animal label`, { where });
+    const released = TWELVE_BRANCHES.find((entry) => entry.hanzi === pillar.branchHanzi);
+    if (released === undefined || released.tierDe !== pillar.tierDe) {
+      mismatch(`${where}: the chart labels branch ${pillar.branchHanzi} "${pillar.tierDe}", the Sizhu table "${released?.tierDe ?? 'nothing'}"`, { where, character: pillar.branchHanzi });
+    }
     const branch: BranchValue = {
       character: pillar.branchHanzi,
       pinyin: pillar.branchPinyin,
@@ -1136,8 +1140,8 @@ export function buildPresentationProjection(input: PresentationInput): Presentat
   });
 
   const strings = new Set(pages.flatMap((page) => page.strings));
-  // Every printed string, model values included (an animal label), is in the pinned advance tables or CJK (ADR 0012
-  // limitation 9) - not only the texts the long form measures and the four checked above.
+  // Every printed string is in the pinned advance tables or CJK (ADR 0012 limitation 9). Defence in depth: each is
+  // payload text measured above or by the paginator, a released label, or a model value bound to a second source.
   for (const text of strings) {
     assertCustomerText(text);
     assertMeasurable(text, 'customerStrings');

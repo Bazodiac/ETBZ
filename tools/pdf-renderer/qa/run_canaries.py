@@ -31,6 +31,7 @@ import hashlib  # noqa: E402
 import json  # noqa: E402
 import pathlib  # noqa: E402
 import platform  # noqa: E402
+import re  # noqa: E402
 import subprocess  # noqa: E402
 import tempfile  # noqa: E402
 
@@ -723,6 +724,56 @@ def c_sheet_escape_element(work):
     wrap_page_html(lambda html, page: html.replace("</body>", '<div style="width:10mm;height:10mm"></div></body>', 1))
 
 
+# Review round 6: CSS channels a class or computed-colour check does not see, and a cover over the upper part of a
+# few characters, between the old three sample points.
+def c_glyph_use_colour(work):
+    # The metal glyphs are repainted in the water colour on their <use>; the <svg> still computes the metal colour.
+    inject_css('svg.disp[data-phase="metal"] use{color:var(--phase-water-mark)}')
+
+
+def c_phase_gradient(work):
+    # Every metal disc is painted over by a background image in the water field colour.
+    inject_css(".f-metal{background-image:linear-gradient(var(--phase-water-field),var(--phase-water-field))}")
+
+
+def c_mark_outline_both(work):
+    # Stem marks gain an outline halo: they read as "both".
+    inject_css("tbody .mark.stem{outline:0.3mm solid var(--ink-600);outline-offset:0.45mm}")
+
+
+def c_mark_bgimage_hidden(work):
+    # Hidden-stem rings are filled by a background image: they read as "both".
+    inject_css(".mark.hidden{background-image:radial-gradient(circle, var(--ink-900) 0 55%, transparent 56%)}")
+
+
+PARTIAL_TOP = "position:absolute;left:30mm;top:0;width:15mm;height:3mm;z-index:1"
+
+
+def c_partial_top_box(work):
+    # A paper-coloured box over the upper 60 % of a few characters of the method note's first line.
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('margin-top:10mm;max-width:130mm">', f'margin-top:10mm;max-width:130mm;position:relative"><div style="{PARTIAL_TOP};background:var(--paper-000)"></div>', 1))
+
+
+def c_partial_top_svg(work):
+    # The same cover drawn as an SVG shape.
+    cover = f'<svg style="{PARTIAL_TOP}" viewBox="0 0 10 10" preserveAspectRatio="none"><rect width="10" height="10" style="fill:var(--paper-000)"/></svg>'
+    wrap_builder("methodNote", lambda html, ctx, page, c: html.replace('margin-top:10mm;max-width:130mm">', f'margin-top:10mm;max-width:130mm;position:relative">{cover}', 1))
+
+
+def c_mark_col_rebound(work):
+    # Row 0's first mark moves into the second column's cell and names that column: it stands under the header it
+    # names, in list order - only the rule that a mark's column index equals its own index sees it.
+    def rebind(html, ctx, page, c):
+        start = html.index('data-slot="content.rows.0"')
+        end = html.index("</tr>", start)
+        row = html[start:end]
+        spans = re.findall(r'<span class="mark [^>]*></span>', row)
+        moved = re.sub(r'(data-col="[^"]*\.)0"', r'\g<1>1"', spans[0])
+        row = row.replace(spans[0], "", 1).replace(spans[1], moved + spans[1], 1)
+        return html[:start] + row + html[end:]
+    wrap_builder("tenGods", rebind)
+
+
 def c_phase_token_unresolved(work):
     # A phase token the QA cannot resolve to a colour: every paint of that phase would go unmeasured.
     inject_css(":root{--phase-wood-field:rgb(231,236,227) !important}")
@@ -853,6 +904,13 @@ CANARIES = {
     "dm-field-branch-phase": ("fact in its slot", "the Day-Master field paints the day branch's phase", "PAGE_QA", "PHASE_NOT_ITS_ENTRY", c_dm_field_branch_phase),
     "phase-token-unresolved": ("fact in its slot", "a phase token is not a colour the QA can resolve", "PAGE_QA", "PHASE_TOKENS_UNRESOLVED", c_phase_token_unresolved),
     "mark-no-column": ("fact in its slot", "the table marks do not name their column", "PAGE_QA", "MARK_OFF_COLUMN", c_mark_no_column),
+    "glyph-use-colour": ("glyphs", "the metal glyphs are repainted in the water colour on their <use>", "PAGE_QA", "PHASE_INK_NOT_ITS_COLOUR", c_glyph_use_colour),
+    "phase-gradient": ("fact in its slot", "every metal disc is painted over by a water-coloured background image", "PAGE_QA", "PHASE_NOT_ITS_COLOUR", c_phase_gradient),
+    "mark-outline-both": ("fact in its slot", "stem marks gain an outline halo and read as both", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_mark_outline_both),
+    "mark-bgimage-hidden": ("fact in its slot", "hidden-stem rings are filled by a background image", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_mark_bgimage_hidden),
+    "partial-top-box": ("no hidden text", "a paper-coloured box covers the upper part of a few characters", "PAGE_QA", "TEXT_OCCLUDED", c_partial_top_box),
+    "partial-top-svg": ("no hidden text", "a paper-coloured SVG shape covers the upper part of a few characters", "PAGE_QA", "TEXT_OCCLUDED", c_partial_top_svg),
+    "mark-col-rebound": ("fact in its slot", "a mark moves into the next column's cell and names that column", "PAGE_QA", "MARK_OFF_COLUMN", c_mark_col_rebound),
     "unknown-text-style": ("page build", "no long-form style is known to the line builder", "PAGE_BUILD", None, c_unknown_text_style),
     "sheet-escape-element": ("renderer adds no text", "an element is placed beside the sheet", "PAGE_QA", "SHEET_ESCAPED", c_sheet_escape_element),
     "pdf-page-count": ("PDF readback", "the projection states one page more than it has (rehashed)", "PDF_READBACK", "PDF_PAGE_COUNT", c_pdf_page_count),

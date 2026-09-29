@@ -94,16 +94,16 @@ CJK_POSTSCRIPT_NAME = "NotoSansCJKsc-Regular"
 ALLOWED_POSTSCRIPT_NAMES = INTER_POSTSCRIPT_NAMES | {CJK_POSTSCRIPT_NAME}
 FONT_SUFFIXES = (".ttf", ".otf", ".ttc", ".otc")
 # The share of a box's pixels (each line box on its own) that carry the item's colour must lie within a band.
-# Calibrated on the evidence document (2026-09-29, 1470 text items, 116 glyphs, 44 marks, 92 phase paints).
-# Floor: a hidden item, or one covered in another colour, leaves (close to) no pixels of its colour. The lowest
-# shares observed were text 0.083, glyph 0.192, mark 0.162, phase 0.474; each floor sits at a third to under half of
-# that. Ceiling: a box (almost) solid in the item's colour is a cover in that colour. The highest shares observed
-# were text 0.190, glyph 0.448, mark 0.691; each ceiling sits well above that and below a solid box (about 1.0).
-# Phase paints are solid fields by design and have no ceiling. The phase fields are pale tints close to the paper
-# colours, so their colour tolerance is 4 (grey-scaled difference): a field covered by paper-200 (difference about
-# 6) no longer counts. Every printed character is also checked in its own box (33,256 characters): the lowest share
-# observed was 0.0151 (a hyphen), the highest 0.263; a character under a cover in another colour leaves (close to)
-# nothing, one under a cover in its own colour about 1.0.
+# Calibrated on the evidence document (2026-09-29, 1470 text items, 116 glyphs, 44 marks, 92 phase paints; the QA
+# report records the band and the contract suite pins it). Floor: a hidden item, or one covered in another colour,
+# leaves (close to) no pixels of its colour. The lowest shares observed were text 0.083, glyph 0.192, mark 0.162,
+# phase 0.474; each floor sits at 30 to 45 % of that. Ceiling: a box (almost) solid in the item's colour is a cover
+# in that colour. The highest shares observed were text 0.190, glyph 0.448, mark 0.691; each ceiling sits above 1.3
+# times that and below a solid box (about 1.0). Phase paints are solid fields by design and have no ceiling. The
+# phase fields are pale tints close to the paper colours, so their colour tolerance is 4 (grey-scaled difference): a
+# field covered by paper-200 (difference about 6) no longer counts. Every printed character is also checked in its
+# own box (33,256 characters): the lowest share observed was 0.0151 (a hyphen), the highest 0.263; a character under
+# a cover in another colour leaves (close to) nothing, one under a cover in its own colour about 1.0.
 INK_TEXT_MIN, INK_TEXT_MAX = 0.03, 0.5
 INK_GLYPH_MIN, INK_GLYPH_MAX = 0.06, 0.75
 INK_MARK_MIN, INK_MARK_MAX = 0.05, 0.92
@@ -234,12 +234,17 @@ DOM_QA = r"""
     if (s.clipPath !== 'none' || s.maskImage !== 'none' || (s.webkitMaskImage && s.webkitMaskImage !== 'none') || s.filter !== 'none' || (s.clip && s.clip !== 'auto')) return name(a); } return null; };
   const shown = (el) => typeof el.checkVisibility !== 'function' ||
     el.checkVisibility({opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true, checkOpacity: true, checkVisibilityCSS: true});
-  // How much an element covers what lies under it: its composite opacity times its background alpha.
-  const paint = (el) => { const s = getComputedStyle(el); const c = parse(s.backgroundColor);
+  // How much an element covers what lies under it: its composite opacity times its background alpha - or, for an SVG
+  // shape, its fill alpha times its fill-opacity (a gradient fill counts as opaque).
+  const isShape = (el) => typeof SVGGeometryElement !== 'undefined' && el instanceof SVGGeometryElement;
+  const paint = (el) => { const s = getComputedStyle(el);
+    if (isShape(el)) { if (!s.fill || s.fill === 'none') return 0; const f = parse(s.fill); return (f === null ? 1 : f.a) * parseFloat(s.fillOpacity || '1') * opacityOf(el); }
+    const c = parse(s.backgroundColor);
     const cover = s.backgroundImage !== 'none' ? 1 : (c === null ? 0 : c.a); return cover * opacityOf(el); };
+  const surfaceColour = (el) => parse(isShape(el) ? getComputedStyle(el).fill : getComputedStyle(el).backgroundColor);
   // The first painted surface under (x, y) for el: its own background counts (a tag), its descendants do not.
   const backdrop = (el, x, y) => { for (const hit of document.elementsFromPoint(x, y)) { if (hit !== el && el.contains(hit)) continue;
-    if (paint(hit) >= VISIBLE) { const c = parse(getComputedStyle(hit).backgroundColor); if (c) return c; } } return {r: 255, g: 255, b: 255, a: 1}; };
+    if (paint(hit) >= VISIBLE) { const c = surfaceColour(hit); if (c && c.a > 0) return c; } } return {r: 255, g: 255, b: 255, a: 1}; };
   // A painted element above el at (x, y) - pointer-events are forced on for the QA, so overlays with none are seen.
   const occluderAt = (el, x, y) => { for (const hit of document.elementsFromPoint(x, y)) {
     if (hit === el || el.contains(hit) || hit.contains(el)) return null; if (paint(hit) >= VISIBLE) return hit; } return null; };
@@ -296,18 +301,19 @@ DOM_QA = r"""
     const own = el.getBoundingClientRect();
     const scale = Math.min(el.offsetHeight > 0 ? own.height / el.offsetHeight : 1, el.offsetWidth > 0 ? own.width / el.offsetWidth : 1), renderedPx = fontPx * scale;
     if (fontPx < MIN_FONT_PX || renderedPx < MIN_FONT_PX - 0.25) findings.push({code: 'TEXT_TOO_SMALL', path, fontPx, renderedPx: +renderedPx.toFixed(2), text: s.slice(0, 40)});
-    let occluder = null;
-    for (const r of rects) for (const fx of [0.15, 0.5, 0.85]) occluder = occluder || occluderAt(el, r.left + r.width * fx, r.top + r.height / 2);
-    if (occluder !== null) findings.push({code: 'TEXT_OCCLUDED', path, by: name(occluder), text: s.slice(0, 40)});
-    const r0 = rects[0], under = backdrop(el, r0.left + r0.width / 2, r0.top + r0.height / 2);
-    const ratio = contrast(mix(fill, under, alpha), under);
-    if (ratio < 1.5) findings.push({code: 'TEXT_LOW_CONTRAST', path, ratio: +ratio.toFixed(2), text: s.slice(0, 40)});
-    // Every character on its own too, so a cover over a few words of a long line cannot average out.
+    // Every character on its own: its box for the ink check, its centre for the occlusion test, so a cover over a few
+    // words of a long line can neither average out nor fall between sample points.
     const chars = [], whole = n.textContent, one = document.createRange();
     for (let i = 0; i < whole.length;) { const cp = whole.codePointAt(i), len = cp > 0xffff ? 2 : 1, ch = String.fromCodePoint(cp);
       if (!/\s/u.test(ch)) { one.setStart(n, i); one.setEnd(n, i + len);
         const cr = Array.from(one.getClientRects()).filter((r) => r.width > 0.5 && r.height > 0.5); if (cr.length > 0) chars.push({...box(cr[0]), ch}); }
       i += len; }
+    let occluder = null;
+    for (const c of chars) { occluder = occluderAt(el, c.x + c.w / 2, c.y + c.h / 2); if (occluder !== null) break; }
+    if (occluder !== null) findings.push({code: 'TEXT_OCCLUDED', path, by: name(occluder), text: s.slice(0, 40)});
+    const r0 = rects[0], under = backdrop(el, r0.left + r0.width / 2, r0.top + r0.height / 2);
+    const ratio = contrast(mix(fill, under, alpha), under);
+    if (ratio < 1.5) findings.push({code: 'TEXT_LOW_CONTRAST', path, ratio: +ratio.toFixed(2), text: s.slice(0, 40)});
     // The colour the pixels carry: the fill composited over its backdrop (text at opacity 0.7 is lighter on the page).
     ink.push({kind: 'text', path, color: rgb(mix(fill, under, alpha)), rects: rects.map(box), chars, text: s.slice(0, 40)});
     printed.add(path);
@@ -333,7 +339,7 @@ DOM_QA = r"""
     if (ratio < 1.5) findings.push({code: 'GLYPH_LOW_CONTRAST', path, ratio: +ratio.toFixed(2), glyph: ch});
     if (g.dataset.phase !== undefined) { const shows = phasesOfColour(gc);
       if (!(shows.length === 1 && shows[0] === g.dataset.phase)) findings.push({code: 'PHASE_NOT_ITS_COLOUR', path: g.dataset.phaseP, declared: g.dataset.phase, painted: shows.join('|') || 'no phase token', on: 'glyph'}); }
-    ink.push({kind: 'glyph', path, color: rgb(gc), rects: [box(r)], text: ch});
+    ink.push({kind: 'glyph', path, color: rgb(mix(gc, under, ga)), rects: [box(r)], text: ch, ...(g.dataset.phase !== undefined ? {phase: g.dataset.phase, token: 1} : {})});
     drawn.add(path);
   }
   for (const p of q.glyphs) if (!drawn.has(p)) findings.push({code: 'GLYPH_MISSING_FROM_PAGE', path: p, glyph: values[p]});
@@ -354,9 +360,10 @@ DOM_QA = r"""
     if (!(mr.width > 0.5 && mr.height > 0.5) || !shown(el) || opacityOf(el) < VISIBLE || effectsOf(el) !== null || paintColor === null || paintColor.a < VISIBLE) {
       findings.push({code: 'MARK_INVISIBLE', path}); continue; }
     // The look of its value, as painted: stem filled, hidden a ring, both filled with a halo, none a bar.
-    const filled = mbg !== null && mbg.a >= VISIBLE, ring = parseFloat(ms.borderTopWidth) > 0, halo = ms.boxShadow !== 'none';
-    const look = expected === 'stem' ? filled && !ring && !halo : expected === 'hidden' ? !filled && ring : expected === 'both' ? filled && halo
-      : filled && mr.height < 2 && mr.width > 2 * mr.height;
+    const filled = (mbg !== null && mbg.a >= VISIBLE) || ms.backgroundImage !== 'none', ring = parseFloat(ms.borderTopWidth) > 0;
+    const halo = ms.boxShadow !== 'none' || (ms.outlineStyle !== 'none' && parseFloat(ms.outlineWidth) > 0);
+    const look = expected === 'stem' ? filled && !ring && !halo : expected === 'hidden' ? !filled && ring && !halo : expected === 'both' ? filled && halo
+      : filled && !ring && !halo && mr.height < 2 && mr.width > 2 * mr.height;
     if (!look) { findings.push({code: 'MARK_NOT_ITS_LOOK', path, value: expected}); continue; }
     // A table mark (a path ending in marks.<j>) names its own column <j> and stands under that column's header.
     const tableIndex = /\.marks\.(\d+)$/.exec(path);
@@ -392,7 +399,9 @@ DOM_QA = r"""
         findings.push({code: 'PHASE_INVISIBLE', path, on: name(el)}); continue; }
       const shows = phasesOfColour(pbg);
       if (!(shows.length === 1 && shows[0] === declared)) { findings.push({code: 'PHASE_NOT_ITS_COLOUR', path, declared, painted: shows.join('|') || 'no phase token', on: name(el)}); continue; }
-      ink.push({kind: 'phase', path, color: rgb(pbg), rects: [box(pr)], text: declared});
+      if (getComputedStyle(el).backgroundImage !== 'none') { findings.push({code: 'PHASE_NOT_ITS_COLOUR', path, declared, painted: 'a background image', on: name(el)}); continue; }
+      const token = sameColour(phaseTokens[declared][0], pbg) ? 0 : 1;
+      ink.push({kind: 'phase', path, color: rgb(pbg), rects: [box(pr)], text: declared, phase: declared, token});
     }
     // A phase paint holds only its own entry's values (a page label aside): the Day-Master field paints the Day
     // Master's phase, not another pillar's.
@@ -466,7 +475,7 @@ DOM_QA = r"""
     const y = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
     if (x > 1.5 && y > 1.5) findings.push({code: 'OVERLAP', a: a.e.textContent.trim().slice(0, 30), b: b.e.textContent.trim().slice(0, 30)});
   }
-  return {findings, textCount, glyphCount: glyphEls.length, ink};
+  return {findings, textCount, glyphCount: glyphEls.length, ink, tokens: phaseTokens};
 }
 """
 
@@ -596,23 +605,50 @@ INK_RULES = {"text": (40, INK_TEXT_MIN, INK_TEXT_MAX, "TEXT_NOT_INKED", "TEXT_OV
              "phase": (4, INK_PHASE_MIN, None, "PHASE_NOT_INKED", None)}
 
 
-def ink_share(image, scale: float, rect: dict, colour: tuple, threshold: int) -> float:
-    """The share of the rect's pixels within `threshold` (grey-scaled difference) of `colour`."""
+def crop_of(image, scale: float, rect: dict):
+    """The screenshot pixels inside a CSS-pixel rect, or None when the rect holds no pixel."""
     left, top = max(0, int(rect["x"] * scale)), max(0, int(rect["y"] * scale))
     right = min(image.width, int(math.ceil((rect["x"] + rect["w"]) * scale)))
     bottom = min(image.height, int(math.ceil((rect["y"] + rect["h"]) * scale)))
-    if right <= left or bottom <= top:
+    return None if right <= left or bottom <= top else image.crop((left, top, right, bottom))
+
+
+def ink_share(image, scale: float, rect: dict, colour: tuple, threshold: int) -> float:
+    """The share of the rect's pixels within `threshold` (grey-scaled difference) of `colour`."""
+    crop = crop_of(image, scale, rect)
+    if crop is None:
         return 0.0
-    crop = image.crop((left, top, right, bottom))
     difference = ImageChops.difference(crop, Image.new("RGB", crop.size, colour)).convert("L")
     return sum(difference.histogram()[:threshold]) / (crop.width * crop.height)
 
 
-def ink_check(png: pathlib.Path, items: list, stats: list) -> list:
+def phase_pixels(image, scale: float, rects: list, tokens: dict) -> dict:
+    """How many pixels of each phase's token (exact, within one level per channel) lie in the rects."""
+    counts = {phase: 0 for phase in tokens}
+    for rect in rects:
+        crop = crop_of(image, scale, rect)
+        if crop is None:
+            continue
+        for count, pixel in crop.getcolors(crop.width * crop.height):
+            for phase, token in tokens.items():
+                if all(abs(pixel[i] - token[i]) <= 1 for i in range(3)):
+                    counts[phase] += count
+    return counts
+
+
+def ink_check(png: pathlib.Path, items: list, stats: list, tokens: dict | None = None) -> list:
     image = Image.open(png).convert("RGB")
     scale = image.width / A4_PX[0]
     findings = []
     for item in items:
+        # A phase paint or phase-coloured glyph: of the five phases' tokens (the kind it paints: field 0, mark 1), its
+        # own must be the one the page image shows most - whatever CSS channel painted it (a <use>, a gradient).
+        if "phase" in item and tokens:
+            kind = item["token"]
+            counts = phase_pixels(image, scale, item["rects"], {p: tuple(int(v[kind][k]) for k in ("r", "g", "b")) for p, v in tokens.items() if len(v) == 2})
+            own = counts.get(item["phase"], 0)
+            if own == 0 or any(n >= own for p, n in counts.items() if p != item["phase"]):
+                findings.append({"code": "PHASE_INK_NOT_ITS_COLOUR", "path": item["path"], "declared": item["phase"], "pixels": counts, "text": item["text"]})
         threshold, minimum, maximum, too_little, too_much = INK_RULES[item["kind"]]
         colour = tuple(int(round(item["color"][k])) for k in ("r", "g", "b"))
         # Every box on its own (each line of a wrapped text): hiding part of a paragraph must not average out.
@@ -694,7 +730,7 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
             # "unloaded" is a declared face the page never asked for; "error" is a face that failed and fell back.
             failed = [f for f in fonts if f["status"] == "error"]
             findings = dom["findings"] + wx + ([{"code": "FONT_LOAD_FAILED", "fonts": failed}] if failed else [])
-            findings += ink_check(png, dom["ink"], ink_stats)
+            findings += ink_check(png, dom["ink"], ink_stats, dom["tokens"])
             foreign = sorted(f"{family}|{ps}" for family, ps in used_fonts if ps not in ALLOWED_POSTSCRIPT_NAMES)
             if foreign:
                 findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign})

@@ -16,11 +16,14 @@
  * times out, fails to load, or throws inside a test body is an error, not a kill.
  *
  * Every file is restored from bytes held in memory; the run fails if the tree
- * differs from before. Two guards have no mutant, by design: `assertEveryWordPlaced`
+ * differs from before. Three guards have no mutant, by design: `assertEveryWordPlaced`
  * in the projection is defence in depth behind the paginator's own every-word
  * check, whose defect mutant ("the last line of a paragraph is dropped") is
- * below; and the band flush's "no recorded line count" refusal guards a state
- * the paginator cannot reach (every band entry is recorded before it is placed).
+ * below; the band flush's "no recorded line count" refusal guards a state the
+ * paginator cannot reach (every band entry is recorded before it is placed); and
+ * the advance-table check on every printed string is defence in depth behind the
+ * checks each string's source already meets (the payload texts, the released
+ * labels, the model values bound to a second source).
  *
  * A mutant whose name says "is not refused as <CODE>" proves only that the
  * guard names its own code: without it the input would still fail, later,
@@ -428,12 +431,17 @@ const MUTANTS = [
     null, [T.architecture], 'does not reach for a clock'],
 
   // --- the evidence on disk ---------------------------------------------------------------------------------------------
-  ['MEASURE: a printed model value outside the advance tables is accepted', 'text', PROJECTION,
-    "    assertCustomerText(text);\n    assertMeasurable(text, 'customerStrings');\n", '    assertCustomerText(text);\n',
-    [T.negative], 'refuses a printed model value outside the pinned Inter advance tables'],
-  ['COVERAGE: the renderer gains a finding code no canary observes', 'text', RENDERER_PY,
+  ['FACT: an animal label that differs from the Sizhu table is accepted', 'text', PROJECTION,
+    '    if (released === undefined || released.tierDe !== pillar.tierDe) {', '    if (false) {',
+    [T.negative], 'refuses an animal label the Sizhu table does not give the branch'],
+  // Both run only inside `if foreign:`, so the added branch never executes; only the source changes.
+  ['COVERAGE: the renderer gains a single-quoted finding code no canary observes', 'text', RENDERER_PY,
     'findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign})',
-    'findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign} if foreign else {"code": "ETBZ55_MUTANT_UNCANARIED"})',
+    "findings.append({\"code\": \"TEXT_SET_IN_UNPINNED_FACE\", \"families\": foreign} if foreign else {'code': 'ETBZ55_MUTANT_UNCANARIED'})",
+    [T.contract], 'covers every check id and finding code the renderer can emit'],
+  ['COVERAGE: the renderer sets a finding code from a variable', 'text', RENDERER_PY,
+    'findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign})',
+    'findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign} if foreign else {"code": etbz55_mutant_code})',
     [T.contract], 'covers every check id and finding code the renderer can emit'],
   ['DATA: a stray file appears in the evidence folder', 'create',
     'docs/evidence/etbz-55/NOTES.md',

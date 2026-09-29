@@ -342,7 +342,8 @@
     "check": "PAGE_QA",
     "codes": [
      "LINE_EXCEEDS_MEASURE",
-     "OVERLAP"
+     "OVERLAP",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -1037,6 +1038,7 @@
     "codes": [
      "GLYPH_NOT_INKED",
      "GLYPH_OCCLUDED",
+     "PHASE_INK_NOT_ITS_COLOUR",
      "PHASE_NOT_INKED"
     ],
     "exitCode": 1,
@@ -1206,7 +1208,8 @@
     "check": "PAGE_QA",
     "codes": [
      "CHARACTER_NOT_INKED",
-     "TEXT_NOT_INKED"
+     "TEXT_NOT_INKED",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -1558,6 +1561,7 @@
     "check": "PAGE_QA",
     "codes": [
      "GLYPH_NOT_INKED",
+     "GLYPH_OCCLUDED",
      "PHASE_UNBOUND"
     ],
     "exitCode": 1,
@@ -1577,7 +1581,8 @@
     "check": "PAGE_QA",
     "codes": [
      "CHARACTER_NOT_INKED",
-     "MARK_NOT_INKED"
+     "MARK_NOT_INKED",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -1596,6 +1601,7 @@
     "check": "PAGE_QA",
     "codes": [
      "GLYPH_NOT_INKED",
+     "GLYPH_OCCLUDED",
      "PHASE_NOT_INKED"
     ],
     "exitCode": 1,
@@ -1654,6 +1660,8 @@
     "check": "PAGE_QA",
     "codes": [
      "CHARACTER_OVER_INKED",
+     "TEXT_LOW_CONTRAST",
+     "TEXT_OCCLUDED",
      "TEXT_OVER_INKED"
     ],
     "exitCode": 1,
@@ -1692,7 +1700,8 @@
     "codes": [
      "CHARACTER_NOT_INKED",
      "MARK_NOT_INKED",
-     "MARK_OVER_INKED"
+     "MARK_OVER_INKED",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -1710,7 +1719,8 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "CHARACTER_NOT_INKED"
+     "CHARACTER_NOT_INKED",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -1728,7 +1738,8 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "CHARACTER_NOT_INKED"
+     "CHARACTER_NOT_INKED",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -1746,7 +1757,8 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "CHARACTER_OVER_INKED"
+     "CHARACTER_OVER_INKED",
+     "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -1839,6 +1851,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "PHASE_INK_NOT_ITS_COLOUR",
      "PHASE_NOT_ITS_COLOUR"
     ],
     "exitCode": 1,
@@ -1894,6 +1907,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "PHASE_INK_NOT_ITS_COLOUR",
      "PHASE_NOT_ITS_COLOUR",
      "PHASE_TOKENS_UNRESOLVED"
     ],
@@ -1910,6 +1924,135 @@
    "id": "mark-no-column",
    "manifestWritten": false,
    "mutation": "the table marks do not name their column",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_OFF_COLUMN"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_INK_NOT_ITS_COLOUR",
+   "gate": "glyphs",
+   "id": "glyph-use-colour",
+   "manifestWritten": false,
+   "mutation": "the metal glyphs are repainted in the water colour on their <use>",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_INK_NOT_ITS_COLOUR"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PHASE_NOT_ITS_COLOUR",
+   "gate": "fact in its slot",
+   "id": "phase-gradient",
+   "manifestWritten": false,
+   "mutation": "every metal disc is painted over by a water-coloured background image",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PHASE_NOT_ITS_COLOUR"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_NOT_ITS_LOOK",
+   "gate": "fact in its slot",
+   "id": "mark-outline-both",
+   "manifestWritten": false,
+   "mutation": "stem marks gain an outline halo and read as both",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_NOT_ITS_LOOK"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_NOT_ITS_LOOK",
+   "gate": "fact in its slot",
+   "id": "mark-bgimage-hidden",
+   "manifestWritten": false,
+   "mutation": "hidden-stem rings are filled by a background image",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_NOT_ITS_LOOK"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OCCLUDED",
+   "gate": "no hidden text",
+   "id": "partial-top-box",
+   "manifestWritten": false,
+   "mutation": "a paper-coloured box covers the upper part of a few characters",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_OCCLUDED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_OCCLUDED",
+   "gate": "no hidden text",
+   "id": "partial-top-svg",
+   "manifestWritten": false,
+   "mutation": "a paper-coloured SVG shape covers the upper part of a few characters",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_OCCLUDED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_OFF_COLUMN",
+   "gate": "fact in its slot",
+   "id": "mark-col-rebound",
+   "manifestWritten": false,
+   "mutation": "a mark moves into the next column's cell and names that column",
    "observed": {
     "check": "PAGE_QA",
     "codes": [
@@ -1991,7 +2134,7 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   }
  ],
- "canarySourceSha256": "sha256:6e0f9ac61deb21c1078a0d483df9951c4b00f0a72685f2f79f09756cb19d801e",
+ "canarySourceSha256": "sha256:f3d63ff3c8c449048b159f0990e39ce9879834c32d9bb1051feefa406a2e260c",
  "canaryVersion": "bazodiac-renderer-canaries.v1",
  "canonicalJsonMirror": {
   "equal": true,
@@ -2006,10 +2149,10 @@
  "projectionStructuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
  "renderer": {
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:826dfdeab6d5b3a29d1eb4f823005b281b0f7c7aaec0a170015617e1cf8966fa"
+  "sourceSha256": "sha256:200622fda4d6ed7a485ce0cad83a1629fb4f9ef00456e9d165c43be1e2ccafd0"
  },
  "summary": {
-  "blockedAsExpected": 108,
-  "canaries": 108
+  "blockedAsExpected": 115,
+  "canaries": 115
  }
 }

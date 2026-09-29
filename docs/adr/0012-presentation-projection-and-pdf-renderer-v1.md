@@ -185,16 +185,21 @@ Before it writes a PDF it checks:
   block. Two keys of one entry trading places, or a page label moved on its page, is
   layout: template code (limitation 8);
 - drawn classifications, measured as painted: every phase paint (a field, a disc, a dot, a
-  phase-coloured glyph) must paint one of its declared phase's two tokens as resolved on
-  the page, and no other phase's; a phase paint holds only its own entry's values (the
-  Day-Master field paints the Day Master's phase, not a pillar's); every presence mark has
-  the look of its value in its computed style (stem filled, hidden a ring, both filled
-  with a halo, none a bar). A disc in another phase's colour, a phase class remapped by
-  CSS, a Wu Xing ring position showing another phase and a mark drawn with another
-  value's look all block;
+  phase-coloured glyph) must compute one of its declared phase's two tokens as resolved on
+  the page, and no other phase's, with no background image over it; and in the page
+  image, of the five phases' tokens, its own must be the one its box shows most (exact
+  pixels; on the evidence document at least 107 of its own against at most 2 of any
+  other), whatever CSS channel painted it. A phase paint holds only its own entry's values
+  (the Day-Master field paints the Day Master's phase, not a pillar's). Every presence
+  mark has the look of its value in its computed style: stem filled, hidden a ring, both
+  filled with a halo, none a bar, where a background image counts as a fill and a shadow
+  or an outline as a halo. A disc in another phase's colour, a phase class remapped by
+  CSS (on the element, on a glyph's `<use>`, or through a background image), a Wu Xing
+  ring position showing another phase and a mark drawn with another value's look all
+  block;
 - visibility, for text and glyphs alike: no box, hidden, faint (effective alpha below 0.5),
-  clipped, masked, filtered, scaled down, covered, at one of three points on each line (15,
-  50 and 85 % of its width), by an element painting a background (an overlay with
+  clipped, masked, filtered, scaled down, covered at the centre of any character by an
+  element painting a background or by an SVG shape with a fill (an overlay with
   `pointer-events:none` included, since the QA forces hit-testing on per element), a
   rendered size below 11 px (either axis of a transform), or below a 1.5 contrast ratio of
   the composited colour against the surface under it; presence marks and phase paints
@@ -213,7 +218,8 @@ Before it writes a PDF it checks:
   0.474), ceilings above 1.3 times the highest and below a solid box (text 0.5 over 0.190,
   glyph 0.75 over 0.448, mark 0.92 over 0.691; phase paints are solid fields and have
   none); per character a floor of 0.005 (a third of the lowest, 0.0151) and a ceiling of
-  0.6 (over twice the highest, 0.263), so a cover over a single word of a line blocks;
+  0.6 (over twice the highest, 0.263), so a cover over a whole character, in any colour,
+  blocks;
 - geometry: nothing outside the sheet, clipped by an ancestor or out of its painted
   container, no line wider than its measure, no overlap, the Wu Xing medallion clear, every
   web font loaded; the running head and foot paint above the atmosphere blobs;
@@ -232,7 +238,7 @@ a PDF, and every run writes into a hidden sibling directory that is renamed into
 only when complete.
 `tools/pdf-renderer/qa/run_canaries.py` breaks every gate in its table at least once,
 runs the real renderer against it, and records the result in `renderer-canaries.json`:
-108 canaries, each of which must end BLOCKED at the expected check with the expected
+115 canaries, each of which must end BLOCKED at the expected check with the expected
 finding, exit 1 and no PDF or manifest; the `partial-write` canary instead proves that a
 failure after a passing render leaves no `--out` directory at all. The record is bound
 to the renderer source digest and to the digest of the canary source; the contract
@@ -323,11 +329,17 @@ are a declaration.
    when it holds no value of its own entry; an edit there that keeps every value, order,
    colour and slot consistent is invisible to the QA. Colour classes come from the entry's
    phase, not from the projection's `paint`, which the renderer does not read; what a
-   phase paint paints is measured against the tokens. Occlusion by a painted element is
-   sampled at three points per line; the ink check covers the rest per line and per
-   character. For a glyph, a mark or a phase paint the ink band is judged over its whole
+   phase paint paints is measured against the tokens. A phase paint is recognised by its
+   `f-`/`m-` class or a `--phase-*` variable; an element painted in a phase colour any
+   other way (a literal colour, a stylesheet rule keyed on an attribute) is neither bound
+   nor measured. A mark's look is judged by which paint channels it uses; the colour of
+   its halo is not measured. The QA proves that every character is present, inked and
+   unoccluded at its centre, not that its shape is intact: a cover over part of every
+   character that leaves each centre uncovered and each character's share at or above
+   0.005 (measured: the upper half of every line of a page; the dots of an umlaut) is not
+   detected. For a glyph, a mark or a phase paint the ink band is judged over its whole
    box, so a cover over part of one of those that leaves its share within the band is not
-   detected. The ink check proves a band of the item's own colour in its box, not
+   detected either. The ink check proves a band of the item's own colour in its box, not
    legibility: a cover that reproduces an item's own ink density (a pattern in its colour,
    the wordmark drawn across a line in the text's colour) passes it.
    Six finding codes in two groups have no canary, because breaking them needs a doctored

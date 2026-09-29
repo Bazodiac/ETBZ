@@ -116,10 +116,10 @@ describe('N1: the content payload', () => {
     }
   });
 
-  it('refuses a printed model value outside the pinned Inter advance tables (a hand-built model\'s animal label): Cyrillic, a decomposed umlaut, an emoji', () => {
-    for (const text of [String.fromCodePoint(0x0416), `a${String.fromCodePoint(0x0308)}`, String.fromCodePoint(0x1f40e)]) {
-      const refusal = expectPresentationRefusal(() => project(modelWith((m) => { m.pillars.day.tierDe = `Pferd ${text}`; })), 'PRESENTATION_TEXT_UNMEASURABLE');
-      expect(refusal.detail).toMatchObject({ where: 'customerStrings' });
+  it('refuses an animal label the Sizhu table does not give the branch (a hand-built model): another animal, Cyrillic, an emoji', () => {
+    for (const text of ['Einhorn', String.fromCodePoint(0x0416), String.fromCodePoint(0x1f40e)]) {
+      const refusal = expectPresentationRefusal(() => project(modelWith((m) => { m.pillars.day.tierDe = text; })), 'PRESENTATION_FACT_MISMATCH');
+      expect(refusal.detail).toMatchObject({ where: 'pillars.day' });
     }
   });
 
