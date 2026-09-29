@@ -640,12 +640,9 @@ def c_text_over_inked(work):
 
 
 def c_glyph_over_inked(work):
-    # The first display glyph on the summary page is covered, inside its own SVG, by a shape in its own colour that
-    # fills exactly the glyph's view box.
-    def cover(html, ctx, page, c):
-        x, y, w, h = ctx.view_box.split()
-        return html.replace('<use href="#g-', f'<rect x="{x}" y="{y}" width="{w}" height="{h}" style="fill:currentColor"/><use href="#g-', 1)
-    wrap_builder("summary", cover)
+    # An inset shadow in the Day-Master glyph's own colour fills its box: the glyph's structure is untouched (one sprite
+    # <use>), the shadow is not hit-testable, so only the ink ceiling can see the cover.
+    inject_css('svg.disp[data-p="content.dayMaster.character"]{box-shadow:inset 0 0 0 30mm currentColor}')
 
 
 def c_mark_over_inked(work):
@@ -828,6 +825,70 @@ def c_stem_bgimage_ring(work):
     inject_css(".mark.stem{background-image:radial-gradient(circle, var(--paper-000) 0 50%, transparent 52%)}")
 
 
+# Review round 8: print rules after the first page, more image channels, vector-drawn words, a glyph drawn by another
+# sprite, reordered or mirrored printing, a page margin box, a crowded running foot, and the none look's halo rule.
+def c_print_longline(work):
+    inject_css("@media print{.longline{visibility:hidden}}")
+
+
+def c_mask_image_url(work):
+    append_to("methodNote", '<div style="position:absolute;left:20mm;top:250mm;width:60mm;height:6mm;background:var(--ink-900);'
+                            f'-webkit-mask-image:url(&quot;{INVENTED_IMAGE}&quot;);mask-image:url(&quot;{INVENTED_IMAGE}&quot;)"></div>')
+
+
+def c_svg_fe_image(work):
+    append_to("methodNote", '<svg style="position:absolute;left:20mm;top:250mm;width:60mm;height:6mm"><filter id="etbz55-fe"><feImage '
+                            f'href="{INVENTED_IMAGE}"/></filter><rect width="240" height="24" filter="url(#etbz55-fe)"/></svg>')
+
+
+def c_svg_path_words(work):
+    # Words drawn as vector outlines instead of text: one path stands for them here.
+    append_to("methodNote", '<svg style="position:absolute;left:20mm;top:250mm;width:60mm;height:6mm" viewBox="0 0 60 6">'
+                            '<path d="M1 5 L3 1 L5 5 M8 1 L8 5 L11 5" style="fill:none;stroke:var(--ink-900);stroke-width:0.6"/></svg>')
+
+
+def c_first_letter_image(work):
+    inject_css(f'.kicker::first-letter{{background-image:url("{INVENTED_IMAGE}")}}')
+
+
+def c_list_style_image(work):
+    inject_css(f'.kicker{{display:list-item;list-style-image:url("{INVENTED_IMAGE}")}}')
+
+
+def c_glyph_use_swap(work):
+    # The summary's first display glyph keeps its data-glyph and path but draws another sprite glyph.
+    def swap(html, ctx, page, c):
+        return re.sub(r'<use href="#g-([a-z0-9-]+)"/>', lambda m: '<use href="#g-' + ("yi" if m.group(1) == "jia" else "jia") + '"/>', html, count=1)
+    wrap_builder("summary", swap)
+
+
+def c_bidi_override(work):
+    # The Wu Xing values print right to left: "2.5" reads "5.2"; the DOM text is unchanged.
+    inject_css(".wx-big{unicode-bidi:bidi-override;direction:rtl}")
+
+
+def c_mirrored_text(work):
+    style_method_note("transform:scaleX(-1)")
+
+
+def c_mirrored_glyph(work):
+    inject_css("svg.disp{scale:-1 1}")
+
+
+def c_page_margin_box(work):
+    inject_css("@page{@top-center{content:'Erfundener Satz'}}")
+
+
+def c_chrome_crowded(work):
+    # The running foot's text is set so wide that it runs into the page number.
+    inject_css(".foot>div{letter-spacing:.9em}")
+
+
+def c_mark_none_halo(work):
+    # The absent marks gain a halo; their height stays under 2 px, so only the no-halo rule sees it.
+    inject_css(".mark.none{box-shadow:0 0 0 0.2mm var(--ink-600)}")
+
+
 def c_phase_token_unresolved(work):
     # A phase token the QA cannot resolve to a colour: every paint of that phase would go unmeasured.
     inject_css(":root{--phase-wood-field:rgb(231,236,227) !important}")
@@ -944,7 +1005,7 @@ CANARIES = {
     "self-clipped": ("no content cut", "the page titles are cut to 10 mm by their own box", "PAGE_QA", "CLIPPED", c_self_clipped),
     "squashed-text": ("no hidden text", "the method note is squashed to 30 % of its height", "PAGE_QA", "TEXT_INVISIBLE", c_squashed_text),
     "text-over-inked": ("no hidden text", "an SVG shape in the text's own colour covers the method note", "PAGE_QA", "TEXT_OVER_INKED", c_text_over_inked),
-    "glyph-over-inked": ("glyphs", "a shape in the glyph's own colour covers the summary's first display glyph", "PAGE_QA", "GLYPH_OVER_INKED", c_glyph_over_inked),
+    "glyph-over-inked": ("glyphs", "an inset shadow in the glyph's own colour fills the Day-Master glyph's box", "PAGE_QA", "GLYPH_OVER_INKED", c_glyph_over_inked),
     "mark-over-inked": ("fact in its slot", "an SVG shape in the stem marks' colour covers the presence-mark columns", "PAGE_QA", "MARK_OVER_INKED", c_mark_over_inked),
     "partial-bg-word": ("no hidden text", "a paper-coloured box covers a few words of one line", "PAGE_QA", "CHARACTER_NOT_INKED", c_partial_bg_word),
     "partial-svg-word": ("no hidden text", "a paper-coloured SVG shape covers a few words of one line", "PAGE_QA", "CHARACTER_NOT_INKED", c_partial_svg_word),
@@ -975,6 +1036,19 @@ CANARIES = {
     "mark-hidden-halo": ("fact in its slot", "hidden-stem rings gain a halo and read as both", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_mark_hidden_halo),
     "mark-none-ring": ("fact in its slot", "the absent marks gain a ring", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_mark_none_ring),
     "stem-bgimage-ring": ("fact in its slot", "stem dots are hollowed into rings by a background image", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_stem_bgimage_ring),
+    "print-longline": ("no hidden text", "a print-only rule hides every long-form line", "PAGE_QA", "TEXT_INVISIBLE", c_print_longline),
+    "mask-image-url": ("renderer adds no text", "an image carrying a sentence is painted through a CSS mask", "PAGE_QA", "FORBIDDEN_ELEMENT", c_mask_image_url),
+    "svg-fe-image": ("renderer adds no text", "an SVG filter image carrying a sentence is placed on the page", "PAGE_QA", "FORBIDDEN_ELEMENT", c_svg_fe_image),
+    "svg-path-words": ("renderer adds no text", "words drawn as SVG vector outlines are placed on the page", "PAGE_QA", "FORBIDDEN_ELEMENT", c_svg_path_words),
+    "first-letter-image": ("renderer adds no text", "an image carrying a sentence is painted behind a first letter", "PAGE_QA", "FORBIDDEN_ELEMENT", c_first_letter_image),
+    "list-style-image": ("renderer adds no text", "an image carrying a sentence is set as a list marker", "PAGE_QA", "FORBIDDEN_ELEMENT", c_list_style_image),
+    "glyph-use-swap": ("glyphs", "a display glyph keeps its attribute but draws another sprite glyph", "PAGE_QA", "GLYPH_NOT_ITS_VALUE", c_glyph_use_swap),
+    "bidi-override": ("fact in its slot", "the Wu Xing values print right to left", "PAGE_QA", "TEXT_REORDERED", c_bidi_override),
+    "mirrored-text": ("no hidden text", "the method note is mirrored", "PAGE_QA", "MIRRORED", c_mirrored_text),
+    "mirrored-glyph": ("glyphs", "every display glyph is mirrored through the scale property", "PAGE_QA", "MIRRORED", c_mirrored_glyph),
+    "page-margin-box": ("renderer adds no text", "a page margin box prints a sentence on every page", "PAGE_QA", "PAGE_RULE_FORBIDDEN", c_page_margin_box),
+    "chrome-crowded": ("no content cut", "the running foot runs into the page number", "PAGE_QA", "CHROME_CROWDED", c_chrome_crowded),
+    "mark-none-halo": ("fact in its slot", "the absent marks gain a halo", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_mark_none_halo),
     "unknown-text-style": ("page build", "no long-form style is known to the line builder", "PAGE_BUILD", None, c_unknown_text_style),
     "sheet-escape-element": ("renderer adds no text", "an element is placed beside the sheet", "PAGE_QA", "SHEET_ESCAPED", c_sheet_escape_element),
     "pdf-page-count": ("PDF readback", "the projection states one page more than it has (rehashed)", "PDF_READBACK", "PDF_PAGE_COUNT", c_pdf_page_count),
@@ -982,8 +1056,51 @@ CANARIES = {
 }
 
 
+# ------------------------------------------------------------------ positive controls (each must PASS)
+
+def dicts_of(value):
+    if isinstance(value, dict):
+        yield value
+        for child_value in value.values():
+            yield from dicts_of(child_value)
+    elif isinstance(value, list):
+        for child_value in value:
+            yield from dicts_of(child_value)
+
+
+def k_zero_phase(work):
+    # The chart with its wood value at 0 on every page that shows it (rehashed): the bar draws an empty track.
+    p = load()
+    for page in p["pages"]:
+        for entry in dicts_of(page["content"]):
+            if entry.get("phase") == "wood" and "valueText" in entry:
+                entry["valueText"] = "0"
+                for key in ("ratio", "value"):
+                    if key in entry:
+                        entry[key] = 0
+        if "1.8" in page["strings"]:
+            restring(p, page, "1.8", "0")
+    return rehash(p)
+
+
+def k_opacity_text(work):
+    # Body text at opacity 0.7: legible, above the 0.5 floor, and its pixels carry the composited colour.
+    inject_css(".body{opacity:.7}")
+
+
+def k_faint_plain_glyph(work):
+    inject_css("svg.disp:not([data-phase]){opacity:.7}")
+
+
+CONTROLS = {
+    "zero-phase": ("a Wu Xing value of 0 (rehashed) draws an empty bar track", k_zero_phase),
+    "opacity-text": ("body text at opacity 0.7", k_opacity_text),
+    "faint-plain-glyph": ("display glyphs without a phase colour at opacity 0.7", k_faint_plain_glyph),
+}
+
+
 def child(canary_id: str, work: pathlib.Path) -> int:
-    projection = CANARIES[canary_id][4](work)
+    projection = (CANARIES[canary_id][4] if canary_id in CANARIES else CONTROLS[canary_id][1])(work)
     path = PROJECTION
     if isinstance(projection, pathlib.Path):
         path = projection
@@ -1031,6 +1148,28 @@ def run_one(canary_id: str) -> dict:
     return result
 
 
+def run_control(control_id: str) -> dict:
+    mutation, _ = CONTROLS[control_id]
+    with tempfile.TemporaryDirectory(prefix=f"etbz55-control-{control_id}-") as tmp:
+        work = pathlib.Path(tmp)
+        proc = subprocess.run([sys.executable, "-B", str(pathlib.Path(__file__).resolve()), "--child", control_id, "--work", str(work)],
+                              capture_output=True, text=True, timeout=1800)
+        out = work / "out"
+        report_path = out / "qa-report.json"
+        report = json.loads(report_path.read_text(encoding="utf-8")) if report_path.is_file() else None
+        pdf = (out / "bazodiac-reading.pdf").is_file()
+        manifest = (out / "artifact-manifest.json").is_file()
+    codes = sorted({f["code"] for p in (report or {}).get("pages", []) for f in p["findings"]}) if report else []
+    holds = proc.returncode == 0 and report is not None and report["status"] == "PASSED" and pdf and manifest
+    result = {"id": control_id, "mutation": mutation,
+              "observed": {"exitCode": proc.returncode, "status": report["status"] if report else None,
+                           "check": report["checks"][-1]["id"] if report else None, "codes": codes},
+              "pdfWritten": pdf, "manifestWritten": manifest, "verdict": "PASSED_AS_EXPECTED" if holds else "NOT_AS_EXPECTED"}
+    if not holds:
+        result["stderrTail"] = proc.stderr[-2000:]
+    return result
+
+
 MIRROR_PROBE = """
 import { readFileSync } from 'node:fs';
 import { canonicalJson } from '%s';
@@ -1073,13 +1212,16 @@ def main() -> int:
         return child(args.child, pathlib.Path(args.work))
     if not args.executed_at:
         parser.error("--executed-at is required")
-    ids = args.only or list(CANARIES)
-    results = []
+    if set(CANARIES) & set(CONTROLS):
+        parser.error(f"a control shares a name with a canary: {sorted(set(CANARIES) & set(CONTROLS))}")
+    ids = args.only or list(CANARIES) + list(CONTROLS)
+    results, controls = [], []
     for canary_id in ids:
-        result = run_one(canary_id)
-        results.append(result)
+        result = run_one(canary_id) if canary_id in CANARIES else run_control(canary_id)
+        (results if canary_id in CANARIES else controls).append(result)
         print(f"{canary_id:26s} {result['verdict']:20s} {result['observed']['check']} {result['observed']['codes'][:4]}", flush=True)
     held = sum(1 for r in results if r["verdict"] == "BLOCKED_AS_EXPECTED")
+    passed = sum(1 for r in controls if r["verdict"] == "PASSED_AS_EXPECTED")
     projection = load()
     mirror = canonical_json_mirror()
     print(f"canonical-json mirror: equal={mirror['equal']} over {mirror['numbers']} numbers", flush=True)
@@ -1091,15 +1233,16 @@ def main() -> int:
         "projectionStructuralHash": projection["structuralHash"],
         "executedAt": args.executed_at,
         "host": f"{platform.system()} {platform.machine()}",
-        "summary": {"canaries": len(results), "blockedAsExpected": held},
+        "summary": {"canaries": len(results), "blockedAsExpected": held, "controls": len(controls), "passedAsExpected": passed},
         "canaries": results,
+        "controls": controls,
     }
     if args.only:
         print(json.dumps(record["summary"]))
-        return 0 if held == len(results) else 1
+        return 0 if held == len(results) and passed == len(controls) else 1
     OUT.write_text(json.dumps(record, indent=1, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"{OUT.relative_to(ROOT)}: {held}/{len(results)} canaries blocked as expected")
-    return 0 if held == len(results) and mirror["equal"] else 1
+    print(f"{OUT.relative_to(ROOT)}: {held}/{len(results)} canaries blocked as expected, {passed}/{len(controls)} controls passed")
+    return 0 if held == len(results) and passed == len(controls) and mirror["equal"] else 1
 
 
 if __name__ == "__main__":

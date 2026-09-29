@@ -58,7 +58,7 @@
   "declared": true,
   "executedAt": "2026-09-29",
   "host": "Darwin arm64",
-  "repositoryHead": "ebd4d49bdbaa979698e57e3da86b7f960daed5dd"
+  "repositoryHead": "020ecc39d3c8766422179d3af96c6fd4179e438d"
  },
  "input": {
   "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
@@ -192,7 +192,7 @@
    "version": "136.0.7103.25"
   },
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:23e21335afc5cf356ad330f857ab569752eb251742c48125adfe938c877f48a8"
+  "sourceSha256": "sha256:6809eb43dc8ef17fd7e9d9abfbd5155d32c10fd5d5a8a0d9ed765dea2c2ddd54"
  },
  "sha256": "sha256:462c182a6ecfa505cc19e2c359d29cbc35229f918fff80b849fead82e3c11938",
  "state": "ARTIFACT_READY",

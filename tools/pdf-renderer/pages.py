@@ -200,7 +200,7 @@ class Context:
                 f'<use href="#g-{asset["slug"]}"/></svg>')
 
     def wordmark(self, height_mm: float) -> str:
-        return self.wordmark_svg.replace("<svg ", f'<svg style="height:{height_mm}mm;width:auto" ', 1)
+        return self.wordmark_svg.replace("<svg ", f'<svg data-wordmark="" style="height:{height_mm}mm;width:auto" ', 1)
 
 
 def phase_attrs(phase: str) -> str:

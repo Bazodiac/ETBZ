@@ -362,6 +362,19 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     ['mark-hidden-halo', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
     ['mark-none-ring', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
     ['stem-bgimage-ring', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
+    ['print-longline', 'PAGE_QA', 'TEXT_INVISIBLE'],
+    ['mask-image-url', 'PAGE_QA', 'FORBIDDEN_ELEMENT'],
+    ['svg-fe-image', 'PAGE_QA', 'FORBIDDEN_ELEMENT'],
+    ['svg-path-words', 'PAGE_QA', 'FORBIDDEN_ELEMENT'],
+    ['first-letter-image', 'PAGE_QA', 'FORBIDDEN_ELEMENT'],
+    ['list-style-image', 'PAGE_QA', 'FORBIDDEN_ELEMENT'],
+    ['glyph-use-swap', 'PAGE_QA', 'GLYPH_NOT_ITS_VALUE'],
+    ['bidi-override', 'PAGE_QA', 'TEXT_REORDERED'],
+    ['mirrored-text', 'PAGE_QA', 'MIRRORED'],
+    ['mirrored-glyph', 'PAGE_QA', 'MIRRORED'],
+    ['page-margin-box', 'PAGE_QA', 'PAGE_RULE_FORBIDDEN'],
+    ['chrome-crowded', 'PAGE_QA', 'CHROME_CROWDED'],
+    ['mark-none-halo', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
     ['unknown-text-style', 'PAGE_BUILD', null],
     ['sheet-escape-element', 'PAGE_QA', 'SHEET_ESCAPED'],
     ['pdf-page-count', 'PDF_READBACK', 'PDF_PAGE_COUNT'],
@@ -382,8 +395,9 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     canonicalJsonMirror: { numbers: number; strings: number; keys: number; nodeExitCode: number; equal: boolean; sha256: string };
     renderer: { ref: string; sourceSha256: string };
     projectionStructuralHash: string;
-    summary: { canaries: number; blockedAsExpected: number };
+    summary: { canaries: number; blockedAsExpected: number; controls: number; passedAsExpected: number };
     canaries: Canary[];
+    controls: { id: string; observed: { exitCode: number; status: string }; pdfWritten: boolean; manifestWritten: boolean; verdict: string }[];
   };
 
   it('ran against the renderer and the projection the manifest binds, from the committed canary source', () => {
@@ -430,6 +444,8 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     expect(setters.length).toBeGreaterThan(40);
     expect(setters.filter((value) => !/^["'][A-Z][A-Z_0-9]+["']$/u.test(value) && !['too_little', 'too_much'].includes(value))).toEqual([]);
     expect([...source.matchAll(/[{,]\s*code\s*[,}]/gu)].map((match) => match[0])).toEqual([]);
+    const subscripts = [...source.matchAll(/\[\s*["']code["']\s*\]\s*=(?!=)\s*([^\n]+?)\s*$/gmu)].map((match) => match[1] as string);
+    expect(subscripts.filter((value) => !/^["'][A-Z][A-Z_0-9]+["']$/u.test(value))).toEqual([]);
     const raised = [...source.matchAll(/\bBlocked\(\s*([^,)]+)/gu)].map((match) => (match[1] as string).trim()).filter((value) => value !== 'Exception');
     expect(raised.length).toBeGreaterThan(5);
     expect(raised.filter((value) => !/^["'][A-Z][A-Z_0-9]+["']$/u.test(value))).toEqual([]);
@@ -458,6 +474,15 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
       expect(canary.pdfWritten, canary.id).toBe(false);
       expect(canary.manifestWritten, canary.id).toBe(false);
     }
-    expect(record.summary).toEqual({ canaries: record.canaries.length, blockedAsExpected: record.canaries.length });
+    expect(record.summary).toEqual({ canaries: record.canaries.length, blockedAsExpected: record.canaries.length, controls: 3, passedAsExpected: 3 });
+  });
+
+  it('passed every positive control: a Wu Xing value of 0, and text and plain glyphs at opacity 0.7, render with a PDF and a manifest', () => {
+    expect(record.controls.map((control) => control.id)).toEqual(['zero-phase', 'opacity-text', 'faint-plain-glyph']);
+    for (const control of record.controls) {
+      expect(control.verdict, control.id).toBe('PASSED_AS_EXPECTED');
+      expect(control.observed, control.id).toMatchObject({ exitCode: 0, status: 'PASSED' });
+      expect(control.pdfWritten && control.manifestWritten, control.id).toBe(true);
+    }
   });
 });

@@ -44,6 +44,7 @@ import json
 import math
 import pathlib
 import platform
+import re
 import shutil
 import sys
 import tempfile
@@ -104,6 +105,8 @@ FONT_SUFFIXES = (".ttf", ".otf", ".ttc", ".otc")
 # field covered by paper-200 (difference about 6) no longer counts. Every printed character is also checked in its
 # own box (33,256 characters): the lowest share observed was 0.0151 (a hyphen), the highest 0.263; a character under
 # a cover in another colour leaves (close to) nothing, one under a cover in its own colour about 1.0.
+# The one @page rule base.css states: A4, no margin, no margin box (the DOM QA compares it without whitespace).
+PAGE_RULE = "@page { size: 210mm 297mm; margin: 0px; }"
 INK_TEXT_MIN, INK_TEXT_MAX = 0.03, 0.5
 INK_GLYPH_MIN, INK_GLYPH_MAX = 0.06, 0.75
 INK_MARK_MIN, INK_MARK_MAX = 0.05, 0.92
@@ -232,10 +235,17 @@ DOM_QA = r"""
   const name = (el) => String(el.className && el.className.baseVal === undefined ? el.className : el.tagName).slice(0, 40);
   const effectsOf = (el) => { for (let a = el; a && a !== sheet.parentElement; a = a.parentElement) { const s = getComputedStyle(a);
     if (s.clipPath !== 'none' || s.maskImage !== 'none' || (s.webkitMaskImage && s.webkitMaskImage !== 'none') || s.filter !== 'none' || (s.clip && s.clip !== 'auto')) return name(a); } return null; };
+  // A unicode-bidi override or embedding on the element or an ancestor reorders what it prints.
+  const bidiOf = (el) => { for (let a = el; a && a !== sheet.parentElement; a = a.parentElement) { const b = getComputedStyle(a).unicodeBidi;
+    if (b !== 'normal' && b !== 'isolate') return `unicode-bidi ${b} on ${name(a)}`; } return null; };
+  // A transform with a negative determinant, on the element or an ancestor, mirrors what it draws.
+  const mirrored = (el) => { let sign = 1; for (let a = el; a && a !== sheet.parentElement; a = a.parentElement) { const s = getComputedStyle(a);
+    if (s.transform && s.transform !== 'none') { const m = new DOMMatrix(s.transform); if (m.a * m.d - m.b * m.c < 0) sign = -sign; }
+    if (s.scale && s.scale !== 'none') { const [x, y = x] = s.scale.split(/\s+/).map(Number); if (x * y < 0) sign = -sign; } } return sign < 0; };
   const shown = (el) => typeof el.checkVisibility !== 'function' ||
     el.checkVisibility({opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true, checkOpacity: true, checkVisibilityCSS: true});
   // How much an element covers what lies under it: its composite opacity times its background alpha - or, for an SVG
-  // shape, its fill alpha times its fill-opacity (a gradient fill counts as opaque).
+  // shape, its fill or stroke alpha times that paint's opacity (a gradient counts as opaque).
   const isShape = (el) => typeof SVGGeometryElement !== 'undefined' && el instanceof SVGGeometryElement;
   const paint = (el) => { const s = getComputedStyle(el);
     if (isShape(el)) { // hit-testing already limits a shape to where it paints, its fill or its stroke
@@ -252,7 +262,8 @@ DOM_QA = r"""
     const side = (w, c) => { const width = parseFloat(w) || 0, colour = parse(c); return width > 0 && colour !== null && colour.a * opacityOf(el) >= VISIBLE ? width : 0; };
     const t = side(s.borderTopWidth, s.borderTopColor), b = side(s.borderBottomWidth, s.borderBottomColor);
     const l = side(s.borderLeftWidth, s.borderLeftColor), rt = side(s.borderRightWidth, s.borderRightColor);
-    return (y < r.top + t) || (y > r.bottom - b) || (x < r.left + l) || (x > r.right - rt); };
+    if (x < r.left || x > r.right || y < r.top || y > r.bottom) return false;
+    return (t > 0 && y < r.top + t) || (b > 0 && y > r.bottom - b) || (l > 0 && x < r.left + l) || (rt > 0 && x > r.right - rt); };
   // A painted element above el at (x, y) - pointer-events are forced on for the QA, so overlays with none are seen.
   const occluderAt = (el, x, y) => { for (const hit of document.elementsFromPoint(x, y)) {
     if (hit === el || el.contains(hit) || hit.contains(el)) return null; if (paint(hit) >= VISIBLE || onBorder(hit, x, y)) return hit; } return null; };
@@ -305,6 +316,10 @@ DOM_QA = r"""
     else if (effect !== null) invisible = `clipped, masked or filtered by ${effect}`;
     else if (Math.max(...rects.map((r) => r.height)) < 0.5 * fontPx) invisible = 'scaled down';
     if (invisible !== null) { findings.push({code: 'TEXT_INVISIBLE', reason: invisible, path, text: s.slice(0, 60)}); continue; }
+    // The characters print in the order the value has them: no bidi override or right-to-left run, no mirroring.
+    const reordered = cs.direction !== 'ltr' || bidiOf(el);
+    if (reordered) { findings.push({code: 'TEXT_REORDERED', path, reason: reordered === true ? 'right-to-left' : reordered, text: s.slice(0, 40)}); continue; }
+    if (mirrored(el)) { findings.push({code: 'MIRRORED', kind: 'text', path, text: s.slice(0, 40)}); continue; }
     // The size the reader sees: the computed font size times the scale any transform applies (rendered / layout height).
     const own = el.getBoundingClientRect();
     const scale = Math.min(el.offsetHeight > 0 ? own.height / el.offsetHeight : 1, el.offsetWidth > 0 ? own.width / el.offsetWidth : 1), renderedPx = fontPx * scale;
@@ -336,10 +351,15 @@ DOM_QA = r"""
     if (!glyphSet.has(ch)) findings.push({code: 'GLYPH_NOT_IN_PROJECTION', glyph: ch});
     const path = g.dataset.p || null;
     if (path === null || !has(path) || values[path] !== ch) { findings.push({code: 'GLYPH_NOT_ITS_VALUE', glyph: ch, path}); continue; }
+    // What draws the glyph is its one sprite <use>, and it must be the value's own glyph, not only the attribute.
+    const uses = Array.from(g.children);
+    if (uses.length !== 1 || uses[0].tagName.toLowerCase() !== 'use' || uses[0].getAttribute('href') !== '#g-' + q.glyphSlugs[ch]) {
+      findings.push({code: 'GLYPH_NOT_ITS_VALUE', glyph: ch, path, reason: 'drawn by another glyph or shape'}); continue; }
     const why = placement(g, path);
     if (why !== null) { findings.push({code: 'GLYPH_OUT_OF_SLOT', path, reason: why, glyph: ch}); continue; }
     const r = g.getBoundingClientRect(), gc = parse(getComputedStyle(g).color) || {r: 0, g: 0, b: 0, a: 1}, ga = gc.a * opacityOf(g);
     if (!(r.width > 1 && r.height > 1) || !shown(g) || ga < VISIBLE || effectsOf(g) !== null) { findings.push({code: 'GLYPH_INVISIBLE', path, glyph: ch}); continue; }
+    if (mirrored(g)) { findings.push({code: 'MIRRORED', kind: 'glyph', path, glyph: ch}); continue; }
     let occluder = null;
     for (const [fx, fy] of [[0.5, 0.5], [0.3, 0.3], [0.7, 0.3], [0.3, 0.7], [0.7, 0.7]]) occluder = occluder || occluderAt(g, r.left + r.width * fx, r.top + r.height * fy);
     if (occluder !== null) findings.push({code: 'GLYPH_OCCLUDED', path, by: name(occluder), glyph: ch});
@@ -438,16 +458,41 @@ DOM_QA = r"""
   for (const el of [document.documentElement, document.body, sheet, ...sheet.querySelectorAll('*')]) for (const pseudo of ['::before', '::after', '::marker']) {
     const content = getComputedStyle(el, pseudo).content;
     if (content && content !== 'none' && content !== 'normal') findings.push({code: 'PSEUDO_CONTENT', pseudo, content: content.slice(0, 60), on: name(el)}); }
-  for (const el of sheet.querySelectorAll('img,picture,input,textarea,select,button,canvas,video,iframe,object,embed,ol,ul,li,foreignObject,svg text,svg image'))
+  for (const el of sheet.querySelectorAll('img,picture,input,textarea,select,button,canvas,video,iframe,object,embed,ol,ul,li'))
     findings.push({code: 'FORBIDDEN_ELEMENT', element: el.tagName});
-  // An image can carry text of its own however it is painted: as a background, a border image or replaced content.
-  for (const el of [document.documentElement, document.body, sheet, ...sheet.querySelectorAll('*')]) { const s = getComputedStyle(el);
-    if (/url\(/.test(s.backgroundImage) || /url\(/.test(s.borderImageSource || '')) findings.push({code: 'FORBIDDEN_ELEMENT', element: 'an image painted by CSS', on: name(el)});
+  // SVG on the sheet is an allowlist: a display glyph is one sprite <use>, the wordmark is the pinned shape; anything
+  // else (a path, text, an image, a filter, a pattern) could draw words of its own.
+  for (const svg of sheet.querySelectorAll('svg')) {
+    const kids = Array.from(svg.children), tags = Array.from(svg.querySelectorAll('*')).map((e) => e.tagName.toLowerCase());
+    const glyph = svg.classList.contains('disp') && kids.length === 1 && kids[0].tagName.toLowerCase() === 'use' && /^#g-[a-z0-9-]+$/.test(kids[0].getAttribute('href') || '');
+    const count = (tag) => tags.filter((t) => t === tag).length;
+    const wordmark = svg.dataset.wordmark !== undefined && tags.every((t) => t in q.wordmark) && Object.keys(q.wordmark).every((t) => count(t) === q.wordmark[t]);
+    if (!glyph && !wordmark) findings.push({code: 'FORBIDDEN_ELEMENT', element: 'svg', holds: [...new Set(tags)].join('|').slice(0, 60)}); }
+  // An image can carry text of its own however it is painted: as a background, a border, mask or marker image, or
+  // replaced content - on an element or on any of its pseudo-elements.
+  const IMAGE_PROPERTIES = ['backgroundImage', 'borderImageSource', 'maskImage', 'webkitMaskImage', 'webkitMaskBoxImageSource', 'listStyleImage', 'maskBorderSource'];
+  for (const el of [document.documentElement, document.body, sheet, ...sheet.querySelectorAll('*')]) {
+    for (const pseudo of [null, '::before', '::after', '::first-letter', '::first-line', '::marker']) { const s = getComputedStyle(el, pseudo);
+      const painted = IMAGE_PROPERTIES.find((p) => /url\(/.test(s[p] || ''));
+      if (painted !== undefined) findings.push({code: 'FORBIDDEN_ELEMENT', element: 'an image painted by CSS', property: painted, pseudo, on: name(el)}); }
+    const s = getComputedStyle(el);
     if (s.content && s.content !== 'normal' && s.content !== 'none') findings.push({code: 'FORBIDDEN_ELEMENT', element: 'replaced content', on: name(el)}); }
+  // The printed page box is the template's: one @page rule, exactly as base.css states it, and no margin box.
+  const pageRules = [];
+  const walkRules = (rules) => { for (const rule of rules) { if (rule.type === 6) pageRules.push(rule); if (rule.cssRules) walkRules(rule.cssRules); } };
+  for (const sheetOf of document.styleSheets) { try { walkRules(sheetOf.cssRules); } catch (e) { findings.push({code: 'PAGE_RULE_FORBIDDEN', reason: 'unreadable stylesheet'}); } }
+  const normalise = (text) => text.replace(/\s+/g, '');
+  if (pageRules.length !== 1 || normalise(pageRules[0].cssText) !== normalise(q.pageRule)) findings.push({code: 'PAGE_RULE_FORBIDDEN', rules: pageRules.map((r) => r.cssText.slice(0, 80))});
   for (const el of sheet.querySelectorAll('.nw')) { const range = document.createRange(); range.selectNodeContents(el);
     const tops = Array.from(range.getClientRects()).filter((r) => r.width > 0.5 && r.height > 0.5).map((r) => r.top);
     const fontPx = parseFloat(getComputedStyle(el).fontSize);
     if (tops.length > 1 && Math.max(...tops) - Math.min(...tops) > 0.5 * fontPx) findings.push({code: 'GROUP_WRAPPED', text: el.textContent.trim().slice(0, 40)}); }
+
+  // The running head and foot keep at least 3 mm between their two parts (a long name must not run into the tag
+  // or the page number).
+  for (const bar of sheet.querySelectorAll('.head, .foot')) { const parts = Array.from(bar.children); if (parts.length !== 2) continue;
+    const gap = parts[1].getBoundingClientRect().left - parts[0].getBoundingClientRect().right;
+    if (gap < 3 * 96 / 25.4) findings.push({code: 'CHROME_CROWDED', bar: bar.className, gapPx: +gap.toFixed(2)}); }
 
   // (5) Geometry: long-form lines at the projection's positions; inside the sheet, not clipped, inside the painted
   //     container, within the measure, no overlap.
@@ -711,15 +756,15 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
     entries = []
     ascent = {style_id: style["ascentCp"] for style_id, style in projection["longFormStyles"].items()}
     ink_stats: list = []
+    # What the QA allows to draw on the sheet: each display glyph through one sprite <use>, and the pinned wordmark.
+    glyph_slugs = {character: g["slug"] for character, g in ctx.glyphs.items()}
+    wordmark_shape = {tag: len(re.findall(rf"<{tag}[\s>/]", ctx.wordmark_svg)) for tag in ("title", "path", "circle")}
     with sync_playwright() as pw:
         browser = pw.chromium.launch(args=CHROMIUM_ARGS)
         chromium_version = browser.version
         # The tokens redefine every colour under prefers-color-scheme: dark; the document is always the light one.
         context = browser.new_context(device_scale_factor=2, color_scheme="light")
         page = context.new_page()
-        # The QA must see the rendering the PDF prints: print media for the screenshot and the DOM checks too, so a
-        # print-only rule cannot change the PDF behind the QA's back.
-        page.emulate_media(media="print", color_scheme="light")
         page.set_viewport_size({"width": A4_PX[0], "height": A4_PX[1]})
         for entry, binding in zip(projection["pages"], bindings):
             html_path = pages_dir / f"{entry['pageLabel']}-{entry['pageId']}.html"
@@ -732,14 +777,19 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
             page.wait_for_timeout(250)
             png = pages_dir / f"{entry['pageLabel']}-{entry['pageId']}.png"
             pdf = pages_dir / f"{entry['pageLabel']}-{entry['pageId']}.pdf"
+            # The QA must see the rendering the PDF prints: print media for the screenshot and for the DOM checks, set
+            # before each (page.pdf() resets the emulation), so a print-only rule cannot change the PDF behind the QA.
+            page.emulate_media(media="print", color_scheme="light")
             page.screenshot(path=str(png), clip={"x": 0, "y": 0, "width": A4_PX[0], "height": A4_PX[1]})
             page.pdf(path=str(pdf), width="210mm", height="297mm", print_background=True, margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
                      prefer_css_page_size=True)
+            page.emulate_media(media="print", color_scheme="light")
             # After the screenshot and the PDF: every element becomes hit-testable for the QA, so an overlay with
             # pointer-events:none (the atmosphere blobs use it, inline !important included) still counts when it covers text.
             page.evaluate("for (const e of document.querySelectorAll('.sheet, .sheet *')) e.style.setProperty('pointer-events', 'auto', 'important')")
             dom = page.evaluate(DOM_QA, {"values": binding["values"], "required": binding["required"], "glyphs": binding["glyphs"],
-                                         "marks": binding["marks"], "displayGlyphs": projection["displayGlyphs"],
+                                         "marks": binding["marks"], "displayGlyphs": projection["displayGlyphs"], "glyphSlugs": glyph_slugs,
+                                         "wordmark": wordmark_shape, "pageRule": PAGE_RULE,
                                          "separators": sorted(SEPARATORS), "ascent": ascent})
             used_fonts, latin_faces = platform_fonts(context, page)
             wx = page.evaluate(WX_QA) if entry["content"]["kind"] == "wuXing" else []

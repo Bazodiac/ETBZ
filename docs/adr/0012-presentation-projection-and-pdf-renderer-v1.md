@@ -95,7 +95,8 @@ labels are the only text the template contributes:
 
 Every chart value is taken from the model. The values a second source defines are checked
 against it; the rest (which hidden stems a branch holds and their Qi roles, which Ten-God
-relation a pillar carries, the Wu Xing values) are FuFirE's own answers: FuFirE owns
+relation a pillar and each hidden stem carries, the Wu Xing values) are FuFirE's own
+answers: FuFirE owns
 symbolic truth, so they are shown as supplied.
 
 - **`PRESENTATION_FACT_MISMATCH`:** the stem, branch and hidden-stem phases, the stem
@@ -157,7 +158,12 @@ the pinned Noto face. Overflow has one resolution, another page. A chapter outsi
 `tools/pdf-renderer/` is Python with Playwright/Chromium, pikepdf, fontTools and Pillow,
 the engine that produced the PO-approved ETBZ-49 look. It is local-only, imported by
 nothing, never run in CI, and adds no npm dependency. Chromium runs in deterministic mode.
-Before it writes a PDF it checks:
+
+What the QA guards against is a page builder or stylesheet edit that prints a wrong value,
+puts one in the wrong place or hides one by mistake. The builders and `base.css` are
+reviewed renderer code, bound by the renderer digest; the QA is not a sandbox for hostile
+CSS. It measures the mechanisms listed below and claims nothing beyond them; limitation 8
+names what it does not measure. Before it writes a PDF it checks:
 
 - identity: the projection hashes to its own `structuralHash` (a Python mirror of
   `canonicalJson`), and its template to its own hash and to the pinned released identity;
@@ -169,51 +175,58 @@ Before it writes a PDF it checks:
   projection's printed-field selection) yield exactly the page's `strings`
   (`PAGE_STRINGS`); a page that cannot be built blocks (`PAGE_BUILD`), and so does any
   unbound value or unknown classification in a builder;
-- slot binding: the page is bound before it is built, so every text node carries the path
-  of the projection value it prints, every glyph the path of its character, every presence
-  mark the path of its value and every phase-coloured element the path of the phase it
-  paints. The QA requires each to equal the value at its path, and printed text only at the
+- slot binding: the page is bound before it is built, so every text node carries the path of
+  the projection value it prints, every glyph the path of its character, every presence mark
+  the path of its value and every phase-coloured element the path of the phase it paints.
+  The QA requires each to equal the value at its path (a glyph drawn by exactly one sprite
+  `<use>` of that character, not only named by an attribute), and printed text only at the
   paths the page prints (never an identifier or classification it carries); every enclosing
   slot to be a prefix of the path and every entry of the path (each indexed step, such as
-  `content.pillars.0`) to have a slot around it; on the page, the centre of every bound
-  item to lie inside the box of every enclosing slot that draws one; the entries of one
-  list to appear in list order in the DOM and on the page (no entry wholly above the one
-  before it, nor left of it on the same row; the Wu Xing ring keeps its template order);
-  every long-form line at the centipoint position the projection computed for it; every
-  table presence mark bound to its own column and standing under that column's header;
-  and every path the page must print, draw or mark to appear. A page-level label shown
-  inside an entry may carry only a page-level value. A key printed in place of another
-  (the other then missing), a value or a whole sub-entry shown in another entry's slot or
-  moved there by CSS, two entries trading places in the DOM or on the page, a dropped copy
-  of a repeated value, a printed identifier and a presence mark under another column all
-  block. Two keys of one entry trading places, or a page label moved on its page, is
-  layout: template code (limitation 8);
+  `content.pillars.0`) to have a slot around it; on the page, the centre of every bound item
+  to lie inside the box of every enclosing slot that draws one; the entries of one list to
+  appear in list order in the DOM and on the page (no entry wholly above the one before it,
+  nor left of it on the same row; the Wu Xing ring keeps its template order); every
+  long-form line at the centipoint position the projection computed for it; every table
+  presence mark bound to its own column and standing under that column's header; and every
+  path the page must print, draw or mark to appear. A page-level label shown inside an entry
+  may carry only a page-level value. A key printed in place of another (the other then
+  missing), a value or a whole sub-entry shown in another entry's slot or moved there by
+  CSS, two entries trading places in the DOM or on the page, a dropped copy of a repeated
+  value, a printed identifier and a presence mark under another column all block. Two keys
+  of one entry trading places, or a page label moved on its page, is layout: template code
+  (limitation 8);
 - drawn classifications, measured as painted: every phase paint (a field, a disc, a dot, a
   phase-coloured glyph) must compute one of its declared phase's two tokens as resolved on
   the page, and no other phase's; a field, disc or dot must carry no background image; and
   in the page image, of the five phases' tokens, its own must be the one its box shows most
   (exact pixels; on the evidence document at least 107 of its own against at most 2 of any
-  other), whatever CSS channel painted it (a glyph's `<use>`, a background image, an inset
-  shadow). A phase of 0 draws no bar fill, an empty track. A phase paint holds only its own
-  entry's values (the Day-Master field paints the Day Master's phase, not a pillar's). Every
-  presence mark has the look of its value in its computed style: stem filled, hidden a ring,
-  both filled with a halo, none a bar, where a shadow or an outline counts as a halo and a
-  background image, which no template mark uses, is refused. A disc in another phase's
-  colour, a phase class remapped by CSS (on the element, on a glyph's `<use>`, or through a
-  background image), a Wu Xing ring position showing another phase and a mark drawn with
-  another value's look all block;
+  other), so another phase's colour painted through a glyph's `<use>`, a background image or
+  an inset shadow is caught. A phase of 0 draws no bar fill, an empty track. A phase paint
+  holds only its own entry's values (the Day-Master field paints the Day Master's phase, not
+  a pillar's). Every presence mark has the look of its value in its computed style: stem
+  filled, hidden a ring, both filled with a halo, none a bar, where a shadow or an outline
+  counts as a halo and a background image, which no template mark uses, is refused. A disc
+  in another phase's colour, a phase class remapped by CSS (on the element, on a glyph's
+  `<use>`, or through a background image), a Wu Xing ring position showing another phase and
+  a mark drawn with another value's look all block;
 - visibility, for text and glyphs alike: no box, hidden, faint (effective alpha below 0.5),
   clipped, masked, filtered, scaled down, covered at the centre of any character by an
   element painting a background or a visible border, or by an SVG shape's fill or stroke
-  (an overlay with
-  `pointer-events:none` included, since the QA forces hit-testing on per element), a
-  rendered size below 11 px (either axis of a transform), or below a 1.5 contrast ratio of
-  the composited colour against the surface under it; presence marks and phase paints
-  must be visible too; no generated `::before`/`::after`/`::marker` content on any
-  element, the root and body included; no element that can carry text of its own (images,
-  form controls, lists, SVG text or images) and no image painted by CSS (a background or
-  border image, replaced content); no text or element outside the sheet; no non-breaking
-  pair split across lines;
+  (an overlay with `pointer-events:none` included, since the QA forces hit-testing on per
+  element), a rendered size below 11 px (either axis of a transform), or below a 1.5
+  contrast ratio of the composited colour against the surface under it; printed in the
+  value's order (no `unicode-bidi` override or embedding and no right-to-left run on the
+  element or an ancestor) and not mirrored (no transform or `scale` with a negative
+  determinant); presence marks and phase paints must be visible too;
+- nothing drawn but the projection: no generated `::before`/`::after`/`::marker` content
+  on any element, the root and body included; no image, picture, form control, canvas,
+  frame, embed or list element; SVG on the sheet is an allowlist (a display glyph is one
+  sprite `<use>`, the wordmark is the pinned shape), so an SVG path, text, image, filter
+  image or pattern is refused; no `url()` in the background, border, mask, mask-box or
+  list-style image of any element or of its `::before`, `::after`, `::first-letter`,
+  `::first-line` or `::marker`, and no replaced content; exactly the template's one
+  `@page` rule (A4, no margin) and no page margin box; no text or element outside the
+  sheet; no non-breaking pair split across lines;
 - ink, on the page image: every printed string (each line box on its own, and each
   character in its own box), glyph, presence mark and phase paint must leave pixels close
   to its own colour (for text, the fill composited over its backdrop) inside its own box in
@@ -228,8 +241,9 @@ Before it writes a PDF it checks:
   0.6 (over twice the highest, 0.263), so a cover over a whole character, in any colour,
   blocks;
 - geometry: nothing outside the sheet, clipped by an ancestor or out of its painted
-  container, no line wider than its measure, no overlap, the Wu Xing medallion clear, every
-  web font loaded; the running head and foot paint above the atmosphere blobs;
+  container, no line wider than its measure, no overlap, the Wu Xing medallion clear, at
+  least 3 mm between the two parts of the running head and of the running foot, every web
+  font loaded; the running head and foot paint above the atmosphere blobs;
 - a DevTools platform-font scan proving every character was set in one of exactly six
   PostScript faces: `Inter-Regular`, `Inter-Medium`, `Inter-SemiBold`,
   `InterDisplay-Light`, `InterDisplay-Regular`, `NotoSansCJKsc-Regular`, and every element
@@ -239,23 +253,27 @@ Before it writes a PDF it checks:
 - byte-identical PDFs and page images across the last two of three runs.
 
 Chromium renders with the light colour scheme pinned (the tokens redefine every colour
-under a dark scheme); the pin has no QA check of its own. The screenshot and every DOM
-check run with print media emulated, the rendering the PDF is made from, so a rule that
-applies only when printing is seen by the QA too. A blocked run, including an
+under a dark scheme); the pin has no QA check of its own. Print media is emulated before
+each page's screenshot and again before its DOM checks (`page.pdf()` resets the
+emulation), so a rule that applies only when printing is seen by the QA too. Paged media
+itself (the `@page` box) is not rendered on screen, so it is restricted instead: the one
+template rule, no margin box. A blocked run, including an
 unexpected renderer error (`RENDERER_ERROR`), writes the QA report and diagnostics, never
 a PDF, and every run writes into a hidden sibling directory that is renamed into place
 only when complete.
 `tools/pdf-renderer/qa/run_canaries.py` breaks every gate in its table at least once,
 runs the real renderer against it, and records the result in `renderer-canaries.json`:
-125 canaries, each of which must end BLOCKED at the expected check with the expected
+138 canaries, each of which must end BLOCKED at the expected check with the expected
 finding, exit 1 and no PDF or manifest; the `partial-write` canary instead proves that a
 failure after a passing render leaves no `--out` directory at all. The record is bound
 to the renderer source digest and to the digest of the canary source; the contract
 suite pins every canary's expected check and finding, requires every canary to hold on
 the same renderer digest the manifest states, and requires every code the renderer can
-emit to appear in the record except the six limitation 8 names. The
-same record carries the differential test of the Python hash mirror against the
-repository's TypeScript `canonicalJson` on a fixed value set.
+emit to appear in the record except the six limitation 8 names. Three positive controls
+must pass with a PDF and a manifest (a Wu Xing value of 0, body text and plain display
+glyphs at opacity 0.7), so the fixes that keep those legitimate pages from failing closed
+are proven too. The same record carries the differential test of the Python hash mirror
+against the repository's TypeScript `canonicalJson` on a fixed value set.
 
 **The informational CJK face** (ADR 0009's open point) is pinned to
 `NotoSansCJK-Regular.ttc`, `sha256:b76b0433…690a`, byte-identical to upstream
@@ -331,38 +349,41 @@ are a declaration.
    prints the Lexicon wording for every relation; the ones absent from the chart carry the
    "Nicht vorhanden" mark of the legend. The rows are Lexicon content, the marks are chart
    values.
-8. **Slot binding binds values, order, phase and each entry's place, not the template's
-   geometry.** What stays template code, reviewed rather than measured, is where the page
-   layouts place each block (the ring order `WX_RING`, the grid of each page), which of an
-   entry's keys sits where inside the entry, and which path a page-level element shows when
-   it holds no value of its own entry; an edit there that keeps every value, order, colour
-   and slot consistent is invisible to the QA. Colour classes come from the entry's phase,
-   not from the projection's `paint`, which the renderer does not read; what a phase paint
-   paints is measured against the tokens. A phase paint is recognised by its `f-`/`m-` class
-   or a `--phase-*` variable; an element painted in a phase colour any other way (a literal
-   colour, a stylesheet rule keyed on an attribute) is neither bound nor measured. A mark's
-   look is judged by which paint channels it uses; the colour of its halo is not measured.
-   The QA proves that every character is present, inked and, at its centre, not covered by a
-   painted background, a visible border or an SVG fill or stroke; it does not prove that the
-   character's shape is intact. A box shadow and an outline are not hit-testable, so a cover
-   drawn as one is caught only when it takes a character below 0.005 or a line below 0.03;
-   and a cover over part of every character that leaves each centre uncovered and each share
-   at or above 0.005 (measured: the upper half of every line of a page; the dots of an
-   umlaut) is not detected. A phase-coloured glyph drawn translucent would fail the pixel
-   classification (its pixels match no token): no template glyph is translucent, and the
-   failure is closed. For a glyph, a mark or a phase paint the ink band is judged over its
-   whole box, so a cover over part of one of those that leaves its share within the band is
-   not detected either. The ink check proves a band of the item's own colour in its box, not
-   legibility: a cover that reproduces an item's own ink density (a pattern in its colour,
-   the wordmark drawn across a line in the text's colour) passes it. Six finding codes in
-   two groups have no canary, because breaking them needs a doctored font or PDF writer
-   rather than a doctored page: the one-em CJK advance (`CJK_ADVANCE_NOT_ONE_EM`) and the
-   PDF readback checks other than the page count (`PDF_MAGIC`, `PDF_MEDIA_BOX`,
-   `PDF_FONT_NOT_EMBEDDED`, `PDF_FONT_NOT_PINNED`, `PDF_TYPE3_WITHOUT_TOUNICODE`). The light
-   colour-scheme pin has no QA check at all. Every other check id and finding code has at
-   least one canary in the committed record; the evidence contract test derives the
-   renderer's codes from its source and pins exactly these six as the ones no canary
-   observed.
+8. **The QA measures the mechanisms section 6 lists, not the template's geometry and not
+   every CSS channel.** CSS that changes how a string's characters look without reordering
+   them (`text-transform`, font features, letter-spacing) or paints outside the listed
+   channels is reviewed template code, not measured. What stays template code, reviewed
+   rather than measured, is where the page layouts place each block (the ring order
+   `WX_RING`, the grid of each page), which of an entry's keys sits where inside the entry,
+   and which path a page-level element shows when it holds no value of its own entry; an
+   edit there that keeps every value, order, colour and slot consistent is invisible to the
+   QA. Colour classes come from the entry's phase, not from the projection's `paint`, which
+   the renderer does not read; what a phase paint paints is measured against the tokens. A
+   phase paint is recognised by its `f-`/`m-` class or a `--phase-*` variable; an element
+   painted in a phase colour any other way (a literal colour, a stylesheet rule keyed on an
+   attribute) is neither bound nor measured. A mark's look is judged by which paint channels
+   it uses; the colour of its halo is not measured. The QA proves that every character is
+   present, inked and, at its centre, not covered by a painted background, a visible border
+   or an SVG fill or stroke; it does not prove that the character's shape is intact. A box
+   shadow and an outline are not hit-testable, so a cover drawn as one is caught only when
+   it takes a character below 0.005 or a line below 0.03, or, in the item's own colour,
+   lifts one above its ceiling; and a cover over part of every character that leaves each
+   centre uncovered and each share at or above 0.005 (measured: the upper half of every line
+   of a page; the dots of an umlaut) is not detected. A phase-coloured glyph drawn
+   translucent would fail the pixel classification (its pixels match no token): no template
+   glyph is translucent, and the failure is closed. For a glyph, a mark or a phase paint the
+   ink band is judged over its whole box, so a cover over part of one of those that leaves
+   its share within the band is not detected either. The ink check proves a band of the
+   item's own colour in its box, not legibility: a cover that reproduces an item's own ink
+   density (a pattern in its colour, the wordmark drawn across a line in the text's colour)
+   passes it. Six finding codes in two groups have no canary, because breaking them needs a
+   doctored font or PDF writer rather than a doctored page: the one-em CJK advance
+   (`CJK_ADVANCE_NOT_ONE_EM`) and the PDF readback checks other than the page count
+   (`PDF_MAGIC`, `PDF_MEDIA_BOX`, `PDF_FONT_NOT_EMBEDDED`, `PDF_FONT_NOT_PINNED`,
+   `PDF_TYPE3_WITHOUT_TOUNICODE`). The light colour-scheme pin has no QA check at all. Every
+   other check id and finding code has at least one canary in the committed record; the
+   evidence contract test derives the renderer's codes from its source and pins exactly
+   these six as the ones no canary observed.
 9. **Customer text is limited to the pinned advance tables.** Every printed string must be
    in the Inter advance tables the long form measures with: U+0020–007E, U+00A0–024F,
    U+2010–2027, U+2030–203A and U+20AC, as far as the pinned Inter cmap carries them (so
@@ -376,16 +397,21 @@ are a declaration.
 10. **The rival-face scan covers the listed font directories.** A face with the pinned
    PostScript name in `/System/Library/Fonts` or activated by a font manager would not be
    detected; on the measured host none exists.
-11. **A display name long enough to wrap in the running foot blocks.** The overlap check
-   compares element boxes, and a wrapped inline name spans the whole foot, so a name of
-   about 45 characters is refused as `OVERLAP` although the page shows none. A name of 40
-   characters sets on one line in the running head and foot and passes (measured; the head
-   tag never breaks inside itself). The projection caps no name length. This fails closed;
-   a length rule is a template decision.
+11. **A display name of about 40 characters or more is refused.** The running head and foot
+   never wrap the name and must keep 3 mm between their two parts, so a long name fails closed
+   (`CHROME_CROWDED`; measured with names built by the real projection: 34 characters pass, 40
+   and 43 characters are refused, and at 45 characters the foot also leaves the sheet). The
+   projection caps no name length; a length rule, or a smaller running-chrome type for long
+   names, is a template decision.
 12. **A pull quote cannot pass the every-word check yet.** The long form wraps a pull quote
    in quotation marks that the placement handed to `assertEveryWordPlaced` keeps; the
    ETBZ-55 payload yields paragraphs only, so the path is unreachable here. ETBZ-56, which
    maps pull quotes, must fix it.
+13. **A Wu Xing value far below the largest fails closed.** A value under about 0.5 % of the
+   largest draws a bar fill narrower than half a pixel, which the phase-paint visibility rule
+   refuses (`PHASE_INVISIBLE`). A value of exactly 0 draws no fill and passes (a positive
+   control proves it). FuFirE's vectors carry values of one decimal, so the case needs a value
+   of 0.0x next to a maximum of several points.
 
 ## What this ADR does not decide
 

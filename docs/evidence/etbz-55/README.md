@@ -16,7 +16,7 @@ template `bazodiac-final-template@1.0.0` and rendered by the local
 | `contact-sheet.png` | all 29 pages, for visual inspection | the renderer |
 | `qa-report.json` | every check of the render, per page, including the platform faces Chromium used, and the ink band (lowest and highest share) each kind left on the page images | the renderer |
 | `artifact-manifest.json` | PDF digest, length and page count; input, presentation, template (with its four drawing assets), renderer and font identities; QA state; the declared generation record | the renderer |
-| `renderer-canaries.json` | 125 executed negative runs: every renderer check and finding code broken at least once except the six ADR 0012 limitation 8 names, each run BLOCKED at the expected check with no PDF and no manifest (the `partial-write` run instead proves that no output directory appears); bound to the renderer and canary source digests; plus the differential test of the renderer's hash mirror against the TypeScript `canonicalJson` | `tools/pdf-renderer/qa/run_canaries.py` |
+| `renderer-canaries.json` | 138 executed negative runs and 3 positive controls: every renderer check and finding code broken at least once except the six ADR 0012 limitation 8 names, each run BLOCKED at the expected check with no PDF and no manifest (the `partial-write` run instead proves that no output directory appears); bound to the renderer and canary source digests; plus the differential test of the renderer's hash mirror against the TypeScript `canonicalJson` | `tools/pdf-renderer/qa/run_canaries.py` |
 
 `tests/contract/etbz55-presentation-evidence.contract.test.ts` re-derives in CI every
 claim that does not need a browser: the projection from the fixtures, the metrics from

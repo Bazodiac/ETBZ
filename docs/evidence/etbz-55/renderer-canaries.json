@@ -323,8 +323,7 @@
      "CLIPPED_BY_ANCESTOR",
      "OUTSIDE_SHEET",
      "OVERLAP",
-     "TEXT_NOT_INKED",
-     "TEXT_OCCLUDED"
+     "TEXT_NOT_INKED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -362,8 +361,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "OVERLAP",
-     "TEXT_OCCLUDED"
+     "OVERLAP"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -599,7 +597,6 @@
      "OVERFLOWS_CONTAINER",
      "OVERLAP",
      "TEXT_MISSING_FROM_PAGE",
-     "TEXT_OCCLUDED",
      "TEXT_OUT_OF_SLOT"
     ],
     "exitCode": 1,
@@ -1211,6 +1208,7 @@
     "check": "PAGE_QA",
     "codes": [
      "CHARACTER_NOT_INKED",
+     "FORBIDDEN_ELEMENT",
      "TEXT_NOT_INKED",
      "TEXT_OCCLUDED"
     ],
@@ -1564,6 +1562,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "FORBIDDEN_ELEMENT",
      "GLYPH_NOT_INKED",
      "GLYPH_OCCLUDED",
      "PHASE_UNBOUND"
@@ -1585,6 +1584,7 @@
     "check": "PAGE_QA",
     "codes": [
      "CHARACTER_NOT_INKED",
+     "FORBIDDEN_ELEMENT",
      "MARK_NOT_INKED",
      "TEXT_OCCLUDED"
     ],
@@ -1604,6 +1604,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "FORBIDDEN_ELEMENT",
      "GLYPH_NOT_INKED",
      "GLYPH_OCCLUDED",
      "PHASE_NOT_INKED"
@@ -1664,6 +1665,7 @@
     "check": "PAGE_QA",
     "codes": [
      "CHARACTER_OVER_INKED",
+     "FORBIDDEN_ELEMENT",
      "TEXT_LOW_CONTRAST",
      "TEXT_OCCLUDED",
      "TEXT_OVER_INKED"
@@ -1680,11 +1682,12 @@
    "gate": "glyphs",
    "id": "glyph-over-inked",
    "manifestWritten": false,
-   "mutation": "a shape in the glyph's own colour covers the summary's first display glyph",
+   "mutation": "an inset shadow in the glyph's own colour fills the Day-Master glyph's box",
    "observed": {
     "check": "PAGE_QA",
     "codes": [
-     "GLYPH_OVER_INKED"
+     "GLYPH_OVER_INKED",
+     "PHASE_NOT_INKED"
     ],
     "exitCode": 1,
     "status": "BLOCKED"
@@ -1703,6 +1706,7 @@
     "check": "PAGE_QA",
     "codes": [
      "CHARACTER_NOT_INKED",
+     "FORBIDDEN_ELEMENT",
      "MARK_NOT_INKED",
      "MARK_OVER_INKED",
      "TEXT_OCCLUDED"
@@ -1743,6 +1747,7 @@
     "check": "PAGE_QA",
     "codes": [
      "CHARACTER_NOT_INKED",
+     "FORBIDDEN_ELEMENT",
      "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
@@ -1762,6 +1767,7 @@
     "check": "PAGE_QA",
     "codes": [
      "CHARACTER_OVER_INKED",
+     "FORBIDDEN_ELEMENT",
      "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
@@ -2042,6 +2048,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "FORBIDDEN_ELEMENT",
      "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
@@ -2172,6 +2179,7 @@
    "observed": {
     "check": "PAGE_QA",
     "codes": [
+     "FORBIDDEN_ELEMENT",
      "TEXT_OCCLUDED"
     ],
     "exitCode": 1,
@@ -2256,6 +2264,245 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   },
   {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_INVISIBLE",
+   "gate": "no hidden text",
+   "id": "print-longline",
+   "manifestWritten": false,
+   "mutation": "a print-only rule hides every long-form line",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_INVISIBLE",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "FORBIDDEN_ELEMENT",
+   "gate": "renderer adds no text",
+   "id": "mask-image-url",
+   "manifestWritten": false,
+   "mutation": "an image carrying a sentence is painted through a CSS mask",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "FORBIDDEN_ELEMENT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "FORBIDDEN_ELEMENT",
+   "gate": "renderer adds no text",
+   "id": "svg-fe-image",
+   "manifestWritten": false,
+   "mutation": "an SVG filter image carrying a sentence is placed on the page",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "FORBIDDEN_ELEMENT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "FORBIDDEN_ELEMENT",
+   "gate": "renderer adds no text",
+   "id": "svg-path-words",
+   "manifestWritten": false,
+   "mutation": "words drawn as SVG vector outlines are placed on the page",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "FORBIDDEN_ELEMENT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "FORBIDDEN_ELEMENT",
+   "gate": "renderer adds no text",
+   "id": "first-letter-image",
+   "manifestWritten": false,
+   "mutation": "an image carrying a sentence is painted behind a first letter",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "FORBIDDEN_ELEMENT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "FORBIDDEN_ELEMENT",
+   "gate": "renderer adds no text",
+   "id": "list-style-image",
+   "manifestWritten": false,
+   "mutation": "an image carrying a sentence is set as a list marker",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "FORBIDDEN_ELEMENT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "GLYPH_NOT_ITS_VALUE",
+   "gate": "glyphs",
+   "id": "glyph-use-swap",
+   "manifestWritten": false,
+   "mutation": "a display glyph keeps its attribute but draws another sprite glyph",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_MISSING_FROM_PAGE",
+     "GLYPH_NOT_ITS_VALUE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_REORDERED",
+   "gate": "fact in its slot",
+   "id": "bidi-override",
+   "manifestWritten": false,
+   "mutation": "the Wu Xing values print right to left",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_REORDERED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MIRRORED",
+   "gate": "no hidden text",
+   "id": "mirrored-text",
+   "manifestWritten": false,
+   "mutation": "the method note is mirrored",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MIRRORED",
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MIRRORED",
+   "gate": "glyphs",
+   "id": "mirrored-glyph",
+   "manifestWritten": false,
+   "mutation": "every display glyph is mirrored through the scale property",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "GLYPH_MISSING_FROM_PAGE",
+     "MIRRORED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PAGE_RULE_FORBIDDEN",
+   "gate": "renderer adds no text",
+   "id": "page-margin-box",
+   "manifestWritten": false,
+   "mutation": "a page margin box prints a sentence on every page",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PAGE_RULE_FORBIDDEN"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "CHROME_CROWDED",
+   "gate": "no content cut",
+   "id": "chrome-crowded",
+   "manifestWritten": false,
+   "mutation": "the running foot runs into the page number",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "CHROME_CROWDED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MARK_NOT_ITS_LOOK",
+   "gate": "fact in its slot",
+   "id": "mark-none-halo",
+   "manifestWritten": false,
+   "mutation": "the absent marks gain a halo",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MARK_MISSING_FROM_PAGE",
+     "MARK_NOT_ITS_LOOK"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
    "expectedCheck": "PAGE_BUILD",
    "expectedCode": null,
    "gate": "page build",
@@ -2324,7 +2571,7 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   }
  ],
- "canarySourceSha256": "sha256:9c38a7f0f5f3f3c0ff86a30d8d545cf0930e5f52e587c704c8cf0693cdf4d1cd",
+ "canarySourceSha256": "sha256:8908fa9de81eda71abe7199e3540f3768ca97b1ac78ab2acc4c7481660d7ff61",
  "canaryVersion": "bazodiac-renderer-canaries.v1",
  "canonicalJsonMirror": {
   "equal": true,
@@ -2334,15 +2581,58 @@
   "sha256": "sha256:09191c36aa9c3e0f2d4fea4a43cfb0b98e595e61d07b3e593de85fdb3e8ab5d4",
   "strings": 9
  },
+ "controls": [
+  {
+   "id": "zero-phase",
+   "manifestWritten": true,
+   "mutation": "a Wu Xing value of 0 (rehashed) draws an empty bar track",
+   "observed": {
+    "check": "DETERMINISM",
+    "codes": [],
+    "exitCode": 0,
+    "status": "PASSED"
+   },
+   "pdfWritten": true,
+   "verdict": "PASSED_AS_EXPECTED"
+  },
+  {
+   "id": "opacity-text",
+   "manifestWritten": true,
+   "mutation": "body text at opacity 0.7",
+   "observed": {
+    "check": "DETERMINISM",
+    "codes": [],
+    "exitCode": 0,
+    "status": "PASSED"
+   },
+   "pdfWritten": true,
+   "verdict": "PASSED_AS_EXPECTED"
+  },
+  {
+   "id": "faint-plain-glyph",
+   "manifestWritten": true,
+   "mutation": "display glyphs without a phase colour at opacity 0.7",
+   "observed": {
+    "check": "DETERMINISM",
+    "codes": [],
+    "exitCode": 0,
+    "status": "PASSED"
+   },
+   "pdfWritten": true,
+   "verdict": "PASSED_AS_EXPECTED"
+  }
+ ],
  "executedAt": "2026-09-29",
  "host": "Darwin arm64",
  "projectionStructuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
  "renderer": {
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:23e21335afc5cf356ad330f857ab569752eb251742c48125adfe938c877f48a8"
+  "sourceSha256": "sha256:6809eb43dc8ef17fd7e9d9abfbd5155d32c10fd5d5a8a0d9ed765dea2c2ddd54"
  },
  "summary": {
-  "blockedAsExpected": 125,
-  "canaries": 125
+  "blockedAsExpected": 138,
+  "canaries": 138,
+  "controls": 3,
+  "passedAsExpected": 3
  }
 }

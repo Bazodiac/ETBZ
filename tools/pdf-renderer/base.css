@@ -17,13 +17,14 @@ body{font-family:var(--font-sans);color:var(--ink-900);-webkit-font-smoothing:an
 .head{position:absolute;left:20mm;right:20mm;top:11mm;display:flex;justify-content:space-between;align-items:center;height:6mm}
 .head .brand{display:flex;align-items:center;gap:3mm}
 .head .brand svg{height:2.6mm;width:auto;color:var(--ink-900)}
-.head .brand .who{font-size:9pt;letter-spacing:.16em;text-transform:uppercase;font-weight:500;color:var(--ink-900)}
+.head .brand .who{font-size:9pt;letter-spacing:.16em;text-transform:uppercase;font-weight:500;color:var(--ink-900);white-space:nowrap}
 .sep{color:var(--ink-400);margin:0 .45em}
 .tag{display:inline-block;font-size:9pt;letter-spacing:.14em;text-transform:uppercase;font-weight:500;padding:1.1mm 2.6mm 0.9mm;border-radius:0.8mm;line-height:1;white-space:nowrap}
 .tag.you{background:var(--ink-900);color:var(--paper-000)}
 .tag.gen{border:0.25mm solid var(--ink-400);color:var(--ink-600)}
 .foot{position:absolute;left:20mm;right:20mm;bottom:11mm;display:flex;justify-content:space-between;align-items:baseline;font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-400)}
 .foot .pn{color:var(--gold-700);font-weight:500}
+.foot>div{white-space:nowrap}
 .kicker{font-size:9pt;letter-spacing:.16em;text-transform:uppercase;font-weight:500;color:var(--gold-700);line-height:12pt}
 .h1{font-family:var(--font-display);font-weight:300;font-size:30pt;line-height:33pt;letter-spacing:-.02em;color:var(--ink-900)}
 .h1.small{font-size:22pt;line-height:25pt;letter-spacing:-.015em}
