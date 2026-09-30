@@ -9,8 +9,8 @@
 //
 // This suite adds the four properties that a package allowlist cannot see:
 //
-//   1. it is a LEAF - nothing imports it, so ETBZ-49 cannot have shipped a
-//      served surface or a hidden runtime dependency ahead of ETBZ-55;
+//   1. it is a LEAF - no served layer imports it, and inside the application
+//      layer only the ETBZ-55 presentation projection does, through the index;
 //   2. it is PURE - no clock, no randomness, no process, no filesystem, which
 //      is what makes a structural hash of its output meaningful;
 //   3. it does NOT render - no PDF, no HTML, no headless browser;
@@ -18,9 +18,9 @@
 // =============================================================================
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { extractImportSpecifiers } from './dependency-direction.test.js';
+import { TYPESCRIPT_EXTENSIONS, UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
 
 const REPO_ROOT = process.cwd();
 const SRC_ROOT = resolve(REPO_ROOT, 'src');
@@ -35,7 +35,7 @@ function listTypeScriptFiles(root: string): string[] {
       const entryPath = join(current, entry);
       if (statSync(entryPath).isDirectory()) {
         walk(entryPath);
-      } else if (entry.endsWith('.ts')) {
+      } else if (TYPESCRIPT_EXTENSIONS.some((extension) => entry.endsWith(extension))) {
         found.push(entryPath);
       }
     }
@@ -45,7 +45,9 @@ function listTypeScriptFiles(root: string): string[] {
 }
 
 const VISUAL_FILES = listTypeScriptFiles(VISUAL_ROOT);
+// An import the guard cannot resolve statically counts as a reference: the leaf check fails closed.
 const referencesVisual = (specifier: string): boolean =>
+  specifier === UNRESOLVABLE_DYNAMIC_IMPORT ||
   specifier.includes('application/visual') ||
   specifier.includes('/visual/') ||
   specifier.endsWith('/visual') ||
@@ -54,6 +56,23 @@ const referencesVisual = (specifier: string): boolean =>
 // -----------------------------------------------------------------------------
 
 describe('ETBZ-49: the visual system is a leaf, reachable from no served path', () => {
+  it('is imported by no top-level src module (the server entry, the attestation script)', () => {
+    const references = (specifier: string): boolean => referencesVisual(specifier);
+    const roots = readdirSync(SRC_ROOT).filter((entry) => !statSync(join(SRC_ROOT, entry)).isDirectory() && TYPESCRIPT_EXTENSIONS.some((extension) => entry.endsWith(extension)));
+    expect(roots.length, 'top-level src modules exist').toBeGreaterThan(0);
+    const offenders: string[] = [];
+    for (const entry of roots) {
+      const path = join(SRC_ROOT, entry);
+      for (const specifier of extractImportSpecifiers(readFileSync(path, 'utf8'), path)) if (references(specifier)) offenders.push(`src/${entry} -> ${specifier}`);
+    }
+    expect(offenders, offenders.join('\n')).toEqual([]);
+  });
+
+  it('scans every src directory there is (a new directory must join the scans below)', () => {
+    const directories = readdirSync(SRC_ROOT).filter((entry) => statSync(join(SRC_ROOT, entry)).isDirectory()).sort();
+    expect(directories).toEqual(['adapters', 'app', 'application', 'domain', 'http']);
+  });
+
   it.each(['app', 'http', 'adapters', 'domain'])(
     'is imported by no module under src/%s',
     (directory) => {
@@ -69,22 +88,33 @@ describe('ETBZ-49: the visual system is a leaf, reachable from no served path', 
       }
       expect(
         offenders,
-        `ETBZ-55 owns the renderer; until then the visual system is reachable from nothing:\n${offenders.join('\n')}`,
+        `the visual system is reachable from no served layer:\n${offenders.join('\n')}`,
       ).toEqual([]);
     },
   );
 
-  it('is imported by no OTHER application module either', () => {
+  // ETBZ-55 (ADR 0012) widens this leaf by exactly one consumer: the presentation
+  // projection, and only through the module's index. Any other application
+  // module, or a deep import, is still an offender.
+  it('is imported by no OTHER application module than the presentation projection, and there only through its index', () => {
     const offenders: string[] = [];
+    let presentationUses = 0;
+    const presentationRoot = join(SRC_ROOT, 'application', 'presentation');
     for (const file of listTypeScriptFiles(join(SRC_ROOT, 'application'))) {
-      if (file.startsWith(VISUAL_ROOT)) continue;
+      if (file.startsWith(VISUAL_ROOT + sep)) continue;
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
-        if (referencesVisual(specifier)) {
-          offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
+        if (!referencesVisual(specifier)) continue;
+        // Whole path segments: a sibling such as application/presentation-x/ is not the consumer.
+        if (file.startsWith(presentationRoot + sep) && specifier === '../visual/index.js') {
+          presentationUses += 1;
+          continue;
         }
+        offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }
     expect(offenders).toEqual([]);
+    // The allowance is used - otherwise it is a hole, not a decision.
+    expect(presentationUses).toBeGreaterThan(0);
   });
 
   it('detects the import it forbids (guard self-check)', () => {
@@ -123,7 +153,8 @@ describe('ETBZ-49: the visual system is pure', () => {
     for (const file of VISUAL_FILES) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (specifier === 'zod') continue;
-        if (specifier.startsWith('./')) continue;
+        // Own modules by resolved path, never by spelling ('./../' would otherwise pass).
+        if (specifier.startsWith('.') && resolve(dirname(file), specifier).startsWith(VISUAL_ROOT + sep)) continue;
         offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }

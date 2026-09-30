@@ -71,7 +71,7 @@ const KNOWN_FRAMEWORK_AND_DRIVER_PACKAGES = [
   '@aws-sdk/client-s3',
 ];
 
-const TYPESCRIPT_EXTENSIONS = ['.ts', '.mts', '.cts', '.tsx'] as const;
+export const TYPESCRIPT_EXTENSIONS = ['.ts', '.mts', '.cts', '.tsx'] as const;
 
 /** Marker emitted for a dynamic import whose target cannot be determined statically. */
 export const UNRESOLVABLE_DYNAMIC_IMPORT = '<unresolvable-dynamic-import>';
@@ -130,15 +130,21 @@ export function extractImportSpecifiers(source: string, fileName = 'source.ts'):
       ts.isStringLiteral(node.moduleReference.expression)
     ) {
       specifiers.push(node.moduleReference.expression.text);
+    } else if (ts.isImportTypeNode(node)) {
+      // A type-position import (`type P = import('...').X`, `typeof import('...')`) couples modules too.
+      const argument = node.argument;
+      if (ts.isLiteralTypeNode(argument) && ts.isStringLiteral(argument.literal)) specifiers.push(argument.literal.text);
+      else specifiers.push(UNRESOLVABLE_DYNAMIC_IMPORT);
     } else if (ts.isCallExpression(node)) {
       const isDynamicImport = node.expression.kind === ts.SyntaxKind.ImportKeyword;
       const isRequire =
         ts.isIdentifier(node.expression) && node.expression.text === 'require';
       if (isDynamicImport || isRequire) {
         const [firstArgument] = node.arguments;
-        if (firstArgument !== undefined && ts.isStringLiteral(firstArgument)) {
+        if (firstArgument !== undefined && (ts.isStringLiteral(firstArgument) || ts.isNoSubstitutionTemplateLiteral(firstArgument))) {
           specifiers.push(firstArgument.text);
-        } else if (isDynamicImport) {
+        } else {
+          // A computed specifier - in import() or in require() - cannot be resolved: report it, never skip it.
           specifiers.push(UNRESOLVABLE_DYNAMIC_IMPORT);
         }
       }
@@ -268,6 +274,13 @@ describe('AC4: inner layers stay free of frameworks and drivers', () => {
     [
       'computed dynamic import',
       'await import(`ex` + `press`);',
+      [UNRESOLVABLE_DYNAMIC_IMPORT],
+    ],
+    ['template-literal dynamic import', 'await import(`express`);', ['express']],
+    ['type-position import', "type App = import('express').Express;", ['express']],
+    [
+      'computed require',
+      'const name = `ex`; const e = require(`${name}press`);',
       [UNRESOLVABLE_DYNAMIC_IMPORT],
     ],
   ])(

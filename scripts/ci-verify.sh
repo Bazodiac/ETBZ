@@ -133,6 +133,11 @@ run_etbz51_skill_guard() { node "${REPO_ROOT}/scripts/verify-etbz51-skill-contra
 # are the product: a weakened one lets an unsupported claim through unseen.
 run_etbz52_skill_reading_guard() { node "${REPO_ROOT}/scripts/verify-etbz52-skill-reading.mjs"; }
 
+# ETBZ-55 decides every page, value, label and line break the PDF renderer draws.
+# The renderer runs locally, never here - so the projection's guards, proven by
+# mutation, are what CI can say about the document.
+run_etbz55_presentation_guard() { node "${REPO_ROOT}/scripts/verify-etbz55-presentation.mjs"; }
+
 # --- 7. secret gate -----------------------------------------------------------
 run_secret_gate() { bash "${REPO_ROOT}/scripts/secret-scan.sh"; }
 
@@ -171,6 +176,9 @@ if [ "${RUN_MUTATIONS}" -eq 1 ]; then
 fi
 if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: ETBZ-52 skill reading boundary (acceptance + package mutation proofs)" run_etbz52_skill_reading_guard
+fi
+if [ "${RUN_MUTATIONS}" -eq 1 ]; then
+  etbz_step "guards :: ETBZ-55 presentation projection (projection + paginator + template + boundary mutation proofs)" run_etbz55_presentation_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan

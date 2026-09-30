@@ -174,7 +174,8 @@ another bundle version or a known contract at another version is
 imports only from `zod`, the interpretation modules it binds and the domain
 hashing primitives, forbids clock, randomness, process, filesystem, network, model
 calls and prose generation, forbids a data file beside the modules, and requires
-that nothing under `src/` imports the bundle until ETBZ-52 does.
+that no served layer imports the bundle (since ETBZ-55, ADR 0012, the presentation
+projection is its one application consumer, through the index).
 `scripts/verify-etbz51-skill-contract-bundle.mjs` (`npm run guards:etbz51`, part of
 `ci-verify.sh`) weakens each guard in turn with the ETBZ-30B kill semantics — a
 named killer test must fail an assertion — and requires the suites to turn red.

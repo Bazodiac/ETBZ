@@ -8,8 +8,8 @@
 // is what a structural hash freezes. This suite adds what an allowlist cannot
 // see:
 //
-//   1. it is a LEAF - nothing imports it yet, so ETBZ-51 cannot have shipped a
-//      served surface or a hidden runtime dependency ahead of ETBZ-52;
+//   1. it is a LEAF - no served layer imports it, and inside the application
+//      layer only the ETBZ-55 presentation projection does, through the index;
 //   2. it is PURE - no clock, randomness, process, filesystem or network;
 //   3. it binds, it does not execute - no model call, no prose generation, no
 //      astrology;
@@ -18,9 +18,9 @@
 // =============================================================================
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { extractImportSpecifiers } from './dependency-direction.test.js';
+import { TYPESCRIPT_EXTENSIONS, UNRESOLVABLE_DYNAMIC_IMPORT, extractImportSpecifiers } from './dependency-direction.test.js';
 
 const REPO_ROOT = process.cwd();
 const SRC_ROOT = resolve(REPO_ROOT, 'src');
@@ -43,7 +43,9 @@ function listFiles(root: string, extension: string): string[] {
 }
 
 const SKILL_FILES = listFiles(SKILL_ROOT, '.ts');
+// An import the guard cannot resolve statically counts as a reference: the leaf check fails closed.
 const referencesSkill = (specifier: string): boolean =>
+  specifier === UNRESOLVABLE_DYNAMIC_IMPORT ||
   specifier.includes('application/skill') ||
   specifier.includes('/skill/') ||
   specifier.endsWith('/skill') ||
@@ -60,31 +62,62 @@ function codeOnly(source: string): string {
 // -----------------------------------------------------------------------------
 
 describe('ETBZ-51: the skill contract bundle is a leaf, reachable from no served path', () => {
+  it('is imported by no top-level src module (the server entry, the attestation script)', () => {
+    const references = (specifier: string): boolean => referencesSkill(specifier);
+    const roots = readdirSync(SRC_ROOT).filter((entry) => !statSync(join(SRC_ROOT, entry)).isDirectory() && TYPESCRIPT_EXTENSIONS.some((extension) => entry.endsWith(extension)));
+    expect(roots.length, 'top-level src modules exist').toBeGreaterThan(0);
+    const offenders: string[] = [];
+    for (const entry of roots) {
+      const path = join(SRC_ROOT, entry);
+      for (const specifier of extractImportSpecifiers(readFileSync(path, 'utf8'), path)) if (references(specifier)) offenders.push(`src/${entry} -> ${specifier}`);
+    }
+    expect(offenders, offenders.join('\n')).toEqual([]);
+  });
+
+  it('scans every src directory there is (a new directory must join the scans below)', () => {
+    const directories = readdirSync(SRC_ROOT).filter((entry) => statSync(join(SRC_ROOT, entry)).isDirectory()).sort();
+    expect(directories).toEqual(['adapters', 'app', 'application', 'domain', 'http']);
+  });
+
   it.each(['app', 'http', 'adapters', 'domain'])('is imported by no module under src/%s', (directory) => {
     const offenders: string[] = [];
     const root = join(SRC_ROOT, directory);
     // Every layer this guard covers exists; a missing one would make the check vacuous.
     expect(existsSync(root), `src/${directory} exists`).toBe(true);
-    for (const file of listFiles(root, '.ts')) {
+    for (const file of TYPESCRIPT_EXTENSIONS.flatMap((extension) => listFiles(root, extension))) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (referencesSkill(specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }
     expect(
       offenders,
-      `ETBZ-52 owns the Skill package; until then the bundle is reachable from nothing:\n${offenders.join('\n')}`,
+      `the bundle is reachable from no served layer:\n${offenders.join('\n')}`,
     ).toEqual([]);
   });
 
-  it('is imported by no OTHER application module either', () => {
+  // ETBZ-55 (ADR 0012) widens this leaf by exactly one consumer: the presentation
+  // projection reads the released Lexicon wording and the wording gates, and
+  // only through the module's index. Any other application module, or a deep
+  // import, is still an offender.
+  it('is imported by no OTHER application module than the presentation projection, and there only through its index', () => {
     const offenders: string[] = [];
-    for (const file of listFiles(join(SRC_ROOT, 'application'), '.ts')) {
-      if (file.startsWith(SKILL_ROOT)) continue;
+    let presentationUses = 0;
+    const presentationRoot = join(SRC_ROOT, 'application', 'presentation');
+    for (const file of TYPESCRIPT_EXTENSIONS.flatMap((extension) => listFiles(join(SRC_ROOT, 'application'), extension))) {
+      if (file.startsWith(SKILL_ROOT + sep)) continue;
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
-        if (referencesSkill(specifier)) offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
+        if (!referencesSkill(specifier)) continue;
+        // Whole path segments: a sibling such as application/presentation-x/ is not the consumer.
+        if (file.startsWith(presentationRoot + sep) && specifier === '../skill/index.js') {
+          presentationUses += 1;
+          continue;
+        }
+        offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }
     expect(offenders).toEqual([]);
+    // The allowance is used - otherwise it is a hole, not a decision.
+    expect(presentationUses).toBeGreaterThan(0);
   });
 
   it('detects the import it forbids (guard self-check)', () => {
@@ -120,9 +153,11 @@ describe('ETBZ-51: the skill contract bundle is pure and binds rather than execu
     for (const file of SKILL_FILES) {
       for (const specifier of extractImportSpecifiers(readFileSync(file, 'utf8'), file)) {
         if (specifier === 'zod') continue;
-        if (specifier.startsWith('./')) continue;
-        if (specifier.startsWith('../interpretation/')) continue;
-        if (specifier === '../../domain/structural-hash.js' || specifier === '../../domain/canonical-json.js') continue;
+        // Decided by resolved path, never by spelling ('./../' would otherwise pass).
+        const target = specifier.startsWith('.') ? resolve(dirname(file), specifier) : null;
+        if (target !== null && target.startsWith(SKILL_ROOT + sep)) continue;
+        if (target !== null && target.startsWith(join(SRC_ROOT, 'application', 'interpretation') + sep)) continue;
+        if (target === join(SRC_ROOT, 'domain', 'structural-hash.js') || target === join(SRC_ROOT, 'domain', 'canonical-json.js')) continue;
         offenders.push(`${relative(REPO_ROOT, file)} -> ${specifier}`);
       }
     }

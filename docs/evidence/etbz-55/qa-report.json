@@ -1,0 +1,550 @@
+{
+ "checks": [
+  {
+   "detail": "bazodiac-presentation-projection.v1",
+   "id": "PROJECTION_VERSION",
+   "result": "PASS"
+  },
+  {
+   "detail": {
+    "projection": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
+    "template": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
+   },
+   "id": "PROJECTION_IDENTITY",
+   "result": "PASS"
+  },
+  {
+   "detail": [
+    "assets/visual-system-v1/fonts/Inter-Regular.ttf",
+    "assets/visual-system-v1/fonts/Inter-Medium.ttf",
+    "assets/visual-system-v1/fonts/Inter-SemiBold.ttf",
+    "assets/visual-system-v1/fonts/InterDisplay-Light.ttf",
+    "assets/visual-system-v1/fonts/InterDisplay-Regular.ttf",
+    "NotoSansCJK-Regular.ttc"
+   ],
+   "id": "FONT_PINS",
+   "result": "PASS"
+  },
+  {
+   "detail": [
+    "assets/visual-system-v1/tokens.css",
+    "assets/visual-system-v1/glyphs/sprite.svg",
+    "assets/visual-system-v1/brand/wordmark.svg",
+    "assets/visual-system-v1/glyphs/manifest.json"
+   ],
+   "id": "TEMPLATE_ASSET_PINS",
+   "result": "PASS"
+  },
+  {
+   "detail": {
+    "cjkCharacters": 31,
+    "displayGlyphs": 27,
+    "unitsPerEm": 1000
+   },
+   "id": "GLYPHS_AND_CJK",
+   "result": "PASS"
+  },
+  {
+   "detail": {
+    "glyphPaths": 111,
+    "pages": 29,
+    "printedPaths": 1449
+   },
+   "id": "PAGE_STRINGS",
+   "result": "PASS"
+  },
+  {
+   "detail": {
+    "displayGlyphs": 116,
+    "pages": 29,
+    "textNodes": 1608
+   },
+   "id": "PAGE_QA",
+   "result": "PASS"
+  },
+  {
+   "detail": {
+    "embeddedFonts": [
+     "AAAAAA+Inter-Medium",
+     "AAAAAA+InterDisplay-Light",
+     "BAAAAA+Inter-Medium",
+     "BAAAAA+Inter-Regular",
+     "BAAAAA+InterDisplay-Light",
+     "CAAAAA+Inter-Regular",
+     "DAAAAA+Inter-Regular",
+     "Type3"
+    ],
+    "mime": "application/pdf",
+    "pages": 29
+   },
+   "id": "PDF_READBACK",
+   "result": "PASS"
+  },
+  {
+   "detail": {
+    "clippedUnits": 0,
+    "pages": 29,
+    "printedStrings": 1608,
+    "textUnits": 33394
+   },
+   "id": "PDF_TEXT_LAYER",
+   "result": "PASS"
+  },
+  {
+   "detail": {
+    "canonicalOutlines": 146,
+    "convexShapes": 566,
+    "displayGlyphs": 116,
+    "pages": 29,
+    "placementDeviationPx": 0.937,
+    "wordmarkDots": 30,
+    "wordmarks": 30
+   },
+   "id": "PDF_VECTOR_LAYER",
+   "result": "PASS"
+  },
+  {
+   "detail": {
+    "comparedRuns": [
+     2,
+     3
+    ],
+    "pages": 29,
+    "pdfSha256": "sha256:462c182a6ecfa505cc19e2c359d29cbc35229f918fff80b849fead82e3c11938"
+   },
+   "id": "DETERMINISM",
+   "result": "PASS"
+  }
+ ],
+ "ink": {
+  "character": {
+   "ceiling": 0.6,
+   "floor": 0.005,
+   "highest": 0.2627,
+   "items": 33256,
+   "lowest": 0.0151
+  },
+  "glyph": {
+   "ceiling": 0.75,
+   "floor": 0.06,
+   "highest": 0.4482,
+   "items": 116,
+   "lowest": 0.192
+  },
+  "mark": {
+   "ceiling": 0.92,
+   "floor": 0.05,
+   "highest": 0.6905,
+   "items": 44,
+   "lowest": 0.1619
+  },
+  "phase": {
+   "ceiling": null,
+   "floor": 0.2,
+   "highest": 0.9789,
+   "items": 92,
+   "lowest": 0.474
+  },
+  "text": {
+   "ceiling": 0.5,
+   "floor": 0.03,
+   "highest": 0.1901,
+   "items": 1470,
+   "lowest": 0.0833
+  }
+ },
+ "pages": [
+  {
+   "displayGlyphs": 1,
+   "findings": [],
+   "pageId": "cover",
+   "pageLabel": "01",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:29128861e33432b7031d105886fd931538d6c83a0ef311207a5b1086b555b2de",
+   "textNodes": 13
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "identity",
+   "pageLabel": "02",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:4ae6c7d3cfb9d21abeb7f226fd7fe85cb4f7a940e6cd5f4f399056f0dbb69bad",
+   "textNodes": 29
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "contents",
+   "pageLabel": "03",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular"
+   ],
+   "pngSha256": "sha256:3b697357995ba6996330e36b447167044df775a4f399115543099cc99699d539",
+   "textNodes": 58
+  },
+  {
+   "displayGlyphs": 14,
+   "findings": [],
+   "pageId": "glance",
+   "pageLabel": "04",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:6a1f8212adc1860ce89a755d17e449c1045957b7b156d1186241898f014e76cb",
+   "textNodes": 48
+  },
+  {
+   "displayGlyphs": 22,
+   "findings": [],
+   "pageId": "four-pillars",
+   "pageLabel": "05",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:ffa9a589823bf7cb68032520893a73422bb28dc0723bdc9e1f3200cf2164cdad",
+   "textNodes": 67
+  },
+  {
+   "displayGlyphs": 8,
+   "findings": [],
+   "pageId": "foundation",
+   "pageLabel": "06",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular"
+   ],
+   "pngSha256": "sha256:94f57e4d2d21bc39abcefbc5f2f7dc4c82c30c9c48c24c9d197f0bd467bbf3c4",
+   "textNodes": 75
+  },
+  {
+   "displayGlyphs": 5,
+   "findings": [],
+   "pageId": "day-master",
+   "pageLabel": "07",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:cc34531814eb67eb80634504d7ab03402e6b05061435e329ec5612c6e2ab42c6",
+   "textNodes": 38
+  },
+  {
+   "displayGlyphs": 10,
+   "findings": [],
+   "pageId": "wu-xing-distribution",
+   "pageLabel": "08",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:dc1fef28ac0ab16b1ab11be355eec331e84dcf6c0351924d1ce13bfea0390617",
+   "textNodes": 44
+  },
+  {
+   "displayGlyphs": 27,
+   "findings": [],
+   "pageId": "five-phases",
+   "pageLabel": "09",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular"
+   ],
+   "pngSha256": "sha256:507c55b33b21b10502a172848d005879d28e4dd71c10701f0a075eee75b36d8a",
+   "textNodes": 31
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "ten-gods",
+   "pageLabel": "10",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:c3590d117a46b21bfa27f282983214ba25d80c8fbfc8eea4d28f698fa7836ab2",
+   "textNodes": 50
+  },
+  {
+   "displayGlyphs": 13,
+   "findings": [],
+   "pageId": "hidden-stems",
+   "pageLabel": "11",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:e468f5f38e23ed02a4fb854833a34ffeda07c99c91f7d51c94cc927f55aa6f8b",
+   "textNodes": 80
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "chapter-01-p1",
+   "pageLabel": "12",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:a5169fc37ac1cb9ee5f5c922ab6913aaa250cfac599cf91491c627a1cf0ee526",
+   "textNodes": 87
+  },
+  {
+   "displayGlyphs": 1,
+   "findings": [],
+   "pageId": "chapter-01-p2",
+   "pageLabel": "13",
+   "platformFonts": [
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:ea75bb7b951fad3f75d3936e34cbd6aaa27bdce49aba38ca1008cb0b2e38397c",
+   "textNodes": 57
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "chapter-02-p1",
+   "pageLabel": "14",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:f34d4423d8e7b538a102f13c10f7e61274d17cb5c8d86282f79a0b4f6a0ca618",
+   "textNodes": 90
+  },
+  {
+   "displayGlyphs": 1,
+   "findings": [],
+   "pageId": "chapter-02-p2",
+   "pageLabel": "15",
+   "platformFonts": [
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:7187d19cd87be93d0cff623015ec8afe409db8383c378d9e7a2838fb745c821d",
+   "textNodes": 53
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "chapter-03-p1",
+   "pageLabel": "16",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular"
+   ],
+   "pngSha256": "sha256:e3f8a232684a93693d8b58b700fd8893dc6b15c814053ac14443ae10f3dd20a2",
+   "textNodes": 88
+  },
+  {
+   "displayGlyphs": 1,
+   "findings": [],
+   "pageId": "chapter-03-p2",
+   "pageLabel": "17",
+   "platformFonts": [
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:87502472af4ea33429d99f0f5c99dd7a239ee2149a41b1098d44147d997b1de1",
+   "textNodes": 58
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "chapter-04-p1",
+   "pageLabel": "18",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular"
+   ],
+   "pngSha256": "sha256:00894ffbaecbfa38607ec39cacef0be009e96f60fe970b6aa3dcfd8b57688314",
+   "textNodes": 88
+  },
+  {
+   "displayGlyphs": 1,
+   "findings": [],
+   "pageId": "chapter-04-p2",
+   "pageLabel": "19",
+   "platformFonts": [
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:1fe6ce9da483d4f7d77c4c67355f3b9c80e37526188050bc07dfce1b6a49efa1",
+   "textNodes": 55
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "chapter-05-p1",
+   "pageLabel": "20",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:a535af0ef034381e882ef74c352505b20e7e5c6e05b522d6a9f8cc8468c174bc",
+   "textNodes": 87
+  },
+  {
+   "displayGlyphs": 1,
+   "findings": [],
+   "pageId": "chapter-05-p2",
+   "pageLabel": "21",
+   "platformFonts": [
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:33e4a36017535d33aad9b9ff9178a6adbc22569f3a4f9277143413c11be419ae",
+   "textNodes": 48
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "chapter-06-p1",
+   "pageLabel": "22",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular"
+   ],
+   "pngSha256": "sha256:7dda2ac163e3c51a37782a859eae1afd412ce58e852861e3f2c97ad7a13706a1",
+   "textNodes": 87
+  },
+  {
+   "displayGlyphs": 1,
+   "findings": [],
+   "pageId": "chapter-06-p2",
+   "pageLabel": "23",
+   "platformFonts": [
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:1eb7289178ed37506d98a4090a61d9565dc76d217e52f5e4dc48b28653af45b0",
+   "textNodes": 49
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "chapter-07-p1",
+   "pageLabel": "24",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular"
+   ],
+   "pngSha256": "sha256:856eca0db3543934562d617919d1364a0d8d246984a62f8f75d3d2c8abddc17e",
+   "textNodes": 88
+  },
+  {
+   "displayGlyphs": 1,
+   "findings": [],
+   "pageId": "chapter-07-p2",
+   "pageLabel": "25",
+   "platformFonts": [
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:cb4ab2b9066250c7b3ecfc5fb838fbeb3aa9da4736bd8a99655244b7044cac34",
+   "textNodes": 56
+  },
+  {
+   "displayGlyphs": 8,
+   "findings": [],
+   "pageId": "reflection",
+   "pageLabel": "26",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular"
+   ],
+   "pngSha256": "sha256:c0eb727b851b592d7aed65207c9735124182073b7a6973bb25096f3fa15246d7",
+   "textNodes": 22
+  },
+  {
+   "displayGlyphs": 1,
+   "findings": [],
+   "pageId": "summary",
+   "pageLabel": "27",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular",
+    "Noto Sans CJK SC|NotoSansCJKsc-Regular"
+   ],
+   "pngSha256": "sha256:e4ce924c144d68e1acc5ec2ee4f22c0f197dc5efbe1fbb8909f35c14463d4d43",
+   "textNodes": 43
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "closing",
+   "pageLabel": "28",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular"
+   ],
+   "pngSha256": "sha256:ed93b9b9c24980266a1176b29b65f1c54113e8c29ffd7d711d7e151993e7850e",
+   "textNodes": 6
+  },
+  {
+   "displayGlyphs": 0,
+   "findings": [],
+   "pageId": "method-note",
+   "pageLabel": "29",
+   "platformFonts": [
+    "Inter Display Light|InterDisplay-Light",
+    "Inter Medium|Inter-Medium",
+    "Inter|Inter-Regular"
+   ],
+   "pngSha256": "sha256:307d3c78a814b3e63cf8fc28459d49b203bb44b170ac64672147976480bb8bed",
+   "textNodes": 13
+  }
+ ],
+ "projectionStructuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
+ "reportVersion": "bazodiac-pdf-qa-report.v1",
+ "state": "QA_PASSED",
+ "status": "PASSED"
+}

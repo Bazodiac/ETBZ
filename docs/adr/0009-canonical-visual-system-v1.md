@@ -84,7 +84,9 @@ matching text, with a mutation proof in `scripts/verify-guards.sh`.
 
 So the visual system is bound by the strictest rule the repository already has,
 and `tests/architecture/etbz49-visual-boundary.test.ts` adds the four properties
-a package allowlist cannot express: the module is a leaf that nothing imports;
+a package allowlist cannot express: the module is a leaf that no served layer
+imports (since ETBZ-55, ADR 0012, the presentation projection is its one
+application consumer, through the index);
 it is pure (no clock, randomness, process, filesystem or network); it emits no
 document; and it computes no BaZi fact, Wu Xing derivation or interpretation.
 
