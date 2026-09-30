@@ -2537,6 +2537,464 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   },
   {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_REORDERED",
+   "gate": "fact in its slot",
+   "id": "rtl-run",
+   "manifestWritten": false,
+   "mutation": "the Wu Xing values run right to left through direction alone",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_REORDERED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "WX_DISC_INTRUDES",
+   "gate": "Wu Xing medallion",
+   "id": "wx-print-only-medallion",
+   "manifestWritten": false,
+   "mutation": "a print-only rule scales the medallion over the phase discs",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "WX_DISC_INTRUDES",
+     "WX_PHASE_BLOCK_INTRUDES"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_TEXT_LAYER",
+   "expectedCode": "PDF_TEXT_UNBOUND",
+   "gate": "final PDF text layer",
+   "id": "list-marker-text",
+   "manifestWritten": false,
+   "mutation": "a kicker's list marker prints a sentence",
+   "observed": {
+    "check": "PDF_TEXT_LAYER",
+    "codes": [
+     "PDF_TEXT_UNBOUND"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_TEXT_LAYER",
+   "expectedCode": "PDF_TEXT_MISMATCH",
+   "gate": "final PDF text layer",
+   "id": "rtl-ancestor",
+   "manifestWritten": false,
+   "mutation": "an ancestor runs right to left under ltr questions: the question mark moves",
+   "observed": {
+    "check": "PDF_TEXT_LAYER",
+    "codes": [
+     "PDF_TEXT_MISMATCH"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "PAGE_RULE_FORBIDDEN",
+   "gate": "renderer adds no text",
+   "id": "page-margin-box-import",
+   "manifestWritten": false,
+   "mutation": "an imported page margin box prints a sentence on every page",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "PAGE_RULE_FORBIDDEN"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_TEXT_LAYER",
+   "expectedCode": "PDF_TEXT_UNBOUND",
+   "gate": "final PDF text layer",
+   "id": "shadow-root-text",
+   "manifestWritten": false,
+   "mutation": "a declarative shadow root holds a sentence",
+   "observed": {
+    "check": "PDF_TEXT_LAYER",
+    "codes": [
+     "PDF_TEXT_UNBOUND"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_TEXT_LAYER",
+   "expectedCode": "PDF_TEXT_MISMATCH",
+   "gate": "final PDF text layer",
+   "id": "hyphenate-character",
+   "manifestWritten": false,
+   "mutation": "body text hyphenates with a + character",
+   "observed": {
+    "check": "PDF_TEXT_LAYER",
+    "codes": [
+     "PDF_TEXT_MISMATCH"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_TEXT_LAYER",
+   "expectedCode": "PDF_TEXT_NOT_UPRIGHT",
+   "gate": "final PDF text layer",
+   "id": "rotate-mirror-text",
+   "manifestWritten": false,
+   "mutation": "the rotate property mirrors the headlines",
+   "observed": {
+    "check": "PDF_TEXT_LAYER",
+    "codes": [
+     "PDF_TEXT_MISMATCH",
+     "PDF_TEXT_NOT_UPRIGHT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_NOT_UPRIGHT",
+   "gate": "final PDF vector layer",
+   "id": "glyph-use-mirror",
+   "manifestWritten": false,
+   "mutation": "a transform on the sprite <use> mirrors every display glyph",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_MISPLACED",
+     "PDF_VECTOR_NOT_UPRIGHT",
+     "PDF_VECTOR_UNEXPECTED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_NOT_ITS_VALUE",
+   "gate": "final PDF vector layer",
+   "id": "glyph-use-smil",
+   "manifestWritten": false,
+   "mutation": "a SMIL set inside the <use> of 辛 draws 庚",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_MISSING",
+     "PDF_VECTOR_NOT_ITS_VALUE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_MISSING",
+   "gate": "final PDF vector layer",
+   "id": "glyph-css-d",
+   "manifestWritten": false,
+   "mutation": "CSS d redraws the sprite path of 辛 as a ring",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_MISSING",
+     "PDF_VECTOR_UNEXPECTED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_UNEXPECTED",
+   "gate": "final PDF vector layer",
+   "id": "wordmark-css-d",
+   "manifestWritten": false,
+   "mutation": "CSS d redraws the wordmark path as a ring",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_MISSING",
+     "PDF_VECTOR_UNEXPECTED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_UNEXPECTED",
+   "gate": "final PDF vector layer",
+   "id": "gradient-fill",
+   "manifestWritten": false,
+   "mutation": "a gradient is painted behind the kicker",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_UNEXPECTED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_TEXT_LAYER",
+   "expectedCode": "PDF_TEXT_NOT_UPRIGHT",
+   "gate": "final PDF text layer",
+   "id": "rotate-upside-down-value",
+   "manifestWritten": false,
+   "mutation": "one Wu Xing value is turned 180 degrees",
+   "observed": {
+    "check": "PDF_TEXT_LAYER",
+    "codes": [
+     "PDF_TEXT_NOT_UPRIGHT"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_CLIPPED",
+   "gate": "final PDF vector layer",
+   "id": "glyph-clip-inset",
+   "manifestWritten": false,
+   "mutation": "a clip path cuts 申 into 甲",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_CLIPPED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_UNEXPECTED",
+   "gate": "final PDF vector layer",
+   "id": "clip-path-word",
+   "manifestWritten": false,
+   "mutation": "a clip path cuts a word out of an atmosphere shape",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_UNEXPECTED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_MISSING",
+   "gate": "final PDF vector layer",
+   "id": "wordmark-dot-hidden",
+   "manifestWritten": false,
+   "mutation": "the wordmark loses its dot",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_MISSING"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_CLIPPED",
+   "gate": "final PDF vector layer",
+   "id": "wordmark-clip",
+   "manifestWritten": false,
+   "mutation": "a clip path cuts the wordmark down to BAZO",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_CLIPPED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_UNEXPECTED",
+   "gate": "final PDF vector layer",
+   "id": "glyph-use-translate",
+   "manifestWritten": false,
+   "mutation": "every display glyph is drawn 40 % right of its box",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_MISPLACED",
+     "PDF_VECTOR_UNEXPECTED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MEDIA_RULE_FORBIDDEN",
+   "gate": "print rendering",
+   "id": "print-width-media",
+   "manifestWritten": false,
+   "mutation": "a print rule keyed on the page width hides the titles",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MEDIA_RULE_FORBIDDEN"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_CLIPPED",
+   "gate": "final PDF vector layer",
+   "id": "clip-frame-hole-glyph",
+   "manifestWritten": false,
+   "mutation": "a frame clip's hole takes the stick of 申",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_CLIPPED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_UNEXPECTED",
+   "gate": "final PDF vector layer",
+   "id": "clip-star-wordmark",
+   "manifestWritten": false,
+   "mutation": "a doubly wound star clips the wordmark away",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_UNEXPECTED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_UNEXPECTED",
+   "gate": "final PDF vector layer",
+   "id": "clip-crescent-blob",
+   "manifestWritten": false,
+   "mutation": "a crescent is bitten out of an atmosphere shape in tiny steps",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_UNEXPECTED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_TEXT_LAYER",
+   "expectedCode": "PDF_TEXT_CLIPPED",
+   "gate": "final PDF text layer",
+   "id": "text-clip-strip",
+   "manifestWritten": false,
+   "mutation": "a strip clip runs through a shadow-tree sentence",
+   "observed": {
+    "check": "PDF_TEXT_LAYER",
+    "codes": [
+     "PDF_TEXT_CLIPPED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PDF_VECTOR_LAYER",
+   "expectedCode": "PDF_VECTOR_MISPLACED",
+   "gate": "final PDF vector layer",
+   "id": "glyph-use-scale",
+   "manifestWritten": false,
+   "mutation": "the <use> of 申 is squashed to 42 % of its height",
+   "observed": {
+    "check": "PDF_VECTOR_LAYER",
+    "codes": [
+     "PDF_VECTOR_MISPLACED"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
    "expectedCheck": "PDF_READBACK",
    "expectedCode": "PDF_PAGE_COUNT",
    "gate": "PDF readback",
@@ -2571,7 +3029,7 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   }
  ],
- "canarySourceSha256": "sha256:8908fa9de81eda71abe7199e3540f3768ca97b1ac78ab2acc4c7481660d7ff61",
+ "canarySourceSha256": "sha256:cdb3a045eabbbf8ce8c83445ae11ae582da6885f03eb86e05c1fafc447cc37d0",
  "canaryVersion": "bazodiac-renderer-canaries.v1",
  "canonicalJsonMirror": {
   "equal": true,
@@ -2620,19 +3078,32 @@
    },
    "pdfWritten": true,
    "verdict": "PASSED_AS_EXPECTED"
+  },
+  {
+   "id": "dotless-i-name",
+   "manifestWritten": true,
+   "mutation": "a display name with a dotless i, upper-cased by the running head (rehashed)",
+   "observed": {
+    "check": "DETERMINISM",
+    "codes": [],
+    "exitCode": 0,
+    "status": "PASSED"
+   },
+   "pdfWritten": true,
+   "verdict": "PASSED_AS_EXPECTED"
   }
  ],
- "executedAt": "2026-09-29",
+ "executedAt": "2026-09-30",
  "host": "Darwin arm64",
  "projectionStructuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
  "renderer": {
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:6809eb43dc8ef17fd7e9d9abfbd5155d32c10fd5d5a8a0d9ed765dea2c2ddd54"
+  "sourceSha256": "sha256:534e96c9bd0c385a21f013cc5ca01c0f4045495ea3901808ef7a33d358a19f36"
  },
  "summary": {
-  "blockedAsExpected": 138,
-  "canaries": 138,
-  "controls": 3,
-  "passedAsExpected": 3
+  "blockedAsExpected": 163,
+  "canaries": 163,
+  "controls": 4,
+  "passedAsExpected": 4
  }
 }

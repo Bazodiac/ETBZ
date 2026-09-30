@@ -26,7 +26,12 @@ invisible text, every display glyph is a projection glyph, nothing outside the
 sheet or clipped, no line wider than its measure, no overlap, the Wu Xing
 medallion clear, every web font loaded, and every face that set text is one of
 the six pinned PostScript faces; (5) merge deterministically, read the PDF back —
-MIME magic, page count, A4 media boxes, only the pinned faces embedded; (6) the
+MIME magic, page count, A4 media boxes, only the pinned faces embedded — and then
+the final artifact itself (`pdf_layer.py`): every glyph of its text layer bound by
+position to one printed string of its page, each string spelled in visual order,
+none turned or mirrored; every clip one convex contour; every painted shape a canonical
+glyph or wordmark outline wholly in its own box and clips, upright, or a single convex
+contour; (6) the
 last two runs must be byte-identical; (7) only then write the PDF, the contact
 sheet, the QA report and the manifest. A failed check writes the QA report with
 `BLOCKED` and no PDF — there is no partial artefact. `qa/run_canaries.py` makes
@@ -59,6 +64,7 @@ from playwright.sync_api import sync_playwright
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import pages as P  # noqa: E402
+import pdf_layer as L  # noqa: E402
 
 RENDERER_REF = "bazodiac-pdf-renderer@1.0.0"
 MANIFEST_VERSION = "bazodiac-artifact-manifest.v1"
@@ -94,6 +100,8 @@ CJK_POSTSCRIPT_NAME = "NotoSansCJKsc-Regular"
 # The faces Chromium may use to set text, by exact PostScript name: the committed Inter faces (web fonts) and the pinned SC face.
 ALLOWED_POSTSCRIPT_NAMES = INTER_POSTSCRIPT_NAMES | {CJK_POSTSCRIPT_NAME}
 FONT_SUFFIXES = (".ttf", ".otf", ".ttc", ".otc")
+# The one @page rule base.css states: A4, no margin, no margin box (the DOM QA compares it without whitespace).
+PAGE_RULE = "@page { size: 210mm 297mm; margin: 0px; }"
 # The share of a box's pixels (each line box on its own) that carry the item's colour must lie within a band.
 # Calibrated on the evidence document (2026-09-29, 1470 text items, 116 glyphs, 44 marks, 92 phase paints; the QA
 # report records the band and the contract suite pins it). Floor: a hidden item, or one covered in another colour,
@@ -105,8 +113,6 @@ FONT_SUFFIXES = (".ttf", ".otf", ".ttc", ".otc")
 # field covered by paper-200 (difference about 6) no longer counts. Every printed character is also checked in its
 # own box (33,256 characters): the lowest share observed was 0.0151 (a hyphen), the highest 0.263; a character under
 # a cover in another colour leaves (close to) nothing, one under a cover in its own colour about 1.0.
-# The one @page rule base.css states: A4, no margin, no margin box (the DOM QA compares it without whitespace).
-PAGE_RULE = "@page { size: 210mm 297mm; margin: 0px; }"
 INK_TEXT_MIN, INK_TEXT_MAX = 0.03, 0.5
 INK_GLYPH_MIN, INK_GLYPH_MAX = 0.06, 0.75
 INK_MARK_MIN, INK_MARK_MAX = 0.05, 0.92
@@ -479,7 +485,16 @@ DOM_QA = r"""
     if (s.content && s.content !== 'normal' && s.content !== 'none') findings.push({code: 'FORBIDDEN_ELEMENT', element: 'replaced content', on: name(el)}); }
   // The printed page box is the template's: one @page rule, exactly as base.css states it, and no margin box.
   const pageRules = [];
-  const walkRules = (rules) => { for (const rule of rules) { if (rule.type === 6) pageRules.push(rule); if (rule.cssRules) walkRules(rule.cssRules); } };
+  // Every rule of every stylesheet, imported ones included. A media condition may name a media type and the colour
+  // scheme only: the screenshot and the checks see the print emulation at the viewport size, while page.pdf() evaluates
+  // size features against another box, so a rule keyed on width, height or the like could change the PDF alone.
+  const mediaAllowed = (media) => Array.from(media).every((q) => q.trim().replace(/^only\s+/i, '').split(/\s+and\s+/i).every((part) =>
+    /^(all|print|screen)$/i.test(part.trim()) || /^\(\s*prefers-color-scheme\s*:\s*(dark|light)\s*\)$/i.test(part.trim())));
+  const walkRules = (rules) => { for (const rule of rules) {
+    if (rule.type === 6) pageRules.push(rule);
+    if ((rule.type === 3 || rule.type === 4) && !mediaAllowed(rule.media)) findings.push({code: 'MEDIA_RULE_FORBIDDEN', media: rule.media.mediaText.slice(0, 80)});
+    if (rule.type === 3) { try { walkRules(rule.styleSheet ? rule.styleSheet.cssRules : []); } catch (e) { findings.push({code: 'PAGE_RULE_FORBIDDEN', reason: 'unreadable imported stylesheet'}); } }
+    if (rule.cssRules) walkRules(rule.cssRules); } };
   for (const sheetOf of document.styleSheets) { try { walkRules(sheetOf.cssRules); } catch (e) { findings.push({code: 'PAGE_RULE_FORBIDDEN', reason: 'unreadable stylesheet'}); } }
   const normalise = (text) => text.replace(/\s+/g, '');
   if (pageRules.length !== 1 || normalise(pageRules[0].cssText) !== normalise(q.pageRule)) findings.push({code: 'PAGE_RULE_FORBIDDEN', rules: pageRules.map((r) => r.cssText.slice(0, 80))});
@@ -490,7 +505,8 @@ DOM_QA = r"""
 
   // The running head and foot keep at least 3 mm between their two parts (a long name must not run into the tag
   // or the page number).
-  for (const bar of sheet.querySelectorAll('.head, .foot')) { const parts = Array.from(bar.children); if (parts.length !== 2) continue;
+  for (const bar of sheet.querySelectorAll('.head, .foot')) { const parts = Array.from(bar.children);
+    if (parts.length !== 2) { findings.push({code: 'CHROME_CROWDED', bar: bar.className, reason: `${parts.length} parts, not two`}); continue; }
     const gap = parts[1].getBoundingClientRect().left - parts[0].getBoundingClientRect().right;
     if (gap < 3 * 96 / 25.4) findings.push({code: 'CHROME_CROWDED', bar: bar.className, gapPx: +gap.toFixed(2)}); }
 
@@ -555,6 +571,45 @@ WX_QA = """
   return findings;
 }
 """
+
+# What the page printed, for the final-artifact readback (pdf_layer.py): every text node on the sheet with the box of
+# each of its characters (all of them - the page QA's own filters do not apply here), the box of every display glyph
+# and every wordmark. Read in print media, on the page the PDF was printed from.
+PAGE_LEDGER = r"""
+() => {
+  const sheet = document.querySelector('.sheet'), text = [], glyphs = [], wordmarks = [];
+  const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT); let n;
+  while ((n = walker.nextNode())) {
+    const s = n.textContent; if (s.trim().length === 0) continue;
+    const el = n.parentElement; if (!el || el.closest('title')) continue;
+    const host = el.closest('[data-p]');
+    const path = host && sheet.contains(host) ? host.dataset.p : (el.classList.contains('sep') ? null : '#unbound');
+    const chars = [], one = document.createRange();
+    for (let i = 0; i < s.length;) { const cp = s.codePointAt(i), len = cp > 0xffff ? 2 : 1;
+      if (!/\s/u.test(String.fromCodePoint(cp))) { one.setStart(n, i); one.setEnd(n, i + len);
+        for (const r of one.getClientRects()) if (r.width > 0 && r.height > 0) chars.push([r.left, r.top, r.right, r.bottom]); }
+      i += len; }
+    text.push({path, text: s, chars});
+  }
+  const box = (r) => ({x: r.left, y: r.top, w: r.width, h: r.height});
+  const viewBox = (svg) => { const v = svg.viewBox && svg.viewBox.baseVal; return v ? {x: v.x, y: v.y, w: v.width, h: v.height} : null; };
+  for (const g of sheet.querySelectorAll('svg.disp')) glyphs.push({path: g.dataset.p || null, box: box(g.getBoundingClientRect()), vb: viewBox(g)});
+  for (const w of sheet.querySelectorAll('svg[data-wordmark]')) wordmarks.push({...box(w.getBoundingClientRect()), vb: viewBox(w)});
+  return {text, glyphs, wordmarks};
+}
+"""
+
+
+def page_ledger(raw: dict, binding: dict, glyph_slugs: dict, label: str) -> dict:
+    """The page's ledger with what each node must print: the projection value at its path, or the template separator.
+    A node the page QA has refused (unbound, an unknown path) keeps its own text; that page never reaches the readback."""
+    values = binding["values"]
+    text = [{"path": node["path"] or "#separator",
+             "expected": str(values[node["path"]]) if node["path"] in values else ("·" if node["path"] is None else node["text"]),
+             "chars": node["chars"]} for node in raw["text"]]
+    glyphs = [{"path": g["path"], "slug": glyph_slugs.get(values.get(g["path"])), "box": g["box"], "vb": g["vb"]} for g in raw["glyphs"]]
+    return {"pageLabel": label, "text": text, "glyphs": glyphs, "wordmarks": raw["wordmarks"]}
+
 
 FONT_STATUS = """async () => { await document.fonts.ready; return Array.from(document.fonts).map(f => ({family: f.family.replace(/"/g, ''), weight: f.weight, status: f.status})); }"""
 
@@ -777,8 +832,10 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
             page.wait_for_timeout(250)
             png = pages_dir / f"{entry['pageLabel']}-{entry['pageId']}.png"
             pdf = pages_dir / f"{entry['pageLabel']}-{entry['pageId']}.pdf"
-            # The QA must see the rendering the PDF prints: print media for the screenshot and for the DOM checks, set
-            # before each (page.pdf() resets the emulation), so a print-only rule cannot change the PDF behind the QA.
+            # The QA must see the rendering the PDF prints: print media for the screenshot, the DOM checks, the Wu Xing
+            # check and the page ledger, so a print-only rule cannot change the PDF behind the QA. It is set before the
+            # screenshot and again after page.pdf() (which keeps it on the pinned Chromium); what resets it is detaching
+            # the DevTools session in platform_fonts(), so every check that reads the layout runs before that.
             page.emulate_media(media="print", color_scheme="light")
             page.screenshot(path=str(png), clip={"x": 0, "y": 0, "width": A4_PX[0], "height": A4_PX[1]})
             page.pdf(path=str(pdf), width="210mm", height="297mm", print_background=True, margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
@@ -791,8 +848,9 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
                                          "marks": binding["marks"], "displayGlyphs": projection["displayGlyphs"], "glyphSlugs": glyph_slugs,
                                          "wordmark": wordmark_shape, "pageRule": PAGE_RULE,
                                          "separators": sorted(SEPARATORS), "ascent": ascent})
-            used_fonts, latin_faces = platform_fonts(context, page)
             wx = page.evaluate(WX_QA) if entry["content"]["kind"] == "wuXing" else []
+            ledger = page_ledger(page.evaluate(PAGE_LEDGER), binding, glyph_slugs, entry["pageLabel"])
+            used_fonts, latin_faces = platform_fonts(context, page)
             # "unloaded" is a declared face the page never asked for; "error" is a face that failed and fell back.
             failed = [f for f in fonts if f["status"] == "error"]
             findings = dom["findings"] + wx + ([{"code": "FONT_LOAD_FAILED", "fonts": failed}] if failed else [])
@@ -805,7 +863,8 @@ def render_run(projection: dict, bindings: list, ctx: P.Context, work: pathlib.P
             if latin_foreign:
                 findings.append({"code": "LATIN_SET_IN_CJK_FACE", "families": latin_foreign})
             entries.append({"pageId": entry["pageId"], "pageLabel": entry["pageLabel"], "png": png, "pdf": pdf, "pngSha256": sha256_file(png),
-                            "textNodes": dom["textCount"], "glyphs": dom["glyphCount"], "platformFonts": sorted(f"{a}|{b}" for a, b in used_fonts), "findings": findings})
+                            "textNodes": dom["textCount"], "glyphs": dom["glyphCount"], "platformFonts": sorted(f"{a}|{b}" for a, b in used_fonts), "findings": findings,
+                            "ledger": ledger})
         browser.close()
     merged = work / "bazodiac-reading.pdf"
     sources = [pikepdf.open(e["pdf"]) for e in entries]
@@ -1021,6 +1080,15 @@ def render(args, out_dir: pathlib.Path, projection: dict, projection_bytes: byte
         if findings:
             raise Blocked("PDF_READBACK", findings)
         checks.append({"id": "PDF_READBACK", "result": "PASS", "detail": {"pages": projection["pageCount"], "embeddedFonts": fonts, "mime": "application/pdf"}})
+        # The final artifact itself: its text layer and its painted shapes, page by page, against what each page printed.
+        text_findings, vector_findings, text_counts, vector_counts = L.check_pdf_layers(
+            last["pdf"], [e["ledger"] for e in last["entries"]], L.canonical_outlines(ctx.sprite, ctx.wordmark_svg), L.wordmark_dots(ctx.wordmark_svg))
+        if text_findings:
+            raise Blocked("PDF_TEXT_LAYER", text_findings)
+        checks.append({"id": "PDF_TEXT_LAYER", "result": "PASS", "detail": text_counts})
+        if vector_findings:
+            raise Blocked("PDF_VECTOR_LAYER", vector_findings)
+        checks.append({"id": "PDF_VECTOR_LAYER", "result": "PASS", "detail": vector_counts})
         png_diff = [e["pageId"] for e, f in zip(last["entries"], previous["entries"]) if e["pngSha256"] != f["pngSha256"]]
         if last["pdfSha256"] != previous["pdfSha256"] or png_diff:
             raise Blocked("DETERMINISM", {"pdf": [previous["pdfSha256"], last["pdfSha256"]], "pngDiffers": png_diff})

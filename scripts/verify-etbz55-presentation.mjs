@@ -54,6 +54,7 @@ const T = {
 };
 const DEPENDENCY = 'tests/architecture/dependency-direction.test.ts';
 const RENDERER_PY = 'tools/pdf-renderer/render_pdf.py';
+const PDF_LAYER_PY = 'tools/pdf-renderer/pdf_layer.py';
 
 const TEMP = '// TEMPORARY MUTATION - scripts/verify-etbz55-presentation.mjs, never committed.\n';
 
@@ -458,6 +459,14 @@ const MUTANTS = [
     'findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign})',
     'findings.append({"code": "TEXT_SET_IN_UNPINNED_FACE", "families": foreign} if foreign else {"code": etbz55_mutant_code})',
     [T.contract], 'covers every check id and finding code the renderer can emit'],
+  ['COVERAGE: the final-artifact readback gains a finding code no canary observes', 'text', PDF_LAYER_PY,
+    'findings.append({"code": "PDF_TEXT_NOT_UPRIGHT", "text": unit["text"][:20], "reason": "the glyph is turned, skewed or mirrored"})',
+    'findings.append({"code": "PDF_TEXT_NOT_UPRIGHT", "text": unit["text"][:20], "reason": "the glyph is turned, skewed or mirrored"} if unit else {"code": "ETBZ55_MUTANT_UNCANARIED"})',
+    [T.contract], 'covers every check id and finding code the renderer can emit'],
+  ['COVERAGE: a new renderer module sets a finding code', 'create',
+    'tools/pdf-renderer/etbz55_mutant.py',
+    '# TEMPORARY MUTATION - scripts/verify-etbz55-presentation.mjs, never committed.\nFINDING = {"code": "ETBZ55_MUTANT_UNCANARIED"}\n',
+    null, [T.contract], 'covers every check id and finding code the renderer can emit'],
   ['DATA: a stray file appears in the evidence folder', 'create',
     'docs/evidence/etbz-55/NOTES.md',
     '# TEMPORARY MUTATION - scripts/verify-etbz55-presentation.mjs, never committed.\n',

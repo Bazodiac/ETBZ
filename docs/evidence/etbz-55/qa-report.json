@@ -82,6 +82,29 @@
   },
   {
    "detail": {
+    "clippedUnits": 0,
+    "pages": 29,
+    "printedStrings": 1608,
+    "textUnits": 33394
+   },
+   "id": "PDF_TEXT_LAYER",
+   "result": "PASS"
+  },
+  {
+   "detail": {
+    "canonicalOutlines": 146,
+    "convexShapes": 566,
+    "displayGlyphs": 116,
+    "pages": 29,
+    "placementDeviationPx": 0.937,
+    "wordmarkDots": 30,
+    "wordmarks": 30
+   },
+   "id": "PDF_VECTOR_LAYER",
+   "result": "PASS"
+  },
+  {
+   "detail": {
     "comparedRuns": [
      2,
      3

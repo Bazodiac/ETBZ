@@ -56,9 +56,9 @@
  ],
  "generation": {
   "declared": true,
-  "executedAt": "2026-09-29",
+  "executedAt": "2026-09-30",
   "host": "Darwin arm64",
-  "repositoryHead": "020ecc39d3c8766422179d3af96c6fd4179e438d"
+  "repositoryHead": "7cbbed7d48a164a10d6922dedfad24b5dbd56149"
  },
  "input": {
   "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
@@ -161,6 +161,29 @@
    },
    {
     "detail": {
+     "clippedUnits": 0,
+     "pages": 29,
+     "printedStrings": 1608,
+     "textUnits": 33394
+    },
+    "id": "PDF_TEXT_LAYER",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "canonicalOutlines": 146,
+     "convexShapes": 566,
+     "displayGlyphs": 116,
+     "pages": 29,
+     "placementDeviationPx": 0.937,
+     "wordmarkDots": 30,
+     "wordmarks": 30
+    },
+    "id": "PDF_VECTOR_LAYER",
+    "result": "PASS"
+   },
+   {
+    "detail": {
      "comparedRuns": [
       2,
       3
@@ -192,7 +215,7 @@
    "version": "136.0.7103.25"
   },
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:6809eb43dc8ef17fd7e9d9abfbd5155d32c10fd5d5a8a0d9ed765dea2c2ddd54"
+  "sourceSha256": "sha256:534e96c9bd0c385a21f013cc5ca01c0f4045495ea3901808ef7a33d358a19f36"
  },
  "sha256": "sha256:462c182a6ecfa505cc19e2c359d29cbc35229f918fff80b849fead82e3c11938",
  "state": "ARTIFACT_READY",

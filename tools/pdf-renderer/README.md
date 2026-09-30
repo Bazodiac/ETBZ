@@ -53,7 +53,8 @@ and a separator after which a line may wrap carries a `<wbr>`.
    value, misplaces one or hides one by mistake; it measures the mechanisms below and
    nothing else (ADR 0012 section 6 and limitation 8):
    - binding: every text node, glyph, presence mark and phase colour is the projection
-     value at its path (a glyph drawn by exactly one sprite `<use>` of that character),
+     value at its path (a glyph drawn by exactly one sprite `<use>` whose `href` names
+     that character; what it draws is proven by the final vector layer, step 7),
      and text only at the paths the page prints (never an identifier it carries); every
      enclosing `data-slot` is a prefix of that path and every entry of
      the path has a slot around it, and on the page the item's centre lies inside the
@@ -83,16 +84,21 @@ and a separator after which a line may wrap carries a `<wbr>`.
      shape's fill or stroke (hit-testing is forced on per element, so an overlay with
      `pointer-events:none`, even inline `!important`, counts), rendered below 11 px on
      either axis, or below a 1.5 contrast ratio of the composited colour against the
-     surface under it; printed in the value's order (no bidi override or embedding, no
-     right-to-left run) and not mirrored (no transform or `scale` with a negative
-     determinant); presence marks and phase paints visible;
-   - nothing drawn but the projection: no `::before`/`::after`/`::marker` content on
-     any element, root and body included; no image, form control, canvas, frame or list
-     element; SVG only as a display glyph (one sprite `<use>`) or the pinned wordmark; no
+     surface under it; no right-to-left `direction` on the element and no bidi override
+     or embedding on it or an ancestor; not mirrored by a transform or `scale` with a
+     negative determinant on it or an ancestor; presence marks and phase paints visible
+     (an inherited right-to-left run, the `rotate` property and a transform on a glyph's
+     `<use>` are the final layers' to catch, step 7);
+   - nothing drawn but the projection, as far as the page reads it: no `content` in
+     the `::before`/`::after`/`::marker` pseudo-elements of any element, root and body
+     included; no image, form control, canvas, frame or list element; SVG only as a
+     display glyph (one sprite `<use>`) or a wordmark with the pinned element inventory; no
      `url()` in a background, border, mask, mask-box or list-style image of any element
-     or pseudo-element, and no replaced content; exactly the template's `@page` rule and
-     no page margin box; nothing outside the sheet; no non-breaking pair split across
-     lines;
+     or pseudo-element, and no replaced content; exactly the template's `@page` rule among
+     all stylesheet rules, imported ones included, and no page margin box; media conditions
+     name a media type and the colour scheme only (a width or height feature is evaluated by
+     `page.pdf()` against another box than the emulation); nothing outside the sheet; no
+     non-breaking pair split across lines;
    - ink, on the screenshot: every printed string (each line box, and each character in
      its own box), glyph, presence mark and phase paint leaves pixels of its own colour
      inside its own box, within a band — so an SVG shape, a border or a shadow painted
@@ -102,8 +108,8 @@ and a separator after which a line may wrap carries a `<wbr>`.
      report records the band each kind left, and the contract suite pins it);
    - geometry: nothing leaves the sheet, is clipped by an ancestor or runs out of its
      painted container; no long-form line is wider than its measure; no two text boxes
-     overlap; the Wu Xing medallion stays clear; at least 3 mm between the two parts of
-     the running head and of the running foot; no web font failed;
+     overlap; the Wu Xing medallion stays clear (in print media too); the running head
+     and foot have their two parts, at least 3 mm apart; no web font failed;
    - faces, through the DevTools `CSS.getPlatformFontsForNode`: every character was set
      in one of exactly six PostScript faces (`Inter-Regular`, `Inter-Medium`,
      `Inter-SemiBold`, `InterDisplay-Light`, `InterDisplay-Regular`,
@@ -113,7 +119,29 @@ and a separator after which a line may wrap carries a `<wbr>`.
    every font embedded and every named font one of the Inter faces (Chromium sets the
    CFF-based CJK face as Type3 glyph procedures, which must carry a ToUnicode map; the
    face that drew them is proven by step 5).
-7. **Determinism.** The whole document is rendered `--runs` times (default 3: the first
+7. **Final-artifact readback** (`pdf_layer.py`, pikepdf only). While each page is open the
+   renderer records its ledger - every text node with the box of each character, and the box
+   of every display glyph and wordmark - and then reads the merged PDF itself, page by page,
+   tracking the clips each glyph and path is drawn under. Every clip must be one convex
+   contour (turning once around) or a convex frame around one convex hole (a box shadow).
+   Every non-whitespace glyph of the text layer (ToUnicode or ActualText; invisible render
+   modes do not count; a glyph under a frame clip or outside a clip blocks) must be bound by its centre to exactly one printed node, each
+   node's glyphs read in visual order must spell the projection value at its path (without
+   whitespace, both sides upper-cased, case-folded and composed: the template upper-cases
+   labels), and every glyph must stand upright (`PDF_TEXT_LAYER`). Every painted path must be
+   a canonical outline (one of the 27 sprite glyphs or the wordmark path, by segment sequence
+   and a scale-and-shift fit within 0.01 px) at the size and position its box's viewBox
+   gives (1.5 px), wholly in the box of the display glyph of that very character, or of a
+   wordmark, never under a frame clip and inside its convex clips, upright and drawn once -
+   each wordmark with its dot where the pinned circle falls - or else a single convex
+   contour; and no image, shading, pattern, soft mask or annotation appears
+   (`PDF_VECTOR_LAYER`). So text or shapes that reach the PDF through a channel the page QA
+   does not read - a list marker, an imported margin box, a shadow tree, a hyphenation
+   character, an inherited right-to-left run, a turning or mirroring `rotate` or `<use>`
+   transform, a SMIL redraw, CSS `d` on a path, a clip path - block. It compares neither
+   colour nor size in the PDF and does not classify a single convex contour further (ADR 0012
+   limitation 14).
+8. **Determinism.** The whole document is rendered `--runs` times (default 3: the first
    warms the font caches); the last two PDFs and all page images must be byte-identical.
 
 A failed check writes `qa-report.json` with `BLOCKED` and the page images under
@@ -127,10 +155,10 @@ blocked `RENDERER_ERROR` check, not only as a trace.
 `qa/run_canaries.py` breaks each gate once — the projection, a pin, the host fonts or
 one page builder — and runs the real renderer against it in a child process; six codes
 that need a doctored font or PDF writer have no canary (ADR 0012 limitation 8). Each of
-the 138 canaries must end `BLOCKED` at the expected check with the expected finding (the
+the 163 canaries must end `BLOCKED` at the expected check with the expected finding (the
 `partial-write` canary instead proves that no `--out` directory appears),
-exit 1, and leave no PDF and no manifest; three positive controls (a Wu Xing value of 0,
-body text and plain glyphs at opacity 0.7) must pass with a PDF and a manifest. The results go to
+exit 1, and leave no PDF and no manifest; four positive controls (a Wu Xing value of 0,
+body text and plain glyphs at opacity 0.7, a display name with a dotless `ı`) must pass with a PDF and a manifest. The results go to
 `docs/evidence/etbz-55/renderer-canaries.json`, bound to the renderer source digest and
 to the digest of `qa/run_canaries.py`, together with the differential test of the
 Python hash mirror against the TypeScript `canonicalJson`. The contract suite pins every

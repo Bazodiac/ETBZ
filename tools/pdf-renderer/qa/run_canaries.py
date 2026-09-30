@@ -894,6 +894,167 @@ def c_phase_token_unresolved(work):
     inject_css(":root{--phase-wood-field:rgb(231,236,227) !important}")
 
 
+def c_rtl_run(work):
+    # The Wu Xing values run right to left through direction alone (no bidi override): the page QA's direction rule.
+    inject_css(".wx-big{direction:rtl}")
+
+
+def c_wx_print_only_medallion(work):
+    # A print-only rule blows the Wu Xing medallion up over the phase discs: the Wu Xing check reads print media.
+    inject_css("@media print{#wx-medallion{transform:scale(1.9)}}")
+
+
+# The final-artifact readback (pdf_layer.py). Each canary below passes the page QA - it uses a channel the DOM checks do
+# not read (the shapes review round 9 found) - and must be refused by the PDF's own text layer or painted shapes.
+
+def c_list_marker_text(work):
+    # The kicker becomes a list item whose marker is a string; the page QA reads ::marker content only (normal here).
+    inject_css('.kicker{display:list-item;list-style:inside "Erfundener Satz: "}')
+
+
+def c_rtl_ancestor(work):
+    # The reflection block runs right to left while each question resets itself to ltr: the closing question mark moves
+    # to the front of its last line. The page QA reads direction on the printed element only.
+    inject_css(".qrow .body{direction:rtl;text-align:left} .qrow .body > span{direction:ltr}")
+
+
+def c_page_margin_box_import(work):
+    # A page margin box that arrives through an imported stylesheet prints a sentence on every page, set in Inter; the
+    # page QA's rule walk follows the import.
+    inject_css('@import url("data:text/css,%40page%7B%40top-center%7Bcontent%3A%22Erfundener%20Kopf%22%3Bfont-family%3AInter%7D%7D");')
+
+
+def c_shadow_root_text(work):
+    # The method-note builder appends a declarative shadow root holding a sentence; the DOM walk does not enter it.
+    wrap_builder("methodNote", lambda html, ctx, page, c: html + '<div style="position:absolute;left:30mm;top:40mm">'
+                 '<template shadowrootmode="open"><p style="margin:0;font:12pt Inter">Erfundener Schattensatz</p></template></div>')
+
+
+def c_hyphenate_character(work):
+    # Body text hyphenates with "+" at every hyphenation point: characters no value carries.
+    inject_css('.sheet .body{hyphens:auto;-webkit-hyphens:auto;hyphenate-character:"+";-webkit-hyphenate-character:"+"}')
+
+
+def c_rotate_mirror_text(work):
+    # The individual rotate property turns the headlines about the y axis; the page QA reads transform and scale only.
+    inject_css(".h1{rotate:y 180deg}")
+
+
+def c_glyph_use_mirror(work):
+    # A transform on each display glyph's sprite <use> mirrors it; the page QA walks from the glyph's svg upwards.
+    inject_css("svg.disp use{transform-origin:50% 50%;transform:scaleX(-1)}")
+
+
+def c_glyph_use_smil(work):
+    # A SMIL <set> inside the sprite <use> of 辛 draws 庚; the attribute still names the value's own glyph.
+    wrap_page_html(lambda html, page: html.replace('<use href="#g-xin"/>', '<use href="#g-xin"><set attributeName="href" to="#g-geng"/></use>'))
+
+
+def c_glyph_css_d(work):
+    # CSS d on the sprite path of 辛 redraws it, for every use, as a square ring; the sprite file itself stays pinned.
+    inject_css('#g-xin path{d:path("M150 -760L870 -760L870 40L150 40Z M330 -580L690 -580L690 -140L330 -140Z")}')
+
+
+def c_wordmark_css_d(work):
+    # CSS d on the wordmark's path redraws it as a ring; the page QA compares the wordmark's element inventory only.
+    inject_css('svg[data-wordmark] path{d:path("M150 0V-1490H720V0Z M300 -300H600V-1200H300Z")}')
+
+
+def c_gradient_fill(work):
+    # A gradient painted behind the kicker: the template paints flat colours only.
+    inject_css(".kicker{background-image:linear-gradient(90deg,#ffffff,#eeeeee)}")
+
+
+
+# Found by the pre-review of the final-artifact readback (round 10), each reproduced before it was fixed.
+
+def c_rotate_upside_down_value(work):
+    # One Wu Xing tally value turned 180 degrees: a 6 would read as a 9. The matrix is not mirrored (determinant +1).
+    inject_css('[data-p="content.tally.2.valueText"]{display:inline-block;rotate:180deg}')
+
+
+def c_glyph_clip_inset(work):
+    # A clip path on the sprite path of 申 cuts its top stroke: it draws as 甲.
+    inject_css("#g-shen path{clip-path:inset(13.4% 0 0 0) fill-box}")
+
+
+def c_clip_path_word(work):
+    # A clip path cuts the word HILFE out of the cover's wood atmosphere shape; colour and opacity unchanged.
+    inject_css('.b-wood{clip-path:path("M2 50H7V90H2Z M19 50H24V90H19Z M7 67H19V72H7Z M30 50H35V90H30Z M41 50H46V90H41Z '
+               'M46 85H61V90H46Z M67 50H72V90H67Z M72 50H88V55H72Z M72 67H85V72H72Z M94 50H99V90H94Z M99 50H116V55H99Z '
+               'M99 67H113V72H99Z M99 85H116V90H99Z")}')
+
+
+def c_wordmark_dot_hidden(work):
+    # The wordmark loses its gold dot.
+    inject_css("svg[data-wordmark] circle{display:none}")
+
+
+def c_wordmark_clip(work):
+    # A clip path cuts the wordmark down to BAZO.
+    inject_css("svg[data-wordmark] path{clip-path:inset(0 45% 0 0)}")
+
+
+def c_glyph_use_translate(work):
+    # Each display glyph is drawn 40 % to the right of its box.
+    inject_css("svg.disp use{transform:translateX(40%)}")
+
+
+
+def c_print_width_media(work):
+    # A print rule keyed on the page width: page.pdf() evaluates it against another box than the emulated viewport, so
+    # it would hide the titles in the PDF only.
+    inject_css("@media print and (min-width:794.1px){.sheet .h1{color:var(--paper-000) !important}}")
+
+
+# Found by the second pre-review (the clip, placement and text-clip rules), each reproduced before it was fixed.
+
+def c_clip_frame_hole_glyph(work):
+    # An even-odd frame clip whose convex hole takes the stick of 申 (it draws as 甲); the hole misses every outline point.
+    inject_css('#g-shen path{clip-path:path(evenodd,"M-5000 -5000 L6000 -5000 L6000 5000 L-5000 5000 Z M318 -8 L518 -8 L518 134 L318 134 Z")}')
+
+
+def c_clip_star_wordmark(work):
+    # A star that winds twice (every turn to the same side) clips the wordmark: its doubly wound core, where the path
+    # lies, is not painted under even-odd.
+    inject_css('svg[data-wordmark] path{clip-path:path(evenodd,"M7711.000 -561.369 L17646.438 -122.514 L21007.211 903.643 '
+               'L15569.366 1838.055 L4931.335 2062.384 L-3867.284 1428.184 L-5004.103 355.130 L2273.155 -446.698 L13148.845 -446.698 '
+               'L20426.103 355.130 L19289.284 1428.184 L10490.665 2062.384 L-147.366 1838.055 L-5585.211 903.643 L-2224.438 -122.514Z")}')
+
+
+def c_clip_crescent_blob(work):
+    # A crescent bitten out of the cover's water atmosphere shape; the concave arc is walked in steps too small to count
+    # as turns one by one.
+    import math as m
+    c1, r1, c2, r2 = (166.0, 166.0), 166.0, (592.0, 166.0), 350.0
+    d = c2[0] - c1[0]
+    a = (r1 * r1 - r2 * r2 + d * d) / (2 * d)
+    h = (r1 * r1 - a * a) ** 0.5
+    start = m.degrees(m.atan2(h, a))
+    points = [(c1[0] + r1 * m.cos(m.radians(t)), c1[1] + r1 * m.sin(m.radians(t))) for t in [start + k for k in range(0, int(360 - 2 * start) + 1)]]
+    points.append((c1[0] + a, c1[1] - h))
+    back = m.degrees(m.atan2(-h, c1[0] + a - c2[0])) % 360
+    ahead = m.degrees(m.atan2(h, c1[0] + a - c2[0])) % 360
+    steps = int((back - ahead) / 0.036)
+    points += [(c2[0] + r2 * m.cos(m.radians(back - k * 0.036)), c2[1] + r2 * m.sin(m.radians(back - k * 0.036))) for k in range(1, steps)]
+    path = "M" + " L".join(f"{x:.3f} {y:.3f}" for x, y in points) + " Z"
+    inject_css(f'.b-water{{clip-path:path("{path}")}}')
+
+
+def c_text_clip_strip(work):
+    # A shadow-tree sentence under an even-odd frame clip whose hole is a thin strip through the glyph centres: the
+    # sentence stays legible, and a centre-only test would have counted it as clipped away.
+    wrap_builder("methodNote", lambda html, ctx, page, c: html + '<div style="position:absolute;left:30mm;top:230mm;width:120mm;height:40mm">'
+                 '<template shadowrootmode="open"><div style="position:absolute;left:0;top:0;width:454px;height:151px;'
+                 "clip-path:path(evenodd,'M0 0H454V151H0Z M20 18.4L434 18.4L434 21.4L20 21.4Z')\"><p style=\"position:absolute;left:60px;top:11px;"
+                 'margin:0;font:12pt Inter;line-height:16px;white-space:nowrap;color:#16181a">Erfundener Schattensatz</p></div></template></div>')
+
+
+def c_glyph_use_scale(work):
+    # The sprite <use> of 申 is squashed to 42 % of its height; the page QA's size rule reads the svg, not the <use>.
+    inject_css('svg.disp use[href="#g-shen"]{transform-box:fill-box;transform-origin:center;transform:scaleY(.42)}')
+
+
 def c_pdf_page_count(work):
     p = load()
     p["pageCount"] = p["pageCount"] + 1
@@ -1051,6 +1212,31 @@ CANARIES = {
     "mark-none-halo": ("fact in its slot", "the absent marks gain a halo", "PAGE_QA", "MARK_NOT_ITS_LOOK", c_mark_none_halo),
     "unknown-text-style": ("page build", "no long-form style is known to the line builder", "PAGE_BUILD", None, c_unknown_text_style),
     "sheet-escape-element": ("renderer adds no text", "an element is placed beside the sheet", "PAGE_QA", "SHEET_ESCAPED", c_sheet_escape_element),
+    "rtl-run": ("fact in its slot", "the Wu Xing values run right to left through direction alone", "PAGE_QA", "TEXT_REORDERED", c_rtl_run),
+    "wx-print-only-medallion": ("Wu Xing medallion", "a print-only rule scales the medallion over the phase discs", "PAGE_QA", "WX_DISC_INTRUDES", c_wx_print_only_medallion),
+    "list-marker-text": ("final PDF text layer", "a kicker's list marker prints a sentence", "PDF_TEXT_LAYER", "PDF_TEXT_UNBOUND", c_list_marker_text),
+    "rtl-ancestor": ("final PDF text layer", "an ancestor runs right to left under ltr questions: the question mark moves", "PDF_TEXT_LAYER", "PDF_TEXT_MISMATCH", c_rtl_ancestor),
+    "page-margin-box-import": ("renderer adds no text", "an imported page margin box prints a sentence on every page", "PAGE_QA", "PAGE_RULE_FORBIDDEN", c_page_margin_box_import),
+    "shadow-root-text": ("final PDF text layer", "a declarative shadow root holds a sentence", "PDF_TEXT_LAYER", "PDF_TEXT_UNBOUND", c_shadow_root_text),
+    "hyphenate-character": ("final PDF text layer", "body text hyphenates with a + character", "PDF_TEXT_LAYER", "PDF_TEXT_MISMATCH", c_hyphenate_character),
+    "rotate-mirror-text": ("final PDF text layer", "the rotate property mirrors the headlines", "PDF_TEXT_LAYER", "PDF_TEXT_NOT_UPRIGHT", c_rotate_mirror_text),
+    "glyph-use-mirror": ("final PDF vector layer", "a transform on the sprite <use> mirrors every display glyph", "PDF_VECTOR_LAYER", "PDF_VECTOR_NOT_UPRIGHT", c_glyph_use_mirror),
+    "glyph-use-smil": ("final PDF vector layer", "a SMIL set inside the <use> of 辛 draws 庚", "PDF_VECTOR_LAYER", "PDF_VECTOR_NOT_ITS_VALUE", c_glyph_use_smil),
+    "glyph-css-d": ("final PDF vector layer", "CSS d redraws the sprite path of 辛 as a ring", "PDF_VECTOR_LAYER", "PDF_VECTOR_MISSING", c_glyph_css_d),
+    "wordmark-css-d": ("final PDF vector layer", "CSS d redraws the wordmark path as a ring", "PDF_VECTOR_LAYER", "PDF_VECTOR_UNEXPECTED", c_wordmark_css_d),
+    "gradient-fill": ("final PDF vector layer", "a gradient is painted behind the kicker", "PDF_VECTOR_LAYER", "PDF_VECTOR_UNEXPECTED", c_gradient_fill),
+    "rotate-upside-down-value": ("final PDF text layer", "one Wu Xing value is turned 180 degrees", "PDF_TEXT_LAYER", "PDF_TEXT_NOT_UPRIGHT", c_rotate_upside_down_value),
+    "glyph-clip-inset": ("final PDF vector layer", "a clip path cuts 申 into 甲", "PDF_VECTOR_LAYER", "PDF_VECTOR_CLIPPED", c_glyph_clip_inset),
+    "clip-path-word": ("final PDF vector layer", "a clip path cuts a word out of an atmosphere shape", "PDF_VECTOR_LAYER", "PDF_VECTOR_UNEXPECTED", c_clip_path_word),
+    "wordmark-dot-hidden": ("final PDF vector layer", "the wordmark loses its dot", "PDF_VECTOR_LAYER", "PDF_VECTOR_MISSING", c_wordmark_dot_hidden),
+    "wordmark-clip": ("final PDF vector layer", "a clip path cuts the wordmark down to BAZO", "PDF_VECTOR_LAYER", "PDF_VECTOR_CLIPPED", c_wordmark_clip),
+    "glyph-use-translate": ("final PDF vector layer", "every display glyph is drawn 40 % right of its box", "PDF_VECTOR_LAYER", "PDF_VECTOR_UNEXPECTED", c_glyph_use_translate),
+    "print-width-media": ("print rendering", "a print rule keyed on the page width hides the titles", "PAGE_QA", "MEDIA_RULE_FORBIDDEN", c_print_width_media),
+    "clip-frame-hole-glyph": ("final PDF vector layer", "a frame clip's hole takes the stick of 申", "PDF_VECTOR_LAYER", "PDF_VECTOR_CLIPPED", c_clip_frame_hole_glyph),
+    "clip-star-wordmark": ("final PDF vector layer", "a doubly wound star clips the wordmark away", "PDF_VECTOR_LAYER", "PDF_VECTOR_UNEXPECTED", c_clip_star_wordmark),
+    "clip-crescent-blob": ("final PDF vector layer", "a crescent is bitten out of an atmosphere shape in tiny steps", "PDF_VECTOR_LAYER", "PDF_VECTOR_UNEXPECTED", c_clip_crescent_blob),
+    "text-clip-strip": ("final PDF text layer", "a strip clip runs through a shadow-tree sentence", "PDF_TEXT_LAYER", "PDF_TEXT_CLIPPED", c_text_clip_strip),
+    "glyph-use-scale": ("final PDF vector layer", "the <use> of 申 is squashed to 42 % of its height", "PDF_VECTOR_LAYER", "PDF_VECTOR_MISPLACED", c_glyph_use_scale),
     "pdf-page-count": ("PDF readback", "the projection states one page more than it has (rehashed)", "PDF_READBACK", "PDF_PAGE_COUNT", c_pdf_page_count),
     "determinism": ("determinism", "every run draws one marker pixel at a different place", "DETERMINISM", None, c_determinism),
 }
@@ -1083,6 +1269,16 @@ def k_zero_phase(work):
     return rehash(p)
 
 
+def k_dotless_i_name(work):
+    # A display name with a dotless i (U+0131), inside the advance tables: the running head upper-cases it to I, which
+    # the text layer must accept as the value's own letter (rehashed; every string re-sorted).
+    p = json.loads(json.dumps(load(), ensure_ascii=False).replace("Musterkundin A", "Aylin Yıldız Weiß"))
+    for page in p["pages"]:
+        page["strings"] = sorted(page["strings"], key=u16)
+    p["customerStrings"] = sorted(p["customerStrings"], key=u16)
+    return rehash(p)
+
+
 def k_opacity_text(work):
     # Body text at opacity 0.7: legible, above the 0.5 floor, and its pixels carry the composited colour.
     inject_css(".body{opacity:.7}")
@@ -1096,6 +1292,7 @@ CONTROLS = {
     "zero-phase": ("a Wu Xing value of 0 (rehashed) draws an empty bar track", k_zero_phase),
     "opacity-text": ("body text at opacity 0.7", k_opacity_text),
     "faint-plain-glyph": ("display glyphs without a phase colour at opacity 0.7", k_faint_plain_glyph),
+    "dotless-i-name": ("a display name with a dotless i, upper-cased by the running head (rehashed)", k_dotless_i_name),
 }
 
 

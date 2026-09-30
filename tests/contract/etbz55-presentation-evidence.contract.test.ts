@@ -8,7 +8,8 @@
  * here - the PDF, the contact sheet, the projection file, the template and its
  * four drawing assets, the renderer sources, the Inter faces; and the committed
  * canary record proves that every renderer gate has failed once, on the same
- * renderer sources, except the six codes ADR 0012 limitation 8 names. Not re-derivable in CI, and stated as such: the
+ * renderer sources, except the six codes ADR 0012 limitation 8 names - the final-artifact readback of the PDF's text
+ * layer and painted shapes (tools/pdf-renderer/pdf_layer.py) included. Not re-derivable in CI, and stated as such: the
  * informational CJK face (a pinned literal - the TTC is a host font, not
  * committed), the per-page image digests of the QA report (the page images are
  * not committed), and the engine versions (a declaration).
@@ -99,6 +100,8 @@ describe('ETBZ-55: the ArtifactManifest states what the files carry', () => {
       'PAGE_STRINGS',
       'PAGE_QA',
       'PDF_READBACK',
+      'PDF_TEXT_LAYER',
+      'PDF_VECTOR_LAYER',
       'DETERMINISM',
     ]);
     for (const check of manifest.qa.checks) expect(check.result, check.id).toBe('PASS');
@@ -111,6 +114,18 @@ describe('ETBZ-55: the ArtifactManifest states what the files carry', () => {
     expect(detail('DETERMINISM')['pdfSha256']).toBe(manifest.sha256);
     expect(detail('PDF_READBACK')['pages']).toBe(manifest.pageCount);
     expect(detail('PAGE_STRINGS')['pages']).toBe(manifest.pageCount);
+    // The final-artifact readback covered every page: each printed string the page QA counted, each display glyph it
+    // checked, and one canonical fill per display glyph and wordmark.
+    expect(detail('PDF_TEXT_LAYER')['pages']).toBe(manifest.pageCount);
+    expect(detail('PDF_TEXT_LAYER')['printedStrings']).toBe(detail('PAGE_QA')['textNodes']);
+    expect(detail('PDF_TEXT_LAYER')['textUnits']).toBeGreaterThan(30000);
+    expect(detail('PDF_VECTOR_LAYER')['pages']).toBe(manifest.pageCount);
+    expect(detail('PDF_VECTOR_LAYER')['displayGlyphs']).toBe(detail('PAGE_QA')['displayGlyphs']);
+    expect(detail('PDF_VECTOR_LAYER')['canonicalOutlines']).toBe((detail('PDF_VECTOR_LAYER')['displayGlyphs'] as number) + (detail('PDF_VECTOR_LAYER')['wordmarks'] as number));
+    expect(detail('PDF_VECTOR_LAYER')['wordmarkDots']).toBe(detail('PDF_VECTOR_LAYER')['wordmarks']);
+    expect(detail('PDF_TEXT_LAYER')['clippedUnits']).toBe(0);
+    // Chromium snaps an SVG viewport to whole pixels in the PDF; the placement tolerance is 1.5 px.
+    expect(detail('PDF_VECTOR_LAYER')['placementDeviationPx']).toBeLessThan(1.5);
     expect(detail('PROJECTION_IDENTITY')).toEqual({ projection: projection.structuralHash, template: RELEASED_TEMPLATE_HASHES['1.0.0'] });
   });
 
@@ -377,6 +392,31 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     ['mark-none-halo', 'PAGE_QA', 'MARK_NOT_ITS_LOOK'],
     ['unknown-text-style', 'PAGE_BUILD', null],
     ['sheet-escape-element', 'PAGE_QA', 'SHEET_ESCAPED'],
+    ['rtl-run', 'PAGE_QA', 'TEXT_REORDERED'],
+    ['wx-print-only-medallion', 'PAGE_QA', 'WX_DISC_INTRUDES'],
+    ['list-marker-text', 'PDF_TEXT_LAYER', 'PDF_TEXT_UNBOUND'],
+    ['rtl-ancestor', 'PDF_TEXT_LAYER', 'PDF_TEXT_MISMATCH'],
+    ['page-margin-box-import', 'PAGE_QA', 'PAGE_RULE_FORBIDDEN'],
+    ['shadow-root-text', 'PDF_TEXT_LAYER', 'PDF_TEXT_UNBOUND'],
+    ['hyphenate-character', 'PDF_TEXT_LAYER', 'PDF_TEXT_MISMATCH'],
+    ['rotate-mirror-text', 'PDF_TEXT_LAYER', 'PDF_TEXT_NOT_UPRIGHT'],
+    ['glyph-use-mirror', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_NOT_UPRIGHT'],
+    ['glyph-use-smil', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_NOT_ITS_VALUE'],
+    ['glyph-css-d', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_MISSING'],
+    ['wordmark-css-d', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_UNEXPECTED'],
+    ['gradient-fill', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_UNEXPECTED'],
+    ['rotate-upside-down-value', 'PDF_TEXT_LAYER', 'PDF_TEXT_NOT_UPRIGHT'],
+    ['glyph-clip-inset', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_CLIPPED'],
+    ['clip-path-word', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_UNEXPECTED'],
+    ['wordmark-dot-hidden', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_MISSING'],
+    ['wordmark-clip', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_CLIPPED'],
+    ['glyph-use-translate', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_UNEXPECTED'],
+    ['print-width-media', 'PAGE_QA', 'MEDIA_RULE_FORBIDDEN'],
+    ['clip-frame-hole-glyph', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_CLIPPED'],
+    ['clip-star-wordmark', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_UNEXPECTED'],
+    ['clip-crescent-blob', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_UNEXPECTED'],
+    ['text-clip-strip', 'PDF_TEXT_LAYER', 'PDF_TEXT_CLIPPED'],
+    ['glyph-use-scale', 'PDF_VECTOR_LAYER', 'PDF_VECTOR_MISPLACED'],
     ['pdf-page-count', 'PDF_READBACK', 'PDF_PAGE_COUNT'],
     ['determinism', 'DETERMINISM', null],
   ];
@@ -413,7 +453,7 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
     expect(record.canonicalJsonMirror.numbers).toBeGreaterThanOrEqual(700);
   });
 
-  it('covers every gate: identity, pins, glyphs, CJK, page build, page QA, PDF readback, determinism', () => {
+  it('covers every gate: identity, pins, glyphs, CJK, page build, page QA, PDF readback, the final text and vector layers, determinism', () => {
     expect(record.canaries.map((canary) => [canary.id, canary.expectedCheck, canary.expectedCode])).toEqual(EXPECTED.map((entry) => [...entry]));
     // Each check of a passing render, and the refusals that prove it can fail.
     const provenBy: Readonly<Record<string, readonly string[]>> = {
@@ -425,6 +465,8 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
       PAGE_STRINGS: ['PAGE_STRINGS'],
       PAGE_QA: ['PAGE_BUILD', 'PAGE_QA'],
       PDF_READBACK: ['PDF_READBACK'],
+      PDF_TEXT_LAYER: ['PDF_TEXT_LAYER'],
+      PDF_VECTOR_LAYER: ['PDF_VECTOR_LAYER'],
       DETERMINISM: ['DETERMINISM'],
     };
     expect(Object.keys(provenBy)).toEqual(manifest.qa.checks.map((entry) => entry.id));
@@ -433,13 +475,17 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
   });
 
   it('covers every check id and finding code the renderer can emit, except the six codes ADR 0012 limitation 8 names', () => {
-    const source = readFileSync(join(RENDERER, 'render_pdf.py'), 'utf8');
+    // Every Python module of the renderer, whichever sets a code (render_pdf.py, pdf_layer.py, and any module added later).
+    const modules = readdirSync(RENDERER).filter((name) => name.endsWith('.py')).sort();
+    expect(modules).toEqual(['pages.py', 'pdf_layer.py', 'render_pdf.py']);
+    const source = modules.map((name) => readFileSync(join(RENDERER, name), 'utf8')).join('\n');
     const emitted = new Set<string>(['RENDERER_ERROR']);
-    // Every place the renderer sets a code is a literal the derivation below reads, in any quoting (code: 'X',
-    // "code": "X", 'code': 'X', code="X", Blocked("X")), or one of the two INK_RULES variables, whose values are
-    // literals too. A code built at run time would be a code no canary is required for.
-    // The whole value is captured, up to the next comma, brace or line end, so a conditional expression or a
-    // concatenation is not mistaken for its first literal; a JavaScript shorthand `{code}` sets no literal at all.
+    // The derivation reads the forms in which the renderer sets a code - a literal in any quoting (code: 'X',
+    // "code": "X", 'code': 'X', code="X", Blocked("X")), a subscript assignment, or one of the two INK_RULES variables,
+    // whose values are literals too - and refuses any of these forms whose value is not a literal. The whole value is
+    // captured, up to the next comma, brace or line end, so a conditional expression or a concatenation on one line
+    // is not mistaken for its first literal; a JavaScript shorthand `{code}` sets no literal at all. A form it does not
+    // read (a setdefault, a computed key, a value continued on the next line) is not covered: review, not this test.
     const setters = [...source.matchAll(/["']?\bcode["']?\s*[:=]\s*([^,}\n]+?)\s*(?=[,}\n])/gu)].map((match) => match[1] as string);
     expect(setters.length).toBeGreaterThan(40);
     expect(setters.filter((value) => !/^["'][A-Z][A-Z_0-9]+["']$/u.test(value) && !['too_little', 'too_much'].includes(value))).toEqual([]);
@@ -474,11 +520,11 @@ describe('ETBZ-55: every renderer gate has failed once, on these renderer source
       expect(canary.pdfWritten, canary.id).toBe(false);
       expect(canary.manifestWritten, canary.id).toBe(false);
     }
-    expect(record.summary).toEqual({ canaries: record.canaries.length, blockedAsExpected: record.canaries.length, controls: 3, passedAsExpected: 3 });
+    expect(record.summary).toEqual({ canaries: record.canaries.length, blockedAsExpected: record.canaries.length, controls: 4, passedAsExpected: 4 });
   });
 
-  it('passed every positive control: a Wu Xing value of 0, and text and plain glyphs at opacity 0.7, render with a PDF and a manifest', () => {
-    expect(record.controls.map((control) => control.id)).toEqual(['zero-phase', 'opacity-text', 'faint-plain-glyph']);
+  it('passed every positive control: a Wu Xing value of 0, text and plain glyphs at opacity 0.7, and a display name with a dotless i render with a PDF and a manifest', () => {
+    expect(record.controls.map((control) => control.id)).toEqual(['zero-phase', 'opacity-text', 'faint-plain-glyph', 'dotless-i-name']);
     for (const control of record.controls) {
       expect(control.verdict, control.id).toBe('PASSED_AS_EXPECTED');
       expect(control.observed, control.id).toMatchObject({ exitCode: 0, status: 'PASSED' });
