@@ -205,7 +205,8 @@ glyphs and wordmark, the PDF is the authority. Before it writes a PDF it checks:
   phase-coloured glyph) must compute one of its declared phase's two tokens as resolved on
   the page, and no other phase's; a field, disc or dot must carry no background image; and
   in the page image, of the five phases' tokens, its own must be the one its box shows most
-  (exact pixels; on the evidence document at least 107 of its own against at most 2 of any
+  (exact pixels; measured locally on the evidence document, not recorded in the committed
+  evidence: at least 107 of its own against at most 2 of any
   other), so another phase's colour painted through a glyph's `<use>`, a background image or
   an inset shadow is caught. A phase of 0 draws no bar fill, an empty track. A phase paint
   holds only its own entry's values (the Day-Master field paints the Day Master's phase, not
@@ -236,9 +237,12 @@ glyphs and wordmark, the PDF is the authority. Before it writes a PDF it checks:
   list-style image of any element or of its `::before`, `::after`, `::first-letter`,
   `::first-line` or `::marker`, and no replaced content; exactly the template's one
   `@page` rule (A4, no margin) among all stylesheet rules, imported ones included, and no
-  page margin box; a media condition names a media type and the colour scheme only
-  (`MEDIA_RULE_FORBIDDEN`: `page.pdf()` evaluates width and height features against
-  another box than the emulated viewport, so such a rule could change the PDF alone); no
+  page margin box; the condition of an `@media` or `@import` rule names a media type and
+  the colour scheme only (`MEDIA_RULE_FORBIDDEN`: `page.pdf()` evaluates width and height
+  features against another box than the emulated viewport, so such a rule could change
+  the PDF alone; measured, the two differ only in a sub-pixel window of width and height).
+  The `media` attribute of a `<style>` or `<link>` element is not read (the template's one
+  stylesheet has none; review round 10, recorded for ETBZ-56); no
   text or element outside the sheet; no non-breaking pair split across lines. Text or
   shapes that reach the PDF another way (a list marker from `display:list-item`, a shadow
   tree, a hyphenation character, CSS `d` on a path, a clip path) are the final layers' to
@@ -299,7 +303,7 @@ then walks the merged PDF's content streams (form XObjects included), page by pa
 - *vector layer*: every painted path (fill or stroke) must be either a canonical outline -
   one of the 27 sprite glyphs or the wordmark path, recognised by its segment sequence
   (each of the 28 is unique) and an axis-aligned scale-and-shift fit to the pinned path
-  data within 0.01 px (the evidence document fits within 0.000003 px) - drawn with positive
+  data within 0.01 px (measured locally on the evidence document: within 0.000003 px) - drawn with positive
   scales at the size and position its box's viewBox gives (within 1.5 px: Chromium snaps an
   SVG viewport to whole pixels in the PDF, by at most 0.94 px on the evidence document),
   lying wholly (every segment end and curve middle, 1 px tolerance) in the box of the
@@ -376,7 +380,9 @@ The field set is the union of the sources:
 - input hashes: chart model, content, and the Lexicon binding;
 - presentation version, structural hash and file digest;
 - template reference, structural hash, design system, decision source, glyph-manifest and
-  wordmark digests, and the digests of the four drawing assets;
+  wordmark digests, and the digests of the four drawing assets (`glyphManifestSha256` is
+  the ETBZ-49 glyph manifest's own content hash, its `manifestSha256` field; the asset
+  entry for `glyphs/manifest.json` is the file's byte digest - two different measures);
 - renderer reference, source digest and engine versions;
 - fonts with digests and licences;
 - QA status and checks, plus the contact-sheet digest;
@@ -420,9 +426,13 @@ are a declaration.
    `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED = 'OPEN'` is carried in the template binding
    as-is; the PO approval of the shipped style is recorded in Jira (ETBZ-49 comment 16514,
    ADR 0009 limitation 3).
-4. **The canonical paginator's wrap carries over.** A paragraph crossing from the opener to
-   a continuation page keeps the opener's column wrap, and the port reproduces this on
-   purpose.
+4. **The canonical paginator's wrap carries over.** A paragraph is wrapped once, at the
+   width of the opener column where it is first placed, and keeps that wrap: the tail of a
+   paragraph that crosses onto a continuation page is set at the opener width (pages 13, 19,
+   21 and 23), and a paragraph that cannot put two lines on the opener moves whole to the
+   continuation page, still at the opener width (pages 15, 17 and 25). The port reproduces
+   the canonical ETBZ-49 paginator on purpose; re-wrapping at the continuation width would
+   change the canonical paginator, a template decision.
 5. **Qi-role labels are terminology labels.** `Haupt-Qi`, `Mittleres Qi` and `Rest-Qi`
    name the FuFirE hidden-stem roles `principal`, `central` and `residual` (label source
    `terminology`). Lexicon v1 carries no German wording for Qi roles; a Lexicon release
@@ -484,7 +494,11 @@ are a declaration.
    Extension A (U+3400–4DBF). Other ideographs (〇 U+3007, the compatibility ideographs,
    Extensions B and later) are refused. So a display name or payload in Vietnamese,
    Cyrillic or Greek is refused (`PRESENTATION_TEXT_UNMEASURABLE`) although the Inter faces
-   carry those letters.
+   carry those letters. Three characters inside the tables (U+01C5 ǅ, U+01C6 ǆ, U+023F ȿ)
+   pass the projection but block every page with running chrome, because the template's
+   upper-casing turns them into code points no pinned face carries (the platform-font scan
+   refuses the fallback face; it names it `LATIN_SET_IN_CJK_FACE` although the fallback is a
+   system face) - review round 10, fails closed.
    Widening the tables changes the font metrics and the released template hash; it is a
    Product Owner decision for a new template version.
 10. **The rival-face scan covers the listed font directories.** A face with the pinned

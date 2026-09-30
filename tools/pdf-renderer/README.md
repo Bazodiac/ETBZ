@@ -95,9 +95,10 @@ and a separator after which a line may wrap carries a `<wbr>`.
      display glyph (one sprite `<use>`) or a wordmark with the pinned element inventory; no
      `url()` in a background, border, mask, mask-box or list-style image of any element
      or pseudo-element, and no replaced content; exactly the template's `@page` rule among
-     all stylesheet rules, imported ones included, and no page margin box; media conditions
-     name a media type and the colour scheme only (a width or height feature is evaluated by
-     `page.pdf()` against another box than the emulation); nothing outside the sheet; no
+     all stylesheet rules, imported ones included, and no page margin box; `@media` and
+     `@import` conditions name a media type and the colour scheme only (a width or height
+     feature is evaluated by `page.pdf()` against another box than the emulation; a
+     `<style media>` attribute is not read); nothing outside the sheet; no
      non-breaking pair split across lines;
    - ink, on the screenshot: every printed string (each line box, and each character in
      its own box), glyph, presence mark and phase paint leaves pixels of its own colour

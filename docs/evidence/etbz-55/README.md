@@ -81,10 +81,12 @@ both against the committed tree.
 
 ## Observations for the human verdict and the contract owners
 
-- A paragraph that crosses from the two-column opener onto a continuation page keeps
-  the wrap of the opener column, so its first lines on the continuation page are
-  narrower than the rest. This is the canonical ETBZ-49 paginator's behaviour, which
-  the port reproduces on purpose.
+- A paragraph is wrapped once, at the width of the opener column where it is first
+  placed: the tail of a paragraph that crosses onto a continuation page is narrower than
+  the rest (pages 13, 19, 21, 23), and a paragraph that cannot put two lines on the
+  opener moves whole to the continuation page at the opener width (pages 15, 17, 25).
+  This is the canonical ETBZ-49 paginator's behaviour, which the port reproduces on
+  purpose (ADR 0012 limitation 4).
 - German Qi-role labels (`Haupt-Qi`, `Mittleres Qi`, `Rest-Qi`) are terminology labels
   for FuFirE's three hidden-stem roles; the Lexicon v1 carries no German wording for Qi
   roles.

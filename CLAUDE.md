@@ -180,8 +180,8 @@ canonical glyph or wordmark outline at its box's size and position, wholly in it
 wordmark with its dot, or a single convex contour; limitation 14 names what this leaves out) and writes the ArtifactManifest
 only when all of it passes; `tools/pdf-renderer/qa/run_canaries.py` makes every
 gate in its table fail at least once and records it (six codes that need a doctored font or PDF writer aside, ADR
-0012 limitation 8). The committed PDF, manifest, projection and canary record under `docs/evidence/etbz-55/`
-are re-derived by `tests/contract/etbz55-presentation-evidence.contract.test.ts`. Any change to
+0012 limitation 8). Under `docs/evidence/etbz-55/` the projection is regenerated and the PDF, manifest, QA report and
+canary record are checked against their digests and each other by `tests/contract/etbz55-presentation-evidence.contract.test.ts`. Any change to
 `tools/pdf-renderer/*.py|*.css` changes the renderer digest, and any change to `tools/pdf-renderer/qa/run_canaries.py`
 the canary digest: re-render and re-run the canaries. The evidence declares the head it was rendered on top of and
 the contract suite requires that head to be in the tested history, so PR #17 merges with a merge commit (never a

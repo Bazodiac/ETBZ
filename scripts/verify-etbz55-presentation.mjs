@@ -55,6 +55,7 @@ const T = {
 const DEPENDENCY = 'tests/architecture/dependency-direction.test.ts';
 const RENDERER_PY = 'tools/pdf-renderer/render_pdf.py';
 const PDF_LAYER_PY = 'tools/pdf-renderer/pdf_layer.py';
+const RENDERER_PAGES_PY = 'tools/pdf-renderer/pages.py';
 
 const TEMP = '// TEMPORARY MUTATION - scripts/verify-etbz55-presentation.mjs, never committed.\n';
 
@@ -467,6 +468,23 @@ const MUTANTS = [
     'tools/pdf-renderer/etbz55_mutant.py',
     '# TEMPORARY MUTATION - scripts/verify-etbz55-presentation.mjs, never committed.\nFINDING = {"code": "ETBZ55_MUTANT_UNCANARIED"}\n',
     null, [T.contract], 'covers every check id and finding code the renderer can emit'],
+  // --- the renderer stays local tooling (round 10: each boundary guard observed red) -----------------------------------
+  ['RENDERER: the README stops declaring the renderer outside CI', 'text', 'tools/pdf-renderer/README.md',
+    'Nothing here runs in CI', 'Everything here runs in CI',
+    [T.architecture], 'lives in tools/pdf-renderer with its README'],
+  ['RENDERER: tsconfig starts compiling the tools folder', 'text', 'tsconfig.json',
+    '"include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]', '"include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts", "tools/**/*.ts"]',
+    [T.architecture], 'contains no TypeScript at any depth, and tsconfig includes no tools/ path'],
+  ['RENDERER: a module under src imports the renderer', 'create',
+    'src/http/etbz55-mutant-tools.ts',
+    `${TEMP}export * from '../../tools/pdf-renderer/probe.js';\n`,
+    null, [T.architecture], 'is imported by nothing under src/'],
+  ['RENDERER: a PDF package joins the production dependencies', 'text', 'package.json',
+    '  "dependencies": {\n    "express": "^5.1.0",', '  "dependencies": {\n    "pdfkit": "0.15.0",\n    "express": "^5.1.0",',
+    [T.architecture], 'adds no npm dependency'],
+  ['RENDERER: a page builder carries a literal customer phrase', 'text', RENDERER_PAGES_PY,
+    "SEP = '<span class=\"sep\">·</span>'", "SEP = '<span class=\"sep\">·</span>'\nLEGACY_KICKER = 'Your chart'",
+    [T.architecture], 'carries its customer text only from the projection'],
   ['DATA: a stray file appears in the evidence folder', 'create',
     'docs/evidence/etbz-55/NOTES.md',
     '# TEMPORARY MUTATION - scripts/verify-etbz55-presentation.mjs, never committed.\n',
