@@ -1,8 +1,10 @@
 # ADR 0013 — Interpretation voice & edge: skill and bundle 1.1.0 beside 1.0.0 (ETBZ-57)
 
-- **Status:** Proposed — candidate. The contract revisions it binds are CANDIDATE pages
-  awaiting the ETBZ-57 Human Editorial Gate; nothing here is released or merged before
-  the Product Owner returns ACCEPTED and the release step re-binds the released pages.
+- **Status:** Proposed — candidate. Merged to `main` as a frozen candidate on the Product
+  Owner's instruction of 2026-10-01 ("merge nach Delta-Review"). The contract revisions it
+  binds are CANDIDATE pages awaiting the ETBZ-57 Human Editorial Gate; nothing here is
+  released before the Product Owner returns ACCEPTED and the release step re-binds the
+  released pages.
 - **Date:** 2026-10-01
 - **Slice:** ETBZ-57 [PRE-GOLDEN] — the customer-voice revision: new versioned revisions
   of the Interpretation Lens and the Terminology & Wording Lexicon, a binding-only
@@ -19,8 +21,8 @@
 
 The ETBZ-52 fixture reading is accepted, chart-bound and safe — and reads like a
 pipeline explaining itself: every FACT paragraph names "die Quelle", fourteen of the
-twenty-five SUPPORTED interpretation paragraphs hedge with a fixed formula, five of
-seven reflections open with "Vielleicht", and grounded tensions end in "welche Form
+twenty-five SUPPORTED interpretation paragraphs hedge with a fixed formula, four of
+seven reflections open with "Vielleicht" (a fifth carries it later), and grounded tensions end in "welche Form
 zutrifft, kann das Chart nicht sagen". The 57.1 reconcile found that no gate in code
 demands any of this: the voice came from the 1.0.0 Lens posture column, the Lexicon's
 uncertainty table and the Skill's own formulas. Rebaseline section 17 moves safety
@@ -55,30 +57,35 @@ Anti-Boilerplate `77266967`) carrying status CANDIDATE and no decision date; the
 pages are untouched. In the repository a contract source may be `CANDIDATE` with
 `releasedOn: null`; a bundle carrying one is valid only if its version is listed in
 `CANDIDATE_BUNDLE_HASHES`, which freezes it by content hash like a released version but
-never makes it released. `buildSkillInputPackage` accepts a candidate bundle only with
-`{ candidateEvaluation: true }`; without it, a released bundle is required. Release moves
+never makes it released. Every boundary accepts a candidate bundle only with
+`{ candidateEvaluation: true }` — `acceptPortableSkillContractBundle`,
+`buildSkillInputPackage`, `acceptSkillReading` and so `acceptEditorialRevision`; without
+it, a released bundle is required. A portable copy of a version the repository does not
+build is refused as such (`BUNDLE_SCHEMA_INVALID`) before its contracts are read. Release moves
 the version from the candidate table to `RELEASED_BUNDLE_HASHES` with the hash of the
 released page versions.
 
 ### 3. Customer-voice gates (Skill 1.1.0 only)
 
-`acceptSkillReading` holds a 1.1.0 reading to seven additional refusals; a 1.0.0 reading
-is accepted under exactly its old gates.
+`acceptSkillReading` holds a 1.1.0 reading to six additional refusals and to a count-word
+check under the existing `READING_UNCITED_NUMERAL`; a 1.0.0 reading is accepted under
+exactly its old gates. The editorial pass adds a seventh code (section 4).
 
 | Code | What it refuses | Contract |
 | --- | --- | --- |
-| `READING_SUPPORTED_UNDERSTATED` | an interpretive paragraph over SUPPORTED claims only, no provisional fact, written TENTATIVE | Lens 1.1 §1.1, §2 hard law; plan constraint `epistemicClassesFixed` |
-| `READING_SUPPORTED_TEMPLATE_HEDGE` | a SUPPORTED paragraph using a retired template ("gelesen werden", "Innerhalb dieses BaZi-Rahmens", "mögliche Ausdrucksform" …) | Lexicon 1.1 §7, L3.4 |
+| `READING_SUPPORTED_UNDERSTATED` | an interpretive paragraph over SUPPORTED claims only, no provisional fact, written TENTATIVE; or any paragraph over SUPPORTED claims only (INTERPRETATION, REFLECTION, FRAME) whose text carries a tentative marker | Lens 1.1 §1.1, §2 hard law; plan constraint `epistemicClassesFixed` |
+| `READING_SUPPORTED_TEMPLATE_HEDGE` | a paragraph over SUPPORTED claims only (FRAME included) using a retired template ("gelesen werden", "Innerhalb dieses BaZi-Rahmens", "mögliche Ausdrucksform" …) | Lexicon 1.1 §7, L3.4 |
 | `READING_TENTATIVE_NOT_VISIBLE` | a TENTATIVE paragraph without a visible marker | Lexicon 1.1 §7, L3.11 |
 | `READING_META_NARRATION` | a title, chapter title, paragraph or reflection question naming the source, validation, calculation, chapters or the reading itself | Lexicon 1.1 L3.12; Lens 1.1 §9.2, §21 step 11 |
-| `READING_TENSION_UNGROUNDED` | tension, conflict or contradiction words over claims in no `CONTRASTS_WITH` relation | Lens 1.1 §7.2, AC 17 |
-| `READING_LIFE_DOMAIN_INVENTED` | a kinship, partnership, work, money, school or biography word on a narrative surface | Lens 1.1 §1.1 CONCRETENESS; Lexicon 1.1 L3.13 |
-| `READING_EDITORIAL_EXPANSION` | an editorial revision changing anything but customer text | Lens 1.1 §18 AC 18 |
+| `READING_TENSION_UNGROUNDED` | tension, conflict, contradiction or opposition words on a surface that does not cite both poles of one `CONTRASTS_WITH` relation | Lens 1.1 §7.2, AC 17 |
+| `READING_LIFE_DOMAIN_INVENTED` | a kinship, partnership, work, money, school or biography word on a narrative surface or in the method note | Lens 1.1 §1.1 CONCRETENESS; Lexicon 1.1 L3.13 |
+| `READING_UNCITED_NUMERAL` (count word) | "zweimal", "doppelt", "an zwei Stellen" …: a count is derived, never a chart fact | SKILL.md 1.1 law 13 |
 
 The 1.1 profile also adds determinism and identity-verdict phrases to the prohibited
 classes ("Schicksal", "so bist du eben", "du bist jemand"). The method note is not
 narrative: it carries the method and data disclosure and is held to the prohibited
-phrases only. Like every wording gate here, the lists are mechanical and conservative;
+phrases and the life-domain words only. A producer label the paragraph cites (e.g.
+"Indirekte Quelle") is terminology and does not count as talk about the source. Like every wording gate here, the lists are mechanical and conservative;
 what they cannot match stays with the human reader.
 
 ### 4. The editorial pass
@@ -86,8 +93,11 @@ what they cannot match stays with the human reader.
 The Skill has two modes. REALISE renders the plan; EDIT receives an accepted reading and
 may revise its customer text only. `acceptEditorialRevision(semantic, revision, context)`
 re-accepts the semantic reading first (a forged one is refused), accepts the revision
-through the whole boundary, and refuses it if anything but the title, chapter titles,
-paragraph texts, reflection texts and method-note text differs.
+through the whole boundary, and refuses it with `READING_EDITORIAL_EXPANSION` if anything
+but the title, chapter titles, paragraph texts and reflection texts differs. The method
+note is disclosure, not voice, and stays as accepted. The pass is version-neutral: it
+compares structure, so it holds for any accepted reading; only Skill 1.1.0 defines an
+EDIT mode.
 
 ### 5. The fixture rerun and the evals
 
@@ -117,7 +127,11 @@ and fails the swap against the unknown-time foil.
   operationally (illustration framed as a situation, never as the reader's behaviour,
   feeling, ability, habit, frequency or other people's view), and the Human Editorial
   Gate remains the check. Round 2 confirmed 8 of 20 flagged sentences, most of them fill
-  for the word floor; REALISE v3 removes them.
+  for the word floor; REALISE v3 removes them. The delta review (round 3) found count
+  statements the chart does not carry (the controlling and the resourcing voice stand in
+  three branches, not two) and 3 more fill sentences. After three rounds of the same
+  class the strategy changed: counts are now refused mechanically, and REALISE v4 names
+  positions instead of counting.
 - The pre-existing ADVICE_PREDICTION phrase "du brauchst" also refuses descriptive uses
   ("was du brauchst"); scoping a safety gate is outside this slice (reconcile C13).
 - Release is mechanical but not optional: page status lines, decision dates and titles,

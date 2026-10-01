@@ -38,7 +38,7 @@
     {
       "chapterRef": "chapter.sha256:2dd764004829631327fe86c37e6f32d366577b6d20b2483a99942c82f4d128f0",
       "narrativeOperation": "ESTABLISH",
-      "title": "Der Ausgangspunkt: Xin und ein Ausdruck, der zweimal auftaucht",
+      "title": "Der Ausgangspunkt: Xin und ein Ausdruck, der wiederkehrt",
       "paragraphs": [
         {
           "kind": "FACT",
@@ -91,7 +91,7 @@
         {
           "kind": "INTERPRETATION",
           "posture": "SUPPORTED",
-          "text": "Das erste Muster deines Charts ist ein Ausdruck, der unterscheidet. Auf der sichtbaren Oberfläche der Monatssäule steht eine Beziehung, die aus Xin hervorgeht: in BaZi der differenzierende, kritische Ausdruck. Gemeint ist die Seite, die benennt, zuspitzt und Unterschiede sichtbar macht, und die einen bestehenden Rahmen prüft, statt ihn einfach zu übernehmen. Dieselbe Beziehung steht noch einmal im Inneren deines Tageszweigs, als verborgener Stamm. Einmal auf der Oberfläche, einmal innen: Dieses Motiv ist in deinem Chart doppelt angelegt, einmal offen sichtbar und einmal in einer Schicht, die weniger unmittelbar gezeigt wird. Wiederkehr heißt dabei weder Rang noch Stärke, sondern nur, dass das Motiv nicht an eine einzige Stelle gebunden ist. Erkennbar ist so eine Bewegung an Sätzen wie „Das ist nicht dasselbe“ oder „Genau hier liegt der Unterschied“.",
+          "text": "Das erste Muster deines Charts ist ein Ausdruck, der unterscheidet. Auf der sichtbaren Oberfläche der Monatssäule steht eine Beziehung, die aus Xin hervorgeht: in BaZi der differenzierende, kritische Ausdruck. Gemeint ist die Seite, die benennt, zuspitzt und Unterschiede sichtbar macht, und die einen bestehenden Rahmen prüft, statt ihn einfach zu übernehmen. Dieselbe Beziehung steht noch einmal im Inneren deines Tageszweigs, als verborgener Stamm. Einmal auf der Oberfläche, einmal innen: Dieses Motiv kehrt in deinem Chart wieder, offen sichtbar in der Monatssäule und im Tageszweig in einer Schicht, die weniger unmittelbar gezeigt wird. Wiederkehr heißt dabei weder Rang noch Stärke, sondern nur, dass das Motiv nicht an eine einzige Stelle gebunden ist. Erkennbar ist so eine Bewegung an Sätzen wie „Das ist nicht dasselbe“ oder „Genau hier liegt der Unterschied“.",
           "factRefs": [
             "chart.natal.pillar.month.tenGod",
             "chart.natal.pillar.day.hiddenStem.0.tenGod",
@@ -365,7 +365,7 @@
         {
           "kind": "INTERPRETATION",
           "posture": "SUPPORTED",
-          "text": "Eine unterstützende Stimme sitzt im Inneren deines Jahreszweigs und deines Monatszweigs, beide Male dieselbe. Diese Beziehung bringt deinen Tagesmeister hervor; in BaZi steht sie für Rückhalt, Lernen und die Aufnahme von Wissen, hier in ihrer seitlichen, auswählenden Form. Sie ist zweimal angelegt, an zwei Stellen deines Charts, und beide Male innen. Erkennbar ist die seitliche Form des Rückhalts an Wegen wie der Frage an einer ungewöhnlichen Stelle, dem Umweg über ein Nachbargebiet oder der eigenen Notiz statt der vorgefertigten Vorlage. Auch ein Fachbuch aus einem anderen Gebiet, das genau die eine fehlende Antwort enthält, ist ein solcher Weg. Auch die Rückfrage bei jemandem, der ein Thema von einer anderen Seite kennt, gehört dazu.",
+          "text": "Eine unterstützende Stimme sitzt im Inneren deines Jahreszweigs und deines Monatszweigs, beide Male dieselbe. Diese Beziehung bringt deinen Tagesmeister hervor; in BaZi steht sie für Rückhalt, Lernen und die Aufnahme von Wissen, hier in ihrer seitlichen, auswählenden Form. In beiden Zweigen liegt sie innen, nicht auf der sichtbaren Oberfläche. Erkennbar ist die seitliche Form des Rückhalts an Wegen wie der Frage an einer ungewöhnlichen Stelle, dem Umweg über ein Nachbargebiet oder der eigenen Notiz statt der vorgefertigten Vorlage. Auch ein Fachbuch aus einem anderen Gebiet, das genau die eine fehlende Antwort enthält, ist ein solcher Weg. Auch die Rückfrage bei jemandem, der ein Thema von einer anderen Seite kennt, gehört dazu.",
           "factRefs": [
             "chart.natal.pillar.year.hiddenStem.1.tenGod",
             "chart.natal.pillar.month.hiddenStem.1.tenGod",
@@ -389,7 +389,7 @@
         {
           "kind": "INTERPRETATION",
           "posture": "SUPPORTED",
-          "text": "Zusammengenommen gehören zu deinem Chart damit zwei weitere Linien: eine unterstützende Beziehung, die innen liegt und in zwei Zweigen wiederkehrt, und eine Zusammensetzung, deren Schwerpunkt bei Feuer liegt. Die beiden Angaben beschreiben verschiedene Dinge: der Rückhalt eine Beziehung zu deinem Tagesmeister, die Verteilung die Zusammensetzung des ganzen Charts. Die eine zeigt, auf welchem Weg Rückhalt bei deinem Tagesmeister ankommt: seitlich und auswählend. Die andere zeigt, wovon dein Chart etwas mehr enthält als von den übrigen Phasen. Zwei Charts mit demselben Tagesmeister können sich gerade in diesen beiden Punkten unterscheiden: darin, auf welchem Weg der Rückhalt ankommt, und darin, wie ihre Phasen verteilt sind. In deinem Chart kommt der Rückhalt seitlich, und der Schwerpunkt der Verteilung liegt bei Feuer.",
+          "text": "Zusammengenommen gehören zu deinem Chart damit zwei weitere Linien: eine unterstützende Beziehung, die innen liegt und im Jahreszweig wie im Monatszweig wiederkehrt, und eine Zusammensetzung, deren Schwerpunkt bei Feuer liegt. Die beiden Angaben beschreiben verschiedene Dinge: der Rückhalt eine Beziehung zu deinem Tagesmeister, die Verteilung die Zusammensetzung des ganzen Charts. Die eine zeigt, auf welchem Weg Rückhalt bei deinem Tagesmeister ankommt: seitlich und auswählend. Die andere zeigt, wovon dein Chart etwas mehr enthält als von den übrigen Phasen. Der Weg des Rückhalts ergibt sich aus den verborgenen Stämmen in deinem Jahres- und deinem Monatszweig, der Schwerpunkt aus der Verteilung aller fünf Phasen in deinem Chart. In deinem Chart kommt der Rückhalt seitlich, und der Schwerpunkt der Verteilung liegt bei Feuer.",
           "factRefs": [
             "chart.natal.pillar.year.hiddenStem.1.tenGod",
             "chart.natal.pillar.month.hiddenStem.1.tenGod",
@@ -536,7 +536,7 @@
         {
           "kind": "FACT",
           "posture": "NONE",
-          "text": "Im Jahreszweig und im Monatszweig deines Charts stehen jeweils zwei verborgene Stämme: zuerst Ding, in der Beziehung des unmittelbaren Drucks zu deinem Tagesmeister, dann Ji, in der Beziehung der seitlichen, auswählenden Unterstützung. Das Element von Ding kontrolliert deinen Tagesmeister, das Element von Ji bringt ihn hervor. Beide stehen im selben Zweig, an beiden Stellen, und keiner von beiden liegt auf der sichtbaren Oberfläche. Beide Zweige enthalten damit dieselbe Verbindung aus zwei verborgenen Stämmen.",
+          "text": "Im Jahreszweig und im Monatszweig deines Charts stehen jeweils zwei verborgene Stämme: zuerst Ding, in der Beziehung des unmittelbaren Drucks zu deinem Tagesmeister, dann Ji, in der Beziehung der seitlichen, auswählenden Unterstützung. Das Element von Ding kontrolliert deinen Tagesmeister, das Element von Ji bringt ihn hervor. Beide stehen im selben Zweig, an beiden Stellen, und keiner von beiden liegt auf der sichtbaren Oberfläche. Beide Zweige enthalten damit dieselben zwei verborgenen Stämme.",
           "factRefs": [
             "chart.natal.pillar.year.hiddenStem.0.stem",
             "chart.natal.pillar.year.hiddenStem.0.tenGod",
@@ -556,7 +556,7 @@
         {
           "kind": "INTERPRETATION",
           "posture": "SUPPORTED",
-          "text": "Die fordernde und die unterstützende Stimme teilen sich in deinem Chart denselben Ort: das Innere des Jahreszweigs und das Innere des Monatszweigs. Sie unterscheiden sich in der Richtung. Die eine kommt als Anforderung auf deinen Tagesmeister zu und kontrolliert ihn, die andere nährt ihn und bringt ihn hervor. In den fünf Wandlungsphasen ist das ein Unterschied der Richtung: Das Kontrollierende begrenzt und gibt Form, das Nährende gibt ab, woraus etwas entstehen kann. Das ist eine echte Spannung, und sie liegt nicht zwischen zwei getrennten Teilen deines Charts, sondern in derselben Schicht derselben Zweige. Was von innen etwas verlangt und was von innen trägt, sitzt Tür an Tür. Erkennbar wird so eine Nähe etwa dort, wo dieselbe Aufgabe zugleich etwas verlangt und etwas lehrt.",
+          "text": "Die fordernde und die unterstützende Stimme teilen sich in deinem Chart denselben Ort: das Innere des Jahreszweigs und das Innere des Monatszweigs. Sie unterscheiden sich in der Richtung. Die eine kommt als Anforderung auf deinen Tagesmeister zu und kontrolliert ihn, die andere nährt ihn und bringt ihn hervor. In den fünf Wandlungsphasen ist das ein Unterschied der Richtung: Das Kontrollierende begrenzt und gibt Form, das Nährende gibt ab, woraus etwas entstehen kann. Das ist eine echte Spannung, und sie liegt nicht zwischen zwei getrennten Teilen deines Charts, sondern in derselben Schicht derselben Zweige. Was von innen etwas verlangt und was von innen trägt, sitzt Tür an Tür. Erkennbar wird diese Nähe etwa in Momenten, in denen eine Entscheidung ohne Vermittlung verlangt wird und am selben Punkt ein seitlicher, auswählender Zugang zu Wissen liegt.",
           "factRefs": [
             "chart.natal.pillar.year.hiddenStem.0.tenGod",
             "chart.natal.pillar.month.hiddenStem.0.tenGod",
@@ -586,7 +586,7 @@
         {
           "kind": "INTERPRETATION",
           "posture": "SUPPORTED",
-          "text": "Damit bekommt die Anforderung einen Gegenpol, der nicht von außen kommt, sondern am selben Ort liegt: den Rückhalt. Eine innere Schicht, in der zugleich etwas verlangt und etwas nährt, beschreibt in BaZi eine Konstellation – keine Aussage darüber, wie du entscheidest oder was du dabei fühlst. Sie beschreibt, dass in deinem Chart eine innere Anforderung und eine innere Versorgung nebeneinanderliegen und aufeinander bezogen sind. Beide liegen in der inneren Schicht, keine auf der Oberfläche. Weil beide innen liegen, zeigen sie sich weniger unmittelbar als das, was auf der Oberfläche einer Säule steht. Die Nähe der beiden ist eine Eigenschaft der Anordnung: zwei Stimmen im selben Zweig, an zwei Stellen deines Charts.",
+          "text": "Damit bekommt die Anforderung einen Gegenpol, der nicht von außen kommt, sondern am selben Ort liegt: den Rückhalt. Eine innere Schicht, in der zugleich etwas verlangt und etwas nährt, beschreibt in BaZi eine Konstellation – keine Aussage darüber, wie du entscheidest oder was du dabei fühlst. Sie beschreibt, dass in deinem Chart eine innere Anforderung und eine innere Versorgung nebeneinanderliegen und aufeinander bezogen sind. Beide liegen in der inneren Schicht, keine auf der Oberfläche. Weil beide innen liegen, zeigen sie sich weniger unmittelbar als das, was auf der Oberfläche einer Säule steht. Die Nähe der beiden ist eine Eigenschaft der Anordnung: zwei Stimmen im selben Zweig, im Jahreszweig wie im Monatszweig.",
           "factRefs": [
             "chart.natal.pillar.year.hiddenStem.0.tenGod",
             "chart.natal.pillar.month.hiddenStem.0.tenGod",
@@ -652,7 +652,7 @@
         {
           "kind": "FACT",
           "posture": "NONE",
-          "text": "In deinem Chart stehen drei Beziehungen: der differenzierende, kritische Ausdruck auf der sichtbaren Oberfläche der Monatssäule, dessen Element dein Tagesmeister hervorbringt; dieselbe Beziehung als verborgener Stamm im Tageszweig; und die Beziehung des unmittelbaren Drucks als erster verborgener Stamm im Jahreszweig und im Monatszweig, deren Element deinen Tagesmeister kontrolliert. Der Ausdruck steht damit an zwei Stellen, die Anforderung ebenfalls an zwei Stellen.",
+          "text": "In deinem Chart stehen drei Beziehungen: der differenzierende, kritische Ausdruck auf der sichtbaren Oberfläche der Monatssäule, dessen Element dein Tagesmeister hervorbringt; dieselbe Beziehung als verborgener Stamm im Tageszweig; und die Beziehung des unmittelbaren Drucks als erster verborgener Stamm im Jahreszweig und im Monatszweig, deren Element deinen Tagesmeister kontrolliert. Der Ausdruck steht damit in der Monatssäule und im Tageszweig, die Anforderung im Jahreszweig und im Monatszweig.",
           "factRefs": [
             "chart.natal.pillar.month.tenGod",
             "chart.natal.pillar.month.tenGod.elementRelation",
@@ -666,7 +666,7 @@
         {
           "kind": "INTERPRETATION",
           "posture": "SUPPORTED",
-          "text": "Der Ausdruck, sichtbar in der Monatssäule und noch einmal innen im Tageszweig, geht aus deinem Tagesmeister hervor: Er ist das, was von deinem Standpunkt ausgeht und unterscheidet. Die Anforderung, innen im Jahreszweig und im Monatszweig, kommt auf deinen Tagesmeister zu: Sie verlangt Entscheidungen. Zusammengenommen ergeben beide eine Figur aus zwei entgegengesetzten Richtungen – eine Bewegung nach außen, die unterscheidet, und eine Bewegung nach innen, die fordert –, und beide betreffen denselben Standpunkt. Beide sind mehr als einmal angelegt: der Ausdruck an zwei Stellen, die Anforderung an zwei Stellen. Der Ausdruck läuft von deinem Tagesmeister weg, die Anforderung auf ihn zu: Beide Richtungen haben denselben Bezugspunkt.",
+          "text": "Der Ausdruck, sichtbar in der Monatssäule und noch einmal innen im Tageszweig, geht aus deinem Tagesmeister hervor: Er ist das, was von deinem Standpunkt ausgeht und unterscheidet. Die Anforderung, innen im Jahreszweig und im Monatszweig, kommt auf deinen Tagesmeister zu: Sie verlangt Entscheidungen. Zusammengenommen ergeben beide eine Figur aus zwei entgegengesetzten Richtungen – eine Bewegung nach außen, die unterscheidet, und eine Bewegung nach innen, die fordert –, und beide betreffen denselben Standpunkt. Beide sind mehr als einmal angelegt: der Ausdruck in der Monatssäule und im Tageszweig, die Anforderung im Jahres- und im Monatszweig. Der Ausdruck läuft von deinem Tagesmeister weg, die Anforderung auf ihn zu: Beide Richtungen haben denselben Bezugspunkt.",
           "factRefs": [
             "chart.natal.pillar.month.tenGod",
             "chart.natal.pillar.day.hiddenStem.0.tenGod",

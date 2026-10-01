@@ -22,6 +22,7 @@ import {
   buildSkillContractBundle,
   buildSkillInputPackage,
   renderPortableSkillContractBundle,
+  skillRefForBundle,
   validateSkillContractBundleCore,
 } from '../../src/application/skill/index.js';
 import type { SkillContractBundleCore, SkillInputPackage, SkillRunErrorCode } from '../../src/application/skill/index.js';
@@ -40,7 +41,7 @@ type Reading = Json & { title: string; chapters: Chapter[]; reflectionQuestions:
 
 const fixture = skillFixtureV1_1();
 const { bundle, inputPackage } = fixture;
-const context = { bundle, inputPackage };
+const context = { bundle, inputPackage, candidateEvaluation: true } as const;
 const FIXTURE_DIR = resolve(process.cwd(), 'docs/evidence/etbz-57/fixture');
 const baseline = JSON.parse(readFileSync(resolve(FIXTURE_DIR, 'skill-reading.json'), 'utf8')) as Reading;
 const semanticBaseline = JSON.parse(readFileSync(resolve(FIXTURE_DIR, 'semantic-reading.json'), 'utf8')) as Reading;
@@ -72,7 +73,18 @@ function expectRefusal(action: () => unknown, code: SkillRunErrorCode): SkillRun
   return error;
 }
 
-const accept = (reading: unknown, pkg: SkillInputPackage = inputPackage) => acceptSkillReading(reading, { bundle, inputPackage: pkg });
+function contractRefusal(action: () => unknown): SkillContractError {
+  let caught: unknown;
+  try {
+    action();
+  } catch (error) {
+    caught = error;
+  }
+  expect(caught, 'expected a SkillContractError to be thrown').toBeInstanceOf(SkillContractError);
+  return caught as SkillContractError;
+}
+
+const accept = (reading: unknown, pkg: SkillInputPackage = inputPackage) => acceptSkillReading(reading, { bundle, inputPackage: pkg, candidateEvaluation: true });
 /** The accepted REALISE reading, built inside each test so a broken boundary fails an assertion, not the file load. */
 const semantic = () => accept(semanticBaseline);
 
@@ -100,7 +112,7 @@ describe('V0: the green baselines', () => {
     expect(() => acceptSkillReading(oldReading, { bundle: released.bundle, inputPackage: released.inputPackage })).not.toThrow();
   });
 
-  it('accepts tension language where the paragraph cites a claim in a CONTRASTS_WITH relation', () => {
+  it('accepts tension language where the paragraph cites both poles of a CONTRASTS_WITH relation', () => {
     expect(paragraph(baseline, 2, 2).text).toMatch(/Spannung/u);
     expect(() => accept(baseline)).not.toThrow();
   });
@@ -129,8 +141,24 @@ describe('V1: uncertainty is carried, not added (DIRECTNESS)', () => {
     })), 'READING_SUPPORTED_UNDERSTATED');
   });
 
+  it('refuses a SUPPORTED paragraph that keeps its posture but adds doubt in the text', () => {
+    const error = expectRefusal(() => accept(readingWith((r) => {
+      const p = paragraph(r, 0, 5);
+      p.text = `Vielleicht kennst du das: ${p.text}`;
+    })), 'READING_SUPPORTED_UNDERSTATED');
+    expect(error.detail).toEqual({ where: 'chapters[0].paragraphs[5]', phrase: 'vielleicht' });
+  });
+
+  it('refuses a retired template in a FRAME paragraph over SUPPORTED claims (posture NONE)', () => {
+    expect(paragraph(baseline, 0, 1).kind).toBe('FRAME');
+    const error = expectRefusal(() => accept(readingWith((r) => {
+      paragraph(r, 0, 1).text += ' Innerhalb dieses BaZi-Rahmens kann der Tagesmeister als Standpunkt gelesen werden.';
+    })), 'READING_SUPPORTED_TEMPLATE_HEDGE');
+    expect(error.detail).toMatchObject({ where: 'chapters[0].paragraphs[1]' });
+  });
+
   it('refuses a SUPPORTED paragraph hedged with a retired template', () => {
-    for (const hedge of ['Das kann als fester Standpunkt gelesen werden.', 'Eine mögliche Ausdrucksform ist ein fester Standpunkt.', 'Innerhalb dieses BaZi-Rahmens ist das ein Standpunkt.']) {
+    for (const hedge of ['Das kann als fester Standpunkt gelesen werden.', 'Eine mögliche Ausdrucksform ist ein fester Standpunkt.', 'Innerhalb dieses BaZi-Rahmens ist das ein Standpunkt.', 'Mögliche Ausdrucksformen sind Genauigkeit und Kritik.', 'Das lässt sich als fester Standpunkt lesen.']) {
       expectRefusal(() => accept(readingWith((r) => { paragraph(r, 0, 2).text = `${paragraph(r, 0, 2).text} ${hedge}`; })), 'READING_SUPPORTED_TEMPLATE_HEDGE');
     }
   });
@@ -155,6 +183,15 @@ describe('V2: TENTATIVE stays visible', () => {
     expect(error.detail).toEqual({ where: 'chapters[0].paragraphs[0]' });
   });
 
+  it('does not take the trait adjective "vorsichtig" for a tentative marker', () => {
+    const { inputPackage: pkg, reading } = withProvisionalDayMaster();
+    for (const p of restingOnDayMaster(reading)) {
+      p.posture = 'TENTATIVE';
+      p.text = `${p.text} Das wirkt vorsichtig und abwägend.`;
+    }
+    expectRefusal(() => accept(reading, pkg), 'READING_TENTATIVE_NOT_VISIBLE');
+  });
+
   it('still refuses the same paragraph written as certain (provisionality never disappears)', () => {
     const { inputPackage: pkg, reading } = withProvisionalDayMaster();
     expectRefusal(() => accept(reading, pkg), 'READING_PROVISIONALITY_LAUNDERED');
@@ -176,12 +213,20 @@ describe('V3: no meta-narration on the customer surface (CUSTOMER_SURFACE)', () 
     ['a paragraph on validation', (r: Reading) => { paragraph(r, 1, 2).text += ' Das steht so in den validierten Angaben.'; }, 'chapters[1].paragraphs[2]'],
     ['a paragraph narrating the reading', (r: Reading) => { paragraph(r, 1, 3).text += ' Dieses Reading rechnet nichts nach.'; }, 'chapters[1].paragraphs[3]'],
     ['a paragraph narrating its chapter', (r: Reading) => { paragraph(r, 1, 4).text += ' Dieses Kapitel öffnet einen Faden.'; }, 'chapters[1].paragraphs[4]'],
+    ['a paragraph narrating later chapters', (r: Reading) => { paragraph(r, 1, 4).text += ' In den nächsten Kapiteln wird dieses Motiv weiter entwickelt.'; }, 'chapters[1].paragraphs[4]'],
+    ['a paragraph placing itself in the reading', (r: Reading) => { paragraph(r, 1, 4).text += ' Im Reading steht das am Anfang.'; }, 'chapters[1].paragraphs[4]'],
+    ['a paragraph naming a producer label it does not cite', (r: Reading) => { paragraph(r, 4, 0).text += ' In BaZi heißt diese Beziehung Indirekte Quelle.'; }, 'chapters[4].paragraphs[0]'],
     ['a chapter title', (r: Reading) => { chapter(r, 1).title = 'Was die Berechnung im Monat zeigt'; }, 'chapters[1].title'],
     ['the reading title', (r: Reading) => { r.title = 'Dein BaZi-Reading aus validierten Angaben'; }, 'title'],
     ['a reflection question', (r: Reading) => { (r.reflectionQuestions[0] as { text: string }).text += ' Was sagt dir diese Lesart?'; }, 'reflectionQuestions[0]'],
   ])('refuses %s', (_name, edit, where) => {
     const error = expectRefusal(() => accept(readingWith(edit)), 'READING_META_NARRATION');
     expect(error.detail).toMatchObject({ where });
+  });
+
+  it('accepts a producer label containing "Quelle" where the paragraph cites the fact that carries it (the guard seen green)', () => {
+    expect(paragraph(baseline, 3, 0).factRefs).toContain('chart.natal.pillar.month.hiddenStem.1.tenGod');
+    expect(() => accept(readingWith((r) => { paragraph(r, 3, 0).text += ' In BaZi heißt diese Beziehung Indirekte Quelle.'; }))).not.toThrow();
   });
 
   it('refuses the 1.0.0 fixture texts once they are held to the 1.1.0 gates', () => {
@@ -204,10 +249,30 @@ describe('V4: tension only where the graph carries it (INTERPRETIVE_EDGE)', () =
     expectRefusal(() => accept(readingWith((r) => { paragraph(r, 2, 0).text += ' Das ist ein Widerspruch.'; })), 'READING_TENSION_UNGROUNDED');
   });
 
-  it('accepts tension language over a claim that is only the target of a CONTRASTS_WITH relation (the guard seen green)', () => {
-    const p = paragraph(baseline, 3, 2);
-    expect(p.claimRefs).toHaveLength(1);
-    expect(() => accept(readingWith((r) => { paragraph(r, 3, 2).text += ' Darin liegt eine echte Spannung.'; }))).not.toThrow();
+  it('refuses tension language over two claims that are each in a contrast, but not with each other', () => {
+    expect(paragraph(baseline, 0, 3).claimRefs).toHaveLength(2);
+    const error = expectRefusal(() => accept(readingWith((r) => {
+      paragraph(r, 0, 3).text += ' Zwischen deinem Tagesmeister und deinem Ausdruck besteht ein Widerspruch.';
+    })), 'READING_TENSION_UNGROUNDED');
+    expect(error.detail).toMatchObject({ where: 'chapters[0].paragraphs[3]' });
+  });
+
+  it('refuses tension language over a single claim, even one that is the pole of a contrast', () => {
+    expect(paragraph(baseline, 3, 2).claimRefs).toHaveLength(1);
+    expectRefusal(() => accept(readingWith((r) => { paragraph(r, 3, 2).text += ' Darin liegt eine echte Spannung.'; })), 'READING_TENSION_UNGROUNDED');
+  });
+
+  it('accepts tension language over both poles cited against the relation\'s direction (the guard seen green)', () => {
+    expect(paragraph(baseline, 5, 2).claimRefs).toHaveLength(2);
+    expect(() => accept(readingWith((r) => {
+      const p = paragraph(r, 5, 2);
+      p.claimRefs.reverse();
+      p.text += ' Darin liegt eine echte Spannung.';
+    }))).not.toThrow();
+  });
+
+  it('refuses a manufactured opposition ("Gegensatz") over a claim in no contrast', () => {
+    expectRefusal(() => accept(readingWith((r) => { paragraph(r, 1, 2).text += ' Zwischen deinem Ausdruck und deinem Tagesmeister besteht ein Gegensatz.'; })), 'READING_TENSION_UNGROUNDED');
   });
 
   it('refuses a manufactured conflict in a title over claims without a contrast', () => {
@@ -222,8 +287,29 @@ describe('V5: concrete, never biographical (CONCRETENESS)', () => {
     ['Mit deinem Partner erlebst du das besonders deutlich.'],
     ['In deiner Kindheit war das schon so.'],
     ['Das kostet dich Geld.'],
+    ['Als Kind warst du schon so.'],
+    ['Mit deinen Freunden zeigt sich das deutlich.'],
+    ['Die Erwartungen deines Vaters spielen hier mit.'],
   ])('refuses "%s"', (sentence) => {
     expectRefusal(() => accept(readingWith((r) => { paragraph(r, 1, 4).text += ` ${sentence}`; })), 'READING_LIFE_DOMAIN_INVENTED');
+  });
+
+  it('refuses a life domain in the method note', () => {
+    const error = expectRefusal(() => accept(readingWith((r) => { r.methodNote.text += ' Deine Familie kennt diese Seite von dir.'; })), 'READING_LIFE_DOMAIN_INVENTED');
+    expect(error.detail).toMatchObject({ where: 'methodNote' });
+  });
+
+  it.each([
+    ['Dieses Motiv taucht zweimal auf.', 'zweimal'],
+    ['Die Anforderung steht an zwei Stellen.', 'an zwei stellen'],
+    ['Der Ausdruck ist doppelt angelegt.', 'doppelt*'],
+  ])('refuses the count "%s": a count is derived, never a chart fact', (sentence, phrase) => {
+    const error = expectRefusal(() => accept(readingWith((r) => { paragraph(r, 1, 4).text += ` ${sentence}`; })), 'READING_UNCITED_NUMERAL');
+    expect(error.detail).toEqual({ where: 'chapters[1].paragraphs[4]', phrase });
+  });
+
+  it('refuses a count in a chapter title', () => {
+    expectRefusal(() => accept(readingWith((r) => { chapter(r, 0).title = 'Xin und ein Ausdruck, der zweimal auftaucht'; })), 'READING_UNCITED_NUMERAL');
   });
 
   it('does not refuse the Lexicon\'s own term "Familie" for a Ten-God family', () => {
@@ -262,6 +348,31 @@ describe('V6: the editorial pass changes customer text only (AC 12)', () => {
     ['an unapproved method', 'Dein Tagesmeister ist verwurzelt.', 'READING_PROHIBITED_WORDING'],
   ] as const)('refuses a revision that injects %s', (_name, sentence, code) => {
     expectRefusal(edit((r) => { paragraph(r, 1, 4).text += ` ${sentence}`; }), code);
+  });
+
+  it('refuses a revision of the method note: the disclosure stays as accepted', () => {
+    const error = expectRefusal(edit((r) => { r.methodNote.text = 'BaZi ist ein traditionelles chinesisches Symbolsystem.'; }), 'READING_EDITORIAL_EXPANSION');
+    expect(error.detail).toEqual({ path: 'reading.methodNote.text' });
+  });
+
+  it('refuses a revision that rebinds a reflection question', () => {
+    const question = baseline.reflectionQuestions[0] as { claimRefs: string[] };
+    const other = paragraph(baseline, 3, 2).claimRefs[0] as string;
+    expect(question.claimRefs).not.toContain(other);
+    const error = expectRefusal(edit((r) => { (r.reflectionQuestions[0] as { claimRefs: string[] }).claimRefs.push(other); }), 'READING_EDITORIAL_EXPANSION');
+    expect(error.detail).toEqual({ path: 'reading.reflectionQuestions[0].claimRefs.length' });
+  });
+
+  it('refuses a revision that changes the kind of a callback', () => {
+    expect(chapter(baseline, 4).callbacks[0]?.deltaKind).toBe('NEW_QUALIFICATION');
+    const error = expectRefusal(edit((r) => { (chapter(r, 4).callbacks[0] as { deltaKind: string }).deltaKind = 'NEW_CONTEXT'; }), 'READING_EDITORIAL_EXPANSION');
+    expect(error.detail).toEqual({ path: 'reading.chapters[4].callbacks[0].deltaKind' });
+  });
+
+  it('refuses a revision that changes a semantic delta', () => {
+    expect(chapter(baseline, 4).semanticDelta[0]?.kind).toBe('NEW_QUALIFICATION');
+    const error = expectRefusal(edit((r) => { (chapter(r, 4).semanticDelta[0] as { kind: string }).kind = 'NEW_CONTEXT'; }), 'READING_EDITORIAL_EXPANSION');
+    expect(error.detail).toEqual({ path: 'reading.chapters[4].semanticDelta[0].kind' });
   });
 
   it('refuses fate in the method note, which is otherwise free of the narrative gates', () => {
@@ -306,11 +417,34 @@ describe('V7: a candidate bundle runs evaluations only', () => {
     expect(() => validateSkillContractBundleCore(undated, BAZI_METHOD_REGISTRY_V1)).toThrow(SkillContractError);
   });
 
-  it('accepts the portable candidate copy only as itself, and refuses an unknown bundle version', () => {
+  it('accepts the portable candidate copy only for an evaluation run, and only as itself', () => {
     const portable = JSON.parse(renderPortableSkillContractBundle(bundle)) as Json;
-    expect(acceptPortableSkillContractBundle(portable).structuralHash).toBe(bundle.structuralHash);
-    expect(() => acceptPortableSkillContractBundle({ ...portable, bundleVersion: '9.9.9', bundleRef: 'bazodiac-skill-contract-bundle@9.9.9' })).toThrow(SkillContractError);
-    expect(() => acceptPortableSkillContractBundle({ ...portable, bundleVersion: 'constructor' })).toThrow(SkillContractError);
+    expect(contractRefusal(() => acceptPortableSkillContractBundle(portable)).code).toBe('BUNDLE_NOT_RELEASED');
+    expect(acceptPortableSkillContractBundle(portable, undefined, { candidateEvaluation: true }).structuralHash).toBe(bundle.structuralHash);
+  });
+
+  it('refuses a portable copy of a bundle version this repository does not build, as such', () => {
+    const releasedPortable = JSON.parse(renderPortableSkillContractBundle(skillFixture().bundle)) as Json;
+    for (const bundleVersion of ['9.9.9', 'constructor', 'toString']) {
+      const error = contractRefusal(() => acceptPortableSkillContractBundle({ ...releasedPortable, bundleVersion, bundleRef: `bazodiac-skill-contract-bundle@${bundleVersion}` }));
+      expect(error.code).toBe('BUNDLE_SCHEMA_INVALID');
+      expect(error.message).toMatch(/is not a version this repository builds/u);
+    }
+    // A candidate copy under an unknown version is refused as unknown, not as a draft.
+    const candidatePortable = JSON.parse(renderPortableSkillContractBundle(bundle)) as Json;
+    const unknown = contractRefusal(() => acceptPortableSkillContractBundle({ ...candidatePortable, bundleVersion: '9.9.9', bundleRef: 'bazodiac-skill-contract-bundle@9.9.9' }, undefined, { candidateEvaluation: true }));
+    expect(unknown.code).toBe('BUNDLE_SCHEMA_INVALID');
+  });
+
+  it('runs no Skill under a bundle version it does not know', () => {
+    for (const bundleVersion of ['9.9.9', 'constructor', 'toString']) {
+      expectRefusal(() => skillRefForBundle(bundleVersion), 'PACKAGE_BINDING_MISMATCH');
+    }
+  });
+
+  it('refuses a reading under the candidate bundle without the evaluation opt-in', () => {
+    const error = expectRefusal(() => acceptSkillReading(baseline, { bundle, inputPackage }), 'READING_BUNDLE_MISMATCH');
+    expect(error.message).toMatch(/candidate/u);
   });
 
   it('refuses a 1.1.0 reading under the 1.0.0 bundle and a 1.0.0 reading under the 1.1.0 bundle', () => {

@@ -166,11 +166,14 @@ rule treats the branch name `You` as a chart symbol, so English second-person pr
 ETBZ-57 adds the customer-voice revision beside 1.0.0 (ADR 0013), never in place: bundle `1.1.0` binds the
 Lens, Lexicon and Anti-Boilerplate revisions (Confluence 77561858 / 77529091 / 77266967) and Skill `1.1.0` runs
 only under it (`skillRefForBundle`); bundle `1.0.0` stays byte-identical so ETBZ-52/55 evidence re-derives. While
-the revisions are CANDIDATE pages the bundle is frozen in `CANDIDATE_BUNDLE_HASHES` (never released) and a
-package for it needs `buildSkillInputPackage(parts, { candidateEvaluation: true })`. A 1.1.0 reading meets seven
-more refusals (`READING_SUPPORTED_UNDERSTATED`, `_SUPPORTED_TEMPLATE_HEDGE`, `_TENTATIVE_NOT_VISIBLE`,
-`_META_NARRATION`, `_TENSION_UNGROUNDED`, `_LIFE_DOMAIN_INVENTED`, `_EDITORIAL_EXPANSION`); the method note is
-not narrative. `acceptEditorialRevision` is the EDIT pass: text-only changes of an accepted reading. A plan
+the revisions are CANDIDATE pages the bundle is frozen in `CANDIDATE_BUNDLE_HASHES` (never released) and every
+boundary refuses it without `{ candidateEvaluation: true }` (`acceptPortableSkillContractBundle`,
+`buildSkillInputPackage`, `acceptSkillReading`). `acceptSkillReading` holds a 1.1.0 reading to six more refusals
+(`READING_SUPPORTED_UNDERSTATED`, `_SUPPORTED_TEMPLATE_HEDGE`, `_TENTATIVE_NOT_VISIBLE`, `_META_NARRATION`,
+`_TENSION_UNGROUNDED` - both poles of one CONTRASTS_WITH pair cited - and `_LIFE_DOMAIN_INVENTED`) and refuses count
+words ("zweimal", "an zwei Stellen") as `READING_UNCITED_NUMERAL`; the method note is not narrative.
+`acceptEditorialRevision` is the EDIT pass (version-neutral): text-only changes of an accepted reading, method
+note kept, anything else `READING_EDITORIAL_EXPANSION`. A plan
 binds the Lexicon/Lens pair of its bundle through `MetaNarrativePlanContext.contractBindings` (absent = 1.0.0).
 Package `skill/bazodiac-interpretation-skill-v1.1/`, evidence `docs/evidence/etbz-57/`, both re-derived by
 `tests/contract/etbz57-skill-voice.contract.test.ts`.

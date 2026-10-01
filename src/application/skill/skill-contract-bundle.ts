@@ -133,7 +133,15 @@ export const CANDIDATE_BUNDLE_HASHES: Readonly<Record<string, string>> = {
   '1.1.0': 'sha256:c584aa05ef0adc71a457ab7ded0543c27863d122427febef9416c0418b4298e1',
 };
 
-function isCandidateVersion(bundleVersion: string): boolean {
+/**
+ * ETBZ-57: the explicit opt-in every boundary asks for before it lets a
+ * CANDIDATE bundle through. Absent, the bundle must be released.
+ */
+export interface CandidateEvaluation {
+  readonly candidateEvaluation?: true;
+}
+
+export function isCandidateVersion(bundleVersion: string): boolean {
   return Object.hasOwn(CANDIDATE_BUNDLE_HASHES, bundleVersion);
 }
 
@@ -774,6 +782,7 @@ function firstDifference(expected: unknown, actual: unknown, path: string): stri
 export function acceptPortableSkillContractBundle(
   input: unknown,
   registry: MethodRegistry = BAZI_METHOD_REGISTRY_V1,
+  options: CandidateEvaluation = {},
 ): SkillContractBundle {
   refuseDangerousKeys(input, 'bundle');
   const parsed = portableSchema.safeParse(input);
@@ -793,6 +802,15 @@ export function acceptPortableSkillContractBundle(
     },
     'bundle',
   );
+  // A version this repository does not build is refused as such, before anything else is read from it.
+  specFor(portableCore.bundleVersion);
+  if (isCandidateVersion(portableCore.bundleVersion) && options.candidateEvaluation !== true) {
+    throw new SkillContractError(
+      'BUNDLE_NOT_RELEASED',
+      `bundle ${portableCore.bundleVersion} is a candidate: a copy of it is accepted for an evaluation run only ({ candidateEvaluation: true })`,
+      { bundleVersion: portableCore.bundleVersion },
+    );
+  }
   for (const source of portableCore.contracts) {
     if (source.status !== 'CURRENT' && !(source.status === 'CANDIDATE' && isCandidateVersion(portableCore.bundleVersion))) {
       throw new SkillContractError(

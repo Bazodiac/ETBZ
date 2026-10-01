@@ -3,7 +3,8 @@
  *
  * Everything committed under skill/bazodiac-interpretation-skill-v1.1/ and
  * docs/evidence/etbz-57/ that a machine produced is re-derived here and must
- * be byte-identical; every hash a manifest states is recomputed. What a
+ * be byte-identical - except the package MANIFEST.json, which is checked field
+ * by field - and every hash a manifest states is recomputed. What a
  * machine cannot produce - the instructions, the wrappers, the two readings,
  * the declared generation record - is checked for presence and consistency.
  */

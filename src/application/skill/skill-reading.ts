@@ -29,8 +29,8 @@ import type { ChartFact } from '../interpretation/feature-set.js';
 import type { AcceptedInterpretiveClaim } from '../interpretation/interpretive-claim-graph.js';
 import { NARRATIVE_OPERATIONS } from '../interpretation/meta-narrative-plan.js';
 import type { NarrativeOperation, PlanChapter, ReleasedContractBinding } from '../interpretation/meta-narrative-plan.js';
-import { assertRunEvidenceBound } from './skill-contract-bundle.js';
-import type { SkillContractBundle } from './skill-contract-bundle.js';
+import { assertRunEvidenceBound, isCandidateVersion } from './skill-contract-bundle.js';
+import type { CandidateEvaluation, SkillContractBundle } from './skill-contract-bundle.js';
 import { SKILL_REF_V1_1, skillRefForBundle } from './skill-package.js';
 import type { SkillInputPackage } from './skill-package.js';
 import { SkillRunError } from './skill-run-errors.js';
@@ -113,7 +113,8 @@ export interface AcceptedSkillReading extends SkillReadingDraft {
   readonly structuralHash: string;
 }
 
-export interface SkillReadingContext {
+/** `candidateEvaluation` (ETBZ-57): a reading under a CANDIDATE bundle is accepted for an evaluation run only. */
+export interface SkillReadingContext extends CandidateEvaluation {
   readonly bundle: SkillContractBundle;
   readonly inputPackage: SkillInputPackage;
 }
@@ -286,7 +287,8 @@ export const META_NARRATION_PHRASES: VoicePhraseList = {
   source: 'terminology-wording-lexicon@1.1.0 §3 L3.12; grounded-reflective-synthesis-lens@1.1.0 §9.2',
   phrases: [
     'quelle', 'quellen', 'datenquelle', 'validiert*', 'validierung*', 'berechnung*', 'berechnet*', 'nachrechn*', 'nachgerechnet',
-    'rechnet nach', 'rechnet nichts nach', 'kapitel', 'dieses reading', 'das reading', 'diesem reading', 'dieses readings',
+    'rechnet nach', 'rechnet nichts nach', 'kapitel*', 'dieses reading', 'das reading', 'diesem reading', 'dieses readings', 'im reading',
+    'dein reading', 'deinem reading', 'deines readings',
     'diese deutung', 'dieser deutung', 'die deutung', 'lesart*', 'diese signale', 'datensatz', 'datenhinweis', 'pipeline', 'evidenz', 'claim*',
     'the source', 'source data', 'validated', 'validation', 'calculation', 'calculated', 'recalculat*', 'this reading', 'the reading',
     'chapter', 'chapters', 'evidence', 'dataset', 'these signals', 'data note',
@@ -298,7 +300,7 @@ export const TEMPLATE_HEDGE_PHRASES: VoicePhraseList = {
   source: 'terminology-wording-lexicon@1.1.0 §7; grounded-reflective-synthesis-lens@1.1.0 §9.2',
   phrases: [
     'innerhalb dieses bazi-rahmens', 'innerhalb des bazi-rahmens', 'im rahmen dieses bazi', 'gelesen werden', 'lesen lässt', 'lesart*',
-    'mögliche ausdrucksform', 'within this bazi framework', 'can be read as', 'one possible reading', 'possible expression',
+    'mögliche ausdrucksform', 'mögliche ausdrucksformen', 'lässt sich als', 'within this bazi framework', 'can be read as', 'one possible reading', 'possible expression',
   ],
 };
 
@@ -306,8 +308,8 @@ export const TEMPLATE_HEDGE_PHRASES: VoicePhraseList = {
 export const TENTATIVE_MARKERS: VoicePhraseList = {
   source: 'terminology-wording-lexicon@1.1.0 §7 L3.11; grounded-reflective-synthesis-lens@1.1.0 §18',
   phrases: [
-    'vielleicht', 'möglicherweise', 'eventuell', 'womöglich', 'vorsichtig*', 'vorläufig*', 'könnte', 'könnten', 'kann sein', 'mag sein',
-    'unter vorbehalt', 'nicht sicher', 'bleibt offen', 'perhaps', 'maybe', 'possibly', 'might', 'may', 'could', 'tentative*', 'provisional*',
+    'vielleicht', 'möglicherweise', 'eventuell', 'womöglich', 'vorsichtig gelesen', 'vorsichtig formuliert', 'vorläufig*', 'könnte', 'könnten',
+    'kann sein', 'mag sein', 'unter vorbehalt', 'ist nicht sicher', 'bleibt offen', 'perhaps', 'maybe', 'possibly', 'might', 'may', 'could', 'tentative*', 'provisional*',
   ],
 };
 
@@ -315,8 +317,20 @@ export const TENTATIVE_MARKERS: VoicePhraseList = {
 export const TENSION_WORDS: VoicePhraseList = {
   source: 'grounded-reflective-synthesis-lens@1.1.0 §7.2, §18; terminology-wording-lexicon@1.1.0 §4',
   phrases: [
-    'spannung*', 'widerspruch*', 'widersprüch*', 'widerstreit*', 'konflikt*', 'zerrissen*', 'hin- und hergerissen',
+    'spannung*', 'widerspruch*', 'widersprüch*', 'widerstreit*', 'gegensatz*', 'gegensätz*', 'konflikt*', 'zerrissen*', 'hin- und hergerissen',
     'tension*', 'conflict*', 'contradict*', 'torn between',
+  ],
+};
+
+/**
+ * SKILL.md 1.1 law 13: a count is derived, never a chart fact. A count word
+ * ("zweimal", "an zwei Stellen") states one anyway; the positions are named instead.
+ */
+export const COUNT_WORDS: VoicePhraseList = {
+  source: 'bazodiac-interpretation-skill@1.1.0 SKILL.md law 13; terminology-wording-lexicon@1.1.0 §3 L3.13',
+  phrases: [
+    'zweimal', 'dreimal', 'viermal', 'fünfmal', 'doppelt*', 'zweifach*', 'dreifach*', 'an zwei stellen', 'an drei stellen', 'an vier stellen',
+    'in zwei zweigen', 'in drei zweigen', 'in zwei säulen', 'in drei säulen', 'twice', 'thrice', 'two places', 'three places',
   ],
 };
 
@@ -329,8 +343,8 @@ export const TENSION_WORDS: VoicePhraseList = {
 export const LIFE_DOMAIN_WORDS: VoicePhraseList = {
   source: 'grounded-reflective-synthesis-lens@1.1.0 §1.1 CONCRETENESS_INVARIANT, §9; terminology-wording-lexicon@1.1.0 §3 L3.13',
   phrases: [
-    'mutter', 'vater', 'eltern*', 'geschwister*', 'bruder', 'brüder', 'schwester*', 'kinder', 'kindheit', 'kindes', 'sohn', 'söhne',
-    'tochter', 'töchter', 'partner*', 'ehemann', 'ehefrau', 'freund', 'freunde', 'freundin*', 'freundschaft*', 'deine familie', 'deiner familie', 'familienleben', 'familiär*', 'chef',
+    'mutter', 'vater', 'vaters', 'eltern*', 'geschwister*', 'bruder', 'brüder', 'schwester*', 'kind', 'kinder', 'kindern', 'kindheit', 'kindes',
+    'sohn', 'söhne', 'tochter', 'töchter', 'partner*', 'ehemann', 'ehefrau', 'freund', 'freunde', 'freunden', 'freundin*', 'freundschaft*', 'deine familie', 'deiner familie', 'familienleben', 'familiär*', 'chef',
     'chefin', 'vorgesetzte*', 'arbeitgeber*', 'kolleg*', 'beruf*', 'karriere*', 'job', 'jobs', 'arbeitsplatz', 'büro', 'firma',
     'schule', 'schulzeit', 'studium', 'jugend', 'gehalt', 'einkommen', 'geld', 'schulden', 'vermögen', 'liebesbeziehung*', 'verliebt*',
     'mother', 'father', 'parent', 'parents', 'sibling*', 'brother*', 'sister*', 'child', 'children', 'childhood', 'son', 'daughter*',
@@ -375,7 +389,17 @@ export function findTemplateHedge(text: string): string | null {
 }
 
 export function hasTentativeMarker(text: string): boolean {
-  return firstPhrase(text, TENTATIVE_MARKERS) !== null;
+  return findTentativeMarker(text) !== null;
+}
+
+/** The tentative marker a text carries, or null. */
+export function findTentativeMarker(text: string): string | null {
+  return firstPhrase(text, TENTATIVE_MARKERS);
+}
+
+/** The count word a text carries, or null. */
+export function findCountWord(text: string): string | null {
+  return firstPhrase(text, COUNT_WORDS);
 }
 
 /** The tension word a text carries, or null. */
@@ -495,17 +519,19 @@ function checkSurface(text: string, where: string): void {
 
 /**
  * The customer-voice surface of a narrative text (title, chapter title,
- * paragraph, reflection question): no meta-narration, no life domain, no
- * voice-profile prohibited phrase, and tension language only over a claim in
- * a CONTRASTS_WITH relation. The method note is not narrative: it carries
- * the necessary method and data notes and is held to the prohibited phrases only.
+ * paragraph, reflection question): no meta-narration (a cited producer label
+ * is terminology, not talk about the source), no life domain, no count word,
+ * no voice-profile prohibited phrase, and tension language only where the text
+ * cites both poles of one CONTRASTS_WITH relation. The method note is not
+ * narrative: it carries the necessary method and data notes and is held to the
+ * prohibited phrases and the life-domain words only.
  */
-function checkVoiceSurface(text: string, where: string, claims: readonly AcceptedInterpretiveClaim[], inContrast: ReadonlySet<string>): void {
+function checkVoiceSurface(text: string, where: string, claims: readonly AcceptedInterpretiveClaim[], contrastPairs: ReadonlySet<string>, citedLabels: readonly string[] = []): void {
   const voiceProhibited = findVoiceProhibitedWording(text);
   if (voiceProhibited !== null) {
     throw new SkillRunError('READING_PROHIBITED_WORDING', `${where} uses wording the Lexicon prohibits (${voiceProhibited.classId})`, { where, ...voiceProhibited });
   }
-  const meta = findMetaNarration(text);
+  const meta = findMetaNarration(withoutLabels(text, citedLabels));
   if (meta !== null) {
     throw new SkillRunError('READING_META_NARRATION', `${where} talks about the reading's sources or mechanics ("${meta}"); that belongs in the method note, if anywhere`, { where, phrase: meta });
   }
@@ -514,9 +540,32 @@ function checkVoiceSurface(text: string, where: string, claims: readonly Accepte
     throw new SkillRunError('READING_LIFE_DOMAIN_INVENTED', `${where} names a life domain or a person ("${domain}") no claim carries`, { where, phrase: domain });
   }
   const tension = findTensionWord(text);
-  if (tension !== null && !claims.some((claim) => inContrast.has(claim.claimId))) {
-    throw new SkillRunError('READING_TENSION_UNGROUNDED', `${where} writes a tension ("${tension}") over no claim the graph links by CONTRASTS_WITH`, { where, phrase: tension });
+  if (tension !== null && !citesContrastPair(claims, contrastPairs)) {
+    throw new SkillRunError('READING_TENSION_UNGROUNDED', `${where} writes a tension ("${tension}") but cites no two claims the graph links by CONTRASTS_WITH`, { where, phrase: tension });
   }
+  const count = findCountWord(text);
+  if (count !== null) {
+    throw new SkillRunError('READING_UNCITED_NUMERAL', `${where} states a count ("${count}"); a count is derived, never a chart fact - name the positions instead`, { where, phrase: count });
+  }
+}
+
+/** One key per unordered claim pair. */
+function pairKey(left: string, right: string): string {
+  return left < right ? `${left}|${right}` : `${right}|${left}`;
+}
+
+/** True when two of the cited claims are the two poles of one CONTRASTS_WITH relation. */
+function citesContrastPair(claims: readonly AcceptedInterpretiveClaim[], contrastPairs: ReadonlySet<string>): boolean {
+  return claims.some((left, index) => claims.slice(index + 1).some((right) => contrastPairs.has(pairKey(left.claimId, right.claimId))));
+}
+
+/** A cited producer label (e.g. "Indirekte Quelle") is terminology, not talk about the source. */
+function withoutLabels(text: string, labels: readonly string[]): string {
+  let rest = normalise(text);
+  for (const label of labels) {
+    if (label.trim() !== '') rest = rest.split(normalise(label)).join(' ');
+  }
+  return rest;
 }
 
 /**
@@ -540,6 +589,9 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
     throw new SkillRunError('READING_SKILL_MISMATCH', `the reading names "${reading.skillRef}", this runtime is ${runtimeSkillRef}`);
   }
   const voice = VOICE_GATED_SKILLS.has(reading.skillRef);
+  if (isCandidateVersion(bundle.bundleVersion) && context.candidateEvaluation !== true) {
+    throw new SkillRunError('READING_BUNDLE_MISMATCH', `bundle ${bundle.bundleVersion} is a candidate: a reading under it is accepted for an evaluation run only ({ candidateEvaluation: true })`);
+  }
   if (reading.bundleRef !== bundle.bundleRef || reading.bundleStructuralHash !== bundle.structuralHash || inputPackage.bundleRef !== bundle.bundleRef || inputPackage.bundleStructuralHash !== bundle.structuralHash) {
     throw new SkillRunError('READING_BUNDLE_MISMATCH', 'the reading or the package names another bundle than the one this run binds');
   }
@@ -557,13 +609,10 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   const excluded = new Set(inputPackage.excludedFactIds);
   const claimById = new Map<string, AcceptedInterpretiveClaim>(inputPackage.claimGraph.claims.map((claim) => [claim.claimId, claim]));
   const planned = new Set(inputPackage.plan.constraints.allowedClaimRefs);
-  const inContrast = new Set<string>();
+  const contrastPairs = new Set<string>();
   for (const claim of inputPackage.claimGraph.claims) {
     for (const relation of claim.relations) {
-      if (relation.type === 'CONTRASTS_WITH') {
-        inContrast.add(claim.claimId);
-        inContrast.add(relation.targetClaimId);
-      }
+      if (relation.type === 'CONTRASTS_WITH') contrastPairs.add(pairKey(claim.claimId, relation.targetClaimId));
     }
   }
   const resolveFact = (id: string, where: string): ChartFact => {
@@ -591,7 +640,7 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   }
   const chartCovered = coveredValuesOf(inputPackage.facts);
   checkSurface(reading.title, 'title');
-  if (voice) checkVoiceSurface(reading.title, 'title', [], inContrast);
+  if (voice) checkVoiceSurface(reading.title, 'title', [], contrastPairs);
   checkSymbols(reading.title, 'title', chartCovered);
   const renderedBefore = new Set<string>();
   const renderedAnywhere = new Set<string>();
@@ -602,7 +651,7 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       throw new SkillRunError('READING_CHAPTER_PLAN_MISMATCH', `${where} is not the plan's chapter at that position (id or operation differs)`, { where });
     }
     checkSurface(chapter.title, `${where}.title`);
-    if (voice) checkVoiceSurface(chapter.title, `${where}.title`, planned_.claimRefs.map((id) => resolveClaim(id, `${where}.title`)), inContrast);
+    if (voice) checkVoiceSurface(chapter.title, `${where}.title`, planned_.claimRefs.map((id) => resolveClaim(id, `${where}.title`)), contrastPairs);
     const chapterClaims = new Set(planned_.claimRefs);
     const renderedHere = new Set<string>();
     const chapterFacts: ChartFact[] = [];
@@ -662,14 +711,20 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
 
       // Customer voice (1.1.0): uncertainty is carried, not added; tentativeness is visible; SUPPORTED is not hedged by template.
       if (voice) {
-        checkVoiceSurface(paragraph.text, at, claims, inContrast);
+        checkVoiceSurface(paragraph.text, at, claims, contrastPairs, facts.map((fact) => fact.sourceLabel ?? ''));
         if (interpretive && !tentative && paragraph.posture === 'TENTATIVE') {
           throw new SkillRunError('READING_SUPPORTED_UNDERSTATED', `${at} renders SUPPORTED claims only but is written as TENTATIVE; uncertainty is carried, not added`, { where: at });
         }
         if (paragraph.posture === 'TENTATIVE' && !hasTentativeMarker(paragraph.text)) {
           throw new SkillRunError('READING_TENTATIVE_NOT_VISIBLE', `${at} is TENTATIVE but carries no visible tentative marker`, { where: at });
         }
-        const hedge = paragraph.posture === 'SUPPORTED' ? findTemplateHedge(paragraph.text) : null;
+        // Over SUPPORTED claims only - INTERPRETATION, REFLECTION or FRAME alike - the text says it with no added doubt.
+        const plain = claims.length > 0 && !tentative;
+        const marker = plain ? findTentativeMarker(paragraph.text) : null;
+        if (marker !== null) {
+          throw new SkillRunError('READING_SUPPORTED_UNDERSTATED', `${at} cites SUPPORTED claims only but writes "${marker}"; uncertainty is carried, not added`, { where: at, phrase: marker });
+        }
+        const hedge = plain ? findTemplateHedge(paragraph.text) : null;
         if (hedge !== null) {
           throw new SkillRunError('READING_SUPPORTED_TEMPLATE_HEDGE', `${at} hedges a SUPPORTED claim with a template ("${hedge}")`, { where: at, phrase: hedge });
         }
@@ -749,7 +804,7 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
     const at = `reflectionQuestions[${String(index)}]`;
     checkSurface(question.text, at);
     const claims = question.claimRefs.map((id) => resolveClaim(id, at));
-    if (voice) checkVoiceSurface(question.text, at, claims, inContrast);
+    if (voice) checkVoiceSurface(question.text, at, claims, contrastPairs);
     for (const claim of claims) {
       if (!planned.has(claim.claimId)) {
         throw new SkillRunError('READING_CLAIM_NOT_PLANNED_HERE', `${at} rests on claim ${claim.claimId}, which the plan does not use`, { where: at, claimRef: claim.claimId });
@@ -762,6 +817,10 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   const methodNoteProhibited = voice ? findVoiceProhibitedWording(reading.methodNote.text) : null;
   if (methodNoteProhibited !== null) {
     throw new SkillRunError('READING_PROHIBITED_WORDING', `methodNote uses wording the Lexicon prohibits (${methodNoteProhibited.classId})`, { where: 'methodNote', ...methodNoteProhibited });
+  }
+  const methodNoteDomain = voice ? findLifeDomainWord(reading.methodNote.text) : null;
+  if (methodNoteDomain !== null) {
+    throw new SkillRunError('READING_LIFE_DOMAIN_INVENTED', `methodNote names a life domain or a person ("${methodNoteDomain}")`, { where: 'methodNote', phrase: methodNoteDomain });
   }
   checkSymbols(reading.methodNote.text, 'methodNote', chartCovered);
   if (!sameList(reading.methodNote.warningCodes, inputPackage.warnings)) {
@@ -828,7 +887,7 @@ function structureOf(reading: SkillReadingDraft): unknown {
       callbacks: chapter.callbacks,
     })),
     reflectionQuestions: reading.reflectionQuestions.map((question) => ({ claimRefs: question.claimRefs })),
-    methodNote: { warningCodes: reading.methodNote.warningCodes },
+    methodNote: { text: reading.methodNote.text, warningCodes: reading.methodNote.warningCodes },
     visualizationSpecs: reading.visualizationSpecs,
   };
 }

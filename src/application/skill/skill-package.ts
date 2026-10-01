@@ -19,7 +19,7 @@ import type { InterpretiveClaimGraph } from '../interpretation/interpretive-clai
 import type { MetaNarrativePlan, ReleasedContractBinding } from '../interpretation/meta-narrative-plan.js';
 import { contractBindingRef } from './contract-sources.js';
 import { assertCandidateSkillContractBundle, assertReleasedSkillContractBundle, contractByKey } from './skill-contract-bundle.js';
-import type { SkillContractBundle } from './skill-contract-bundle.js';
+import type { CandidateEvaluation, SkillContractBundle } from './skill-contract-bundle.js';
 import { SkillRunError } from './skill-run-errors.js';
 
 export const SKILL_ID = 'bazodiac-interpretation-skill' as const;
@@ -83,14 +83,11 @@ export interface SkillInputPackageParts {
 /** A slot id as the visual contract spells it (e.g. `pillars.stem[*]`): one non-empty token without whitespace. */
 const ID_PATTERN = /^[a-z][^\s]*$/u;
 
-export interface SkillInputPackageOptions {
-  /**
-   * ETBZ-57: an evaluation run of a CANDIDATE bundle (before its Human
-   * Editorial Gate). Absent, the bundle must be released; present, it must be
-   * a frozen candidate. Nothing else changes.
-   */
-  readonly candidateEvaluation?: true;
-}
+/**
+ * ETBZ-57: an evaluation run of a CANDIDATE bundle (before its Human Editorial
+ * Gate) passes `{ candidateEvaluation: true }`. Absent, the bundle must be released.
+ */
+export type SkillInputPackageOptions = CandidateEvaluation;
 
 /**
  * Assembles the package and proves its parts belong together. Throws on the

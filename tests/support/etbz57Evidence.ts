@@ -68,20 +68,23 @@ export const ETBZ57_GENERATION = {
   model: 'claude-opus-5-5',
   executedAt: '2026-10-01',
   operator: 'Delivery Runner (ETBZ-57 57.4)',
-  repositoryHead: '8abe8d7023992926bf3d6100c88cb0458be9757c',
+  repositoryHead: 'ffbcd0ab6ba215e3172cd78b32e0c8872c29be8d',
   passes: [
     'REALISE v1 and EDIT v1: superseded after independent editorial review round 1 (not committed)',
-    'REALISE v2: semantic-reading.json',
-    'EDIT v2: skill-reading.json (text-only revision of REALISE v2)',
+    'REALISE v2 and EDIT v2: superseded after review round 2 confirmed 8 of 20 flagged sentences as overreach (not committed)',
+    'REALISE v3 and EDIT v3: committed in ffbcd0a, superseded after the delta review (round 3) found unlicensed count statements and 3 overreaching fill sentences',
+    'REALISE v4: semantic-reading.json',
+    'EDIT v4: skill-reading.json (text-only revision of REALISE v4)',
   ],
 } as const;
 
 const sha256Of = (path: string): string => `sha256:${createHash('sha256').update(readFileSync(resolve(process.cwd(), path))).digest('hex')}`;
+const sha256OfText = (text: string): string => `sha256:${createHash('sha256').update(text).digest('hex')}`;
 
 export function deriveEtbz57Evidence(): Etbz57Evidence {
   const v10 = skillFixture();
   const v11 = skillFixtureV1_1();
-  const context = { bundle: v11.bundle, inputPackage: v11.inputPackage };
+  const context = { bundle: v11.bundle, inputPackage: v11.inputPackage, candidateEvaluation: true } as const;
   const old = acceptSkillReading(readJson(`${ETBZ52_FIXTURE_DIR}/skill-reading.json`), { bundle: v10.bundle, inputPackage: v10.inputPackage });
   const semantic = acceptSkillReading(readJson(`${ETBZ57_FIXTURE_DIR}/semantic-reading.json`), context);
   const accepted = acceptEditorialRevision(semantic, readJson(`${ETBZ57_FIXTURE_DIR}/skill-reading.json`), context);
@@ -103,7 +106,7 @@ export function deriveEtbz57Evidence(): Etbz57Evidence {
   for (const p of onDayMaster(silent)) (p as { posture: string }).posture = 'TENTATIVE';
   const marked = structuredClone(silent);
   for (const p of onDayMaster(marked)) (p as { text: string }).text = `Vorläufig, solange die Angabe nicht bestätigt ist: ${p.text}`;
-  const tentativeContext = { bundle: v11.bundle, inputPackage: tentative.pkg };
+  const tentativeContext = { bundle: v11.bundle, inputPackage: tentative.pkg, candidateEvaluation: true } as const;
 
   // D — no manufactured tension: tension language added to the paragraph over the one claim in no contrast.
   const manufactured = structuredClone(accepted) as SkillReadingDraft & { structuralHash?: string };
@@ -190,6 +193,10 @@ export function deriveEtbz57Evidence(): Etbz57Evidence {
       'skill-input.json': sha256Of(`${ETBZ57_FIXTURE_DIR}/skill-input.json`),
       'semantic-reading.json': sha256Of(`${ETBZ57_FIXTURE_DIR}/semantic-reading.json`),
       'skill-reading.json': sha256Of(`${ETBZ57_FIXTURE_DIR}/skill-reading.json`),
+      // Written by the same emit run as this manifest: hashed from the rendered bytes, not read back.
+      'accepted-reading.json': sha256OfText(renderJson(accepted)),
+      'customer-reading.json': sha256OfText(renderJson(customer)),
+      '../evals.json': sha256OfText(renderJson(evals)),
     },
     generation: ETBZ57_GENERATION,
   };
