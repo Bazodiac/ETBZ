@@ -64,7 +64,7 @@ both against the committed tree.
   must show is shown - against a mistaken builder or stylesheet edit, for the mechanisms
   ADR 0012 section 6 lists (limitation 8 names what the page QA does not measure).
 - The PDF itself says the same (final-artifact readback, ADR 0012 section 6): each of its
-  33,543 text units is bound to one of the 1,640 printed strings of its page, none clipped
+  33,542 text units is bound to one of the 1,639 printed strings of its page, none clipped
   away, and each string's glyphs spell its projection value in visual order, every glyph
   upright; every clip is one convex shape or a frame around one; its painted shapes are the
   116 display glyphs and 30 wordmarks (each with its dot) as canonical outlines, each wholly
@@ -72,7 +72,7 @@ both against the committed tree.
   single convex contours, nothing else (limitation 14 names what this leaves out).
 - Deterministic: runs 2 and 3 produced the same PDF bytes and the same 29 page images,
   and a separate two-run render process produced the same PDF bytes again (re-measured for
-  the ETBZ-56 re-render).
+  the ETBZ-56 re-render; an operator declaration - CI re-derives only the in-process runs).
 
 ## What it does not show
 

@@ -17,8 +17,8 @@ ADR 0014.
 | `artifact-manifest.json` | `ARTIFACT_READY`, `QA_PASSED`: the PDF, the projection sources (Lexicon 1.1.0, the branch animal table, the Skill identities), template, renderer, fonts, QA checks, generation record | the renderer |
 | `qa-report.json` | per page: findings (none), printed strings, glyphs, faces, page image digest | the renderer |
 | `contact-sheet.png` | all 29 pages | the renderer |
-| `pages/*.png` | fourteen full-size page renders of the same run: cover, identity, glance, four pillars, day master, Wu Xing, five phases, Ten Gods, hidden stems, chapter 1 opener and continuation, reflection, summary, method note | the renderer (digests in `qa-report.json`) |
-| `visual-verdict.json` | the Delivery Runner's visual evidence verdict (Rebaseline section 18): `VISUALLY_FIT_FOR_GOLDEN`, no defect, two observations, bound to the artifact and render digests | the Delivery Runner, after inspecting the renders |
+| `pages/*.png` | fifteen full-size page renders of the same run: cover, identity, glance, four pillars, foundation, day master, Wu Xing, five phases, Ten Gods, hidden stems, chapter 1 opener and continuation, reflection, summary, method note | the renderer (digests in `qa-report.json`) |
+| `visual-verdict.json` | the Delivery Runner's visual evidence verdict (Rebaseline section 18): `VISUALLY_FIT_FOR_GOLDEN`, no defect, five observations, bound to the artifact and render digests | the Delivery Runner, after inspecting the renders |
 
 `tests/contract/etbz56-skill-presentation-evidence.contract.test.ts` re-derives in CI what
 needs no browser: the projection from the accepted reading, its input package and the
@@ -30,7 +30,8 @@ the one the QA report hashed; the verdict bound to the same artifact.
 
 The generation record is the operator's declaration (`declared: true`): the render ran on
 the head it names, which the contract suite requires in the tested history. A second
-render process produced the same PDF bytes.
+render process produced the same PDF bytes - also a declaration; CI re-derives the
+in-process DETERMINISM check the manifest records.
 
 ## What the render shows
 
@@ -39,12 +40,14 @@ render process produced the same PDF bytes.
   German quotation marks included (ADR 0012 limitation 12 is resolved, ADR 0014 section 4).
 - The chart the reading was written about: every fact of the input package equals the chart
   value at its path before a page is built; the pages draw the validated chart.
-- Every displayed Earthly Branch with its German animal label from
+- Every Earthly Branch the template displays with its German animal label from
   `bazodiac-branch-animal-labels@1.0.0` - glance, four pillars, foundation, day master, all
-  twelve on the five-phases page, hidden stems, reflection and summary.
+  twelve on the five-phases page, hidden stems, reflection and summary. Branches the
+  reading's own text names ("Wu (午)" on pages 12 and 14) stay as the Skill wrote them: the
+  mapper adds no word to an accepted reading (ADR 0014 section 3).
 - No internal identifier on any page: the identities live in `sources`, which no page
   prints, and the PDF's text layer is bound string for string to the pages' printed
-  strings (32,151 text units, 1,617 strings).
+  strings (32,150 text units, 1,616 strings).
 
 ## What it does not show
 

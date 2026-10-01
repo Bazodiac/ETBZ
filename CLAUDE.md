@@ -20,7 +20,7 @@ README on `main` still describes ETBZ-9; the code and `docs/adr/` are authoritat
 npm ci                      # deterministic install (lockfile drift fails here)
 npm run typecheck           # tsc --noEmit, strict
 npm run lint                # eslint, zero warnings: recommended rule sets + four type-aware defect rules, no formatting rules
-npm test                    # all five suites (1652 tests with ETBZ-55; the architecture leaf tests import dependency-direction.test.ts, so its 19 tests are also registered inside each of them)
+npm test                    # all five suites (__TESTCOUNT__ tests with ETBZ-56; the architecture leaf tests import dependency-direction.test.ts, so its 19 tests are also registered inside each of them)
 npm run build               # tsc -p tsconfig.build.json -> dist/
 ETBZ_ENV=local LOG_LEVEL=info npm start     # http://localhost:8120 — serves /health and /ready only
 ```
@@ -212,10 +212,11 @@ squash or rebase).
 
 ETBZ-56 presents an accepted Skill reading on the same projection and renderer (ADR 0014):
 `buildSkillReadingProjection({ model, reading, bundle, inputPackage })` refuses a bundle other than the released 1.1.0
-(`PRESENTED_SKILL_BUNDLE_VERSIONS`), accepts the recorded reading again through `acceptSkillReading` and holds it to its
-own structural hash, requires every input-package fact to equal the chart value at its path (so the PDF shows the chart
-the reading was written about), and binds each visualization spec to the pages that draw its slot through the
-slot-to-fact vocabulary `SKILL_FACT_KIND_TO_PAGE_KIND` (cited facts the slot does not show are recorded, never drawn).
+(`PRESENTED_SKILL_BUNDLE_VERSIONS`), requires the input package, its claim graph and its plan to hash to their own
+hashes, accepts the recorded reading again through `acceptSkillReading` and holds it to its own structural hash, requires
+every input-package fact to equal the chart value at its path and the package's source warnings to be the chart's (so the
+PDF shows the facts the reading was written about), and records each visualization spec against the pages that draw its
+slot through the slot-to-fact vocabulary `SKILL_FACT_KIND_TO_PAGE_KIND` (cited facts split by kind, never drawn).
 `sources.skill` carries the Skill, bundle, package, plan, graph, reading and contract identities into the manifest, and
 `sources.lexicon` is the bundle's Lexicon (1.1.0) - the fixture path `buildPresentationProjection` still records 1.0.0.
 Both call `projectPresentation`, which has no third caller (`tests/architecture/etbz56-skill-presentation-boundary.test.ts`).
@@ -223,7 +224,7 @@ Every page that displays an Earthly Branch prints its animal from the hash-froze
 `bazodiac-branch-animal-labels@1.0.0` (German = the Sizhu `tierDe` column); an unmapped branch or language is refused.
 The every-word check compares `placedBlockText` with the placed lines and strips nothing (it used to strip U+201C/D from
 the placed lines only, which refused any German `„…“` quotation). Evidence `docs/evidence/etbz-56/` (PDF, manifest, QA,
-fourteen page renders, the visual verdict), checked by `tests/contract/etbz56-skill-presentation-evidence.contract.test.ts`;
+fifteen page renders, the visual verdict), checked by `tests/contract/etbz56-skill-presentation-evidence.contract.test.ts`;
 the ETBZ-55 evidence was re-rendered on the same renderer digest.
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source

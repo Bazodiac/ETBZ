@@ -1,7 +1,7 @@
 {
- "artifactId": "bazodiac-reading-89865a31935cae2d",
- "byteLength": 1921461,
- "contactSheetSha256": "sha256:00f13c18031ec61ffc1af52d7bf545bcd68fc31b3aac95ad2b06524a4d578e84",
+ "artifactId": "bazodiac-reading-33f0cc8aa3fd5204",
+ "byteLength": 1921444,
+ "contactSheetSha256": "sha256:a7565ad535f19943b57605c2e74e0b2f52bc3b942ad8d55602430c32464ba207",
  "fonts": [
   {
    "family": "Inter",
@@ -58,7 +58,7 @@
   "declared": true,
   "executedAt": "2026-10-01",
   "host": "Darwin arm64",
-  "repositoryHead": "7238339f3c4e3942bf6ce8f0e1bb180602fb4101"
+  "repositoryHead": "aad37c074da595960665d6f724f26b542734f4a7"
  },
  "input": {
   "branchAnimals": {
@@ -141,7 +141,7 @@
     "detail": {
      "displayGlyphs": 116,
      "pages": 29,
-     "textNodes": 1640
+     "textNodes": 1639
     },
     "id": "PAGE_QA",
     "result": "PASS"
@@ -168,8 +168,8 @@
     "detail": {
      "clippedUnits": 0,
      "pages": 29,
-     "printedStrings": 1640,
-     "textUnits": 33543
+     "printedStrings": 1639,
+     "textUnits": 33542
     },
     "id": "PDF_TEXT_LAYER",
     "result": "PASS"
@@ -194,7 +194,7 @@
       3
      ],
      "pages": 29,
-     "pdfSha256": "sha256:89865a31935cae2d79de3a7272d2b73869ed5ebfced4b8289262ed092a366021"
+     "pdfSha256": "sha256:33f0cc8aa3fd5204db9444beb294840536b1cb91370ab522398449a9546a7e3e"
     },
     "id": "DETERMINISM",
     "result": "PASS"
@@ -220,9 +220,9 @@
    "version": "136.0.7103.25"
   },
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:0fdfd40a65502256574a78c493239c8ef19ce82e7ad803f3a46d1d38c70a746a"
+  "sourceSha256": "sha256:4924747390ce173a37b437b55d402cb70b582f316c2a06f0878914fe5a65096d"
  },
- "sha256": "sha256:89865a31935cae2d79de3a7272d2b73869ed5ebfced4b8289262ed092a366021",
+ "sha256": "sha256:33f0cc8aa3fd5204db9444beb294840536b1cb91370ab522398449a9546a7e3e",
  "state": "ARTIFACT_READY",
  "template": {
   "assets": [

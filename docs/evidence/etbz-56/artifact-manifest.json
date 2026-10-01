@@ -1,7 +1,7 @@
 {
- "artifactId": "bazodiac-reading-87806e0ad2151bfa",
- "byteLength": 1919146,
- "contactSheetSha256": "sha256:533eb9df599fdfa3254c7d4a1f0b08eefd8ad972409bb423cb94a45dbd283551",
+ "artifactId": "bazodiac-reading-9aec05c2fb0bd58e",
+ "byteLength": 1919129,
+ "contactSheetSha256": "sha256:ebbbae6b6f52859e7ea2b4b28c77a54db899e9e8363b64dcd07123585a6f5edd",
  "fonts": [
   {
    "family": "Inter",
@@ -58,7 +58,7 @@
   "declared": true,
   "executedAt": "2026-10-01",
   "host": "Darwin arm64",
-  "repositoryHead": "7238339f3c4e3942bf6ce8f0e1bb180602fb4101"
+  "repositoryHead": "aad37c074da595960665d6f724f26b542734f4a7"
  },
  "input": {
   "branchAnimals": {
@@ -111,41 +111,36 @@
    "visualBindings": [
     {
      "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.dayMaster.stemHanzi"
+     ],
      "emptyReason": null,
-     "notShownFactRefs": [],
+     "otherKindFactRefs": [],
      "pageNumbers": [
       1
-     ],
-     "shownFactRefs": [
-      "chart.dayMaster.stemHanzi"
      ],
      "slotId": "cover.primaryGlyph",
      "specId": "spec.cover"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [],
-     "pageNumbers": [
-      4
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.dayMaster.stem",
       "chart.dayMaster.stemHanzi",
       "chart.dayMaster.element",
       "chart.dayMaster.polarity"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      4
      ],
      "slotId": "glance.dayMaster",
      "specId": "spec.glance.dayMaster"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [],
-     "pageNumbers": [
-      4
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.pillar.year.stem",
       "chart.pillar.year.branch",
       "chart.pillar.month.stem",
@@ -155,36 +150,36 @@
       "chart.pillar.hour.stem",
       "chart.pillar.hour.branch"
      ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      4
+     ],
      "slotId": "glance.pillars",
      "specId": "spec.glance.pillars"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [
-      "chart.wuxing.dominant"
-     ],
-     "pageNumbers": [
-      4
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.wuxing.weight.Holz",
       "chart.wuxing.weight.Feuer",
       "chart.wuxing.weight.Erde",
       "chart.wuxing.weight.Metall",
       "chart.wuxing.weight.Wasser"
      ],
+     "emptyReason": null,
+     "otherKindFactRefs": [
+      "chart.wuxing.dominant"
+     ],
+     "pageNumbers": [
+      4
+     ],
      "slotId": "glance.wuXing",
      "specId": "spec.glance.wuXing"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [],
-     "pageNumbers": [
-      5
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.pillar.year.stem",
       "chart.pillar.year.stemHanzi",
       "chart.pillar.year.stemElement",
@@ -198,17 +193,17 @@
       "chart.pillar.hour.stemHanzi",
       "chart.pillar.hour.stemElement"
      ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      5
+     ],
      "slotId": "pillars.stem[*]",
      "specId": "spec.pillars.stem"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [],
-     "pageNumbers": [
-      5
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.pillar.year.branch",
       "chart.pillar.year.branchHanzi",
       "chart.pillar.month.branch",
@@ -218,17 +213,17 @@
       "chart.pillar.hour.branch",
       "chart.pillar.hour.branchHanzi"
      ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      5
+     ],
      "slotId": "pillars.branch[*]",
      "specId": "spec.pillars.branch"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [],
-     "pageNumbers": [
-      5
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.natal.pillar.year.hiddenStem.0.stem",
       "chart.natal.pillar.year.hiddenStem.1.stem",
       "chart.natal.pillar.month.hiddenStem.0.stem",
@@ -239,37 +234,42 @@
       "chart.natal.pillar.hour.hiddenStem.1.stem",
       "chart.natal.pillar.hour.hiddenStem.2.stem"
      ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      5
+     ],
      "slotId": "pillars.hidden[*]",
      "specId": "spec.pillars.hidden"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [],
-     "pageNumbers": [
-      5
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.natal.pillar.year.tenGod",
       "chart.natal.pillar.month.tenGod",
       "chart.natal.pillar.hour.tenGod"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      5
      ],
      "slotId": "pillars.tenGod[*]",
      "specId": "spec.pillars.tenGod"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [],
-     "pageNumbers": [
-      7
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.dayMaster.stem",
       "chart.dayMaster.stemHanzi",
       "chart.dayMaster.stemPinyin",
       "chart.dayMaster.element",
       "chart.dayMaster.polarity"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      7
      ],
      "slotId": "dayMaster.hero",
      "specId": "spec.dayMaster.hero"
@@ -278,40 +278,35 @@
      "claimRefs": [
       "claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57"
      ],
+     "consumedKindFactRefs": [],
      "emptyReason": "NO_APPROVED_CONTENT",
-     "notShownFactRefs": [
+     "otherKindFactRefs": [
       "chart.dayMaster.stem"
      ],
      "pageNumbers": [],
-     "shownFactRefs": [],
      "slotId": "dayMaster.reading",
      "specId": "spec.dayMaster.reading"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [],
-     "pageNumbers": [
-      8
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.wuxing.weight.Holz",
       "chart.wuxing.weight.Feuer",
       "chart.wuxing.weight.Erde",
       "chart.wuxing.weight.Metall",
       "chart.wuxing.weight.Wasser"
      ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      8
+     ],
      "slotId": "wuXing.vector",
      "specId": "spec.wuXing.vector"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [],
-     "pageNumbers": [
-      10
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.natal.pillar.year.tenGod",
       "chart.natal.pillar.month.tenGod",
       "chart.natal.pillar.hour.tenGod",
@@ -325,17 +320,17 @@
       "chart.natal.pillar.hour.hiddenStem.1.tenGod",
       "chart.natal.pillar.hour.hiddenStem.2.tenGod"
      ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      10
+     ],
      "slotId": "tenGods.presence",
      "specId": "spec.tenGods.presence"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [],
-     "pageNumbers": [
-      11
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.natal.pillar.year.hiddenStem.0.stem",
       "chart.natal.pillar.year.hiddenStem.0.tenGod",
       "chart.natal.pillar.year.hiddenStem.1.stem",
@@ -355,6 +350,11 @@
       "chart.natal.pillar.hour.hiddenStem.2.stem",
       "chart.natal.pillar.hour.hiddenStem.2.tenGod"
      ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      11
+     ],
      "slotId": "hidden.rows",
      "specId": "spec.hidden.rows"
     },
@@ -367,8 +367,9 @@
       "claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57",
       "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"
      ],
+     "consumedKindFactRefs": [],
      "emptyReason": null,
-     "notShownFactRefs": [],
+     "otherKindFactRefs": [],
      "pageNumbers": [
       12,
       13,
@@ -385,7 +386,6 @@
       24,
       25
      ],
-     "shownFactRefs": [],
      "slotId": "chapter.longForm",
      "specId": "spec.chapter.longForm"
     },
@@ -397,25 +397,18 @@
       "claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57",
       "claim.sha256:a1dbb87ff5e598f3d6a6bffbb20b3686b741ac29ed39b29bc372b8484e8501d1"
      ],
+     "consumedKindFactRefs": [],
      "emptyReason": null,
-     "notShownFactRefs": [],
+     "otherKindFactRefs": [],
      "pageNumbers": [
       26
      ],
-     "shownFactRefs": [],
      "slotId": "reflection.prompts",
      "specId": "spec.reflection.prompts"
     },
     {
      "claimRefs": [],
-     "emptyReason": null,
-     "notShownFactRefs": [
-      "chart.wuxing.dominant"
-     ],
-     "pageNumbers": [
-      27
-     ],
-     "shownFactRefs": [
+     "consumedKindFactRefs": [
       "chart.dayMaster.stem",
       "chart.pillar.year.stem",
       "chart.pillar.year.branch",
@@ -426,17 +419,24 @@
       "chart.pillar.hour.stem",
       "chart.pillar.hour.branch"
      ],
+     "emptyReason": null,
+     "otherKindFactRefs": [
+      "chart.wuxing.dominant"
+     ],
+     "pageNumbers": [
+      27
+     ],
      "slotId": "summary.facts",
      "specId": "spec.summary.facts"
     },
     {
      "claimRefs": [],
+     "consumedKindFactRefs": [],
      "emptyReason": null,
-     "notShownFactRefs": [],
+     "otherKindFactRefs": [],
      "pageNumbers": [
       29
      ],
-     "shownFactRefs": [],
      "slotId": "method.conventions",
      "specId": "spec.method.conventions"
     }
@@ -447,9 +447,9 @@
  "mimeType": "application/pdf",
  "pageCount": 29,
  "presentation": {
-  "fileSha256": "sha256:1f5f374f596b425fc98c1f9a6eea8ae7497b00054aa8d3d8e475757a988b5186",
+  "fileSha256": "sha256:d4819d54e9e57759e4ae49ac6f829f80dfc76478ab7dade63f492c579fd3c8da",
   "projectionVersion": "bazodiac-presentation-projection.v1",
-  "structuralHash": "sha256:465d6b08e64ebaace4a2f72f6073ca9ce641062cacc14508feab2045c88d7d4a"
+  "structuralHash": "sha256:ce232a9859b8ad7cb34aa44db0e3a18f070872d2ecb30c082dae64e2c8f983b8"
  },
  "qa": {
   "checks": [
@@ -460,7 +460,7 @@
    },
    {
     "detail": {
-     "projection": "sha256:465d6b08e64ebaace4a2f72f6073ca9ce641062cacc14508feab2045c88d7d4a",
+     "projection": "sha256:ce232a9859b8ad7cb34aa44db0e3a18f070872d2ecb30c082dae64e2c8f983b8",
      "template": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
     },
     "id": "PROJECTION_IDENTITY",
@@ -510,7 +510,7 @@
     "detail": {
      "displayGlyphs": 116,
      "pages": 29,
-     "textNodes": 1617
+     "textNodes": 1616
     },
     "id": "PAGE_QA",
     "result": "PASS"
@@ -537,8 +537,8 @@
     "detail": {
      "clippedUnits": 0,
      "pages": 29,
-     "printedStrings": 1617,
-     "textUnits": 32151
+     "printedStrings": 1616,
+     "textUnits": 32150
     },
     "id": "PDF_TEXT_LAYER",
     "result": "PASS"
@@ -563,7 +563,7 @@
       3
      ],
      "pages": 29,
-     "pdfSha256": "sha256:87806e0ad2151bfadb30040d5c7d2fbd31c8630bb7a5bdd4468f73c020c7e14c"
+     "pdfSha256": "sha256:9aec05c2fb0bd58ea3bcc0d3bc9a02a00a524109073cd83f440c3c3843e9b939"
     },
     "id": "DETERMINISM",
     "result": "PASS"
@@ -589,9 +589,9 @@
    "version": "136.0.7103.25"
   },
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:0fdfd40a65502256574a78c493239c8ef19ce82e7ad803f3a46d1d38c70a746a"
+  "sourceSha256": "sha256:4924747390ce173a37b437b55d402cb70b582f316c2a06f0878914fe5a65096d"
  },
- "sha256": "sha256:87806e0ad2151bfadb30040d5c7d2fbd31c8630bb7a5bdd4468f73c020c7e14c",
+ "sha256": "sha256:9aec05c2fb0bd58ea3bcc0d3bc9a02a00a524109073cd83f440c3c3843e9b939",
  "state": "ARTIFACT_READY",
  "template": {
   "assets": [

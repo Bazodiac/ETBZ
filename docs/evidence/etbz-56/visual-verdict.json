@@ -4,15 +4,15 @@
  "scope": "Delivery Runner visual evidence verdict, Rebaseline 62128133 section 18 (ETBZ-55 comment 16818): no additional Product Owner stop, not a sellability verdict.",
  "reviewedOn": "2026-10-01",
  "artifact": {
-  "artifactId": "bazodiac-reading-87806e0ad2151bfa",
-  "pdfSha256": "sha256:87806e0ad2151bfadb30040d5c7d2fbd31c8630bb7a5bdd4468f73c020c7e14c",
-  "contactSheetSha256": "sha256:533eb9df599fdfa3254c7d4a1f0b08eefd8ad972409bb423cb94a45dbd283551",
+  "artifactId": "bazodiac-reading-9aec05c2fb0bd58e",
+  "pdfSha256": "sha256:9aec05c2fb0bd58ea3bcc0d3bc9a02a00a524109073cd83f440c3c3843e9b939",
+  "contactSheetSha256": "sha256:ebbbae6b6f52859e7ea2b4b28c77a54db899e9e8363b64dcd07123585a6f5edd",
   "pageCount": 29
  },
  "inspected": [
-  "the final PDF via its 29 page renders of the same run",
-  "the contact sheet",
-  "the full-size renders listed under pages"
+  "the contact sheet: all 29 pages of the same run",
+  "the full-size renders listed under pages (fifteen, committed)",
+  "each of the fifteen at full size - in this run or in an earlier render of the same projection whose page image is byte-identical"
  ],
  "checks": [
   {
@@ -46,9 +46,9 @@
    "note": "PDF digest, length and page count re-derived by tests/contract/etbz56-skill-presentation-evidence.contract.test.ts."
   },
   {
-   "check": "Every displayed Earthly Branch carries its animal label (ETBZ-56 AC 8)",
+   "check": "Every Earthly Branch the template displays carries its animal label (ETBZ-56 AC 8, as ADR 0014 section 3 reads it)",
    "result": "PASS",
-   "note": "Glance, four pillars, foundation, day master, five phases (all twelve), hidden stems, reflection, summary."
+   "note": "Glance, four pillars, foundation, day master, five phases (all twelve), hidden stems, reflection, summary. Branches named in the reading’s own text (Wu (午) on pages 12 and 14) carry no label: the mapper adds no word to an accepted reading."
   }
  ],
  "defects": [],
@@ -57,6 +57,21 @@
    "page": "13",
    "pageId": "chapter-01-p2",
    "note": "The tail of a paragraph carried onto a continuation page keeps the opener column width (ADR 0012 limitation 4, the canonical ETBZ-49 paginator); not a defect."
+  },
+  {
+   "page": "09",
+   "pageId": "five-phases",
+   "note": "The Earth card holds four branches, which wrap to two rows under their labels; the branch rows of the five cards do not line up with each other. Legible, nothing clipped."
+  },
+  {
+   "page": "27",
+   "pageId": "summary",
+   "note": "The separator before an animal label is the renderer’s spaced separator, the Day-Master row’s separators are part of its value: the spacing differs within one table."
+  },
+  {
+   "page": "01",
+   "pageId": "cover",
+   "note": "The two-line title from the reading runs across the fire atmosphere shape; it stays legible (the same composition as ETBZ-55)."
   },
   {
    "page": "29",
@@ -90,10 +105,16 @@
    "pngSha256": "sha256:ffa9a589823bf7cb68032520893a73422bb28dc0723bdc9e1f3200cf2164cdad"
   },
   {
+   "file": "pages/06-foundation.png",
+   "pageLabel": "06",
+   "pageId": "foundation",
+   "pngSha256": "sha256:94f57e4d2d21bc39abcefbc5f2f7dc4c82c30c9c48c24c9d197f0bd467bbf3c4"
+  },
+  {
    "file": "pages/07-day-master.png",
    "pageLabel": "07",
    "pageId": "day-master",
-   "pngSha256": "sha256:c570e5ffc21233dc427ee342fdf067d2eb08bf8fc83087ffe9c163d9b7f4d2cf"
+   "pngSha256": "sha256:e56c143e13407768410cb6070cea2e77a57554add7a1759a370fc0e6b8129c77"
   },
   {
    "file": "pages/08-wu-xing-distribution.png",

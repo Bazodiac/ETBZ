@@ -243,7 +243,8 @@ glyphs and wordmark, the PDF is the authority. Before it writes a PDF it checks:
   the PDF alone; measured, the two differ only in a sub-pixel window of width and height).
   The `media` attribute of a `<style>` or `<link>` element - the stylesheet's own media
   list - is held to the same condition (ETBZ-56, ADR 0014; canaries `style-media-attribute`
-  and `link-media-attribute`); no
+  and `link-media-attribute`); the walk covers every stylesheet in `document.styleSheets`
+  (a shadow root's or an adopted stylesheet is not in it); no
   text or element outside the sheet; no non-breaking pair split across lines. Text or
   shapes that reach the PDF another way (a list marker from `display:list-item`, a shadow
   tree, a hyphenation character, CSS `d` on a path, a clip path) are the final layers' to
@@ -299,8 +300,8 @@ then walks the merged PDF's content streams (form XObjects included), page by pa
   neither rotated, skewed nor mirrored. Text the page does not hold as a printed node, a
   missing or doubled string, an inserted character, a string printed out of its order and a
   turned or mirrored glyph block (`PDF_TEXT_UNBOUND`, `PDF_TEXT_MISMATCH`,
-  `PDF_TEXT_NOT_UPRIGHT`, `PDF_TEXT_CLIPPED`). On the evidence document: 33,394 text units
-  bound to 1,608 printed strings on 29 pages, none clipped;
+  `PDF_TEXT_NOT_UPRIGHT`, `PDF_TEXT_CLIPPED`). On the evidence document (re-rendered in ETBZ-56): 33,542
+  text units bound to 1,639 printed strings on 29 pages, none clipped;
 - *vector layer*: every painted path (fill or stroke) must be either a canonical outline -
   one of the 27 sprite glyphs or the wordmark path, recognised by its segment sequence
   (each of the 28 is unique) and an axis-aligned scale-and-shift fit to the pinned path

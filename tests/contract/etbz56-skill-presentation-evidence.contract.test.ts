@@ -172,7 +172,8 @@ describe('ETBZ-56: the QA report and the visual evidence', () => {
       expect(sha256Of(readFileSync(resolve(EVIDENCE, 'pages', file))), file).toBe(page?.pngSha256);
     }
     const ids = files.map((file) => file.slice(3, -4));
-    for (const required of ['cover', 'identity', 'four-pillars', 'wu-xing-distribution', 'hidden-stems', 'ten-gods', 'chapter-01-p1', 'chapter-01-p2', 'reflection', 'summary', 'method-note']) {
+    // Rebaseline section 18 names these; the AC 8 pages (every page that displays a branch) are committed too.
+    for (const required of ['cover', 'identity', 'glance', 'four-pillars', 'foundation', 'day-master', 'wu-xing-distribution', 'five-phases', 'hidden-stems', 'ten-gods', 'chapter-01-p1', 'chapter-01-p2', 'reflection', 'summary', 'method-note']) {
       expect(ids, required).toContain(required);
     }
   });
@@ -188,7 +189,8 @@ describe('ETBZ-56: the QA report and the visual evidence', () => {
     expect(['VISUALLY_FIT_FOR_GOLDEN', 'BLOCKED_BY_PRESENTATION_DEFECT']).toContain(verdict.verdict);
     expect(verdict.verdict === 'VISUALLY_FIT_FOR_GOLDEN').toBe(verdict.defects.length === 0);
     expect(verdict.artifact).toEqual({ artifactId: manifest.artifactId, pdfSha256: manifest.sha256, contactSheetSha256: manifest.contactSheetSha256, pageCount: manifest.pageCount });
-    for (const check of verdict.checks) expect(check.result, check.check).toBe(verdict.verdict === 'VISUALLY_FIT_FOR_GOLDEN' ? 'PASS' : expect.any(String));
+    // A fit verdict passes every check; a blocked one names its defects (the checks may then carry any result).
+    if (verdict.verdict === 'VISUALLY_FIT_FOR_GOLDEN') for (const check of verdict.checks) expect(check.result, check.check).toBe('PASS');
     expect(verdict.pages.map((page) => page.file)).toEqual(readdirSync(resolve(EVIDENCE, 'pages')).sort().map((file) => `pages/${file}`));
     for (const page of verdict.pages) expect(page.pngSha256, page.file).toBe(sha256Of(readFileSync(resolve(EVIDENCE, page.file))));
   });

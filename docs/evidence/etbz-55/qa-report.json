@@ -57,7 +57,7 @@
    "detail": {
     "displayGlyphs": 116,
     "pages": 29,
-    "textNodes": 1640
+    "textNodes": 1639
    },
    "id": "PAGE_QA",
    "result": "PASS"
@@ -84,8 +84,8 @@
    "detail": {
     "clippedUnits": 0,
     "pages": 29,
-    "printedStrings": 1640,
-    "textUnits": 33543
+    "printedStrings": 1639,
+    "textUnits": 33542
    },
    "id": "PDF_TEXT_LAYER",
    "result": "PASS"
@@ -110,7 +110,7 @@
      3
     ],
     "pages": 29,
-    "pdfSha256": "sha256:89865a31935cae2d79de3a7272d2b73869ed5ebfced4b8289262ed092a366021"
+    "pdfSha256": "sha256:33f0cc8aa3fd5204db9444beb294840536b1cb91370ab522398449a9546a7e3e"
    },
    "id": "DETERMINISM",
    "result": "PASS"
@@ -246,8 +246,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:c570e5ffc21233dc427ee342fdf067d2eb08bf8fc83087ffe9c163d9b7f4d2cf",
-   "textNodes": 42
+   "pngSha256": "sha256:e56c143e13407768410cb6070cea2e77a57554add7a1759a370fc0e6b8129c77",
+   "textNodes": 41
   },
   {
    "displayGlyphs": 10,

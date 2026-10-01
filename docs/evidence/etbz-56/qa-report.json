@@ -7,7 +7,7 @@
   },
   {
    "detail": {
-    "projection": "sha256:465d6b08e64ebaace4a2f72f6073ca9ce641062cacc14508feab2045c88d7d4a",
+    "projection": "sha256:ce232a9859b8ad7cb34aa44db0e3a18f070872d2ecb30c082dae64e2c8f983b8",
     "template": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
    },
    "id": "PROJECTION_IDENTITY",
@@ -57,7 +57,7 @@
    "detail": {
     "displayGlyphs": 116,
     "pages": 29,
-    "textNodes": 1617
+    "textNodes": 1616
    },
    "id": "PAGE_QA",
    "result": "PASS"
@@ -84,8 +84,8 @@
    "detail": {
     "clippedUnits": 0,
     "pages": 29,
-    "printedStrings": 1617,
-    "textUnits": 32151
+    "printedStrings": 1616,
+    "textUnits": 32150
    },
    "id": "PDF_TEXT_LAYER",
    "result": "PASS"
@@ -110,7 +110,7 @@
      3
     ],
     "pages": 29,
-    "pdfSha256": "sha256:87806e0ad2151bfadb30040d5c7d2fbd31c8630bb7a5bdd4468f73c020c7e14c"
+    "pdfSha256": "sha256:9aec05c2fb0bd58ea3bcc0d3bc9a02a00a524109073cd83f440c3c3843e9b939"
    },
    "id": "DETERMINISM",
    "result": "PASS"
@@ -246,8 +246,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:c570e5ffc21233dc427ee342fdf067d2eb08bf8fc83087ffe9c163d9b7f4d2cf",
-   "textNodes": 42
+   "pngSha256": "sha256:e56c143e13407768410cb6070cea2e77a57554add7a1759a370fc0e6b8129c77",
+   "textNodes": 41
   },
   {
    "displayGlyphs": 10,
@@ -543,7 +543,7 @@
    "textNodes": 13
   }
  ],
- "projectionStructuralHash": "sha256:465d6b08e64ebaace4a2f72f6073ca9ce641062cacc14508feab2045c88d7d4a",
+ "projectionStructuralHash": "sha256:ce232a9859b8ad7cb34aa44db0e3a18f070872d2ecb30c082dae64e2c8f983b8",
  "reportVersion": "bazodiac-pdf-qa-report.v1",
  "state": "QA_PASSED",
  "status": "PASSED"
