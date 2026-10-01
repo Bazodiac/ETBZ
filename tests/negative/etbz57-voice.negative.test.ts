@@ -482,7 +482,9 @@ describe('V7: bundle 1.1.0 is released; the candidate boundary still holds', () 
     const base = buildSkillContractBundle(undefined, '1.1.0');
     expect(base.contracts.every((source) => source.status === 'CURRENT')).toBe(true);
     const undated: SkillContractBundleCore = { ...base, contracts: base.contracts.map((source) => (source.key === 'INTERPRETATION_LENS' ? { ...source, releasedOn: null } : source)) };
-    expect(() => validateSkillContractBundleCore(undated, BAZI_METHOD_REGISTRY_V1)).toThrow(SkillContractError);
+    const error = contractRefusal(() => validateSkillContractBundleCore(undated, BAZI_METHOD_REGISTRY_V1));
+    expect(error.code).toBe('BUNDLE_SCHEMA_INVALID');
+    expect(error.message).toMatch(/INTERPRETATION_LENS" has no title or no decision date/u);
   });
 
   it('accepts the portable 1.1.0 copy as itself, with no opt-in now that it is released', () => {

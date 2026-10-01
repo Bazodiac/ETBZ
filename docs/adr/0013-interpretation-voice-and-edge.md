@@ -54,8 +54,8 @@ plan built without it binds the 1.0.0 pair, which a 1.1.0 package refuses.
 ### 2. Candidate is a status, not a pretence
 
 The revised pages are copies of the released pages (Lens `77561858`, Lexicon `77529091`,
-Anti-Boilerplate `77266967`) carrying status CANDIDATE and no decision date; the released
-pages are untouched. In the repository a contract source may be `CANDIDATE` with
+Anti-Boilerplate `77266967`) that carried status CANDIDATE and no decision date until the
+release (see Status); until then the 1.0.0 pages were untouched. In the repository a contract source may be `CANDIDATE` with
 `releasedOn: null`; a bundle carrying one is valid only if its version is listed in
 `CANDIDATE_BUNDLE_HASHES`, which freezes it by content hash like a released version but
 never makes it released. Every boundary accepts a candidate bundle only with
@@ -126,8 +126,11 @@ and fails the swap against the unknown-time foil.
 
 ## Consequences
 
-- ETBZ-56 must build its packages from bundle 1.1.0 after release; a plan without the
-  1.1.0 bindings is refused, so a stale binding fails closed.
+- ETBZ-56 must build its packages from bundle 1.1.0 after release; once a run binds bundle
+  1.1.0, a plan without the 1.1.0 bindings is refused, so a stale binding fails closed.
+  `buildSkillContractBundle()` still defaults to 1.0.0, which stays released for the runs
+  generated under it; nothing in the code stops a new run from choosing 1.0.0, so the
+  consumer must pass `'1.1.0'`.
 - The chapter word floor (600, ETBZ-43) stays. Without meta-commentary, and again after
   the editorial review removed overreaching sentences, the fixture chapters fell below
   600 words (439–595) and were brought back above it with licensed substance only: term
@@ -171,6 +174,7 @@ and fails the swap against the unknown-time foil.
 
 ## What this ADR does not decide
 
-The Method Profile reading of reconcile C5 (uncertainty carried, not added) is put to the
-Product Owner at the gate. No new method, fact kind, claim, relation or reading-schema
+The Method Profile reading of reconcile C5 (uncertainty carried, not added) was put to the
+Product Owner at the gate and confirmed (Jira ETBZ-57 comment 16969); the Method Profile
+itself is unchanged. No new method, fact kind, claim, relation or reading-schema
 field is introduced. The renderer and the presentation projection are untouched.

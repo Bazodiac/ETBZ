@@ -15,6 +15,7 @@ import { canonicalJson } from '../../src/domain/canonical-json.js';
 import { structuralHash } from '../../src/domain/structural-hash.js';
 import type { ChartFact } from '../../src/application/interpretation/feature-set.js';
 import {
+  RELEASED_BUNDLE_HASHES,
   SkillRunError,
   acceptEditorialRevision,
   acceptSkillReading,
@@ -183,7 +184,7 @@ export function deriveEtbz57Evidence(): Etbz57Evidence {
     skillPackageStructuralHash: skillManifest.packageStructuralHash,
     bundleRef: v11.bundle.bundleRef,
     bundleStructuralHash: v11.bundle.structuralHash,
-    bundleStatus: 'RELEASED',
+    bundleStatus: Object.hasOwn(RELEASED_BUNDLE_HASHES, v11.bundle.bundleVersion) ? 'RELEASED' : 'CANDIDATE',
     contracts: v11.inputPackage.contracts,
     inputPackageStructuralHash: v11.inputPackage.structuralHash,
     interpretationInputStructuralHash: v11.input.structuralHash,

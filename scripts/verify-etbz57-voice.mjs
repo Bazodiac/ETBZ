@@ -33,9 +33,11 @@ const T = {
 };
 
 /** [name, kind, file, find, replace, tests, killer] — kind 'text' (find occurs exactly once). */
-// Retired with the release of 1.1.0 (2026-10-01): no bundle version is a candidate, so the candidate
-// opt-in at the package, the portable copy and the reading boundary and the candidate decision-date rule cannot be
-// observed. Re-arm these four with the next candidate version:
+// Retired with the release of 1.1.0 (2026-10-01): no bundle version is a candidate. Three cannot be observed at
+// all - the opt-in at the reading boundary and at the portable copy (isCandidateVersion is always false) and the
+// candidate decision-date rule (an earlier check refuses any CANDIDATE contract first). The fourth hard-coded
+// '1.1.0' and now breaks the fixture at load (RUN_ERROR, not a kill). Their bodies are in bdc9f544; re-arm them
+// with the next candidate version, rewriting the package mutant for that version:
 //   "CANDIDATE: a candidate bundle builds a released-run package"
 //   "CANDIDATE: a CANDIDATE contract may carry a decision date"
 //   "CANDIDATE: a reading under the candidate bundle needs no opt-in"
@@ -245,6 +247,10 @@ const MUTANTS = [
     "  if (acceptSkillReading(semanticDraft, context).structuralHash !== semanticHash) {",
     "  if (false) {",
     [T.negative], "refuses a \"semantic\" reading that is not the accepted reading"],
+  ["CANDIDATE: the package ignores the candidate opt-in", 'text', PACKAGE,
+    "  if (options.candidateEvaluation === true) {",
+    "  if (false) {",
+    [T.negative], "builds a released-run package under bundle 1.1.0"],
   ["CANDIDATE: a released bundle passes as a candidate", 'text', BUNDLE,
     "  if (!HASH_PATTERN.test(bundle.structuralHash) || actual !== bundle.structuralHash || candidate === undefined || candidate !== actual) {",
     "  if (!HASH_PATTERN.test(bundle.structuralHash) || actual !== bundle.structuralHash) {",
