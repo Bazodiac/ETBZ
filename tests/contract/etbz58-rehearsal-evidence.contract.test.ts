@@ -175,6 +175,18 @@ describe('ETBZ-58: the runtime readings, accepted by the boundary (AC 1, AC 2)',
     expect(String(before.get('.chapters.2.paragraphs.3.text')).replace('noch ehe ein', 'noch bevor ein')).toBe(repaired);
   });
 
+  it('holds the EDIT revision to 36 customer-text leaves (3 chapter titles, 33 texts), nothing added or removed', () => {
+    const leaves = (value: unknown, path = ''): [string, unknown][] =>
+      value !== null && typeof value === 'object' ? Object.entries(value).flatMap(([key, child]) => leaves(child, `${path}.${key}`)) : [[path, value]];
+    const before = new Map(leaves(readJsonFile(ETBZ58_SEMANTIC_READING)));
+    const after = new Map(leaves(readJsonFile(ETBZ58_SKILL_READING)));
+    const paths = [...new Set([...before.keys(), ...after.keys()])].filter((path) => !after.has(path) || !before.has(path) || before.get(path) !== after.get(path));
+    expect(paths.every((path) => before.has(path) && after.has(path))).toBe(true);
+    expect(paths.filter((path) => path.endsWith('.title')).length).toBe(3);
+    expect(paths.filter((path) => path.endsWith('.text')).length).toBe(33);
+    expect(paths.length).toBe(36);
+  });
+
   it('accepts REALISE and EDIT and regenerates the accepted reading and the projection byte for byte', async () => {
     const { accepted, projection } = await chain();
     expect(read(ETBZ58_ACCEPTED_READING).toString('utf8')).toBe(renderJson(accepted));

@@ -49,7 +49,7 @@ One non-Golden known-time case from a fresh call at the live FuFirE boundary to 
 | --- | --- |
 | attestation not passed, runtime not ready | `etbz58-rehearsal.negative.test.ts` (no calculation is sent) |
 | a runtime that answers a call without credentials | `etbz58-rehearsal.negative.test.ts` (the run is refused; the probe follows the calculations) |
-| recorded evidence tampered, another request, an unrecorded call, a recorded call not answered exactly once | `etbz58-rehearsal.negative.test.ts` |
+| recorded evidence tampered, another request, an unrecorded call, a recorded call left unanswered | `etbz58-rehearsal.negative.test.ts` (a call answered twice is refused by the same check; the use case makes each call once, so that branch is not reached) |
 | an attestation that is typed as PASS or does not pass | `etbz58-rehearsal.negative.test.ts` (`INTERPRETATION_INPUT_ATTESTATION_FOREIGN`, `REHEARSAL_NOT_PRODUCTION_ELIGIBLE`) |
 | a live chart that answers a fact the reviewed drafts cite differently | `etbz58-rehearsal.negative.test.ts` (`REHEARSAL_DRAFT_FACTS_DRIFTED`) |
 | an existing reading presented as this run's | `etbz58-rehearsal.negative.test.ts` (`READING_PACKAGE_MISMATCH`) |
@@ -77,7 +77,7 @@ One non-Golden known-time case from a fresh call at the live FuFirE boundary to 
 - Whether any sentence of the reading is true of a person, specific enough or sellable; that is ETBZ-54's Human SELLABLE gate.
 - No independent content review was run as a gate. The ETBZ-57 experience is that a direct voice drifts into overreach which the mechanical gates do not see.
 - Which model wrote the text: the generation record is a declaration.
-- That no person edited the reading between the stages: declared (`ETBZ58_GENERATION.noHumanEdit`). What is measured: the repair changed exactly one leaf, the EDIT revision exactly 36 customer-text leaves and nothing else.
+- That no person edited the reading between the stages: declared (`ETBZ58_GENERATION.noHumanEdit`). What is measured (contract suite): the repair changed exactly one leaf; the EDIT revision changed exactly 36 leaves - 3 chapter titles and 33 texts - and the boundary (`acceptEditorialRevision`) refuses any change outside customer text.
 - That the instance read nothing but its input: this is its own report, not measured.
 - That the drafting step works for a chart without reviewed drafts (finding 4).
 - The prose-level anti-boilerplate checks that need a second reading.

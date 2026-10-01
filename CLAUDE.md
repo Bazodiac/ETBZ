@@ -20,7 +20,7 @@ README on `main` still describes ETBZ-9; the code and `docs/adr/` are authoritat
 npm ci                      # deterministic install (lockfile drift fails here)
 npm run typecheck           # tsc --noEmit, strict
 npm run lint                # eslint, zero warnings: recommended rule sets + four type-aware defect rules, no formatting rules
-npm test                    # all five suites (1827 tests with ETBZ-58; the architecture leaf tests import dependency-direction.test.ts, so its 19 tests are also registered inside each of them)
+npm test                    # all five suites (1828 tests with ETBZ-58; the architecture leaf tests import dependency-direction.test.ts, so its 19 tests are also registered inside each of them)
 npm run build               # tsc -p tsconfig.build.json -> dist/
 ETBZ_ENV=local LOG_LEVEL=info npm start     # http://localhost:8120 — serves /health and /ready only
 ```
