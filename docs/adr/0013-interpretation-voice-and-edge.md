@@ -87,8 +87,10 @@ classes ("Schicksal", "so bist du eben", "du bist jemand"). The method note is n
 narrative: it carries the method and data disclosure and is held to the prohibited
 phrases, the life-domain words and the count words only. A producer label the surface
 cites, directly or through its claims (e.g. "Indirekte Quelle"), is terminology and does
-not count as talk about the source. A paragraph whose claim the graph links by
-`ALTERNATIVE_READING` keeps the bounded wording the Lexicon reserves for it (L3.4).
+not count as talk about the source. A paragraph all of whose claims the graph links by
+`ALTERNATIVE_READING` keeps the bounded formulations the Lexicon reserves for them (L3.4);
+the per-sentence framework template ("Innerhalb dieses BaZi-Rahmens") stays refused there
+too (Lens 1.1 E1).
 
 Every wording gate here is a closed, conservative list. Inflections and paraphrases it
 does not list pass ("Brüdern", "des Readings", "beide Male", "drei Beziehungen"), and a
@@ -143,9 +145,13 @@ and fails the swap against the unknown-time foil.
   position statements as complete: the claims C1 and C2 name the year and the month
   branch, while the chart carries the same relations in the hour branch too. A reading
   may cite only the facts its claims are grounded in, so it cannot name the hour branch
-  there. REALISE v5 marks those positions as non-exhaustive ("unter anderem", "etwa",
-  "jeweils"), and the method note discloses that named positions are the ones an
-  interpretation rests on. Why the claims omit the hour branch is a claim-graph question
+  there. REALISE v5 marks those positions as non-exhaustive ("unter anderem", "etwa"),
+  and the method note discloses that named positions are the ones an interpretation
+  rests on. The final verification (round 5) found new classes: statements about how
+  contrasted claims interact (neither "one cancels the other" nor "neither cancels the
+  other" is licensed - classically output restrains the controlling relation and the
+  controlling relation feeds the resource), a strength verdict, and the Wu-Xing weighting
+  read as a count of the eight characters. REALISE v6 removes them. Why the claims omit the hour branch is a claim-graph question
   (ETBZ-30), not a voice question; it is reported to the Product Owner at the gate.
 - An accepted reading does not carry the evaluation-only status of its bundle: the
   opt-in is checked at every boundary, but the accepted reading and its customer

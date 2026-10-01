@@ -304,6 +304,12 @@ export const TEMPLATE_HEDGE_PHRASES: VoicePhraseList = {
   ],
 };
 
+/** Lens 1.1 E1: the framework is named once, never as a per-sentence template - not even over a graph-carried alternative. */
+export const FRAMEWORK_TEMPLATE_PHRASES: VoicePhraseList = {
+  source: 'grounded-reflective-synthesis-lens@1.1.0 §2 E1; terminology-wording-lexicon@1.1.0 §7',
+  phrases: ['innerhalb dieses bazi-rahmens', 'innerhalb des bazi-rahmens', 'im rahmen dieses bazi', 'within this bazi framework'],
+};
+
 /** Lexicon 1.1 section 7 and rule L3.11, Lens 1.1 section 18 AC 15: a TENTATIVE paragraph carries a visible tentative marker. */
 export const TENTATIVE_MARKERS: VoicePhraseList = {
   source: 'terminology-wording-lexicon@1.1.0 §7 L3.11; grounded-reflective-synthesis-lens@1.1.0 §18',
@@ -390,6 +396,11 @@ export function findTemplateHedge(text: string): string | null {
 
 export function hasTentativeMarker(text: string): boolean {
   return findTentativeMarker(text) !== null;
+}
+
+/** The per-sentence framework template a text carries, or null. */
+export function findFrameworkTemplate(text: string): string | null {
+  return firstPhrase(text, FRAMEWORK_TEMPLATE_PHRASES);
 }
 
 /** The tentative marker a text carries, or null. */
@@ -524,7 +535,7 @@ function checkSurface(text: string, where: string): void {
  * no voice-profile prohibited phrase, and tension language only where the text
  * cites both poles of one CONTRASTS_WITH relation. The method note is not
  * narrative: it carries the necessary method and data notes and is held to the
- * prohibited phrases and the life-domain words only.
+ * prohibited phrases, the life-domain words and the count words only.
  */
 function checkVoiceSurface(text: string, where: string, claims: readonly AcceptedInterpretiveClaim[], contrastPairs: ReadonlySet<string>, citedLabels: readonly string[] = []): void {
   const voiceProhibited = findVoiceProhibitedWording(text);
@@ -734,14 +745,16 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
         if (paragraph.posture === 'TENTATIVE' && !hasTentativeMarker(paragraph.text)) {
           throw new SkillRunError('READING_TENTATIVE_NOT_VISIBLE', `${at} is TENTATIVE but carries no visible tentative marker`, { where: at });
         }
-        // Over SUPPORTED claims only - INTERPRETATION, REFLECTION or FRAME alike - the text says it with no added doubt,
-        // unless the graph carries an ALTERNATIVE_READING for one of them (Lexicon 1.1 L3.4 keeps bounded wording there).
-        const plain = claims.length > 0 && !tentative && !claims.some((claim) => inAlternative.has(claim.claimId));
+        // Over SUPPORTED claims only - INTERPRETATION, REFLECTION or FRAME alike - the text says it with no added doubt.
+        // Where the graph carries an ALTERNATIVE_READING for EVERY cited claim, Lexicon 1.1 L3.4 keeps the bounded
+        // formulations; the per-sentence framework template stays retired either way (Lens 1.1 E1).
+        const certain = claims.length > 0 && !tentative;
+        const plain = certain && !claims.every((claim) => inAlternative.has(claim.claimId));
         const marker = plain ? findTentativeMarker(paragraph.text) : null;
         if (marker !== null) {
           throw new SkillRunError('READING_SUPPORTED_UNDERSTATED', `${at} cites SUPPORTED claims only but writes "${marker}"; uncertainty is carried, not added`, { where: at, phrase: marker });
         }
-        const hedge = plain ? findTemplateHedge(paragraph.text) : null;
+        const hedge = plain ? findTemplateHedge(paragraph.text) : certain ? findFrameworkTemplate(paragraph.text) : null;
         if (hedge !== null) {
           throw new SkillRunError('READING_SUPPORTED_TEMPLATE_HEDGE', `${at} hedges a SUPPORTED claim with a template ("${hedge}")`, { where: at, phrase: hedge });
         }

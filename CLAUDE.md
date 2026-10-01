@@ -171,8 +171,8 @@ boundary refuses it without `{ candidateEvaluation: true }` (`acceptPortableSkil
 `buildSkillInputPackage`, `acceptSkillReading`). `acceptSkillReading` holds a 1.1.0 reading to six more refusals
 (`READING_SUPPORTED_UNDERSTATED`, `_SUPPORTED_TEMPLATE_HEDGE`, `_TENTATIVE_NOT_VISIBLE`, `_META_NARRATION`,
 `_TENSION_UNGROUNDED` - both poles of one CONTRASTS_WITH pair cited - and `_LIFE_DOMAIN_INVENTED`) and refuses count
-words ("zweimal", "an zwei Stellen") as `READING_UNCITED_NUMERAL`; a claim in an ALTERNATIVE_READING relation keeps
-its bounded wording, and a cited producer label ("Indirekte Quelle") is not meta-narration. All of these are
+words ("zweimal", "an zwei Stellen") as `READING_UNCITED_NUMERAL`; a paragraph all of whose claims are in an
+ALTERNATIVE_READING relation keeps the L3.4 bounded wording (never "Innerhalb dieses BaZi-Rahmens"), and a cited producer label ("Indirekte Quelle") is not meta-narration. All of these are
 closed phrase lists: unlisted inflections pass, the Human Editorial Gate is the check. The method note is not
 narrative (prohibited phrases, life-domain and count words only).
 `acceptEditorialRevision` is the EDIT pass (version-neutral): text-only changes of an accepted reading, method

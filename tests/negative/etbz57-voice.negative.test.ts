@@ -149,17 +149,37 @@ describe('V1: uncertainty is carried, not added (DIRECTNESS)', () => {
     expect(error.detail).toEqual({ where: 'chapters[0].paragraphs[5]', phrase: 'vielleicht' });
   });
 
-  it('keeps bounded wording where the graph carries an ALTERNATIVE_READING (the guard seen green)', () => {
+  /** The claim of paragraph (0,5) linked by ALTERNATIVE_READING to the claim of paragraph (1,2); paragraph (0,3) also cites an unlinked claim. */
+  const withAlternative = () => {
     const own = paragraph(baseline, 0, 5).claimRefs[0] as string;
-    const other = paragraph(baseline, 0, 2).claimRefs[0] as string;
-    const { inputPackage: pkg, reading } = packageWith((core) => {
+    const other = paragraph(baseline, 1, 2).claimRefs[0] as string;
+    expect(paragraph(baseline, 0, 3).claimRefs).toContain(own);
+    expect(paragraph(baseline, 0, 3).claimRefs.some((id) => id !== own && id !== other)).toBe(true);
+    return packageWith((core) => {
       const graph = core['claimGraph'] as { claims: { claimId: string; relations: { targetClaimId: string; type: string }[] }[] };
       const claim = graph.claims.find((entry) => entry.claimId === own);
       expect(claim).toBeDefined();
       claim?.relations.push({ targetClaimId: other, type: 'ALTERNATIVE_READING' });
     });
+  };
+
+  it('keeps bounded wording where the graph carries an ALTERNATIVE_READING for every cited claim (the guard seen green)', () => {
+    const { inputPackage: pkg, reading } = withAlternative();
     paragraph(reading, 0, 5).text = `Vielleicht kennst du das: ${paragraph(reading, 0, 5).text}`;
     expect(() => accept(reading, pkg)).not.toThrow();
+  });
+
+  it('refuses doubt in a paragraph that also cites a claim the alternative does not cover', () => {
+    const { inputPackage: pkg, reading } = withAlternative();
+    paragraph(reading, 0, 3).text = `Vielleicht: ${paragraph(reading, 0, 3).text}`;
+    const error = expectRefusal(() => accept(reading, pkg), 'READING_SUPPORTED_UNDERSTATED');
+    expect(error.detail).toMatchObject({ where: 'chapters[0].paragraphs[3]' });
+  });
+
+  it('refuses the framework template even over a graph-carried alternative', () => {
+    const { inputPackage: pkg, reading } = withAlternative();
+    paragraph(reading, 0, 5).text += ' Innerhalb dieses BaZi-Rahmens ist das ein Standpunkt.';
+    expectRefusal(() => accept(reading, pkg), 'READING_SUPPORTED_TEMPLATE_HEDGE');
   });
 
   it('refuses a retired template in a FRAME paragraph over SUPPORTED claims (posture NONE)', () => {
@@ -242,6 +262,11 @@ describe('V3: no meta-narration on the customer surface (CUSTOMER_SURFACE)', () 
   it('accepts a producer label containing "Quelle" where the paragraph cites the fact that carries it (the guard seen green)', () => {
     expect(paragraph(baseline, 3, 0).factRefs).toContain('chart.natal.pillar.month.hiddenStem.1.tenGod');
     expect(() => accept(readingWith((r) => { paragraph(r, 3, 0).text += ' In BaZi heißt diese Beziehung Indirekte Quelle.'; }))).not.toThrow();
+  });
+
+  it('refuses a producer label in a reflection question or a chapter title that does not cite it', () => {
+    expectRefusal(() => accept(readingWith((r) => { (r.reflectionQuestions[2] as { text: string }).text += ' Kennst du die Indirekte Quelle?'; })), 'READING_META_NARRATION');
+    expectRefusal(() => accept(readingWith((r) => { chapter(r, 4).title = 'Klarstellung: Indirekte Quelle'; })), 'READING_META_NARRATION');
   });
 
   it('accepts a producer label in a reflection question whose claim is grounded in it (the guard seen green)', () => {
