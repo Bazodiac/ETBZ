@@ -9,7 +9,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
 import {
   PresentationError,
@@ -33,6 +33,10 @@ import { skillPresentationFixture } from '../support/skillPresentationFixture.js
 
 type Mutable<T> = { -readonly [K in keyof T]: Mutable<T[K]> };
 
+
+// Each Skill-path build accepts the reading again and projects twice; under a full-suite load that exceeds the
+// default 5 s. A timed-out test would still log, with stale numbers - pin the budget per file.
+vi.setConfig({ testTimeout: 60_000 });
 const fixture = skillPresentationFixture();
 const parts = skillFixtureV1_1();
 

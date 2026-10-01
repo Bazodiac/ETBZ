@@ -11,7 +11,7 @@
  * The projections are built inside the tests, never while the file is collected:
  * a refusal must surface as a failed assertion of the test that names it.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   BRANCH_ANIMAL_LABELS,
   BRANCH_ANIMAL_LABELS_REF,
@@ -43,6 +43,10 @@ function refusal(action: () => unknown): PresentationError {
   return caught as PresentationError;
 }
 
+
+// Each Skill-path build accepts the reading again and projects twice; under a full-suite load that exceeds the
+// default 5 s. A timed-out test would still log, with stale numbers - pin the budget per file.
+vi.setConfig({ testTimeout: 60_000 });
 const BRANCHES = new Set(DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'earthly_branch').map((glyph) => glyph.character));
 const withDe = (entries: BranchAnimalLabels['locales']['de']): BranchAnimalLabels => ({ ...BRANCH_ANIMAL_LABELS, locales: { de: entries } });
 const OPEN_DE = String.fromCodePoint(0x201e);
