@@ -6,12 +6,9 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { InterpretationInputError } from '../../src/application/interpretation/interpretation-input.js';
-import { SkillRunError } from '../../src/application/skill/index.js';
 import { canonicalJson } from '../../src/domain/canonical-json.js';
 import {
   ETBZ58_SKILL_INPUT,
-  RehearsalError,
   assembleRehearsal,
   deriveRehearsalInput,
   loadRecordedRun,
@@ -30,7 +27,9 @@ const codeOf = async (action: () => Promise<unknown>): Promise<string> => {
     await action();
     return 'ACCEPTED';
   } catch (error) {
-    if (error instanceof RehearsalError || error instanceof InterpretationInputError || error instanceof SkillRunError) return error.code;
+    // Every refusal of the chain carries a code (RehearsalError, InterpretationInputError, SkillRunError, ClaimError ...).
+    const code = (error as { code?: unknown }).code;
+    if (error instanceof Error && typeof code === 'string') return code;
     throw error;
   }
 };
