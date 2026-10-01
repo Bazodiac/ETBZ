@@ -7,6 +7,8 @@
  * unchanged as `SkillRunError`; every other one is a `PresentationError` with its
  * code. Nothing partial is returned.
  */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
 import {
@@ -25,7 +27,7 @@ import {
 } from '../../src/application/skill/index.js';
 import type { SkillContractBundle, SkillInputPackage } from '../../src/application/skill/index.js';
 import { listSlotIds } from '../../src/application/visual/index.js';
-import { skillFixtureV1_1 } from '../support/skillFixture.js';
+import { skillFixture, skillFixtureV1_1 } from '../support/skillFixture.js';
 import { skillPresentationFixture } from '../support/skillPresentationFixture.js';
 
 type Mutable<T> = { -readonly [K in keyof T]: Mutable<T[K]> };
@@ -93,7 +95,7 @@ describe('S0: the baseline presents the accepted reading under its released iden
     const identifiers = [
       skill.skillRef, skill.bundleRef, skill.bundleStructuralHash, skill.inputPackageStructuralHash, skill.readingStructuralHash,
       skill.claimGraphStructuralHash, skill.planStructuralHash,
-      ...skill.visualBindings.flatMap((binding) => [binding.specId, binding.slotId, ...binding.shownFactRefs, ...binding.notShownFactRefs, ...binding.claimRefs]),
+      ...skill.visualBindings.flatMap((binding) => [binding.specId, binding.slotId, ...binding.consumedKindFactRefs, ...binding.otherKindFactRefs, ...binding.claimRefs]),
     ];
     for (const identifier of identifiers) expect(customer, identifier).not.toContain(identifier);
     expect(customer).not.toMatch(/sha256:|claim\.sha256|chart\.(pillar|natal|dayMaster|wuxing)|spec\.|chapter\.sha256/u);
@@ -103,24 +105,30 @@ describe('S0: the baseline presents the accepted reading under its released iden
 });
 
 describe('S1: the bundle must be the released identity this projection presents (AC 7)', () => {
-  it('refuses the superseded 1.0.0 bundle', () => {
-    const error = expectRefusal(() => present({ bundle: buildSkillContractBundle() }), 'PRESENTATION_SKILL_IDENTITY_REFUSED');
-    expect(error.detail['bundleVersion']).toBe('1.0.0');
+  it('refuses the superseded 1.0.0 bundle, even for a coherent 1.0.0 run the run boundary accepts', () => {
+    // The ETBZ-52 reading under bundle and Skill 1.0.0, with its own package: acceptSkillReading accepts it.
+    const v10 = skillFixture();
+    const reading = acceptSkillReading(JSON.parse(readFileSync(resolve(process.cwd(), 'docs/evidence/etbz-52/fixture/skill-reading.json'), 'utf8')) as unknown, {
+      bundle: v10.bundle,
+      inputPackage: v10.inputPackage,
+    });
+    const error = expectRefusal(() => present({ reading, bundle: v10.bundle, inputPackage: v10.inputPackage }), 'PRESENTATION_SKILL_IDENTITY_REFUSED');
+    expect(error.detail).toEqual({ bundleVersion: '1.0.0', presented: ['1.1.0'] });
+    expect(() => assertBundleCarriesTemplateWording(buildSkillContractBundle())).not.toThrow();
   });
 
   it('refuses a 1.1.0 bundle that is not its released identity (a placeholder hash, an edited contract)', () => {
     const placeholder = { ...fixture.bundle, structuralHash: `sha256:${'0'.repeat(64)}` };
-    expectRefusal(() => present({ bundle: placeholder }), 'PRESENTATION_SKILL_IDENTITY_REFUSED');
+    expect(expectRefusal(() => present({ bundle: placeholder }), 'PRESENTATION_SKILL_IDENTITY_REFUSED').detail['cause']).toBe('BUNDLE_NOT_RELEASED');
     const edited = structuredClone(fixture.bundle) as Mutable<SkillContractBundle>;
     const lexicon = edited.contracts.find((source) => source.key === 'TERMINOLOGY_LEXICON');
     if (lexicon === undefined) throw new Error('no Lexicon');
     lexicon.confluencePageVersion = '3';
-    expectRefusal(() => present({ bundle: edited }), 'PRESENTATION_SKILL_IDENTITY_REFUSED');
+    expect(expectRefusal(() => present({ bundle: edited }), 'PRESENTATION_SKILL_IDENTITY_REFUSED').detail['cause']).toBe('BUNDLE_NOT_RELEASED');
   });
 
   it('refuses a bundle whose Ten-God wording or chart terms are not the ones the template prints', () => {
     expect(() => assertBundleCarriesTemplateWording(fixture.bundle)).not.toThrow();
-    expect(() => assertBundleCarriesTemplateWording(buildSkillContractBundle())).not.toThrow();
     const wording = structuredClone(fixture.bundle) as Mutable<SkillContractBundle>;
     const first = wording.wordingBoundaries.tenGodRelationWording[0];
     if (first === undefined) throw new Error('no wording');
@@ -134,8 +142,11 @@ describe('S1: the bundle must be the released identity this projection presents 
 
 describe('S2: the reading must be accepted again and be the reading it says it is', () => {
   it('refuses a reading that is not an object or carries no structural hash', () => {
-    expectRefusal(() => present({ reading: 'reading' }), 'PRESENTATION_SKILL_BINDING_MISMATCH');
-    expectRefusal(() => present({ reading: readingWith((reading) => { delete reading['structuralHash']; }) }), 'PRESENTATION_SKILL_BINDING_MISMATCH');
+    for (const reading of ['reading', null, [fixture.reading]]) {
+      expect(expectRefusal(() => present({ reading }), 'PRESENTATION_SKILL_BINDING_MISMATCH').message).toMatch(/the reading is not an object/u);
+    }
+    const unhashed = readingWith((reading) => { delete reading['structuralHash']; });
+    expect(expectRefusal(() => present({ reading: unhashed }), 'PRESENTATION_SKILL_BINDING_MISMATCH').message).toMatch(/carries no structural hash/u);
   });
 
   it('refuses a reading whose content no longer hashes to its recorded hash (output/hash mismatch)', () => {
@@ -162,6 +173,42 @@ describe('S2: the reading must be accepted again and be the reading it says it i
 });
 
 describe('S3: the package and the chart must be the same chart', () => {
+  /** A package changed after it was built, its recorded hash kept - and a reading bound to that hash. */
+  function tampered(edit: (inputPackage: Mutable<SkillInputPackage>) => void): { inputPackage: SkillInputPackage; reading: unknown } {
+    const inputPackage = structuredClone(fixture.inputPackage) as Mutable<SkillInputPackage>;
+    edit(inputPackage);
+    return { inputPackage, reading: fixture.reading };
+  }
+
+  it('refuses an input package, claim graph or plan that does not hash to the hash it carries (a stale or placeholder identity)', () => {
+    const facts = tampered((inputPackage) => {
+      const fact = inputPackage.facts.find((entry) => entry.id === 'chart.wuxing.weight.Holz');
+      if (fact === undefined) throw new Error('no Holz weight');
+      fact.value = '2.2';
+    });
+    expect(expectRefusal(() => present(facts), 'PRESENTATION_SKILL_BINDING_MISMATCH').detail['part']).toBe('input package');
+    const placeholder = tampered((inputPackage) => {
+      inputPackage.structuralHash = `sha256:${'0'.repeat(64)}`;
+    });
+    expect(expectRefusal(() => present(placeholder), 'PRESENTATION_SKILL_BINDING_MISMATCH').detail['part']).toBe('input package');
+    const graph = tampered((inputPackage) => {
+      inputPackage.claimGraph.structuralHash = `sha256:${'1'.repeat(64)}`;
+    });
+    expect(expectRefusal(() => present(graph), 'PRESENTATION_SKILL_BINDING_MISMATCH').detail['part']).toBe('claim graph');
+    const plan = tampered((inputPackage) => {
+      inputPackage.plan.structuralHash = `sha256:${'2'.repeat(64)}`;
+    });
+    expect(expectRefusal(() => present(plan), 'PRESENTATION_SKILL_BINDING_MISMATCH').detail['part']).toBe('plan');
+  });
+
+  it("refuses a chart whose source warnings are not the package's, verbatim", () => {
+    expect(fixture.inputPackage.warnings).toEqual(fixture.model.sourceWarnings);
+    const none = modelWith((model) => { model.sourceWarnings = []; });
+    expect(expectRefusal(() => present({ model: none }), 'PRESENTATION_SKILL_BINDING_MISMATCH').message).toMatch(/source warnings/u);
+    const extra = modelWith((model) => { model.sourceWarnings = [...model.sourceWarnings, 'BIRTH_TIME_UNCONFIRMED']; });
+    expect(expectRefusal(() => present({ model: extra }), 'PRESENTATION_SKILL_BINDING_MISMATCH').message).toMatch(/source warnings/u);
+  });
+
   it('refuses a chart whose value differs from a package fact, shown or not', () => {
     expectRefusal(() => present({ model: modelWith((model) => { model.wuxing.vector['Erde'] = 3; }) }), 'PRESENTATION_SKILL_BINDING_MISMATCH');
     expectRefusal(() => present({ model: modelWith((model) => { model.wuxing.dominant = 'Erde'; }) }), 'PRESENTATION_SKILL_BINDING_MISMATCH');
@@ -196,8 +243,9 @@ describe('S4: visualization specs on the pages', () => {
     const bindings = fixture.projection.sources.skill?.visualBindings ?? [];
     expect(bindings.map((binding) => binding.specId)).toEqual(specs.map((spec) => spec.specId));
     const byId = new Map(bindings.map((binding) => [binding.specId, binding]));
-    expect(byId.get('spec.dayMaster.reading')).toMatchObject({ pageNumbers: [], emptyReason: 'NO_APPROVED_CONTENT', shownFactRefs: [] });
-    expect(byId.get('spec.glance.wuXing')?.notShownFactRefs).toEqual(['chart.wuxing.dominant']);
+    expect(byId.get('spec.dayMaster.reading')).toMatchObject({ pageNumbers: [], emptyReason: 'NO_APPROVED_CONTENT', consumedKindFactRefs: [] });
+    expect(byId.get('spec.glance.wuXing')?.otherKindFactRefs).toEqual(['chart.wuxing.dominant']);
+    expect(byId.get('spec.summary.facts')?.otherKindFactRefs).toEqual(['chart.wuxing.dominant']);
     expect(byId.get('spec.pillars.branch')?.pageNumbers).toEqual([5]);
     for (const binding of bindings) if (binding.emptyReason === null) expect(binding.pageNumbers.length, binding.specId).toBeGreaterThan(0);
   });

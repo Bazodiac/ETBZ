@@ -14,22 +14,28 @@
 //    the ETBZ-57 release); a candidate, a superseded 1.0.0 or an unknown
 //    version is refused, and so is a bundle whose Lexicon values are not the
 //    ones the template prints (PRESENTATION_SKILL_IDENTITY_REFUSED);
+//  - the input package, its claim graph and its plan must each hash to the
+//    structural hash they carry (PRESENTATION_SKILL_BINDING_MISMATCH), so the
+//    identities the manifest records are the ones of the objects used;
 //  - the reading must pass `acceptSkillReading` again against that bundle and
-//    package - the run boundary is composed, never re-implemented - and hash to
+//    package - the run boundary is composed, never re-implemented: a stale Skill,
+//    bundle or contract binding of the reading is refused there - and hash to
 //    the structural hash it carries (PRESENTATION_SKILL_BINDING_MISMATCH);
 //  - every fact of the input package must equal the chart value at its own
-//    path, and the package's subject and slot vocabulary must be the chart's
-//    and the template's (PRESENTATION_SKILL_BINDING_MISMATCH), so the PDF can
-//    only show the chart the reading was written about;
+//    path, the package's source warnings must be the chart's, verbatim, and its
+//    subject and slot vocabulary the chart's and the template's
+//    (PRESENTATION_SKILL_BINDING_MISMATCH), so the facts and warnings the PDF
+//    shows are those the reading was written about;
 //  - every visualization spec must name a slot a page draws or the template
 //    leaves empty, and every fact it cites must be of a kind the slot-to-fact
 //    vocabulary below knows (PRESENTATION_VISUAL_SPEC_UNBOUND).
 //
 // Does NOT: re-check the reading's wording (the run boundary did, under the
 // bundle's own lists), fill an empty content slot from a spec (a spec carries
-// references, no text), draw a cited fact the template does not show (it is
-// recorded as not shown), or accept a reading with an unknown birth time (the
-// projection refuses those, as for any payload).
+// references, no text), draw a cited fact the template does not show, measure
+// which cited fact a page draws (the spec record classifies by fact kind), or
+// accept a reading with an unknown birth time (the projection refuses those,
+// as for any payload).
 // =============================================================================
 
 import {
@@ -139,6 +145,25 @@ export function assertBundleCarriesTemplateWording(bundle: SkillContractBundleCo
 // the reading, the package and the chart
 // ---------------------------------------------------------------------------
 
+/** A hash-bound object must hash to the structural hash it carries. */
+function hashesToItself(value: Readonly<{ structuralHash: string }>): boolean {
+  const { structuralHash: carried, ...core } = value;
+  return structuralHash(core) === carried;
+}
+
+function assertPackageIntact(inputPackage: SkillInputPackage): void {
+  const parts: readonly (readonly [string, Readonly<{ structuralHash: string }>])[] = [
+    ['claim graph', inputPackage.claimGraph],
+    ['plan', inputPackage.plan],
+    ['input package', inputPackage],
+  ];
+  for (const [name, part] of parts) {
+    if (!hashesToItself(part)) {
+      refuse('PRESENTATION_SKILL_BINDING_MISMATCH', `the ${name} does not hash to the structural hash it carries`, { part: name, carried: part.structuralHash });
+    }
+  }
+}
+
 function acceptAgain(reading: unknown, bundle: SkillContractBundle, inputPackage: SkillInputPackage): AcceptedSkillReading {
   if (typeof reading !== 'object' || reading === null || Array.isArray(reading)) {
     return refuse('PRESENTATION_SKILL_BINDING_MISMATCH', 'the reading is not an object', {});
@@ -186,6 +211,12 @@ function assertPackageIsTheChart(model: HoroscopeModel, inputPackage: SkillInput
       refuse('PRESENTATION_SKILL_BINDING_MISMATCH', `fact ${fact.id} does not equal the chart value at ${fact.path}`, { factId: fact.id, path: fact.path });
     }
   }
+  if (structuralHash([...inputPackage.warnings]) !== structuralHash([...model.sourceWarnings])) {
+    refuse('PRESENTATION_SKILL_BINDING_MISMATCH', "the input package's source warnings are not the chart's", {
+      package: inputPackage.warnings.length,
+      chart: model.sourceWarnings.length,
+    });
+  }
   const template = [...listSlotIds()].sort();
   const allowed = [...inputPackage.allowedSlotIds].sort();
   if (structuralHash(allowed) !== structuralHash(template)) {
@@ -210,9 +241,10 @@ function consumedKinds(slotId: string): ReadonlySet<string> {
 }
 
 /**
- * Each visualization spec on the pages: where its slot is drawn, or why it stays empty, and which of its cited facts
- * the slot shows. Exported so a test can observe the refusals the released vocabulary and template cannot reach (a
- * slot no page draws, a fact kind the vocabulary does not know).
+ * Each visualization spec on the pages: where its slot is drawn, or why it stays empty, and its cited facts split by
+ * kind - those of a kind the slot consumes (the ETBZ-49 page family's declaration plus the animal rule) and the rest.
+ * A classification by kind, not a measurement of which fact a page draws. Exported so a test can observe the refusals
+ * the released vocabulary and template cannot reach (a slot no page draws, a fact kind the vocabulary does not know).
  */
 export function bindVisualSpecs(
   specs: readonly ReadingVisualizationSpec[],
@@ -227,8 +259,8 @@ export function bindVisualSpecs(
       refuse('PRESENTATION_VISUAL_SPEC_UNBOUND', `spec ${spec.specId} binds slot ${spec.slotId}, which no page draws`, { specId: spec.specId, slotId: spec.slotId });
     }
     const consumed = consumedKinds(spec.slotId);
-    const shownFactRefs: string[] = [];
-    const notShownFactRefs: string[] = [];
+    const consumedKindFactRefs: string[] = [];
+    const otherKindFactRefs: string[] = [];
     for (const factRef of spec.factRefs) {
       const fact = factsById.get(factRef);
       if (fact === undefined) return refuse('PRESENTATION_VISUAL_SPEC_UNBOUND', `spec ${spec.specId} cites ${factRef}, which the package does not carry`, { specId: spec.specId, factRef });
@@ -236,16 +268,16 @@ export function bindVisualSpecs(
         refuse('PRESENTATION_VISUAL_SPEC_UNBOUND', `spec ${spec.specId} cites a fact of kind ${fact.kind}, which the slot vocabulary does not know`, { specId: spec.specId, kind: fact.kind });
       }
       const pageKind = SKILL_FACT_KIND_TO_PAGE_KIND[fact.kind] ?? null;
-      if (pageNumbers.length > 0 && pageKind !== null && consumed.has(pageKind)) shownFactRefs.push(factRef);
-      else notShownFactRefs.push(factRef);
+      if (pageNumbers.length > 0 && pageKind !== null && consumed.has(pageKind)) consumedKindFactRefs.push(factRef);
+      else otherKindFactRefs.push(factRef);
     }
     return {
       specId: spec.specId,
       slotId: spec.slotId,
       pageNumbers,
       emptyReason: pageNumbers.length === 0 && empty !== undefined ? empty.reason : null,
-      shownFactRefs,
-      notShownFactRefs,
+      consumedKindFactRefs,
+      otherKindFactRefs,
       claimRefs: [...spec.claimRefs],
     };
   });
@@ -258,6 +290,7 @@ export function bindVisualSpecs(
 export function buildSkillReadingProjection(input: SkillReadingPresentationInput): PresentationProjection {
   const { model, bundle, inputPackage } = input;
   assertPresentedBundle(bundle);
+  assertPackageIntact(inputPackage);
   const reading = acceptAgain(input.reading, bundle, inputPackage);
   assertPackageIsTheChart(model, inputPackage);
 

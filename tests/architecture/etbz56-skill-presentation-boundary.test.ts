@@ -8,7 +8,9 @@
 // fixture-first path under the released 1.0.0 Lexicon) and
 // `buildSkillReadingProjection` (which accepts the reading again and binds it to
 // the package and the chart first). No other source, test, script or tool may
-// call it.
+// name it - a call, an aliased import or a namespace access all name it. This
+// is a text-level guard against a mistake: a name assembled at run time is not
+// seen.
 // =============================================================================
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -38,15 +40,15 @@ describe('ETBZ-56: the bound projection build has exactly two callers', () => {
     const callers: string[] = [];
     for (const file of ROOTS.flatMap(listFiles)) {
       if (file === SELF) continue;
-      if (/\bprojectPresentation\s*\(/u.test(readFileSync(file, 'utf8'))) callers.push(relative(REPO_ROOT, file));
+      if (/\bprojectPresentation\b/u.test(readFileSync(file, 'utf8'))) callers.push(relative(REPO_ROOT, file));
     }
     expect(callers.sort()).toEqual(['src/application/presentation/projection.ts', 'src/application/presentation/skill-presentation.ts']);
   });
 
-  it('is reached from the Skill path only after the reading is accepted again and bound to the package and the chart', () => {
+  it('is reached from the Skill path only after the bundle, the package, the reading and the chart are checked', () => {
     const source = readFileSync(resolve(REPO_ROOT, 'src/application/presentation/skill-presentation.ts'), 'utf8');
     const body = source.slice(source.indexOf('export function buildSkillReadingProjection'));
-    const order = ['assertPresentedBundle(bundle)', 'acceptAgain(input.reading', 'assertPackageIsTheChart(model, inputPackage)', 'projectPresentation('].map((step) => body.indexOf(step));
+    const order = ['assertPresentedBundle(bundle)', 'assertPackageIntact(inputPackage)', 'acceptAgain(input.reading', 'assertPackageIsTheChart(model, inputPackage)', 'projectPresentation('].map((step) => body.indexOf(step));
     expect(order.every((index) => index >= 0)).toBe(true);
     expect([...order].sort((left, right) => left - right)).toEqual(order);
   });

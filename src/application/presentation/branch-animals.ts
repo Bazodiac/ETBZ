@@ -66,16 +66,12 @@ function refuse(message: string, detail: Readonly<Record<string, unknown>>): nev
 }
 
 /**
- * The table, proven: it hashes to its released identity, carries each of the
- * twelve branches exactly once per language, and its German column equals the
- * Sizhu table branch for branch.
+ * The table, proven: it carries each of the twelve branches exactly once per
+ * language, in order, with plain labels; its German column equals the Sizhu
+ * table branch for branch; and it hashes to its released identity. The
+ * structural checks run first, so each names its own defect.
  */
 export function assertReleasedBranchAnimalLabels(table: BranchAnimalLabels = BRANCH_ANIMAL_LABELS): void {
-  const released = RELEASED_BRANCH_ANIMAL_LABELS_HASHES[table.ref];
-  const actual = structuralHash(table);
-  if (released === undefined || released !== actual) {
-    refuse(`the branch animal table ${table.ref} hashes to ${actual}, not to its released identity`, { ref: table.ref, actual });
-  }
   for (const locale of BRANCH_ANIMAL_LOCALES) {
     const entries = table.locales[locale];
     const branches = entries.map((entry) => entry.branch);
@@ -90,6 +86,11 @@ export function assertReleasedBranchAnimalLabels(table: BranchAnimalLabels = BRA
   const sizhu = TWELVE_BRANCHES.map((entry) => entry.tierDe);
   if (table.locales.de.some((entry, index) => entry.label !== sizhu[index])) {
     refuse('the German branch animal labels differ from the Sizhu table', { locale: 'de' });
+  }
+  const released = RELEASED_BRANCH_ANIMAL_LABELS_HASHES[table.ref];
+  const actual = structuralHash(table);
+  if (released === undefined || released !== actual) {
+    refuse(`the branch animal table ${table.ref} hashes to ${actual}, not to its released identity`, { ref: table.ref, actual });
   }
 }
 

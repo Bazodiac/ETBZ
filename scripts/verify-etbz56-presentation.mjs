@@ -2,11 +2,11 @@
 /**
  * ETBZ-56 — source-mutation proofs for the Skill-reading presentation.
  *
- * For each gate of `buildSkillReadingProjection` (bundle identity, the reading
- * accepted again, the package bound to the chart, the visualization specs), the
- * Earthly-Branch animal labels and the every-word check over quotation marks:
- * weaken it in exactly one place, run the suites that claim to protect it, and
- * require them to turn RED. A guard whose removal leaves the suite green is
+ * For each gate a test can reach - of `buildSkillReadingProjection` (bundle
+ * identity, package integrity, the reading accepted again, the package bound to
+ * the chart, the visualization specs), the Earthly-Branch animal labels and the
+ * every-word check over quotation marks: weaken it in exactly one place, run the
+ * suites that claim to protect it, and require them to turn RED. A guard whose removal leaves the suite green is
  * decoration. The unmutated baseline must be GREEN first — otherwise "red"
  * proves nothing.
  *
@@ -14,12 +14,18 @@
  * names its killer is killed only by that test failing an assertion; a run that
  * times out, fails to load, or throws inside a test body is an error, not a kill.
  *
- * Not mutated here: the renderer (Python, local only) - its gates are proven by
- * tools/pdf-renderer/qa/run_canaries.py, whose record the contract suite checks;
- * and the projection's every-word call (`assertEveryWordPlaced` over
- * `placedBlockText`), which is equivalent to `blockWords` for the paragraphs a
- * payload can carry - the paginator's own check, which does see pull quotes, is
- * mutated instead.
+ * Not mutated here, each for a stated reason:
+ *  - the renderer (Python, local only): its gates are proven by
+ *    tools/pdf-renderer/qa/run_canaries.py, whose record the contract suite checks;
+ *  - the projection's every-word call (`assertEveryWordPlaced` over
+ *    `placedBlockText`): equivalent to `blockWords` for the paragraphs a payload
+ *    can carry - the paginator's own check, which does see pull quotes, is mutated;
+ *  - the call of `assertBundleCarriesTemplateWording` from the Skill path: every
+ *    released bundle carries the template's wording, so no input reaches it - its
+ *    own checks are mutated through the function directly;
+ *  - the `birthTimeKnown` clause of the subject check: the package builder refuses
+ *    a package whose subject differs from its interpretation input, so no
+ *    accepted reading binds one (equivalent).
  *
  * Every file is restored from bytes held in memory; the run fails if the tree
  * differs from before.
@@ -61,6 +67,22 @@ const MUTANTS = [
     "  const missingTerm = CHART_TERMINOLOGY.find((entry) => !bundleTerms.has(entry.term));",
     "  const missingTerm = CHART_TERMINOLOGY.find((entry) => entry.term === '' && !bundleTerms.has(entry.term));",
     [T.negative], "refuses a bundle whose Ten-God wording or chart terms are not the ones the template prints"],
+  ["PACKAGE: a package, graph or plan need not hash to itself", 'text', SKILL,
+    "    if (!hashesToItself(part)) {",
+    "    if (false) {",
+    [T.negative], "refuses an input package, claim graph or plan that does not hash"],
+  ["PACKAGE: the package integrity is not checked at all", 'text', SKILL,
+    "  assertPackageIntact(inputPackage);\n",
+    "\n",
+    [T.negative], "refuses an input package, claim graph or plan that does not hash"],
+  ["READING: a reading that is not an object reaches the boundary", 'text', SKILL,
+    "  if (typeof reading !== 'object' || reading === null || Array.isArray(reading)) {",
+    "  if (typeof reading !== 'object') {",
+    [T.negative], "refuses a reading that is not an object or carries no structural hash"],
+  ["READING: a reading without a recorded hash reaches the boundary", 'text', SKILL,
+    "  if (typeof recorded !== 'string') return refuse('PRESENTATION_SKILL_BINDING_MISMATCH', 'the reading carries no structural hash', {});\n",
+    "",
+    [T.negative], "refuses a reading that is not an object or carries no structural hash"],
   ["READING: the recorded hash is not compared", 'text', SKILL,
     "  if (accepted.structuralHash !== recorded) {",
     "  if (false) {",
@@ -85,6 +107,10 @@ const MUTANTS = [
     "  if (structuralHash(allowed) !== structuralHash(template)) {",
     "  if (false) {",
     [T.negative], "refuses a package whose slot vocabulary is not the template's"],
+  ["CHART: the package's source warnings may differ from the chart's", 'text', SKILL,
+    "  if (structuralHash([...inputPackage.warnings]) !== structuralHash([...model.sourceWarnings])) {",
+    "  if (false) {",
+    [T.negative], "refuses a chart whose source warnings are not the package's"],
   ["SPECS: a spec may bind a slot no page draws", 'text', SKILL,
     "    if (pageNumbers.length === 0 && empty === undefined) {",
     "    if (false) {",
@@ -113,11 +139,11 @@ const MUTANTS = [
   ["ANIMALS: the glance page drops the branch animals", 'text', PROJECTION,
     "branch: branchText(pillar.branch) })),",
     "branch: { ...glyphText(pillar.branch), animalLabel: '' } })),",
-    [T.unit], "prints the animal of every branch a page shows"],
+    [T.unit], "gives every branch display its own branch's animal"],
   ["ANIMALS: the five-phase page prints one word for every branch", 'text', PROJECTION,
     "animalLabel: branchAnimalLabel(glyph.character, 'de'),",
     "animalLabel: 'Tier',",
-    [T.unit], "binds each drawn branch glyph to its own animal"],
+    [T.unit], "gives every branch display its own branch's animal"],
   ["ANIMALS: the chart's animal label is not held to the table", 'text', PROJECTION,
     "    if (animalLabel !== pillar.tierDe) {",
     "    if (false) {",
@@ -125,7 +151,19 @@ const MUTANTS = [
   ["ANIMALS: the table is not held to its released hash", 'text', ANIMALS,
     "  if (released === undefined || released !== actual) {",
     "  if (false) {",
-    [T.unit], "refuses a changed label, a reordered table and a label the Sizhu table does not carry"],
+    [T.unit], "refuses a structurally valid table that is not the released identity"],
+  ["ANIMALS: the table need not list the twelve branches in order", 'text', ANIMALS,
+    "    if (branches.length !== expected.length || branches.some((branch, index) => branch !== expected[index])) {",
+    "    if (false) {",
+    [T.unit], "refuses a reordered table, a padded label and a label the Sizhu table does not carry"],
+  ["ANIMALS: an empty or padded label passes", 'text', ANIMALS,
+    "    if (entries.some((entry) => entry.label.trim() === '' || entry.label.trim() !== entry.label)) {",
+    "    if (false) {",
+    [T.unit], "refuses a reordered table, a padded label and a label the Sizhu table does not carry"],
+  ["ANIMALS: the German labels are not held to the Sizhu table", 'text', ANIMALS,
+    "  if (table.locales.de.some((entry, index) => entry.label !== sizhu[index])) {",
+    "  if (false) {",
+    [T.unit], "refuses a reordered table, a padded label and a label the Sizhu table does not carry"],
   ["ANIMALS: an unknown output language is not refused", 'text', ANIMALS,
     "  if (!(BRANCH_ANIMAL_LOCALES as readonly string[]).includes(locale)) {",
     "  if (false) {",

@@ -442,7 +442,7 @@ def day_master(ctx: Context, page: dict, c: dict) -> str:
       <div class="rule gold" style="margin:6mm 0 7mm"></div>
       <div{slot(dp)} style="display:flex;gap:4mm;align-items:center">
         {disc(ctx, dp["stem"], 24, 16)}{disc(ctx, dp["branch"], 24, 16)}
-        <div>{t(dp["stem"]["pinyin"], "pinyin", "display:block;font-size:11pt")}<div>{pair(t(dp["branch"]["pinyin"], "pinyin", "font-size:11pt") + SEP + t(dp["branch"]["animalLabel"], "caption"))}</div><div class="caption">{t(dp["positionLabel"])}</div></div>
+        <div>{t(dp["stem"]["pinyin"], "pinyin", "display:block;font-size:11pt")}{t(dp["branch"]["pinyin"], "pinyin", "display:block;font-size:11pt")}<div class="caption">{t(dp["branch"]["animalLabel"])}</div><div class="caption">{t(dp["positionLabel"])}</div></div>
       </div>
       <div class="label ink" style="margin:10mm 0 3mm">{t(c["hiddenStemsLabel"])}</div>
       <div>{hidden}<div class="rule"></div></div>

@@ -285,7 +285,7 @@ export interface LexiconBinding {
 
 /**
  * ETBZ-56: the identities of a presented Skill reading - never printed. The ArtifactManifest copies them verbatim.
- * `visualBindings` records, per visualization spec, where the slot is drawn and which cited facts the slot shows.
+ * `visualBindings` records, per visualization spec, where the slot is drawn and its cited facts split by kind.
  */
 export interface SkillPresentationSources {
   readonly skillRef: string;
@@ -305,10 +305,14 @@ export interface VisualBinding {
   /** The pages that draw the slot; empty when the template leaves it empty (`emptyReason`). */
   readonly pageNumbers: readonly number[];
   readonly emptyReason: 'NO_APPROVED_CONTENT' | null;
-  /** Cited facts of a kind the slot shows - each equal to the chart value the page draws. */
-  readonly shownFactRefs: readonly string[];
-  /** Cited facts of a kind the slot does not show; recorded, never drawn. */
-  readonly notShownFactRefs: readonly string[];
+  /**
+   * Cited facts of a kind the slot consumes (the ETBZ-49 page family's declaration, plus the animal label wherever a
+   * branch is consumed). Classified by kind, not measured on the page; every package fact equals the chart value at
+   * its path, and the pages draw the chart.
+   */
+  readonly consumedKindFactRefs: readonly string[];
+  /** Cited facts of any other kind: recorded, never drawn because of the spec. */
+  readonly otherKindFactRefs: readonly string[];
   readonly claimRefs: readonly string[];
 }
 
@@ -1130,9 +1134,11 @@ export interface PresentationBinding {
 }
 
 /**
- * The one projection build behind both paths. Internal: only `buildPresentationProjection` and
- * `buildSkillReadingProjection` call it (tests/architecture/etbz56-skill-presentation-boundary.test.ts), because the
- * binding it records is only as true as the checks its caller ran.
+ * The one projection build behind both paths. Only `buildPresentationProjection` and `buildSkillReadingProjection`
+ * may use it, because the binding it records is only as true as the checks its caller ran. It is exported (the Skill
+ * path lives in its own module); tests/architecture/etbz56-skill-presentation-boundary.test.ts refuses any other
+ * reference to the name in the repository's code - a text-level guard against a mistake, not against a caller who
+ * builds the name at run time.
  */
 export function projectPresentation(modelInput: HoroscopeModel, contentInput: unknown, binding: PresentationBinding): PresentationProjection {
   const parsed = contentSchema.safeParse(contentInput);
