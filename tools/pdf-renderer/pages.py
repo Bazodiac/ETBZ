@@ -508,9 +508,10 @@ def five_phases(ctx: Context, page: dict, c: dict) -> str:
     cards = ""
     for p in c["phases"]:
         stems = "".join(ctx.glyph(s["character"], 6.5, entry=s) for s in p["stems"])
-        # A branch shows its animal label under it (ETBZ-56 AC 8): the glyph and the word are one slot.
+        # A branch shows its pinyin and its animal under it (ETBZ-56 AC 8, Rebaseline section 20): one slot.
         branches = "".join(
-            f'<div class="brx"{slot(b)}>{ctx.glyph(b["character"], 6.5)}{t(b["animalLabel"], "brx-l")}</div>' for b in p["branches"])
+            f'<div class="brx"{slot(b)}>{ctx.glyph(b["character"], 6.5)}{t(b["pinyin"], "brx-l pinyin")}{t(b["animalLabel"], "brx-l")}</div>'
+            for b in p["branches"])
         cards += (f'<div{slot(p)} style="text-align:center"><div class="disc f-{p["phase"]}"{phase_attrs(p["phase"])} style="width:30mm;height:30mm;margin:0 auto">{ctx.glyph(p["character"], 19)}</div>'
                   f'<div class="pinyin" style="margin-top:3.5mm;font-size:11pt;font-weight:400">{t(p["pinyin"])}</div><div class="label" style="margin-top:1mm">{t(p["label"])}</div>'
                   f'<div style="margin-top:5mm;border-top:0.25mm solid var(--rule-200);padding-top:3mm"><div class="caption"{PAGE_LABEL} style="margin-bottom:1.5mm">{t(c["stemsLabel"])}</div>'
@@ -650,7 +651,7 @@ def long_form(ctx: Context, page: dict, c: dict) -> str:
 def reflection(ctx: Context, page: dict, c: dict) -> str:
     eight = "".join(
         f'<div{slot(p)} style="display:flex;flex-direction:column;align-items:center;gap:2mm">{ctx.glyph(p["stem"]["character"], 13)}{ctx.glyph(p["branch"]["character"], 13)}'
-        f'<div class="caption">{t(p["branch"]["animalLabel"])}</div>'
+        f'<div style="text-align:center">{t(p["branch"]["pinyin"], "pinyin", "display:block")}{t(p["branch"]["animalLabel"], "caption")}</div>'
         f'<div class="label" style="margin-top:1mm">{t(p["positionLabel"])}</div></div>' for p in c["characters"])
     questions = "".join(
         f'<div class="qrow"{slot(q)}>{t(q["number"], "label gold")}<div class="body" style="font-size:11.5pt;line-height:16pt;color:var(--ink-900)">{t(q["text"])}</div></div>'

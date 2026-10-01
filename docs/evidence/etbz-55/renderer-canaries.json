@@ -3168,10 +3168,10 @@
  ],
  "executedAt": "2026-10-01",
  "host": "Darwin arm64",
- "projectionStructuralHash": "sha256:a40c282aeec90f49dde357e683641ab6c41b14bf2d35926c4a900f7ab777f429",
+ "projectionStructuralHash": "sha256:c72150a7fd13a156db95970488233ec439d5abfdc015f7d515d657deb81918a2",
  "renderer": {
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:4924747390ce173a37b437b55d402cb70b582f316c2a06f0878914fe5a65096d"
+  "sourceSha256": "sha256:f971a44b5eaa2721a2cb46156786a5485f521d7bfcd8f8d545ab19c04c4de820"
  },
  "summary": {
   "blockedAsExpected": 167,

@@ -4,15 +4,15 @@
  "scope": "Delivery Runner visual evidence verdict, Rebaseline 62128133 section 18 (ETBZ-55 comment 16818): no additional Product Owner stop, not a sellability verdict.",
  "reviewedOn": "2026-10-01",
  "artifact": {
-  "artifactId": "bazodiac-reading-9aec05c2fb0bd58e",
-  "pdfSha256": "sha256:9aec05c2fb0bd58ea3bcc0d3bc9a02a00a524109073cd83f440c3c3843e9b939",
-  "contactSheetSha256": "sha256:ebbbae6b6f52859e7ea2b4b28c77a54db899e9e8363b64dcd07123585a6f5edd",
+  "artifactId": "bazodiac-reading-cdd674c48267d309",
+  "pdfSha256": "sha256:cdd674c48267d3091aae3add54f0e54434905270280a7dba26ed4b6312bd9456",
+  "contactSheetSha256": "sha256:cf1239b9a3403a4604cbd64f349fb0e952383046d039cdce445d165a10cdc5cf",
   "pageCount": 29
  },
  "inspected": [
   "the contact sheet: all 29 pages of the same run",
   "the full-size renders listed under pages (fifteen, committed)",
-  "each of the fifteen at full size - in this run, or in an earlier render whose page image is byte-identical (the projection changed between them only in its sources, which no page prints)"
+  "each of the fifteen at full size: five-phases and reflection in this run (the only pages whose image changed); the other thirteen in an earlier render whose page image is byte-identical to this run’s"
  ],
  "checks": [
   {
@@ -46,9 +46,9 @@
    "note": "PDF digest, length and page count re-derived by tests/contract/etbz56-skill-presentation-evidence.contract.test.ts."
   },
   {
-   "check": "Every Earthly Branch the template displays carries its animal label (ETBZ-56 AC 8, as ADR 0014 section 3 reads it)",
+   "check": "Every structured display of an Earthly Branch shows its Hanzi, canonical pinyin and animal label (ETBZ-56 AC 8, Rebaseline 62128133 section 20)",
    "result": "PASS",
-   "note": "Glance, four pillars, foundation, day master, five phases (all twelve), hidden stems, reflection, summary. Branches named in the reading’s own text (Wu (午), Hai (亥) and Wei (未) on page 12, Wu (午) on page 14) carry no label: the mapper adds no word to an accepted reading."
+   "note": "Glance, four pillars, foundation, day master, five phases (all twelve), hidden stems, reflection, summary: glyph, pinyin with tone marks and the German animal. Branches named in the reading’s own text (Wu (午), Hai (亥) and Wei (未) on page 12, Wu (午) on page 14) stay as the Skill wrote them, as section 20 permits."
   }
  ],
  "defects": [],
@@ -61,7 +61,7 @@
   {
    "page": "09",
    "pageId": "five-phases",
-   "note": "The Earth card holds four branches, which wrap to two rows under their labels; the branch rows of the five cards do not line up with each other. Legible, nothing clipped."
+   "note": "The Earth card holds four branches, which wrap to two rows of glyph, pinyin and animal; the branch rows of the five cards do not line up with each other. Legible, nothing clipped."
   },
   {
    "page": "27",
@@ -126,7 +126,7 @@
    "file": "pages/09-five-phases.png",
    "pageLabel": "09",
    "pageId": "five-phases",
-   "pngSha256": "sha256:a38a0826f9581b284e702bcd64bfb0c9979bf45fd47390d62827228cb2692b1f"
+   "pngSha256": "sha256:d67eef73ad9f61bd9037f87b8aadd770df3c4bba88035ce916d40a99a4487b21"
   },
   {
    "file": "pages/10-ten-gods.png",
@@ -156,7 +156,7 @@
    "file": "pages/26-reflection.png",
    "pageLabel": "26",
    "pageId": "reflection",
-   "pngSha256": "sha256:1376ba8e78480a82b2f4f16801bcedff01cf2c23493481ad80b671ea77448b5e"
+   "pngSha256": "sha256:8792f6fb458577f2fa746155f328da630cf21ec4d4107cc549f4f28832c62d26"
   },
   {
    "file": "pages/27-summary.png",

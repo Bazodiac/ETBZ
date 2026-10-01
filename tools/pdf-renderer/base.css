@@ -81,6 +81,7 @@ table.tg tbody tr:last-child td{border-bottom:0.25mm solid var(--rule-200)}
 .glyphrow{display:flex;justify-content:center;gap:1.5mm;flex-wrap:wrap}
 .brx{display:flex;flex-direction:column;align-items:center;gap:0.6mm;min-width:9mm}
 .brx-l{font-size:8.5pt;line-height:10pt;color:var(--ink-400)}
+.brx-l.pinyin{color:var(--ink-900)}
 .qrow{padding:6mm 0;border-top:0.25mm solid var(--rule-200);display:grid;grid-template-columns:10mm 1fr;gap:4mm}
 .refterm{padding:1.6mm 0;border-top:0.25mm solid var(--rule-200)}
 .wx-v{font-size:14pt;font-weight:300;margin-top:1.5mm;font-family:var(--font-display)}

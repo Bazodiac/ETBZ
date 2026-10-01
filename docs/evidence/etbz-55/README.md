@@ -8,8 +8,8 @@ template `bazodiac-final-template@1.0.0` and rendered by the local
 `bazodiac-pdf-renderer@1.0.0` (`tools/pdf-renderer/`). Decision record: ADR 0012.
 
 Re-rendered in ETBZ-56 (2026-10-01, ADR 0014): the projection gained the Earthly-Branch
-animal labels on every page that displays a branch and records the label table, and the
-renderer changed (the labels, the Ten Gods legend, the media attribute of a stylesheet), so
+animal labels on every page that displays a branch (and the pinyin on the five-phases and reflection pages) and records the label table, and the
+renderer changed (the labels and branch pinyin, the Ten Gods legend, the media attribute of a stylesheet), so
 the PDF, the manifest, the QA report, the contact sheet and the canary record were produced
 again on the new renderer digest. The text payload is unchanged. The accepted 1.1.0 Skill
 reading is presented by the same renderer in `docs/evidence/etbz-56/`.
@@ -64,7 +64,7 @@ both against the committed tree.
   must show is shown - against a mistaken builder or stylesheet edit, for the mechanisms
   ADR 0012 section 6 lists (limitation 8 names what the page QA does not measure).
 - The PDF itself says the same (final-artifact readback, ADR 0012 section 6): each of its
-  33,542 text units is bound to one of the 1,639 printed strings of its page, none clipped
+  33,587 text units is bound to one of the 1,655 printed strings of its page, none clipped
   away, and each string's glyphs spell its projection value in visual order, every glyph
   upright; every clip is one convex shape or a frame around one; its painted shapes are the
   116 display glyphs and 30 wordmarks (each with its dot) as canonical outlines, each wholly
