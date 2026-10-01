@@ -121,6 +121,7 @@ export interface SkillRunContractEvidence {
  */
 export const RELEASED_BUNDLE_HASHES: Readonly<Record<string, string>> = {
   '1.0.0': 'sha256:1c8f80c38b57748e65035a6bd2d671604fb19574cdf3355326352fbe0e19564e',
+  '1.1.0': 'sha256:9e6762f3cf339f3e03e56d52770629bd30eebe79ab6b7a70cbcc9dbb9ea599c2',
 };
 
 /**
@@ -128,10 +129,9 @@ export const RELEASED_BUNDLE_HASHES: Readonly<Record<string, string>> = {
  * their content hash exactly like a released version. A candidate authorises
  * an evaluation run and nothing else - it is never a released version, and a
  * release moves it from this table to RELEASED_BUNDLE_HASHES with a new hash.
+ * Empty since 2026-10-01: 1.1.0 was released (Jira ETBZ-57 comment 16969).
  */
-export const CANDIDATE_BUNDLE_HASHES: Readonly<Record<string, string>> = {
-  '1.1.0': 'sha256:c584aa05ef0adc71a457ab7ded0543c27863d122427febef9416c0418b4298e1',
-};
+export const CANDIDATE_BUNDLE_HASHES: Readonly<Record<string, string>> = {};
 
 /**
  * ETBZ-57: the explicit opt-in every boundary asks for before it lets a

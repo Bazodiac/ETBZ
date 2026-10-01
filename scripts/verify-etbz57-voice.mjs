@@ -33,6 +33,15 @@ const T = {
 };
 
 /** [name, kind, file, find, replace, tests, killer] — kind 'text' (find occurs exactly once). */
+// Retired with the release of 1.1.0 (2026-10-01): no bundle version is a candidate. Three cannot be observed at
+// all - the opt-in at the reading boundary and at the portable copy (isCandidateVersion is always false) and the
+// candidate decision-date rule (an earlier check refuses any CANDIDATE contract first). The fourth hard-coded
+// '1.1.0' and now breaks the fixture at load (RUN_ERROR, not a kill). Their bodies are in bdc9f544; re-arm them
+// with the next candidate version, rewriting the package mutant for that version:
+//   "CANDIDATE: a candidate bundle builds a released-run package"
+//   "CANDIDATE: a CANDIDATE contract may carry a decision date"
+//   "CANDIDATE: a reading under the candidate bundle needs no opt-in"
+//   "CANDIDATE: a portable candidate copy needs no opt-in"
 const MUTANTS = [
   ["VOICE: the voice gates are switched off for 1.1.0", 'text', READING,
     "  const voice = VOICE_GATED_SKILLS.has(reading.skillRef);",
@@ -198,14 +207,6 @@ const MUTANTS = [
     "      semanticDelta: chapter.semanticDelta,\n      callbacks: chapter.callbacks,\n    })),",
     "      callbacks: chapter.callbacks,\n    })),",
     [T.negative], "refuses a revision that changes a semantic delta"],
-  ["CANDIDATE: a reading under the candidate bundle needs no opt-in", 'text', READING,
-    "  if (isCandidateVersion(bundle.bundleVersion) && context.candidateEvaluation !== true) {",
-    "  if (false) {",
-    [T.negative], "refuses a reading under the candidate bundle without the evaluation opt-in"],
-  ["CANDIDATE: a portable candidate copy needs no opt-in", 'text', BUNDLE,
-    "  if (isCandidateVersion(portableCore.bundleVersion) && options.candidateEvaluation !== true) {",
-    "  if (false) {",
-    [T.negative], "accepts the portable candidate copy only for an evaluation run"],
   ["UNKNOWN: a portable copy's version is checked only after its statuses", 'text', BUNDLE,
     "  specFor(portableCore.bundleVersion);\n",
     "",
@@ -246,22 +247,18 @@ const MUTANTS = [
     "  if (acceptSkillReading(semanticDraft, context).structuralHash !== semanticHash) {",
     "  if (false) {",
     [T.negative], "refuses a \"semantic\" reading that is not the accepted reading"],
-  ["CANDIDATE: a candidate bundle builds a released-run package", 'text', PACKAGE,
+  ["CANDIDATE: the package ignores the candidate opt-in", 'text', PACKAGE,
     "  if (options.candidateEvaluation === true) {",
-    "  if (options.candidateEvaluation === true || bundle.bundleVersion === '1.1.0') {",
-    [T.negative], "refuses a package for a released run under the candidate bundle"],
+    "  if (false) {",
+    [T.negative], "builds a released-run package under bundle 1.1.0"],
   ["CANDIDATE: a released bundle passes as a candidate", 'text', BUNDLE,
     "  if (!HASH_PATTERN.test(bundle.structuralHash) || actual !== bundle.structuralHash || candidate === undefined || candidate !== actual) {",
     "  if (!HASH_PATTERN.test(bundle.structuralHash) || actual !== bundle.structuralHash) {",
-    [T.negative], "refuses a package for a released run under the candidate bundle"],
+    [T.negative], "builds a released-run package under bundle 1.1.0"],
   ["CANDIDATE: a CANDIDATE contract is accepted in any bundle version", 'text', BUNDLE,
     "    if (source.status !== 'CURRENT' && !(source.status === 'CANDIDATE' && isCandidateVersion(core.bundleVersion))) {",
     "    if (source.status !== 'CURRENT' && !(source.status === 'CANDIDATE')) {",
     [T.negative], "refuses a CANDIDATE contract in a bundle version that is not a candidate"],
-  ["CANDIDATE: a CANDIDATE contract may carry a decision date", 'text', BUNDLE,
-    "(source.status === 'CANDIDATE' ? source.releasedOn !== null : source.releasedOn === null || !isCalendarDate(source.releasedOn))",
-    "(source.status === 'CANDIDATE' ? false : source.releasedOn === null || !isCalendarDate(source.releasedOn))",
-    [T.negative], "refuses a CANDIDATE contract that claims a decision date"],
   ["IDENTITY: the 1.1.0 bundle runs the 1.0.0 Skill", 'text', PACKAGE,
     "  '1.1.0': SKILL_REF_V1_1,\n",
     "  '1.1.0': SKILL_REF,\n",

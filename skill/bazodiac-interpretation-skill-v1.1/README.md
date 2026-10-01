@@ -2,7 +2,7 @@
 
 `bazodiac-interpretation-skill@1.1.0` — the customer-voice revision of the portable execution package (Jira ETBZ-57; Confluence Rebaseline 62128133 section 17). Same reading schema (`bazodiac-skill-reading.v1`), same input package (`bazodiac-skill-input.v1`), same acceptance boundary plus the customer-voice gates and the editorial pass. The 1.0.0 package in `../bazodiac-interpretation-skill-v1/` is unchanged and stays the package of every run generated under it.
 
-**Status: CANDIDATE.** The bundle `bazodiac-skill-contract-bundle@1.1.0` binds the Lens, Lexicon and Anti-Boilerplate revisions at their candidate pages (Confluence 77561858, 77529091, 77266967). A candidate bundle authorises evaluation runs only: every boundary refuses it unless the operator passes `{ candidateEvaluation: true }` — `acceptPortableSkillContractBundle`, `buildSkillInputPackage`, `acceptSkillReading` and `acceptEditorialRevision`. It is released, and this package regenerated, only after the ETBZ-57 Human Editorial Gate returns ACCEPTED.
+**Status: RELEASED 2026-10-01.** The ETBZ-57 Human Editorial Gate returned ACCEPTED (Jira ETBZ-57 comment 16969). The bundle `bazodiac-skill-contract-bundle@1.1.0` binds the released Lens, Lexicon and Anti-Boilerplate revisions (Confluence 77561858 v6, 77529091 v4, 77266967 v3) and is frozen in `RELEASED_BUNDLE_HASHES`. Before the release it was a candidate for evaluation runs only; the candidate boundary (`{ candidateEvaluation: true }`) remains for future revisions.
 
 | File | Role | Written by |
 | --- | --- | --- |

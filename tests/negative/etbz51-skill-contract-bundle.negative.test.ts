@@ -435,7 +435,8 @@ describe('N16: a bundle that is not the released content', () => {
   });
 
   it('refuses an unknown bundle version outright', () => {
-    const core = { ...coreOf(bundle), bundleVersion: '1.1.0', bundleRef: 'bazodiac-skill-contract-bundle@1.1.0' };
+    // This probe used 1.1.0 while it was not in the released table; since its release (ETBZ-57) 9.9.9 is the unknown version.
+    const core = { ...coreOf(bundle), bundleVersion: '9.9.9', bundleRef: 'bazodiac-skill-contract-bundle@9.9.9' };
     const candidate: SkillContractBundle = { ...core, structuralHash: structuralHash(core) };
     const error = expectRefusal(() => assertReleasedSkillContractBundle(candidate), 'BUNDLE_NOT_RELEASED');
     expect(error.message).toContain('not a released version');

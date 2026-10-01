@@ -15,6 +15,7 @@ import { canonicalJson } from '../../src/domain/canonical-json.js';
 import { structuralHash } from '../../src/domain/structural-hash.js';
 import type { ChartFact } from '../../src/application/interpretation/feature-set.js';
 import {
+  RELEASED_BUNDLE_HASHES,
   SkillRunError,
   acceptEditorialRevision,
   acceptSkillReading,
@@ -78,6 +79,7 @@ export const ETBZ57_GENERATION = {
     'REALISE v6 and EDIT v6: committed in 3e8e9b3, superseded after the closure check of round 5 found two reflection surfaces still speaking of frequency, one remaining "neither side prevails" sentence and a near-absolute "kaum abgefedert"',
     'REALISE v7: semantic-reading.json',
     'EDIT v7: skill-reading.json (text-only revision of REALISE v7)',
+    'Release rebind 2026-10-01 (Human Editorial Gate ACCEPTED, Jira ETBZ-57 comment 16969): both readings re-bound to the released 1.1.0 identities - bundle hash, input-package and plan hashes, contract page versions; customer text unchanged',
   ],
 } as const;
 
@@ -87,7 +89,7 @@ const sha256OfText = (text: string): string => `sha256:${createHash('sha256').up
 export function deriveEtbz57Evidence(): Etbz57Evidence {
   const v10 = skillFixture();
   const v11 = skillFixtureV1_1();
-  const context = { bundle: v11.bundle, inputPackage: v11.inputPackage, candidateEvaluation: true } as const;
+  const context = { bundle: v11.bundle, inputPackage: v11.inputPackage };
   const old = acceptSkillReading(readJson(`${ETBZ52_FIXTURE_DIR}/skill-reading.json`), { bundle: v10.bundle, inputPackage: v10.inputPackage });
   const semantic = acceptSkillReading(readJson(`${ETBZ57_FIXTURE_DIR}/semantic-reading.json`), context);
   const accepted = acceptEditorialRevision(semantic, readJson(`${ETBZ57_FIXTURE_DIR}/skill-reading.json`), context);
@@ -109,7 +111,7 @@ export function deriveEtbz57Evidence(): Etbz57Evidence {
   for (const p of onDayMaster(silent)) (p as { posture: string }).posture = 'TENTATIVE';
   const marked = structuredClone(silent);
   for (const p of onDayMaster(marked)) (p as { text: string }).text = `Vorläufig, solange die Angabe nicht bestätigt ist: ${p.text}`;
-  const tentativeContext = { bundle: v11.bundle, inputPackage: tentative.pkg, candidateEvaluation: true } as const;
+  const tentativeContext = { bundle: v11.bundle, inputPackage: tentative.pkg };
 
   // D — no manufactured tension: tension language added to the paragraph over the one claim in no contrast.
   const manufactured = structuredClone(accepted) as SkillReadingDraft & { structuralHash?: string };
@@ -182,7 +184,7 @@ export function deriveEtbz57Evidence(): Etbz57Evidence {
     skillPackageStructuralHash: skillManifest.packageStructuralHash,
     bundleRef: v11.bundle.bundleRef,
     bundleStructuralHash: v11.bundle.structuralHash,
-    bundleStatus: 'CANDIDATE',
+    bundleStatus: Object.hasOwn(RELEASED_BUNDLE_HASHES, v11.bundle.bundleVersion) ? 'RELEASED' : 'CANDIDATE',
     contracts: v11.inputPackage.contracts,
     inputPackageStructuralHash: v11.inputPackage.structuralHash,
     interpretationInputStructuralHash: v11.input.structuralHash,

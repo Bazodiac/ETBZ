@@ -169,19 +169,19 @@ export const PLAN_CONTRACT_BINDINGS_V1_0: PlanContractBindings = {
  * ETBZ-57 - the voice revision pair (`terminology-wording-lexicon@1.1.0`,
  * `grounded-reflective-synthesis-lens@1.1.0`), each on its own page; the
  * released 1.0.0 pages stay unchanged. A plan for skill-contract bundle 1.1.0
- * binds these through `MetaNarrativePlanContext.contractBindings`. The page
- * versions are the candidate pages' until the release step re-binds them.
+ * binds these through `MetaNarrativePlanContext.contractBindings`, at the
+ * page versions released on 2026-10-01 (Jira ETBZ-57 comment 16969).
  */
 export const PLAN_CONTRACT_BINDINGS_V1_1: PlanContractBindings = {
   terminologyLexicon: {
     contractRef: 'terminology-wording-lexicon@1.1.0',
     confluencePageId: '77529091',
-    confluencePageVersion: '3',
+    confluencePageVersion: '4',
   },
   interpretationLens: {
     contractRef: 'grounded-reflective-synthesis-lens@1.1.0',
     confluencePageId: '77561858',
-    confluencePageVersion: '5',
+    confluencePageVersion: '6',
   },
 };
 

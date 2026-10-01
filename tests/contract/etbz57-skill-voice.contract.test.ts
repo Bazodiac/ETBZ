@@ -59,16 +59,19 @@ function listFiles(dir: string): string[] {
 const fixture = skillFixtureV1_1();
 const evidence = deriveEtbz57Evidence();
 
-describe('ETBZ-57: bundle 1.1.0 is a frozen candidate beside the unchanged 1.0.0', () => {
+describe('ETBZ-57: bundle 1.1.0 is released beside the unchanged 1.0.0', () => {
   it('leaves bundle 1.0.0 byte-identical to its released hash', () => {
     expect(buildSkillContractBundle().structuralHash).toBe(RELEASED_BUNDLE_HASHES['1.0.0']);
   });
 
-  it('freezes 1.1.0 as a candidate and never as released', () => {
-    expect(fixture.bundle.structuralHash).toBe(CANDIDATE_BUNDLE_HASHES['1.1.0']);
-    expect(Object.keys(CANDIDATE_BUNDLE_HASHES).filter((version) => Object.hasOwn(RELEASED_BUNDLE_HASHES, version))).toEqual([]);
-    expect(fixture.bundle.contracts.filter((source) => source.status === 'CANDIDATE').map((source) => source.key)).toEqual([
-      'INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON', 'ANTI_BOILERPLATE',
+  it('freezes 1.1.0 as released, with its three revised contracts CURRENT since the gate decision', () => {
+    expect(fixture.bundle.structuralHash).toBe(RELEASED_BUNDLE_HASHES['1.1.0']);
+    expect(Object.keys(CANDIDATE_BUNDLE_HASHES)).toEqual([]);
+    expect(fixture.bundle.contracts.map((source) => [source.key, source.status])).toEqual([
+      ['METHOD_PROFILE', 'CURRENT'], ['LONG_FORM', 'CURRENT'], ['INTERPRETATION_LENS', 'CURRENT'], ['TERMINOLOGY_LEXICON', 'CURRENT'], ['ANTI_BOILERPLATE', 'CURRENT'],
+    ]);
+    expect(fixture.bundle.contracts.filter((source) => source.identity?.endsWith('@1.1.0') === true).map((source) => [source.confluencePageId, source.confluencePageVersion, source.releasedOn])).toEqual([
+      ['77561858', '6', '2026-10-01'], ['77529091', '4', '2026-10-01'], ['77266967', '3', '2026-10-01'],
     ]);
   });
 

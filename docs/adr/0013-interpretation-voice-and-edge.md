@@ -1,10 +1,11 @@
 # ADR 0013 — Interpretation voice & edge: skill and bundle 1.1.0 beside 1.0.0 (ETBZ-57)
 
-- **Status:** Proposed — candidate. Merged to `main` as a frozen candidate on the Product
-  Owner's instruction of 2026-10-01 ("merge nach Delta-Review"). The contract revisions it
-  binds are CANDIDATE pages awaiting the ETBZ-57 Human Editorial Gate; nothing here is
-  released before the Product Owner returns ACCEPTED and the release step re-binds the
-  released pages.
+- **Status:** Accepted — released 2026-10-01. Merged to `main` as a frozen candidate on the
+  Product Owner's instruction of 2026-10-01 ("merge nach Delta-Review"; PR #18, `bdc9f544`);
+  the ETBZ-57 Human Editorial Gate then returned ACCEPTED and the Product Owner confirmed the
+  Method Profile reading of reconcile C5 (Jira ETBZ-57 comment 16969). The release step
+  re-bound bundle 1.1.0 to the released pages (Lens 77561858 v6, Lexicon 77529091 v4,
+  Anti-Boilerplate 77266967 v3) and marked the 1.0.0 pages superseded for new runs.
 - **Date:** 2026-10-01
 - **Slice:** ETBZ-57 [PRE-GOLDEN] — the customer-voice revision: new versioned revisions
   of the Interpretation Lens and the Terminology & Wording Lexicon, a binding-only
@@ -53,8 +54,8 @@ plan built without it binds the 1.0.0 pair, which a 1.1.0 package refuses.
 ### 2. Candidate is a status, not a pretence
 
 The revised pages are copies of the released pages (Lens `77561858`, Lexicon `77529091`,
-Anti-Boilerplate `77266967`) carrying status CANDIDATE and no decision date; the released
-pages are untouched. In the repository a contract source may be `CANDIDATE` with
+Anti-Boilerplate `77266967`) that carried status CANDIDATE and no decision date until the
+release (see Status); until then the 1.0.0 pages were untouched. In the repository a contract source may be `CANDIDATE` with
 `releasedOn: null`; a bundle carrying one is valid only if its version is listed in
 `CANDIDATE_BUNDLE_HASHES`, which freezes it by content hash like a released version but
 never makes it released. Every boundary accepts a candidate bundle only with
@@ -125,8 +126,11 @@ and fails the swap against the unknown-time foil.
 
 ## Consequences
 
-- ETBZ-56 must build its packages from bundle 1.1.0 after release; a plan without the
-  1.1.0 bindings is refused, so a stale binding fails closed.
+- ETBZ-56 must build its packages from bundle 1.1.0 after release; once a run binds bundle
+  1.1.0, a plan without the 1.1.0 bindings is refused, so a stale binding fails closed.
+  `buildSkillContractBundle()` still defaults to 1.0.0, which stays released for the runs
+  generated under it; nothing in the code stops a new run from choosing 1.0.0, so the
+  consumer must pass `'1.1.0'`.
 - The chapter word floor (600, ETBZ-43) stays. Without meta-commentary, and again after
   the editorial review removed overreaching sentences, the fixture chapters fell below
   600 words (439–595) and were brought back above it with licensed substance only: term
@@ -164,10 +168,13 @@ and fails the swap against the unknown-time foil.
   ("was du brauchst"); scoping a safety gate is outside this slice (reconcile C13).
 - Release is mechanical but not optional: page status lines, decision dates and titles,
   then the contract sources, plan bindings, candidate-to-released hash move, package
-  regeneration and evidence regeneration.
+  regeneration and evidence regeneration. Done on 2026-10-01; with no candidate version
+  left, four mutants of the candidate boundary cannot be observed and were retired (named
+  in `scripts/verify-etbz57-voice.mjs`); they are re-armed with the next candidate.
 
 ## What this ADR does not decide
 
-The Method Profile reading of reconcile C5 (uncertainty carried, not added) is put to the
-Product Owner at the gate. No new method, fact kind, claim, relation or reading-schema
+The Method Profile reading of reconcile C5 (uncertainty carried, not added) was put to the
+Product Owner at the gate and confirmed (Jira ETBZ-57 comment 16969); the Method Profile
+itself is unchanged. No new method, fact kind, claim, relation or reading-schema
 field is introduced. The renderer and the presentation projection are untouched.
