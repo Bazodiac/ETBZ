@@ -29,9 +29,9 @@ import type { ChartFact } from '../interpretation/feature-set.js';
 import type { AcceptedInterpretiveClaim } from '../interpretation/interpretive-claim-graph.js';
 import { NARRATIVE_OPERATIONS } from '../interpretation/meta-narrative-plan.js';
 import type { NarrativeOperation, PlanChapter, ReleasedContractBinding } from '../interpretation/meta-narrative-plan.js';
-import { assertRunEvidenceBound } from './skill-contract-bundle.js';
-import type { SkillContractBundle } from './skill-contract-bundle.js';
-import { SKILL_REF } from './skill-package.js';
+import { assertRunEvidenceBound, isCandidateVersion } from './skill-contract-bundle.js';
+import type { CandidateEvaluation, SkillContractBundle } from './skill-contract-bundle.js';
+import { SKILL_REF_V1_1, skillRefForBundle } from './skill-package.js';
 import type { SkillInputPackage } from './skill-package.js';
 import { SkillRunError } from './skill-run-errors.js';
 
@@ -113,7 +113,8 @@ export interface AcceptedSkillReading extends SkillReadingDraft {
   readonly structuralHash: string;
 }
 
-export interface SkillReadingContext {
+/** `candidateEvaluation` (ETBZ-57): a reading under a CANDIDATE bundle is accepted for an evaluation run only. */
+export interface SkillReadingContext extends CandidateEvaluation {
   readonly bundle: SkillContractBundle;
   readonly inputPackage: SkillInputPackage;
 }
@@ -265,6 +266,174 @@ export function findEvidenceChrome(text: string): string | null {
   return null;
 }
 
+// -----------------------------------------------------------------------------
+// ETBZ-57 - customer-voice gates. They hold only a reading of the voice
+// revision (bazodiac-interpretation-skill@1.1.0); a 1.0.0 reading is accepted
+// under exactly the gates it was accepted under. Like the lists above they are
+// mechanical and conservative, and each names the section it carries; what
+// they cannot match stays with the Human Editorial Gate.
+// -----------------------------------------------------------------------------
+
+/** Readings of these Skills are held to the customer-voice gates. */
+const VOICE_GATED_SKILLS: ReadonlySet<string> = new Set([SKILL_REF_V1_1]);
+
+export interface VoicePhraseList {
+  readonly source: string;
+  readonly phrases: readonly string[];
+}
+
+/** Lexicon 1.1 rule L3.12, Lens 1.1 sections 9.2 and 21 step 11: the narrative never talks about the source, the validation, the calculation, the pipeline, its chapters or the reading itself. */
+export const META_NARRATION_PHRASES: VoicePhraseList = {
+  source: 'terminology-wording-lexicon@1.1.0 §3 L3.12; grounded-reflective-synthesis-lens@1.1.0 §9.2',
+  phrases: [
+    'quelle', 'quellen', 'datenquelle', 'validiert*', 'validierung*', 'berechnung*', 'berechnet*', 'nachrechn*', 'nachgerechnet',
+    'rechnet nach', 'rechnet nichts nach', 'kapitel*', 'dieses reading', 'das reading', 'diesem reading', 'dieses readings', 'im reading',
+    'dein reading', 'deinem reading', 'deines readings',
+    'diese deutung', 'dieser deutung', 'die deutung', 'lesart*', 'diese signale', 'datensatz', 'datenhinweis', 'pipeline', 'evidenz', 'claim*',
+    'the source', 'source data', 'validated', 'validation', 'calculation', 'calculated', 'recalculat*', 'this reading', 'the reading',
+    'chapter', 'chapters', 'evidence', 'dataset', 'these signals', 'data note',
+  ],
+};
+
+/** Lexicon 1.1 section 7 and rule L3.4: a SUPPORTED claim is stated directly, never under a retired template hedge. */
+export const TEMPLATE_HEDGE_PHRASES: VoicePhraseList = {
+  source: 'terminology-wording-lexicon@1.1.0 §7; grounded-reflective-synthesis-lens@1.1.0 §9.2',
+  phrases: [
+    'innerhalb dieses bazi-rahmens', 'innerhalb des bazi-rahmens', 'im rahmen dieses bazi', 'gelesen werden', 'lesen lässt', 'lesart*',
+    'mögliche ausdrucksform', 'mögliche ausdrucksformen', 'lässt sich als', 'within this bazi framework', 'can be read as', 'one possible reading', 'possible expression',
+  ],
+};
+
+/** Lens 1.1 E1: the framework is named once, never as a per-sentence template - not even over a graph-carried alternative. */
+export const FRAMEWORK_TEMPLATE_PHRASES: VoicePhraseList = {
+  source: 'grounded-reflective-synthesis-lens@1.1.0 §2 E1; terminology-wording-lexicon@1.1.0 §7',
+  phrases: ['innerhalb dieses bazi-rahmens', 'innerhalb des bazi-rahmens', 'im rahmen dieses bazi', 'within this bazi framework'],
+};
+
+/** Lexicon 1.1 section 7 and rule L3.11, Lens 1.1 section 18 AC 15: a TENTATIVE paragraph carries a visible tentative marker. */
+export const TENTATIVE_MARKERS: VoicePhraseList = {
+  source: 'terminology-wording-lexicon@1.1.0 §7 L3.11; grounded-reflective-synthesis-lens@1.1.0 §18',
+  phrases: [
+    'vielleicht', 'möglicherweise', 'eventuell', 'womöglich', 'vorsichtig gelesen', 'vorsichtig formuliert', 'vorläufig*', 'könnte', 'könnten',
+    'kann sein', 'mag sein', 'unter vorbehalt', 'ist nicht sicher', 'bleibt offen', 'perhaps', 'maybe', 'possibly', 'might', 'may', 'could', 'tentative*', 'provisional*',
+  ],
+};
+
+/** Lens 1.1 section 7.2 and AC 17, Lexicon 1.1 section 4: tension language only over claims the graph links by CONTRASTS_WITH. */
+export const TENSION_WORDS: VoicePhraseList = {
+  source: 'grounded-reflective-synthesis-lens@1.1.0 §7.2, §18; terminology-wording-lexicon@1.1.0 §4',
+  phrases: [
+    'spannung*', 'widerspruch*', 'widersprüch*', 'widerstreit*', 'gegensatz*', 'gegensätz*', 'konflikt*', 'zerrissen*', 'hin- und hergerissen',
+    'tension*', 'conflict*', 'contradict*', 'torn between',
+  ],
+};
+
+/**
+ * SKILL.md 1.1 law 13: a count is derived, never a chart fact. A count word
+ * ("zweimal", "an zwei Stellen") states one anyway; the positions are named instead.
+ */
+export const COUNT_WORDS: VoicePhraseList = {
+  source: 'bazodiac-interpretation-skill@1.1.0 SKILL.md law 13; terminology-wording-lexicon@1.1.0 §3 L3.13',
+  phrases: [
+    'zweimal', 'dreimal', 'viermal', 'fünfmal', 'doppelt*', 'zweifach*', 'dreifach*', 'an zwei stellen', 'an drei stellen', 'an vier stellen',
+    'in zwei zweigen', 'in drei zweigen', 'in zwei säulen', 'in drei säulen', 'twice', 'thrice', 'two places', 'three places',
+  ],
+};
+
+/**
+ * Lens 1.1 sections 1.1 and 9, Lexicon 1.1 rule L3.13: no biography, person or
+ * life domain presented as fact. Kinship is matched as a phrase ("deine
+ * Familie"), because "Familie" alone is the Lexicon's own term for a Ten-God
+ * family.
+ */
+export const LIFE_DOMAIN_WORDS: VoicePhraseList = {
+  source: 'grounded-reflective-synthesis-lens@1.1.0 §1.1 CONCRETENESS_INVARIANT, §9; terminology-wording-lexicon@1.1.0 §3 L3.13',
+  phrases: [
+    'mutter', 'vater', 'vaters', 'eltern*', 'geschwister*', 'bruder', 'brüder', 'schwester*', 'kind', 'kinder', 'kindern', 'kindheit', 'kindes',
+    'sohn', 'söhne', 'tochter', 'töchter', 'partner*', 'ehemann', 'ehefrau', 'freund', 'freunde', 'freunden', 'freundin*', 'freundschaft*', 'deine familie', 'deiner familie', 'familienleben', 'familiär*', 'chef',
+    'chefin', 'vorgesetzte*', 'arbeitgeber*', 'kolleg*', 'beruf*', 'karriere*', 'job', 'jobs', 'arbeitsplatz', 'büro', 'firma',
+    'schule', 'schulzeit', 'studium', 'jugend', 'gehalt', 'einkommen', 'geld', 'schulden', 'vermögen', 'liebesbeziehung*', 'verliebt*',
+    'mother', 'father', 'parent', 'parents', 'sibling*', 'brother*', 'sister*', 'child', 'children', 'childhood', 'son', 'daughter*',
+    'husband*', 'wife', 'wives', 'boyfriend*', 'girlfriend*', 'friend', 'friends', 'friendship*', 'your family', 'family life', 'boss*',
+    'manager*', 'employer*', 'colleague*', 'career*', 'workplace', 'office', 'school*', 'salary', 'income', 'money', 'debt*',
+    'romance', 'romantic',
+  ],
+};
+
+/** Lexicon 1.1 section 12 (determinism class) and Lens section 9.2 avoid list: phrases the 1.1 profile adds to the prohibited classes. */
+export const VOICE_PROHIBITED_PHRASES: readonly ProhibitedPhraseClass[] = [
+  { classId: 'DETERMINISM_CAUSALITY', source: 'terminology-wording-lexicon@1.1.0 §12', phrases: [
+    'schicksal*', 'fate', 'destiny', 'so bist du eben', 'so bist du nun mal', 'so bist du nun einmal', 'that is simply who you are', 'that is just who you are',
+  ] },
+  { classId: 'IDENTITY_VERDICT', source: 'grounded-reflective-synthesis-lens@1.1.0 §9.2', phrases: [
+    'du bist jemand', 'du bist ein mensch', 'du bist eine person', 'you are someone', 'you are the kind of person', 'you are a person',
+  ] },
+];
+
+function firstPhrase(text: string, list: VoicePhraseList): string | null {
+  const haystack = normalise(text);
+  for (const phrase of list.phrases) {
+    if (containsPhrase(haystack, phrase)) return phrase;
+  }
+  return null;
+}
+
+/** Every phrase of `list` a text carries, in list order: what an audit counts, never a gate. */
+export function findAllPhrases(text: string, list: VoicePhraseList): readonly string[] {
+  const haystack = normalise(text);
+  return list.phrases.filter((phrase) => containsPhrase(haystack, phrase));
+}
+
+/** The meta-narration phrase a text carries, or null. */
+export function findMetaNarration(text: string): string | null {
+  return firstPhrase(text, META_NARRATION_PHRASES);
+}
+
+/** The retired template hedge a text carries, or null. */
+export function findTemplateHedge(text: string): string | null {
+  return firstPhrase(text, TEMPLATE_HEDGE_PHRASES);
+}
+
+export function hasTentativeMarker(text: string): boolean {
+  return findTentativeMarker(text) !== null;
+}
+
+/** The per-sentence framework template a text carries, or null. */
+export function findFrameworkTemplate(text: string): string | null {
+  return firstPhrase(text, FRAMEWORK_TEMPLATE_PHRASES);
+}
+
+/** The tentative marker a text carries, or null. */
+export function findTentativeMarker(text: string): string | null {
+  return firstPhrase(text, TENTATIVE_MARKERS);
+}
+
+/** The count word a text carries, or null. */
+export function findCountWord(text: string): string | null {
+  return firstPhrase(text, COUNT_WORDS);
+}
+
+/** The tension word a text carries, or null. */
+export function findTensionWord(text: string): string | null {
+  return firstPhrase(text, TENSION_WORDS);
+}
+
+/** The life-domain word a text carries, or null. */
+export function findLifeDomainWord(text: string): string | null {
+  return firstPhrase(text, LIFE_DOMAIN_WORDS);
+}
+
+/** The voice-profile prohibited class and phrase a text carries, or null. */
+export function findVoiceProhibitedWording(text: string): Readonly<{ classId: string; phrase: string }> | null {
+  const haystack = normalise(text);
+  for (const entry of VOICE_PROHIBITED_PHRASES) {
+    for (const phrase of entry.phrases) {
+      if (containsPhrase(haystack, phrase)) return { classId: entry.classId, phrase };
+    }
+  }
+  return null;
+}
+
 export function countWords(text: string): number {
   return text.split(/\s+/u).filter((token) => token.length > 0).length;
 }
@@ -360,6 +529,64 @@ function checkSurface(text: string, where: string): void {
 }
 
 /**
+ * The customer-voice surface of a narrative text (title, chapter title,
+ * paragraph, reflection question): no meta-narration (a cited producer label
+ * is terminology, not talk about the source), no life domain, no count word,
+ * no voice-profile prohibited phrase, and tension language only where the text
+ * cites both poles of one CONTRASTS_WITH relation. The method note is not
+ * narrative: it carries the necessary method and data notes and is held to the
+ * prohibited phrases, the life-domain words and the count words only.
+ */
+function checkVoiceSurface(text: string, where: string, claims: readonly AcceptedInterpretiveClaim[], contrastPairs: ReadonlySet<string>, citedLabels: readonly string[] = []): void {
+  const voiceProhibited = findVoiceProhibitedWording(text);
+  if (voiceProhibited !== null) {
+    throw new SkillRunError('READING_PROHIBITED_WORDING', `${where} uses wording the Lexicon prohibits (${voiceProhibited.classId})`, { where, ...voiceProhibited });
+  }
+  const meta = findMetaNarration(withoutLabels(text, citedLabels));
+  if (meta !== null) {
+    throw new SkillRunError('READING_META_NARRATION', `${where} talks about the reading's sources or mechanics ("${meta}"); that belongs in the method note, if anywhere`, { where, phrase: meta });
+  }
+  const domain = findLifeDomainWord(text);
+  if (domain !== null) {
+    throw new SkillRunError('READING_LIFE_DOMAIN_INVENTED', `${where} names a life domain or a person ("${domain}") no claim carries`, { where, phrase: domain });
+  }
+  const tension = findTensionWord(text);
+  if (tension !== null && !citesContrastPair(claims, contrastPairs)) {
+    throw new SkillRunError('READING_TENSION_UNGROUNDED', `${where} writes a tension ("${tension}") but cites no two claims the graph links by CONTRASTS_WITH`, { where, phrase: tension });
+  }
+  const count = findCountWord(text);
+  if (count !== null) {
+    throw new SkillRunError('READING_UNCITED_NUMERAL', `${where} states a count ("${count}"); a count is derived, never a chart fact - name the positions instead`, { where, phrase: count });
+  }
+}
+
+/** One key per unordered claim pair. */
+function pairKey(left: string, right: string): string {
+  return left < right ? `${left}|${right}` : `${right}|${left}`;
+}
+
+/** True when two of the cited claims are the two poles of one CONTRASTS_WITH relation. */
+function citesContrastPair(claims: readonly AcceptedInterpretiveClaim[], contrastPairs: ReadonlySet<string>): boolean {
+  return claims.some((left, index) => claims.slice(index + 1).some((right) => contrastPairs.has(pairKey(left.claimId, right.claimId))));
+}
+
+/** A cited producer label (e.g. "Indirekte Quelle") is terminology, not talk about the source - as a whole term only. */
+function withoutLabels(text: string, labels: readonly string[]): string {
+  let rest = normalise(text);
+  for (const label of labels) {
+    if (label.trim() === '') continue;
+    const escaped = normalise(label).replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+    rest = rest.replace(new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'gu'), ' ');
+  }
+  return rest;
+}
+
+/** The producer labels of the facts a surface cites directly or through its claims. */
+function labelsOf(facts: readonly (ChartFact | undefined)[]): readonly string[] {
+  return facts.flatMap((fact) => (fact?.sourceLabel === undefined || fact.sourceLabel === null ? [] : [fact.sourceLabel]));
+}
+
+/**
  * Accepts a reading draft against the package it was produced from. Throws on
  * the FIRST violation: a reading that is wrong in one place is not trusted in
  * any other.
@@ -375,8 +602,13 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   const reading: SkillReadingDraft = parsed.data;
 
   // 1. Bindings: this Skill, this bundle, this package, this graph, this plan, this contract set.
-  if (reading.skillRef !== SKILL_REF || reading.skillRef !== inputPackage.skillRef) {
-    throw new SkillRunError('READING_SKILL_MISMATCH', `the reading names "${reading.skillRef}", this runtime is ${SKILL_REF}`);
+  const runtimeSkillRef = skillRefForBundle(bundle.bundleVersion);
+  if (reading.skillRef !== runtimeSkillRef || reading.skillRef !== inputPackage.skillRef) {
+    throw new SkillRunError('READING_SKILL_MISMATCH', `the reading names "${reading.skillRef}", this runtime is ${runtimeSkillRef}`);
+  }
+  const voice = VOICE_GATED_SKILLS.has(reading.skillRef);
+  if (isCandidateVersion(bundle.bundleVersion) && context.candidateEvaluation !== true) {
+    throw new SkillRunError('READING_BUNDLE_MISMATCH', `bundle ${bundle.bundleVersion} is a candidate: a reading under it is accepted for an evaluation run only ({ candidateEvaluation: true })`);
   }
   if (reading.bundleRef !== bundle.bundleRef || reading.bundleStructuralHash !== bundle.structuralHash || inputPackage.bundleRef !== bundle.bundleRef || inputPackage.bundleStructuralHash !== bundle.structuralHash) {
     throw new SkillRunError('READING_BUNDLE_MISMATCH', 'the reading or the package names another bundle than the one this run binds');
@@ -395,6 +627,18 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   const excluded = new Set(inputPackage.excludedFactIds);
   const claimById = new Map<string, AcceptedInterpretiveClaim>(inputPackage.claimGraph.claims.map((claim) => [claim.claimId, claim]));
   const planned = new Set(inputPackage.plan.constraints.allowedClaimRefs);
+  const contrastPairs = new Set<string>();
+  const inAlternative = new Set<string>();
+  for (const claim of inputPackage.claimGraph.claims) {
+    for (const relation of claim.relations) {
+      if (relation.type === 'CONTRASTS_WITH') contrastPairs.add(pairKey(claim.claimId, relation.targetClaimId));
+      if (relation.type === 'ALTERNATIVE_READING') {
+        inAlternative.add(claim.claimId);
+        inAlternative.add(relation.targetClaimId);
+      }
+    }
+  }
+  const groundingOf = (claims: readonly AcceptedInterpretiveClaim[]): (ChartFact | undefined)[] => claims.flatMap((claim) => claim.factRefs.map((id) => factById.get(id)));
   const resolveFact = (id: string, where: string): ChartFact => {
     if (excluded.has(id)) {
       throw new SkillRunError('READING_FACT_EXCLUDED', `${where} cites fact ${id}, which the input excludes from interpretation`, { where, factRef: id });
@@ -420,6 +664,7 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   }
   const chartCovered = coveredValuesOf(inputPackage.facts);
   checkSurface(reading.title, 'title');
+  if (voice) checkVoiceSurface(reading.title, 'title', [], contrastPairs);
   checkSymbols(reading.title, 'title', chartCovered);
   const renderedBefore = new Set<string>();
   const renderedAnywhere = new Set<string>();
@@ -430,6 +675,10 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       throw new SkillRunError('READING_CHAPTER_PLAN_MISMATCH', `${where} is not the plan's chapter at that position (id or operation differs)`, { where });
     }
     checkSurface(chapter.title, `${where}.title`);
+    if (voice) {
+      const titleClaims = planned_.claimRefs.map((id) => resolveClaim(id, `${where}.title`));
+      checkVoiceSurface(chapter.title, `${where}.title`, titleClaims, contrastPairs, labelsOf(groundingOf(titleClaims)));
+    }
     const chapterClaims = new Set(planned_.claimRefs);
     const renderedHere = new Set<string>();
     const chapterFacts: ChartFact[] = [];
@@ -485,6 +734,30 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       // Provisionality never disappears.
       if (tentative && paragraph.posture !== 'TENTATIVE') {
         throw new SkillRunError('READING_PROVISIONALITY_LAUNDERED', `${at} cites a tentative claim or a provisional fact but is not written as tentative`, { where: at });
+      }
+
+      // Customer voice (1.1.0): uncertainty is carried, not added; tentativeness is visible; SUPPORTED is not hedged by template.
+      if (voice) {
+        checkVoiceSurface(paragraph.text, at, claims, contrastPairs, labelsOf([...facts, ...groundingOf(claims)]));
+        if (interpretive && !tentative && paragraph.posture === 'TENTATIVE') {
+          throw new SkillRunError('READING_SUPPORTED_UNDERSTATED', `${at} renders SUPPORTED claims only but is written as TENTATIVE; uncertainty is carried, not added`, { where: at });
+        }
+        if (paragraph.posture === 'TENTATIVE' && !hasTentativeMarker(paragraph.text)) {
+          throw new SkillRunError('READING_TENTATIVE_NOT_VISIBLE', `${at} is TENTATIVE but carries no visible tentative marker`, { where: at });
+        }
+        // Over SUPPORTED claims only - INTERPRETATION, REFLECTION or FRAME alike - the text says it with no added doubt.
+        // Where the graph carries an ALTERNATIVE_READING for EVERY cited claim, Lexicon 1.1 L3.4 keeps the bounded
+        // formulations; the per-sentence framework template stays retired either way (Lens 1.1 E1).
+        const certain = claims.length > 0 && !tentative;
+        const plain = certain && !claims.every((claim) => inAlternative.has(claim.claimId));
+        const marker = plain ? findTentativeMarker(paragraph.text) : null;
+        if (marker !== null) {
+          throw new SkillRunError('READING_SUPPORTED_UNDERSTATED', `${at} cites SUPPORTED claims only but writes "${marker}"; uncertainty is carried, not added`, { where: at, phrase: marker });
+        }
+        const hedge = plain ? findTemplateHedge(paragraph.text) : certain ? findFrameworkTemplate(paragraph.text) : null;
+        if (hedge !== null) {
+          throw new SkillRunError('READING_SUPPORTED_TEMPLATE_HEDGE', `${at} hedges a SUPPORTED claim with a template ("${hedge}")`, { where: at, phrase: hedge });
+        }
       }
 
       // A symbol or a number in prose is a cited fact.
@@ -561,6 +834,7 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
     const at = `reflectionQuestions[${String(index)}]`;
     checkSurface(question.text, at);
     const claims = question.claimRefs.map((id) => resolveClaim(id, at));
+    if (voice) checkVoiceSurface(question.text, at, claims, contrastPairs, labelsOf(groundingOf(claims)));
     for (const claim of claims) {
       if (!planned.has(claim.claimId)) {
         throw new SkillRunError('READING_CLAIM_NOT_PLANNED_HERE', `${at} rests on claim ${claim.claimId}, which the plan does not use`, { where: at, claimRef: claim.claimId });
@@ -570,6 +844,18 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
     checkSymbols(question.text, at, coveredValuesOf(questionFacts));
   });
   checkSurface(reading.methodNote.text, 'methodNote');
+  const methodNoteProhibited = voice ? findVoiceProhibitedWording(reading.methodNote.text) : null;
+  if (methodNoteProhibited !== null) {
+    throw new SkillRunError('READING_PROHIBITED_WORDING', `methodNote uses wording the Lexicon prohibits (${methodNoteProhibited.classId})`, { where: 'methodNote', ...methodNoteProhibited });
+  }
+  const methodNoteDomain = voice ? findLifeDomainWord(reading.methodNote.text) : null;
+  if (methodNoteDomain !== null) {
+    throw new SkillRunError('READING_LIFE_DOMAIN_INVENTED', `methodNote names a life domain or a person ("${methodNoteDomain}")`, { where: 'methodNote', phrase: methodNoteDomain });
+  }
+  const methodNoteCount = voice ? findCountWord(reading.methodNote.text) : null;
+  if (methodNoteCount !== null) {
+    throw new SkillRunError('READING_UNCITED_NUMERAL', `methodNote states a count ("${methodNoteCount}"); a count is derived, never a chart fact`, { where: 'methodNote', phrase: methodNoteCount });
+  }
   checkSymbols(reading.methodNote.text, 'methodNote', chartCovered);
   if (!sameList(reading.methodNote.warningCodes, inputPackage.warnings)) {
     throw new SkillRunError('READING_WARNINGS_NOT_VERBATIM', 'the method note does not carry the source warnings verbatim, in source order');
@@ -600,6 +886,87 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   });
 
   return { ...reading, structuralHash: structuralHash(reading) };
+}
+
+// -----------------------------------------------------------------------------
+// ETBZ-57 - the editorial pass: semantic realisation -> customer editorial
+// realisation -> validation again. An editorial revision may change customer
+// text and nothing else.
+// -----------------------------------------------------------------------------
+
+/**
+ * Everything of a reading but its customer text, field by field so nothing
+ * else can ride along: what an editorial revision may not change.
+ */
+function structureOf(reading: SkillReadingDraft): unknown {
+  return {
+    schemaVersion: reading.schemaVersion,
+    skillRef: reading.skillRef,
+    bundleRef: reading.bundleRef,
+    bundleStructuralHash: reading.bundleStructuralHash,
+    inputPackageStructuralHash: reading.inputPackageStructuralHash,
+    claimGraphStructuralHash: reading.claimGraphStructuralHash,
+    planStructuralHash: reading.planStructuralHash,
+    contracts: reading.contracts,
+    chapters: reading.chapters.map((chapter) => ({
+      chapterRef: chapter.chapterRef,
+      narrativeOperation: chapter.narrativeOperation,
+      paragraphs: chapter.paragraphs.map((paragraph) => ({
+        kind: paragraph.kind,
+        posture: paragraph.posture,
+        factRefs: paragraph.factRefs,
+        claimRefs: paragraph.claimRefs,
+      })),
+      semanticDelta: chapter.semanticDelta,
+      callbacks: chapter.callbacks,
+    })),
+    reflectionQuestions: reading.reflectionQuestions.map((question) => ({ claimRefs: question.claimRefs })),
+    methodNote: { text: reading.methodNote.text, warningCodes: reading.methodNote.warningCodes },
+    visualizationSpecs: reading.visualizationSpecs,
+  };
+}
+
+function firstStructuralDifference(expected: unknown, actual: unknown, path: string): string | null {
+  if (Array.isArray(expected) || Array.isArray(actual)) {
+    if (!Array.isArray(expected) || !Array.isArray(actual)) return path;
+    if (expected.length !== actual.length) return `${path}.length`;
+    for (let index = 0; index < expected.length; index += 1) {
+      const inner = firstStructuralDifference(expected[index], actual[index], `${path}[${String(index)}]`);
+      if (inner !== null) return inner;
+    }
+    return null;
+  }
+  if (expected !== null && typeof expected === 'object' && actual !== null && typeof actual === 'object') {
+    const left = expected as Record<string, unknown>;
+    const right = actual as Record<string, unknown>;
+    for (const key of [...new Set([...Object.keys(left), ...Object.keys(right)])].sort()) {
+      const inner = firstStructuralDifference(left[key], right[key], `${path}.${key}`);
+      if (inner !== null) return inner;
+    }
+    return null;
+  }
+  return expected === actual ? null : path;
+}
+
+/**
+ * Accepts an editorial revision of an accepted reading. The revision passes
+ * the whole acceptance boundary again, and everything but customer text -
+ * bindings, chapters, paragraph kinds and postures, fact and claim references,
+ * semantic deltas, callbacks, reflection bindings, warnings, visual specs -
+ * must equal the reading it revises. The semantic reading is re-accepted
+ * first, so a forged "accepted" reading is refused rather than trusted.
+ */
+export function acceptEditorialRevision(semantic: AcceptedSkillReading, revision: unknown, context: SkillReadingContext): AcceptedSkillReading {
+  const { structuralHash: semanticHash, ...semanticDraft } = semantic;
+  if (acceptSkillReading(semanticDraft, context).structuralHash !== semanticHash) {
+    throw new SkillRunError('READING_EDITORIAL_EXPANSION', 'the reading under revision is not the accepted reading it claims to be');
+  }
+  const accepted = acceptSkillReading(revision, context);
+  const differing = firstStructuralDifference(structureOf(semanticDraft), structureOf(accepted), 'reading');
+  if (differing !== null) {
+    throw new SkillRunError('READING_EDITORIAL_EXPANSION', `the editorial revision changes ${differing}; an editorial pass changes customer text only`, { path: differing });
+  }
+  return accepted;
 }
 
 /** Text only; no id, hash, code or state. Nothing is invented and nothing is repaired. */

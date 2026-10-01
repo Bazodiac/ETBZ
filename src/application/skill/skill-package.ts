@@ -18,23 +18,41 @@ import type { BazodiacInterpretationInput } from '../interpretation/interpretati
 import type { InterpretiveClaimGraph } from '../interpretation/interpretive-claim-graph.js';
 import type { MetaNarrativePlan, ReleasedContractBinding } from '../interpretation/meta-narrative-plan.js';
 import { contractBindingRef } from './contract-sources.js';
-import { assertReleasedSkillContractBundle, contractByKey } from './skill-contract-bundle.js';
-import type { SkillContractBundle } from './skill-contract-bundle.js';
+import { assertCandidateSkillContractBundle, assertReleasedSkillContractBundle, contractByKey } from './skill-contract-bundle.js';
+import type { CandidateEvaluation, SkillContractBundle } from './skill-contract-bundle.js';
 import { SkillRunError } from './skill-run-errors.js';
 
 export const SKILL_ID = 'bazodiac-interpretation-skill' as const;
 export const SKILL_VERSION = '1.0.0' as const;
 /** The identity a reading and a run's evidence record. */
 export const SKILL_REF = `${SKILL_ID}@${SKILL_VERSION}` as const;
+/** ETBZ-57: the voice revision of the Skill, run only under skill-contract bundle 1.1.0. */
+export const SKILL_VERSION_V1_1 = '1.1.0' as const;
+export const SKILL_REF_V1_1 = `${SKILL_ID}@${SKILL_VERSION_V1_1}` as const;
+
+/** One Skill identity per bundle version: a Skill never runs under another bundle than its own. */
+const SKILL_REF_BY_BUNDLE_VERSION: Readonly<Record<string, string>> = {
+  '1.0.0': SKILL_REF,
+  '1.1.0': SKILL_REF_V1_1,
+};
+
+/** The Skill identity that runs under `bundleVersion`; an unknown bundle version runs no Skill. */
+export function skillRefForBundle(bundleVersion: string): string {
+  const skillRef = Object.hasOwn(SKILL_REF_BY_BUNDLE_VERSION, bundleVersion) ? SKILL_REF_BY_BUNDLE_VERSION[bundleVersion] : undefined;
+  if (skillRef === undefined) {
+    throw new SkillRunError('PACKAGE_BINDING_MISMATCH', `no Skill runs under bundle version ${bundleVersion}`, { bundleVersion });
+  }
+  return skillRef;
+}
 
 export const SKILL_INPUT_PACKAGE_VERSION = 'bazodiac-skill-input.v1' as const;
 
 export interface SkillInputPackage {
   readonly packageVersion: typeof SKILL_INPUT_PACKAGE_VERSION;
-  readonly skillRef: typeof SKILL_REF;
+  readonly skillRef: string;
   readonly bundleRef: string;
   readonly bundleStructuralHash: string;
-  /** The released contract set, as a run's evidence must record it. */
+  /** The bundle's contract set, as a run's evidence must record it: released, or - for an evaluation run of a candidate bundle - the candidate pages. */
   readonly contracts: readonly ReleasedContractBinding[];
   readonly subject: Readonly<{ displayName: string; birthTimeKnown: boolean }>;
   /** Hash of the exact `BazodiacInterpretationInput v1` the facts come from. */
@@ -66,12 +84,22 @@ export interface SkillInputPackageParts {
 const ID_PATTERN = /^[a-z][^\s]*$/u;
 
 /**
+ * ETBZ-57: an evaluation run of a CANDIDATE bundle (before its Human Editorial
+ * Gate) passes `{ candidateEvaluation: true }`. Absent, the bundle must be released.
+ */
+export type SkillInputPackageOptions = CandidateEvaluation;
+
+/**
  * Assembles the package and proves its parts belong together. Throws on the
  * first mismatch; no partial package exists.
  */
-export function buildSkillInputPackage(parts: SkillInputPackageParts): SkillInputPackage {
+export function buildSkillInputPackage(parts: SkillInputPackageParts, options: SkillInputPackageOptions = {}): SkillInputPackage {
   const { bundle, input, graph, plan, subject, allowedSlotIds } = parts;
-  assertReleasedSkillContractBundle(bundle);
+  if (options.candidateEvaluation === true) {
+    assertCandidateSkillContractBundle(bundle);
+  } else {
+    assertReleasedSkillContractBundle(bundle);
+  }
 
   if (graph.methodProfileRef !== bundle.repository.methodProfileRef || graph.methodRegistryStructuralHash !== bundle.repository.methodRegistryStructuralHash) {
     throw new SkillRunError('PACKAGE_BINDING_MISMATCH', 'the claim graph was accepted under another Method Profile than the bundle binds');
@@ -126,7 +154,7 @@ export function buildSkillInputPackage(parts: SkillInputPackageParts): SkillInpu
 
   const core = {
     packageVersion: SKILL_INPUT_PACKAGE_VERSION,
-    skillRef: SKILL_REF,
+    skillRef: skillRefForBundle(bundle.bundleVersion),
     bundleRef: bundle.bundleRef,
     bundleStructuralHash: bundle.structuralHash,
     contracts: bundle.contracts.map((source) => ({

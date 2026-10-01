@@ -117,6 +117,10 @@ describe('AC8: the verification contract still contains every mandatory gate', (
       'ETBZ-55 presentation guard',
       /etbz_step\s+"guards :: ETBZ-55[^"]*"\s+run_etbz55_presentation_guard/,
     ],
+    [
+      'ETBZ-57 customer-voice guard',
+      /etbz_step\s+"guards :: ETBZ-57[^"]*"\s+run_etbz57_voice_guard/,
+    ],
     ['secret scan', /secret-scan\.sh/],
     ['dependency risk scan', /npm audit/],
     ['container build dry run', /build-dry-run\.sh/],

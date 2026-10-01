@@ -447,7 +447,9 @@ describe('N17: guards the released content never exercises, on a crafted core', 
 
   it('refuses a bundle version that is not a semver', () => {
     const core = { ...coreOf(bundle), bundleVersion: '1.0', bundleRef: 'bazodiac-skill-contract-bundle@1.0' };
-    expectRefusal(() => validate(core), 'BUNDLE_SCHEMA_INVALID');
+    const error = expectRefusal(() => validate(core), 'BUNDLE_SCHEMA_INVALID');
+    // The identity check refuses it first; the known-version lookup (ETBZ-57) would refuse it later with the same code.
+    expect(error.message).toMatch(/not a released bundle identity/u);
   });
 
   it('refuses a contract key nothing released', () => {

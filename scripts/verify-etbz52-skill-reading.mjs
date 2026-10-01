@@ -38,7 +38,7 @@ const MUTANTS = [
     'const readingDraftSchema = z.strictObject({', 'const readingDraftSchema = z.object({',
     [T.negative], 'refuses an extra top-level key'],
   ['READING: another skill identity is accepted', 'text', READING,
-    '  if (reading.skillRef !== SKILL_REF || reading.skillRef !== inputPackage.skillRef) {', '  if (false) {',
+    '  if (reading.skillRef !== runtimeSkillRef || reading.skillRef !== inputPackage.skillRef) {', '  if (false) {',
     [T.negative], 'refuses another skill identity'],
   ['READING: another bundle identity or hash is accepted', 'text', READING,
     '  if (reading.bundleRef !== bundle.bundleRef || reading.bundleStructuralHash !== bundle.structuralHash || inputPackage.bundleRef !== bundle.bundleRef || inputPackage.bundleStructuralHash !== bundle.structuralHash) {',

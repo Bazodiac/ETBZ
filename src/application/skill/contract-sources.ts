@@ -43,7 +43,7 @@ export const CONTRACT_DOMAINS = [
 ] as const;
 export type ContractDomain = (typeof CONTRACT_DOMAINS)[number];
 
-export const CONTRACT_STATUSES = ['CURRENT', 'DRAFT'] as const;
+export const CONTRACT_STATUSES = ['CURRENT', 'CANDIDATE', 'DRAFT'] as const;
 export type ContractStatus = (typeof CONTRACT_STATUSES)[number];
 
 export interface ContractSource {
@@ -55,10 +55,18 @@ export interface ContractSource {
   readonly confluencePageId: string;
   /** The page version the repository binds. A later revision is an explicit re-binding. */
   readonly confluencePageVersion: string;
-  /** Only CURRENT authorises anything; the schema admits DRAFT solely to refuse it. */
+  /**
+   * CURRENT authorises a released bundle. CANDIDATE authorises only an
+   * evaluation run of a bundle version listed as a candidate (ETBZ-57: a
+   * revision awaiting its Human Editorial Gate); it never makes a bundle
+   * released. The schema admits DRAFT solely to refuse it.
+   */
   readonly status: ContractStatus;
-  /** The page's own "Decision date" line, `YYYY-MM-DD` - never a page-version timestamp. */
-  readonly releasedOn: string;
+  /**
+   * The page's own "Decision date" line, `YYYY-MM-DD` - never a page-version
+   * timestamp. Null exactly for a CANDIDATE page: it has no decision date yet.
+   */
+  readonly releasedOn: string | null;
   readonly owns: readonly ContractDomain[];
   /**
    * The contracts this page lists under "Normative dependencies", by key. A
@@ -130,6 +138,58 @@ export const RELEASED_CONTRACT_SOURCES: readonly ContractSource[] = [
     confluencePageVersion: '1',
     status: 'CURRENT',
     releasedOn: '2026-09-28',
+    owns: ['CROSS_READING_INDIVIDUALITY'],
+    dependsOn: ['METHOD_PROFILE', 'LONG_FORM', 'INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON'],
+  },
+];
+
+/**
+ * ETBZ-57 - the contract set of bundle 1.1.0. The Interpretation Lens and the
+ * Terminology & Wording Lexicon at their voice revision, the Anti-Boilerplate
+ * contract at its binding-only revision (its 1.0.0 pins the Lens and Lexicon
+ * at 1.0.0 and requires a new identity for a consumer-binding change). Each
+ * revision is a separate page copied from the released one; the released
+ * pages stay unchanged history. The three are CANDIDATE until the ETBZ-57
+ * Human Editorial Gate returns ACCEPTED and the release step re-binds them
+ * CURRENT at their released page versions. Method Profile and Long-Form are
+ * unchanged.
+ */
+const unchangedSource = (key: ContractKey): ContractSource =>
+  RELEASED_CONTRACT_SOURCES.find((source) => source.key === key) as ContractSource;
+
+export const CONTRACT_SOURCES_V1_1: readonly ContractSource[] = [
+  unchangedSource('METHOD_PROFILE'),
+  unchangedSource('LONG_FORM'),
+  {
+    key: 'INTERPRETATION_LENS',
+    title: 'ETBZ — Grounded Reflective Synthesis Interpretation Lens v1.1 (candidate)',
+    identity: 'grounded-reflective-synthesis-lens@1.1.0',
+    confluencePageId: '77561858',
+    confluencePageVersion: '5',
+    status: 'CANDIDATE',
+    releasedOn: null,
+    owns: ['SEMANTIC_ENVELOPE'],
+    dependsOn: ['METHOD_PROFILE', 'LONG_FORM'],
+  },
+  {
+    key: 'TERMINOLOGY_LEXICON',
+    title: 'ETBZ — Terminology & Wording Lexicon v1.1 (candidate)',
+    identity: 'terminology-wording-lexicon@1.1.0',
+    confluencePageId: '77529091',
+    confluencePageVersion: '3',
+    status: 'CANDIDATE',
+    releasedOn: null,
+    owns: ['CUSTOMER_WORDING'],
+    dependsOn: ['METHOD_PROFILE', 'LONG_FORM', 'INTERPRETATION_LENS'],
+  },
+  {
+    key: 'ANTI_BOILERPLATE',
+    title: 'ETBZ — Cross-Reading Individuality / Anti-Boilerplate Contract v1.1 (candidate)',
+    identity: 'cross-reading-individuality-contract@1.1.0',
+    confluencePageId: '77266967',
+    confluencePageVersion: '2',
+    status: 'CANDIDATE',
+    releasedOn: null,
     owns: ['CROSS_READING_INDIVIDUALITY'],
     dependsOn: ['METHOD_PROFILE', 'LONG_FORM', 'INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON'],
   },
