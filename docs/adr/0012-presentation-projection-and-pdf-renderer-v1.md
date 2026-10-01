@@ -300,8 +300,8 @@ then walks the merged PDF's content streams (form XObjects included), page by pa
   neither rotated, skewed nor mirrored. Text the page does not hold as a printed node, a
   missing or doubled string, an inserted character, a string printed out of its order and a
   turned or mirrored glyph block (`PDF_TEXT_UNBOUND`, `PDF_TEXT_MISMATCH`,
-  `PDF_TEXT_NOT_UPRIGHT`, `PDF_TEXT_CLIPPED`). On the evidence document (re-rendered in ETBZ-56): 33,542
-  text units bound to 1,639 printed strings on 29 pages, none clipped;
+  `PDF_TEXT_NOT_UPRIGHT`, `PDF_TEXT_CLIPPED`). On the evidence document (re-rendered in ETBZ-56): 33,587
+  text units bound to 1,655 printed strings on 29 pages, none clipped;
 - *vector layer*: every painted path (fill or stroke) must be either a canonical outline -
   one of the 27 sprite glyphs or the wordmark path, recognised by its segment sequence
   (each of the 28 is unique) and an axis-aligned scale-and-shift fit to the pinned path

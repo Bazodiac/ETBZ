@@ -97,11 +97,11 @@ mapper adds and changes no word (AC "keine neue Interpretation im Mapper").
 
 ### 3. Earthly-Branch animal labels
 
-Every page that displays an Earthly Branch shows its animal beside it: glance, four
-pillars, foundation, day master, five phases (all twelve), hidden stems, reflection and
-summary (AC 8). The label is a separate value of the branch, never of a stem, printed as
-its own string beside the branch's glyph or Hanzi and pinyin; in a fact row it is the row's
-`detail`.
+Every structured display of an Earthly Branch - glance, four pillars, foundation, day
+master, five phases (all twelve), hidden stems, reflection and summary - shows the branch's
+Hanzi, its canonical pinyin and its animal label (AC 8, as the Product Owner clarified it in
+Rebaseline 62128133 section 20). The three are separate values of the branch, never of a
+stem; in a fact row the animal is the row's `detail` and the pinyin is part of its value.
 
 The labels come from a released, versioned table, `bazodiac-branch-animal-labels@1.0.0`
 (`branch-animals.ts`), frozen by content hash and recorded in `sources.branchAnimals`. Its
@@ -110,12 +110,14 @@ ADR 0003), the vocabulary the HoroscopeModel build holds every FuFirE `tier` val
 A chart whose animal differs from the table, a branch the table lacks or a language
 without a table is refused - no fallback to another language or a romanisation (AC 9).
 
-**AC 8 is read as the template's displays.** A branch character quoted inside the
-reading's own text - the accepted 1.1.0 reading writes "Wu (午)", "Hai (亥)" and "Wei (未)" in
-its first two chapters - stays as the Skill wrote it: the mapper adds no word to an
-accepted reading (out of scope "keine neue Interpretation im Mapper"), and editing its text
-would set aside the Human Editorial Gate. Labelling branches named in prose is a Skill or
-Lexicon matter (a voice rule for a later Skill revision), recorded for the Product Owner.
+**Narrative prose stays as written** (Rebaseline section 20). A branch character quoted
+inside the reading's own text - the accepted 1.1.0 reading writes "Wu (午)", "Hai (亥)" and
+"Wei (未)" in its first two chapters - stays as the Skill wrote it: section 20 permits the
+form "Wu (午)" in prose and forbids rewriting the Human-accepted reading to append labels.
+The first merge of this slice (PR #20) printed the five-phases and reflection branches
+without their pinyin, although the issue's own required form (Hanzi, canonical pinyin,
+animal) already named it; its AC 8 test checked the animal only. The follow-up adds the
+pinyin and makes the test require all three per display.
 
 The renderer prints each label bound to its path like every other string, so the page QA
 and the final PDF text layer hold it: two canaries make the check fail on a wrong label
@@ -174,7 +176,7 @@ names the guards no input reaches and why they are not mutated).
    by the projection (`PRESENTATION_INPUT_INVALID`).
 4. **The visual verdict is the Delivery Runner's.** It records what the runner inspected and
    is not a sellability verdict; the runtime that inspected the pages also wrote the gates.
-5. **Branches named in the reading's prose carry no label** (section 3).
+5. **Branches named in the reading's prose carry no label**, as Rebaseline section 20 allows (section 3).
 6. **The manifest names the Skill by reference, not by package hash.** `sources.skill`
    records `skillRef`; the content hash of the Skill package directory is not recorded.
 7. **A second render process is a declaration.** The evidence states that a second render

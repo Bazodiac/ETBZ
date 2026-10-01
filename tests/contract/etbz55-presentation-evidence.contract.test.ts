@@ -229,11 +229,11 @@ describe('ETBZ-55: the QA report', () => {
     interface Band { items: number; lowest: number; highest: number; floor: number; ceiling: number | null }
     const ink = (json('qa-report.json') as { ink: Record<string, Band> }).ink;
     expect(ink).toEqual({
-      text: { items: 1496, lowest: 0.0808, highest: 0.1901, floor: 0.03, ceiling: 0.5 },
+      text: { items: 1512, lowest: 0.0808, highest: 0.1901, floor: 0.03, ceiling: 0.5 },
       glyph: { items: 116, lowest: 0.192, highest: 0.4482, floor: 0.06, ceiling: 0.75 },
       mark: { items: 44, lowest: 0.1619, highest: 0.6905, floor: 0.05, ceiling: 0.92 },
       phase: { items: 92, lowest: 0.474, highest: 0.9789, floor: 0.2, ceiling: null },
-      character: { items: 33399, lowest: 0.0151, highest: 0.2627, floor: 0.005, ceiling: 0.6 },
+      character: { items: 33444, lowest: 0.0151, highest: 0.2627, floor: 0.005, ceiling: 0.6 },
     });
     // Floors at 30 to 45 % of the lowest share observed; ceilings above 1.3 times the highest and below a solid box;
     // the character band wider still (a third of the lowest, more than twice the highest).
