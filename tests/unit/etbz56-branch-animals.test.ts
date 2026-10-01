@@ -165,15 +165,18 @@ describe.each(projections)('ETBZ-56 AC 8: every displayed Earthly Branch carries
     const projection = build();
     const stems = new Set(DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'heavenly_stem').map((glyph) => glyph.character));
     const offenders: string[] = [];
+    let stemCount = 0;
     const walk = (value: unknown): void => {
       if (Array.isArray(value)) value.forEach(walk);
       else if (typeof value === 'object' && value !== null) {
         const record = value as Record<string, unknown>;
+        if (typeof record['character'] === 'string' && stems.has(record['character'])) stemCount += 1;
         if (typeof record['character'] === 'string' && stems.has(record['character']) && 'animalLabel' in record) offenders.push(record['character']);
         Object.values(record).forEach(walk);
       }
     };
     walk(projection.pages.map((page) => page.content));
+    expect(stemCount, 'the walk found no stem at all').toBeGreaterThan(0);
     expect(offenders).toEqual([]);
     for (const page of projection.pages) for (const display of branchDisplays(page)) expect(String(display.label)).not.toContain(display.branch);
   });

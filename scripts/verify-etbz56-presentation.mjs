@@ -22,10 +22,7 @@
  *    can carry - the paginator's own check, which does see pull quotes, is mutated;
  *  - the call of `assertBundleCarriesTemplateWording` from the Skill path: every
  *    released bundle carries the template's wording, so no input reaches it - its
- *    own checks are mutated through the function directly;
- *  - the `birthTimeKnown` clause of the subject check: the package builder refuses
- *    a package whose subject differs from its interpretation input, so no
- *    accepted reading binds one (equivalent).
+ *    own checks are mutated through the function directly.
  *
  * Every file is restored from bytes held in memory; the run fails if the tree
  * differs from before.
@@ -103,6 +100,10 @@ const MUTANTS = [
     "  if (inputPackage.subject.displayName !== model.displayName || inputPackage.subject.birthTimeKnown !== model.birth.birthTimeKnown) {",
     "  if (false) {",
     [T.negative], "refuses a chart of another subject"],
+  ["CHART: the package may declare another birth-time state", 'text', SKILL,
+    "  if (inputPackage.subject.displayName !== model.displayName || inputPackage.subject.birthTimeKnown !== model.birth.birthTimeKnown) {",
+    "  if (inputPackage.subject.displayName !== model.displayName) {",
+    [T.negative], "refuses a package whose subject declares another birth-time state than the chart"],
   ["CHART: the package may carry another slot vocabulary", 'text', SKILL,
     "  if (structuralHash(allowed) !== structuralHash(template)) {",
     "  if (false) {",

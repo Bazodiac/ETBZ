@@ -27,6 +27,7 @@ import {
 } from '../../src/application/skill/index.js';
 import type { SkillContractBundle, SkillInputPackage } from '../../src/application/skill/index.js';
 import { listSlotIds } from '../../src/application/visual/index.js';
+import { structuralHash } from '../../src/domain/structural-hash.js';
 import { skillFixture, skillFixtureV1_1 } from '../support/skillFixture.js';
 import { skillPresentationFixture } from '../support/skillPresentationFixture.js';
 
@@ -217,6 +218,19 @@ describe('S3: the package and the chart must be the same chart', () => {
 
   it("refuses a chart of another subject than the package's", () => {
     expectRefusal(() => present({ model: modelWith((model) => { model.displayName = 'Musterkundin B'; }) }), 'PRESENTATION_SKILL_BINDING_MISMATCH');
+  });
+
+  it('refuses a package whose subject declares another birth-time state than the chart, even re-hashed with its reading', () => {
+    // A package re-hashed after its subject changed, and the reading re-bound to it: integrity and the run boundary pass.
+    const changed = structuredClone(fixture.inputPackage) as Mutable<SkillInputPackage>;
+    changed.subject.birthTimeKnown = false;
+    const core: Record<string, unknown> = { ...changed };
+    delete core['structuralHash'];
+    const inputPackage = { ...core, structuralHash: structuralHash(core) } as SkillInputPackage;
+    const draft = structuredClone(fixture.reading);
+    delete draft['structuralHash'];
+    const reading = acceptSkillReading({ ...draft, inputPackageStructuralHash: inputPackage.structuralHash }, { bundle: fixture.bundle, inputPackage });
+    expect(expectRefusal(() => present({ reading, inputPackage }), 'PRESENTATION_SKILL_BINDING_MISMATCH').message).toMatch(/subject is not the chart's/u);
   });
 
   it("refuses a package whose slot vocabulary is not the template's, even with a reading bound to it", () => {

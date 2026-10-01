@@ -12,7 +12,7 @@
  "inspected": [
   "the contact sheet: all 29 pages of the same run",
   "the full-size renders listed under pages (fifteen, committed)",
-  "each of the fifteen at full size - in this run or in an earlier render of the same projection whose page image is byte-identical"
+  "each of the fifteen at full size - in this run, or in an earlier render whose page image is byte-identical (the projection changed between them only in its sources, which no page prints)"
  ],
  "checks": [
   {
@@ -48,7 +48,7 @@
   {
    "check": "Every Earthly Branch the template displays carries its animal label (ETBZ-56 AC 8, as ADR 0014 section 3 reads it)",
    "result": "PASS",
-   "note": "Glance, four pillars, foundation, day master, five phases (all twelve), hidden stems, reflection, summary. Branches named in the reading’s own text (Wu (午) on pages 12 and 14) carry no label: the mapper adds no word to an accepted reading."
+   "note": "Glance, four pillars, foundation, day master, five phases (all twelve), hidden stems, reflection, summary. Branches named in the reading’s own text (Wu (午), Hai (亥) and Wei (未) on page 12, Wu (午) on page 14) carry no label: the mapper adds no word to an accepted reading."
   }
  ],
  "defects": [],

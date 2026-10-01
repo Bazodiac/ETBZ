@@ -43,7 +43,7 @@ in-process DETERMINISM check the manifest records.
 - Every Earthly Branch the template displays with its German animal label from
   `bazodiac-branch-animal-labels@1.0.0` - glance, four pillars, foundation, day master, all
   twelve on the five-phases page, hidden stems, reflection and summary. Branches the
-  reading's own text names ("Wu (午)" on pages 12 and 14) stay as the Skill wrote them: the
+  reading's own text names ("Wu (午)", "Hai (亥)" and "Wei (未)" on page 12, "Wu (午)" on page 14) stay as the Skill wrote them: the
   mapper adds no word to an accepted reading (ADR 0014 section 3).
 - No internal identifier on any page: the identities live in `sources`, which no page
   prints, and the PDF's text layer is bound string for string to the pages' printed

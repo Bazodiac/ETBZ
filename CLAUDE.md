@@ -216,7 +216,7 @@ ETBZ-56 presents an accepted Skill reading on the same projection and renderer (
 hashes, accepts the recorded reading again through `acceptSkillReading` and holds it to its own structural hash, requires
 every input-package fact to equal the chart value at its path and the package's source warnings to be the chart's (so the
 PDF shows the facts the reading was written about), and records each visualization spec against the pages that draw its
-slot through the slot-to-fact vocabulary `SKILL_FACT_KIND_TO_PAGE_KIND` (cited facts split by kind, never drawn).
+slot through the slot-to-fact vocabulary `SKILL_FACT_KIND_TO_PAGE_KIND` (cited facts split by kind; nothing is drawn because of a spec).
 `sources.skill` carries the Skill, bundle, package, plan, graph, reading and contract identities into the manifest, and
 `sources.lexicon` is the bundle's Lexicon (1.1.0) - the fixture path `buildPresentationProjection` still records 1.0.0.
 Both call `projectPresentation`, which has no third caller (`tests/architecture/etbz56-skill-presentation-boundary.test.ts`).

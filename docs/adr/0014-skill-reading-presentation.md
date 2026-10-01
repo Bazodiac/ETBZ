@@ -64,8 +64,10 @@ In this order, each a typed refusal and nothing partial:
    bundles do today).
 2. **The package** (`PRESENTATION_SKILL_BINDING_MISMATCH`): the input package, its claim
    graph and its plan each hash to the structural hash they carry, so the identities the
-   manifest records are those of the objects used - a package changed after it was built,
-   or a placeholder hash, is refused.
+   manifest records are those of the objects used - a package changed after it was built
+   whose carried hash was left stale, or a placeholder hash, is refused. This proves each
+   object consistent with itself, not where it came from: a package and a reading re-hashed
+   together pass it, and are then held to the chart by step 4.
 3. **The reading** (`acceptSkillReading` composed, never re-implemented): the recorded
    reading is accepted again against that bundle and package - an unknown fact, claim or
    slot reference, an unknown key (a motif reference has no field in a reading), and a stale
@@ -146,7 +148,7 @@ report's digests, and the Delivery Runner's visual verdict (AC-V2, Rebaseline se
 `tests/contract/etbz56-skill-presentation-evidence.contract.test.ts`; the gates by
 `tests/negative/etbz56-skill-presentation.negative.test.ts`,
 `tests/unit/etbz56-branch-animals.test.ts` and the mutation proofs of
-`scripts/verify-etbz56-presentation.mjs` (31 mutants, a step of `ci-verify`; its header
+`scripts/verify-etbz56-presentation.mjs` (32 mutants, a step of `ci-verify`; its header
 names the guards no input reaches and why they are not mutated).
 
 ## Consequences
