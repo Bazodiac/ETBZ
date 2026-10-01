@@ -141,11 +141,10 @@ export interface StemValue extends GlyphText {
   readonly polarityLabel: string;
 }
 
-/** A displayed Earthly Branch with its animal orientation label (ETBZ-56): the glyph and the word stay separate values. */
-export interface BranchGlyph extends GlyphRef {
-  readonly animalLabel: string;
-}
-
+/**
+ * A displayed Earthly Branch (ETBZ-56, Rebaseline 62128133 section 20): every structured display shows the branch's
+ * Hanzi, its canonical pinyin and its animal orientation label - three separate values, never one string.
+ */
 export interface BranchText extends GlyphText {
   readonly animalLabel: string;
 }
@@ -244,11 +243,11 @@ export type PageContent =
   | Readonly<{ kind: 'foundation'; kicker: string; title: string; characters: readonly Readonly<{ positionLabel: string; roleLabel: string; glyph: GlyphText & Readonly<{ phaseLabel: string }>; detail: string }>[] }>
   | Readonly<{ kind: 'dayMaster'; kicker: string; title: string; dayMaster: StemValue; dayMasterLabel: string; rows: readonly FactRow[]; dayPillar: Readonly<{ positionLabel: string; stem: GlyphText; branch: BranchText; hidden: readonly Readonly<GlyphText & { phaseLabel: string; qiLabel: string }>[] }>; hiddenStemsLabel: string }>
   | Readonly<{ kind: 'wuXing'; kicker: string; title: string; wuXing: WuXingValue; medallion: TermValue; captions: readonly string[] }>
-  | Readonly<{ kind: 'fivePhases'; kicker: string; title: string; stemsLabel: string; branchesLabel: string; phases: readonly Readonly<{ phase: Phase; character: string; pinyin: string; label: string; stems: readonly GlyphRef[]; branches: readonly BranchGlyph[] }>[] }>
+  | Readonly<{ kind: 'fivePhases'; kicker: string; title: string; stemsLabel: string; branchesLabel: string; phases: readonly Readonly<{ phase: Phase; character: string; pinyin: string; label: string; stems: readonly GlyphRef[]; branches: readonly BranchText[] }>[] }>
   | Readonly<{ kind: 'tenGods'; kicker: string; title: string; relationHeader: string; columns: readonly string[]; rows: readonly Readonly<{ tenGod: TenGodEntry; marks: readonly PresenceMark[] }>[]; legend: readonly Readonly<{ mark: PresenceMark; label: string }>[] }>
   | Readonly<{ kind: 'hiddenStems'; kicker: string; title: string; branchLabel: string; rows: readonly Readonly<{ positionLabel: string; branch: BranchValue; hidden: readonly HiddenStemValue[] }>[] }>
   | Readonly<{ kind: 'longForm'; chapterNumber: number; chapterPage: number; template: 'opener' | 'continuation'; headerLines: readonly HeaderLine[]; runningKicker: string | null; fragments: readonly LayoutFragment[]; sidebar: (Readonly<{ xCp: number; yCp: number; widthCp: number }> & ChapterReference) | null; referencePanel: (Readonly<{ xCp: number; yCp: number; widthCp: number }> & ChapterReference) | null }>
-  | Readonly<{ kind: 'reflection'; kicker: string; title: string; charactersLabel: string; characters: readonly Readonly<{ positionLabel: string; stem: GlyphRef; branch: BranchGlyph }>[]; questions: readonly Readonly<{ number: string; text: string }>[] }>
+  | Readonly<{ kind: 'reflection'; kicker: string; title: string; charactersLabel: string; characters: readonly Readonly<{ positionLabel: string; stem: GlyphRef; branch: BranchText }>[]; questions: readonly Readonly<{ number: string; text: string }>[] }>
   | Readonly<{ kind: 'summary'; kicker: string; title: string; rows: readonly FactRow[]; wuXingLabel: string; tally: readonly Readonly<{ phase: Phase; label: string; valueText: string }>[]; dayMaster: GlyphText; dayMasterLabel: string }>
   | Readonly<{ kind: 'closing'; kicker: string; title: string; preparedFor: string; displayName: string; product: string; pageNumberLabel: string }>
   | Readonly<{ kind: 'methodNote'; kicker: string; title: string; paragraphs: readonly string[]; dataNote: Readonly<{ label: string; text: string }> | null }>;
@@ -437,7 +436,6 @@ function bindTenGod(fact: FufireTenGodFact, where: string): TenGodName {
 const glyphText = (value: GlyphText): GlyphText => ({ character: value.character, pinyin: value.pinyin, phase: value.phase });
 const glyphRef = (value: GlyphRef): GlyphRef => ({ character: value.character, phase: value.phase });
 const branchText = (value: BranchText): BranchText => ({ ...glyphText(value), animalLabel: value.animalLabel });
-const branchGlyph = (value: BranchText): BranchGlyph => ({ ...glyphRef(value), animalLabel: value.animalLabel });
 
 // ---------------------------------------------------------------------------
 // the chart values
@@ -885,6 +883,7 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
           stems: DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'heavenly_stem' && glyph.phase === entry.phase).map(glyphRef),
           branches: DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'earthly_branch' && glyph.phase === entry.phase).map((glyph) => ({
             ...glyphRef(glyph),
+            pinyin: glyph.pinyin,
             animalLabel: branchAnimalLabel(glyph.character, 'de'),
           })),
         })),
@@ -945,7 +944,7 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
         kicker: label('tagReading'),
         title: label('reflectionTitle'),
         charactersLabel: label('reflectionCharacters'),
-        characters: pillars.map((pillar) => ({ positionLabel: pillar.positionLabel, stem: glyphRef(pillar.stem), branch: branchGlyph(pillar.branch) })),
+        characters: pillars.map((pillar) => ({ positionLabel: pillar.positionLabel, stem: glyphRef(pillar.stem), branch: branchText(pillar.branch) })),
         questions: content.reflectionQuestions.map((text, index) => ({ number: pad2(index + 1), text })),
       },
     },
