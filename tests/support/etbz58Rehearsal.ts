@@ -21,10 +21,13 @@
  * renderer (tools/pdf-renderer, run on the emitted projection) and any judgement of the reading's content.
  */
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fufireResponseMapper, createFufireClient, FUFIRE_BAZI_PATH, FUFIRE_NATAL_PATH, FUFIRE_WUXING_PATH } from '../../src/adapters/fufire/http-client.js';
 import type { AttestationVerdict } from '../../src/application/attestation/runtime-attestation.js';
 import { createCalculateHoroscopeUseCase } from '../../src/application/horoscope-use-case.js';
 import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
+import { deriveInterpretationFeatureSet } from '../../src/application/interpretation/feature-set.js';
 import { buildBazodiacInterpretationInput } from '../../src/application/interpretation/interpretation-input.js';
 import type { BazodiacInterpretationInput } from '../../src/application/interpretation/interpretation-input.js';
 import type { InterpretiveClaimGraph } from '../../src/application/interpretation/interpretive-claim-graph.js';
@@ -44,8 +47,8 @@ import { listSlotIds } from '../../src/application/visual/index.js';
 import { canonicalJson } from '../../src/domain/canonical-json.js';
 import { runFufireAttestation } from '../../src/attest-fufire.js';
 import { contextFor } from './claimGraphFixture.js';
-import { graphFor, planContextFor, validPlanDraft } from './metaNarrativePlanFixture.js';
-import { KNOWN_BIRTH } from './narrativeFixture.js';
+import { graphFor, planClaims, planContextFor, validPlanDraft } from './metaNarrativePlanFixture.js';
+import { KNOWN_BIRTH, knownTimeChart } from './narrativeFixture.js';
 
 export const ETBZ58_DIR = 'docs/evidence/etbz-58';
 export const ETBZ58_RUN_DIR = `${ETBZ58_DIR}/run`;
@@ -76,7 +79,8 @@ export type RehearsalErrorCode =
   | 'REHEARSAL_REPLAY_UNKNOWN_CALL'
   | 'REHEARSAL_REPLAY_REQUEST_MISMATCH'
   | 'REHEARSAL_EVIDENCE_TAMPERED'
-  | 'REHEARSAL_NOT_PRODUCTION_ELIGIBLE';
+  | 'REHEARSAL_NOT_PRODUCTION_ELIGIBLE'
+  | 'REHEARSAL_DRAFT_FACTS_DRIFTED';
 
 export class RehearsalError extends Error {
   readonly code: RehearsalErrorCode;
@@ -228,26 +232,56 @@ export async function runLiveStage(config: LiveStageConfig, fetchImpl: FetchLike
   return { readback, responses: responses as Record<ExchangeLabel, Uint8Array> };
 }
 
-/** A transport that answers only the recorded calls, with the recorded bytes, for the recorded request bodies. */
-export function replayTransport(readback: RuntimeReadback, responses: Readonly<Record<ExchangeLabel, Uint8Array>>): { fetch: FetchLike } {
+/**
+ * A transport that answers only the recorded calls, with the recorded bytes, for the recorded request bodies. A
+ * refusal is also pushed to `violations`: the FuFirE client wraps any transport failure as a network error, and
+ * the caller re-raises the rehearsal's own code from there.
+ */
+export function replayTransport(
+  readback: RuntimeReadback,
+  responses: Readonly<Record<ExchangeLabel, Uint8Array>>,
+  violations: RehearsalError[] = [],
+): { fetch: FetchLike } {
+  const refuse = (code: RehearsalErrorCode, message: string): Promise<Response> => {
+    const error = new RehearsalError(code, message);
+    violations.push(error);
+    return Promise.reject(error);
+  };
   return {
     fetch: (url, init) => {
       const path = new URL(url).pathname;
       const exchange = readback.exchanges.find((candidate) => candidate.path === path);
-      if (exchange === undefined) {
-        return Promise.reject(new RehearsalError('REHEARSAL_REPLAY_UNKNOWN_CALL', `no recorded exchange for ${path}`));
-      }
+      if (exchange === undefined) return refuse('REHEARSAL_REPLAY_UNKNOWN_CALL', `no recorded exchange for ${path}`);
       const body = typeof init.body === 'string' ? init.body : '';
-      if (sha256Of(body) !== exchange.requestSha256) {
-        return Promise.reject(new RehearsalError('REHEARSAL_REPLAY_REQUEST_MISMATCH', `the request for ${path} is not the recorded one`));
-      }
+      if (sha256Of(body) !== exchange.requestSha256) return refuse('REHEARSAL_REPLAY_REQUEST_MISMATCH', `the request for ${path} is not the recorded one`);
       const bytes = responses[exchange.label];
       if (sha256Of(bytes) !== exchange.responseSha256 || bytes.byteLength !== exchange.byteLength) {
-        return Promise.reject(new RehearsalError('REHEARSAL_EVIDENCE_TAMPERED', `the response bytes for ${path} are not the recorded ones`));
+        return refuse('REHEARSAL_EVIDENCE_TAMPERED', `the response bytes for ${path} are not the recorded ones`);
       }
       return Promise.resolve(new Response(bytes, { status: exchange.status, headers: { 'Content-Type': 'application/json' } }));
     },
   };
+}
+
+/**
+ * The facts the reviewed drafts cite, with the value each was reviewed against: the chart the drafts were written
+ * for (the fixture chart of Musterkundin A, ETBZ-30A/30B). PO decision D-58-1 uses the drafts on the live chart
+ * only where these values hold; a claim's statement is prose the builders cannot compare with a value.
+ */
+export function draftFactPins(): ReadonlyMap<string, string> {
+  const reviewed = knownTimeChart().model;
+  const values = new Map(deriveInterpretationFeatureSet(reviewed).facts.map((fact) => [fact.id, canonicalJson(fact.value)]));
+  const ids = [...new Set(planClaims(contextFor(reviewed)).flatMap((claim) => claim.factRefs))].sort();
+  return new Map(ids.map((id) => [id, values.get(id) ?? 'MISSING']));
+}
+
+/** Refuses a live chart on which a cited fact of the reviewed drafts has another value (or none). */
+export function assertDraftFactsHold(model: HoroscopeModel): void {
+  const live = new Map(deriveInterpretationFeatureSet(model).facts.map((fact) => [fact.id, canonicalJson(fact.value)]));
+  const drifted = [...draftFactPins()].filter(([id, value]) => live.get(id) !== value).map(([id, value]) => `${id}: reviewed ${value}, live ${live.get(id) ?? 'absent'}`);
+  if (drifted.length > 0) {
+    throw new RehearsalError('REHEARSAL_DRAFT_FACTS_DRIFTED', `the reviewed drafts cite facts the live chart answers differently: ${drifted.join('; ')}`);
+  }
 }
 
 export interface RehearsalInput {
@@ -266,11 +300,14 @@ export interface RehearsalInput {
  */
 export async function deriveRehearsalInput(readback: RuntimeReadback, responses: Readonly<Record<ExchangeLabel, Uint8Array>>): Promise<RehearsalInput> {
   const { runtimeImage, openapiSha256 } = readback.runtime;
+  const violations: RehearsalError[] = [];
   const gateway = createFufireClient({
     config: { baseUrl: 'https://replay.invalid', apiKey: 'replay-no-network', timeoutMs: 30_000, runtimeImage, openapiSha256 },
-    transport: replayTransport(readback, responses),
+    transport: replayTransport(readback, responses, violations),
   });
   const result = await createCalculateHoroscopeUseCase({ gateway, runtime: { runtimeImage, openapiSha256 } }).execute(KNOWN_BIRTH);
+  const [violation] = violations;
+  if (violation !== undefined) throw violation;
   if (!result.ok) {
     throw new RehearsalError('REHEARSAL_PRODUCER_FAILED', `replay: ${result.error.code}: ${'message' in result.error ? result.error.message : JSON.stringify(result.error.issues)}`);
   }
@@ -279,7 +316,8 @@ export async function deriveRehearsalInput(readback: RuntimeReadback, responses:
   if (!input.productionEligibility.eligible) {
     throw new RehearsalError('REHEARSAL_NOT_PRODUCTION_ELIGIBLE', `interpretation input blockers: ${input.productionEligibility.blockers.join(', ')}`);
   }
-  // PO decision D-58-1: the reviewed drafts of this chart, accepted against the live model.
+  // PO decision D-58-1: the reviewed drafts of this chart, on the live model only where their cited facts hold.
+  assertDraftFactsHold(model);
   const context = contextFor(model);
   const graph = graphFor(context);
   const planContext = { ...planContextFor(context, graph), contractBindings: PLAN_CONTRACT_BINDINGS_V1_1 };
@@ -310,6 +348,15 @@ export function assembleRehearsal(rehearsal: RehearsalInput, realise: unknown, e
   const projection = buildSkillReadingProjection({ model: rehearsal.model, reading: accepted, bundle: rehearsal.bundle, inputPackage: rehearsal.inputPackage });
   return { semantic, accepted, projection };
 }
+
+/** The committed live stage: the readback and the three response bodies as recorded. */
+export function loadRecordedRun(root: string = process.cwd()): { readback: RuntimeReadback; responses: Record<ExchangeLabel, Uint8Array> } {
+  const readback = JSON.parse(readFileSync(resolve(root, ETBZ58_READBACK), 'utf8')) as RuntimeReadback;
+  const responses = Object.fromEntries(EXCHANGE_LABELS.map((label) => [label, new Uint8Array(readFileSync(resolve(root, responseFileOf(label))))])) as Record<ExchangeLabel, Uint8Array>;
+  return { readback, responses };
+}
+
+export const readJsonFile = (path: string, root: string = process.cwd()): unknown => JSON.parse(readFileSync(resolve(root, path), 'utf8')) as unknown;
 
 export function renderJson(value: unknown): string {
   return `${canonicalJson(value)}\n`;
