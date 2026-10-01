@@ -169,6 +169,13 @@ describe('V1: uncertainty is carried, not added (DIRECTNESS)', () => {
     expect(() => accept(reading, pkg)).not.toThrow();
   });
 
+  it('counts the target of an ALTERNATIVE_READING as covered too (the guard seen green)', () => {
+    const { inputPackage: pkg, reading } = withAlternative();
+    expect(paragraph(reading, 1, 2).claimRefs).toHaveLength(1);
+    paragraph(reading, 1, 2).text = `Vielleicht: ${paragraph(reading, 1, 2).text}`;
+    expect(() => accept(reading, pkg)).not.toThrow();
+  });
+
   it('refuses doubt in a paragraph that also cites a claim the alternative does not cover', () => {
     const { inputPackage: pkg, reading } = withAlternative();
     paragraph(reading, 0, 3).text = `Vielleicht: ${paragraph(reading, 0, 3).text}`;
@@ -267,6 +274,12 @@ describe('V3: no meta-narration on the customer surface (CUSTOMER_SURFACE)', () 
   it('refuses a producer label in a reflection question or a chapter title that does not cite it', () => {
     expectRefusal(() => accept(readingWith((r) => { (r.reflectionQuestions[2] as { text: string }).text += ' Kennst du die Indirekte Quelle?'; })), 'READING_META_NARRATION');
     expectRefusal(() => accept(readingWith((r) => { chapter(r, 4).title = 'Klarstellung: Indirekte Quelle'; })), 'READING_META_NARRATION');
+  });
+
+  it('accepts a producer label in a chapter title and a FRAME paragraph whose claims are grounded in it (the guard seen green)', () => {
+    expect(paragraph(baseline, 3, 1).factRefs).toHaveLength(0);
+    expect(() => accept(readingWith((r) => { chapter(r, 3).title = 'Rückhalt im Inneren: die Indirekte Quelle'; }))).not.toThrow();
+    expect(() => accept(readingWith((r) => { paragraph(r, 3, 1).text += ' In BaZi heißt diese Beziehung Indirekte Quelle.'; }))).not.toThrow();
   });
 
   it('accepts a producer label in a reflection question whose claim is grounded in it (the guard seen green)', () => {

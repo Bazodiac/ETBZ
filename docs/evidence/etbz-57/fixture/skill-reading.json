@@ -240,7 +240,7 @@
         {
           "kind": "INTERPRETATION",
           "posture": "SUPPORTED",
-          "text": "Eine fordernde Stimme sitzt unter anderem im Inneren deines Jahreszweigs und deines Monatszweigs, dort jeweils dieselbe. Auch das ist eine Wiederkehr, aber diese Beziehung kommt auf deinen Tagesmeister zu und kontrolliert ihn. In den fünf Wandlungsphasen gibt es neben dem Nähren das Kontrollieren: Eine Phase begrenzt eine andere und gibt ihr eine Form. Was den Tagesmeister kontrolliert, gehört in BaZi zur Familie der Struktur und des Anspruchs, und die Variante hier ist die unmittelbare – kein geordnetes Regelwerk, sondern direkter, kaum abgefederter Druck: eine Anforderung, die ohne Vermittlung kommt und eine Entscheidung verlangt. Sie bestimmt nicht über dich. Sie beschreibt, in welcher Form Anforderungen in deinem Chart angelegt sind: eher als direkter Entscheidungsdruck denn als vermittelte Vorschrift.",
+          "text": "Eine fordernde Stimme sitzt unter anderem im Inneren deines Jahreszweigs und deines Monatszweigs, dort jeweils dieselbe. Auch das ist eine Wiederkehr, aber diese Beziehung kommt auf deinen Tagesmeister zu und kontrolliert ihn. In den fünf Wandlungsphasen gibt es neben dem Nähren das Kontrollieren: Eine Phase begrenzt eine andere und gibt ihr eine Form. Was den Tagesmeister kontrolliert, gehört in BaZi zur Familie der Struktur und des Anspruchs, und die Variante hier ist die unmittelbare – kein geordnetes Regelwerk, sondern unmittelbarer, weniger abgefederter Druck: eine Anforderung, die ohne Vermittlung kommt und eine Entscheidung verlangt. Sie bestimmt nicht über dich. Sie beschreibt, in welcher Form Anforderungen in deinem Chart angelegt sind: eher als direkter Entscheidungsdruck denn als vermittelte Vorschrift.",
           "factRefs": [
             "chart.natal.pillar.year.hiddenStem.0.tenGod",
             "chart.natal.pillar.month.hiddenStem.0.tenGod",
@@ -500,7 +500,7 @@
         {
           "kind": "REFLECTION",
           "posture": "SUPPORTED",
-          "text": "Kennst du das aus anderen Zusammenhängen: dass das, was in einer Sache am häufigsten vorkommt, nicht der Punkt ist, von dem aus du sie verstehst? Von welchem Punkt aus betrachtest du Dinge, die dir wichtig sind – und bleibt er derselbe, wenn sich anderes verschiebt? Und gibt es Situationen, in denen dir dieser Unterschied gar nicht auffällt?",
+          "text": "Kennst du das aus anderen Zusammenhängen: dass das, was in einer Sache am stärksten vertreten ist, nicht der Punkt ist, von dem aus du sie verstehst? Von welchem Punkt aus betrachtest du Dinge, die dir wichtig sind – und bleibt er derselbe, wenn sich anderes verschiebt? Und gibt es Situationen, in denen dir dieser Unterschied gar nicht auffällt?",
           "factRefs": [],
           "claimRefs": [
             "claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57",
@@ -699,7 +699,7 @@
         {
           "kind": "INTERPRETATION",
           "posture": "SUPPORTED",
-          "text": "Wie verhalten sich die Anforderung, die auf dich zukommt, und der Ausdruck nach außen, wenn beide zugleich da sind? Dein Chart löst das nicht zugunsten einer Seite auf. Beide gehören zu demselben Standpunkt und treffen dort aufeinander. Die Spannung bleibt bestehen: zwei Richtungen an einem Standpunkt. Erkennbar wird eine solche Spannung etwa in Momenten, in denen eine Entscheidung ansteht und zugleich der Wunsch da ist, sie noch genauer zu fassen, oder dort, wo etwas festgelegt werden soll, das sich noch nicht ganz in Worte fassen lässt. Oder in einer Lage, in der ein Unterschied benannt werden soll, während schon eine Antwort erwartet wird. Gemeinsam ist solchen Momenten, dass Genauigkeit und Festlegung zur selben Zeit verlangt werden.",
+          "text": "Wie verhalten sich die Anforderung, die auf dich zukommt, und der Ausdruck nach außen, wenn beide zugleich da sind? Beide gehören zu demselben Standpunkt und treffen dort aufeinander. Die Spannung bleibt bestehen: zwei Richtungen an einem Standpunkt. Erkennbar wird eine solche Spannung etwa in Momenten, in denen eine Entscheidung ansteht und zugleich der Wunsch da ist, sie noch genauer zu fassen, oder dort, wo etwas festgelegt werden soll, das sich noch nicht ganz in Worte fassen lässt. Oder in einer Lage, in der ein Unterschied benannt werden soll, während schon eine Antwort erwartet wird. Gemeinsam ist solchen Momenten, dass Genauigkeit und Festlegung zur selben Zeit verlangt werden.",
           "factRefs": [
             "chart.natal.pillar.month.tenGod",
             "chart.natal.pillar.day.hiddenStem.0.tenGod",
@@ -729,7 +729,7 @@
         {
           "kind": "REFLECTION",
           "posture": "SUPPORTED",
-          "text": "Gibt es bei dir eine Verbindung zwischen den Momenten, in denen du am genauesten unterscheidest, und den Momenten, in denen eine Entscheidung von dir verlangt wird – oder bleiben die beiden für dich getrennt? Wenn du beide Seiten kennst: Welche erkennst du eher? Oder erkennst du dich in keiner der beiden wieder? Und gibt es Momente, in denen beide zugleich da sind, ohne dass sich etwas entscheiden muss?",
+          "text": "Gibt es bei dir eine Verbindung zwischen den Momenten, in denen du am genauesten unterscheidest, und den Momenten, in denen eine Entscheidung von dir verlangt wird – oder bleiben die beiden für dich getrennt? Wenn du beide Seiten kennst: Welche erkennst du eher? Oder erkennst du dich in keiner der beiden wieder? Und gibt es Momente, in denen beide zugleich da sind, ohne dass sich etwas entscheiden muss? Und kennst du auch Momente, in denen nur eine der beiden Seiten da ist?",
           "factRefs": [],
           "claimRefs": [
             "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375",
@@ -778,7 +778,7 @@
       ]
     },
     {
-      "text": "Wenn du an etwas denkst, das dir wichtig ist: Verstehst du es eher von deinem eigenen Standpunkt aus – oder von dem her, was darin am häufigsten vorkommt?",
+      "text": "Wenn du an etwas denkst, das dir wichtig ist: Verstehst du es eher von deinem eigenen Standpunkt aus – oder von dem her, was darin am stärksten vertreten ist?",
       "claimRefs": [
         "claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57",
         "claim.sha256:a1dbb87ff5e598f3d6a6bffbb20b3686b741ac29ed39b29bc372b8484e8501d1"

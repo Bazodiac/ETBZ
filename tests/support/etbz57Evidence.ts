@@ -68,15 +68,16 @@ export const ETBZ57_GENERATION = {
   model: 'claude-opus-5-5',
   executedAt: '2026-10-01',
   operator: 'Delivery Runner (ETBZ-57 57.4)',
-  repositoryHead: 'cab9ff041afb785404c0b17e8bc97da3690adb7a',
+  repositoryHead: '3e8e9b37d66de0639b329a2c555efb7930335a50',
   passes: [
     'REALISE v1 and EDIT v1: superseded after independent editorial review round 1 (not committed)',
     'REALISE v2 and EDIT v2: superseded after review round 2 confirmed 8 of 20 flagged sentences as overreach (not committed)',
     'REALISE v3 and EDIT v3: committed in ffbcd0a, superseded after the delta review (round 3) found unlicensed count statements and 3 overreaching fill sentences',
     'REALISE v4 and EDIT v4: committed in 84f1234, superseded after the fix verification found position statements that read as complete (the controlling and the resourcing voice also stand in the hour branch)',
     'REALISE v5 and EDIT v5: committed in cab9ff0, superseded after the final verification (round 5) found statements about how contrasted claims interact, a strength verdict, the Wu-Xing weighting read as a count, and three position lists still read as complete',
-    'REALISE v6: semantic-reading.json',
-    'EDIT v6: skill-reading.json (text-only revision of REALISE v6)',
+    'REALISE v6 and EDIT v6: committed in 3e8e9b3, superseded after the closure check of round 5 found two reflection surfaces still speaking of frequency, one remaining "neither side prevails" sentence and a near-absolute "kaum abgefedert"',
+    'REALISE v7: semantic-reading.json',
+    'EDIT v7: skill-reading.json (text-only revision of REALISE v7)',
   ],
 } as const;
 
