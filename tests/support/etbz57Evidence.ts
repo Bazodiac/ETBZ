@@ -68,13 +68,14 @@ export const ETBZ57_GENERATION = {
   model: 'claude-opus-5-5',
   executedAt: '2026-10-01',
   operator: 'Delivery Runner (ETBZ-57 57.4)',
-  repositoryHead: 'ffbcd0ab6ba215e3172cd78b32e0c8872c29be8d',
+  repositoryHead: '84f12344e99f58a0475e8d1959f90beedc65f39d',
   passes: [
     'REALISE v1 and EDIT v1: superseded after independent editorial review round 1 (not committed)',
     'REALISE v2 and EDIT v2: superseded after review round 2 confirmed 8 of 20 flagged sentences as overreach (not committed)',
     'REALISE v3 and EDIT v3: committed in ffbcd0a, superseded after the delta review (round 3) found unlicensed count statements and 3 overreaching fill sentences',
-    'REALISE v4: semantic-reading.json',
-    'EDIT v4: skill-reading.json (text-only revision of REALISE v4)',
+    'REALISE v4 and EDIT v4: committed in 84f1234, superseded after the fix verification found position statements that read as complete (the controlling and the resourcing voice also stand in the hour branch)',
+    'REALISE v5: semantic-reading.json',
+    'EDIT v5: skill-reading.json (text-only revision of REALISE v5)',
   ],
 } as const;
 

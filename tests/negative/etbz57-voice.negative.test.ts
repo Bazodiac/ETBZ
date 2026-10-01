@@ -149,6 +149,19 @@ describe('V1: uncertainty is carried, not added (DIRECTNESS)', () => {
     expect(error.detail).toEqual({ where: 'chapters[0].paragraphs[5]', phrase: 'vielleicht' });
   });
 
+  it('keeps bounded wording where the graph carries an ALTERNATIVE_READING (the guard seen green)', () => {
+    const own = paragraph(baseline, 0, 5).claimRefs[0] as string;
+    const other = paragraph(baseline, 0, 2).claimRefs[0] as string;
+    const { inputPackage: pkg, reading } = packageWith((core) => {
+      const graph = core['claimGraph'] as { claims: { claimId: string; relations: { targetClaimId: string; type: string }[] }[] };
+      const claim = graph.claims.find((entry) => entry.claimId === own);
+      expect(claim).toBeDefined();
+      claim?.relations.push({ targetClaimId: other, type: 'ALTERNATIVE_READING' });
+    });
+    paragraph(reading, 0, 5).text = `Vielleicht kennst du das: ${paragraph(reading, 0, 5).text}`;
+    expect(() => accept(reading, pkg)).not.toThrow();
+  });
+
   it('refuses a retired template in a FRAME paragraph over SUPPORTED claims (posture NONE)', () => {
     expect(paragraph(baseline, 0, 1).kind).toBe('FRAME');
     const error = expectRefusal(() => accept(readingWith((r) => {
@@ -215,6 +228,8 @@ describe('V3: no meta-narration on the customer surface (CUSTOMER_SURFACE)', () 
     ['a paragraph narrating its chapter', (r: Reading) => { paragraph(r, 1, 4).text += ' Dieses Kapitel öffnet einen Faden.'; }, 'chapters[1].paragraphs[4]'],
     ['a paragraph narrating later chapters', (r: Reading) => { paragraph(r, 1, 4).text += ' In den nächsten Kapiteln wird dieses Motiv weiter entwickelt.'; }, 'chapters[1].paragraphs[4]'],
     ['a paragraph placing itself in the reading', (r: Reading) => { paragraph(r, 1, 4).text += ' Im Reading steht das am Anfang.'; }, 'chapters[1].paragraphs[4]'],
+    ['a paragraph addressing "dein Reading"', (r: Reading) => { paragraph(r, 1, 4).text += ' Dein Reading beginnt hier.'; }, 'chapters[1].paragraphs[4]'],
+    ['an inflected meta word beside a cited label', (r: Reading) => { paragraph(r, 3, 0).text += ' Indirekte Quellen sind hier gemeint.'; }, 'chapters[3].paragraphs[0]'],
     ['a paragraph naming a producer label it does not cite', (r: Reading) => { paragraph(r, 4, 0).text += ' In BaZi heißt diese Beziehung Indirekte Quelle.'; }, 'chapters[4].paragraphs[0]'],
     ['a chapter title', (r: Reading) => { chapter(r, 1).title = 'Was die Berechnung im Monat zeigt'; }, 'chapters[1].title'],
     ['the reading title', (r: Reading) => { r.title = 'Dein BaZi-Reading aus validierten Angaben'; }, 'title'],
@@ -227,6 +242,12 @@ describe('V3: no meta-narration on the customer surface (CUSTOMER_SURFACE)', () 
   it('accepts a producer label containing "Quelle" where the paragraph cites the fact that carries it (the guard seen green)', () => {
     expect(paragraph(baseline, 3, 0).factRefs).toContain('chart.natal.pillar.month.hiddenStem.1.tenGod');
     expect(() => accept(readingWith((r) => { paragraph(r, 3, 0).text += ' In BaZi heißt diese Beziehung Indirekte Quelle.'; }))).not.toThrow();
+  });
+
+  it('accepts a producer label in a reflection question whose claim is grounded in it (the guard seen green)', () => {
+    const question = baseline.reflectionQuestions[1] as { claimRefs: string[] };
+    expect(question.claimRefs).toHaveLength(1);
+    expect(() => accept(readingWith((r) => { (r.reflectionQuestions[1] as { text: string }).text += ' Kennst du die Indirekte Quelle?'; }))).not.toThrow();
   });
 
   it('refuses the 1.0.0 fixture texts once they are held to the 1.1.0 gates', () => {
@@ -290,6 +311,7 @@ describe('V5: concrete, never biographical (CONCRETENESS)', () => {
     ['Als Kind warst du schon so.'],
     ['Mit deinen Freunden zeigt sich das deutlich.'],
     ['Die Erwartungen deines Vaters spielen hier mit.'],
+    ['Mit deinen Kindern erlebst du das.'],
   ])('refuses "%s"', (sentence) => {
     expectRefusal(() => accept(readingWith((r) => { paragraph(r, 1, 4).text += ` ${sentence}`; })), 'READING_LIFE_DOMAIN_INVENTED');
   });
@@ -306,6 +328,11 @@ describe('V5: concrete, never biographical (CONCRETENESS)', () => {
   ])('refuses the count "%s": a count is derived, never a chart fact', (sentence, phrase) => {
     const error = expectRefusal(() => accept(readingWith((r) => { paragraph(r, 1, 4).text += ` ${sentence}`; })), 'READING_UNCITED_NUMERAL');
     expect(error.detail).toEqual({ where: 'chapters[1].paragraphs[4]', phrase });
+  });
+
+  it('refuses a count in the method note', () => {
+    const error = expectRefusal(() => accept(readingWith((r) => { r.methodNote.text += ' Das Motiv steht zweimal.'; })), 'READING_UNCITED_NUMERAL');
+    expect(error.detail).toEqual({ where: 'methodNote', phrase: 'zweimal' });
   });
 
   it('refuses a count in a chapter title', () => {
@@ -373,6 +400,15 @@ describe('V6: the editorial pass changes customer text only (AC 12)', () => {
     expect(chapter(baseline, 4).semanticDelta[0]?.kind).toBe('NEW_QUALIFICATION');
     const error = expectRefusal(edit((r) => { (chapter(r, 4).semanticDelta[0] as { kind: string }).kind = 'NEW_CONTEXT'; }), 'READING_EDITORIAL_EXPANSION');
     expect(error.detail).toEqual({ path: 'reading.chapters[4].semanticDelta[0].kind' });
+  });
+
+  it('is version-neutral: it accepts a text-only revision of a 1.0.0 reading and refuses a structural one', () => {
+    const released = skillFixture();
+    const releasedContext = { bundle: released.bundle, inputPackage: released.inputPackage };
+    const accepted = acceptSkillReading(oldReading, releasedContext);
+    const retitled = acceptEditorialRevision(accepted, readingWith((r) => { r.title = 'Dein BaZi-Reading: ein neuer Titel'; }, oldReading), releasedContext);
+    expect(retitled.skillRef).toBe('bazodiac-interpretation-skill@1.0.0');
+    expectRefusal(() => acceptEditorialRevision(accepted, readingWith((r) => { r.visualizationSpecs.pop(); }, oldReading), releasedContext), 'READING_EDITORIAL_EXPANSION');
   });
 
   it('refuses fate in the method note, which is otherwise free of the narrative gates', () => {

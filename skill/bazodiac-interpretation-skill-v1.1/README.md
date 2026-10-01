@@ -12,4 +12,4 @@
 | `reading-schema.json` | JSON Schema of `bazodiac-skill-reading.v1` (identical to the 1.0.0 package's) | `npm run etbz57:package` |
 | `MANIFEST.json` | identities, bundle hash, contract set and the SHA-256 of every file above; `packageStructuralHash` freezes the whole package | `npm run etbz57:package` |
 
-`tests/contract/etbz57-skill-voice.contract.test.ts` requires every generated file here to be byte-identical to a fresh generation and the manifest digests to match the files. Nothing in this directory is served, imported by `src/` or shipped in the container image.
+`tests/contract/etbz57-skill-voice.contract.test.ts` requires `contract-bundle.json` and `reading-schema.json` to be byte-identical to a fresh generation, checks `MANIFEST.json` field by field, and requires its digests to match the files. Nothing in this directory is served, imported by `src/` or shipped in the container image.

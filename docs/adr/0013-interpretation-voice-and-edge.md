@@ -69,7 +69,8 @@ released page versions.
 
 `acceptSkillReading` holds a 1.1.0 reading to six additional refusals and to a count-word
 check under the existing `READING_UNCITED_NUMERAL`; a 1.0.0 reading is accepted under
-exactly its old gates. The editorial pass adds a seventh code (section 4).
+exactly its old gates. The editorial pass (section 4) is version-neutral and adds
+`READING_EDITORIAL_EXPANSION`.
 
 | Code | What it refuses | Contract |
 | --- | --- | --- |
@@ -84,9 +85,16 @@ exactly its old gates. The editorial pass adds a seventh code (section 4).
 The 1.1 profile also adds determinism and identity-verdict phrases to the prohibited
 classes ("Schicksal", "so bist du eben", "du bist jemand"). The method note is not
 narrative: it carries the method and data disclosure and is held to the prohibited
-phrases and the life-domain words only. A producer label the paragraph cites (e.g.
-"Indirekte Quelle") is terminology and does not count as talk about the source. Like every wording gate here, the lists are mechanical and conservative;
-what they cannot match stays with the human reader.
+phrases, the life-domain words and the count words only. A producer label the surface
+cites, directly or through its claims (e.g. "Indirekte Quelle"), is terminology and does
+not count as talk about the source. A paragraph whose claim the graph links by
+`ALTERNATIVE_READING` keeps the bounded wording the Lexicon reserves for it (L3.4).
+
+Every wording gate here is a closed, conservative list. Inflections and paraphrases it
+does not list pass ("Brüdern", "des Readings", "beide Male", "drei Beziehungen"), and a
+listed phrase can match an innocent sentence ("kann sein", "ist nicht sicher"). The
+gates catch the listed forms; the editorial reviews and the Human Editorial Gate are the
+check on everything else.
 
 ### 4. The editorial pass
 
@@ -130,8 +138,19 @@ and fails the swap against the unknown-time foil.
   for the word floor; REALISE v3 removes them. The delta review (round 3) found count
   statements the chart does not carry (the controlling and the resourcing voice stand in
   three branches, not two) and 3 more fill sentences. After three rounds of the same
-  class the strategy changed: counts are now refused mechanically, and REALISE v4 names
-  positions instead of counting.
+  class the strategy changed: listed count words are refused mechanically, and REALISE v4
+  named positions instead of counting. The fix verification then read the remaining
+  position statements as complete: the claims C1 and C2 name the year and the month
+  branch, while the chart carries the same relations in the hour branch too. A reading
+  may cite only the facts its claims are grounded in, so it cannot name the hour branch
+  there. REALISE v5 marks those positions as non-exhaustive ("unter anderem", "etwa",
+  "jeweils"), and the method note discloses that named positions are the ones an
+  interpretation rests on. Why the claims omit the hour branch is a claim-graph question
+  (ETBZ-30), not a voice question; it is reported to the Product Owner at the gate.
+- An accepted reading does not carry the evaluation-only status of its bundle: the
+  opt-in is checked at every boundary, but the accepted reading and its customer
+  projection have no marker. No consumer exists yet; ETBZ-56 must take its bundle from
+  release.
 - The pre-existing ADVICE_PREDICTION phrase "du brauchst" also refuses descriptive uses
   ("was du brauchst"); scoping a safety gate is outside this slice (reconcile C13).
 - Release is mechanical but not optional: page status lines, decision dates and titles,

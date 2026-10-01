@@ -559,13 +559,20 @@ function citesContrastPair(claims: readonly AcceptedInterpretiveClaim[], contras
   return claims.some((left, index) => claims.slice(index + 1).some((right) => contrastPairs.has(pairKey(left.claimId, right.claimId))));
 }
 
-/** A cited producer label (e.g. "Indirekte Quelle") is terminology, not talk about the source. */
+/** A cited producer label (e.g. "Indirekte Quelle") is terminology, not talk about the source - as a whole term only. */
 function withoutLabels(text: string, labels: readonly string[]): string {
   let rest = normalise(text);
   for (const label of labels) {
-    if (label.trim() !== '') rest = rest.split(normalise(label)).join(' ');
+    if (label.trim() === '') continue;
+    const escaped = normalise(label).replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+    rest = rest.replace(new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'gu'), ' ');
   }
   return rest;
+}
+
+/** The producer labels of the facts a surface cites directly or through its claims. */
+function labelsOf(facts: readonly (ChartFact | undefined)[]): readonly string[] {
+  return facts.flatMap((fact) => (fact?.sourceLabel === undefined || fact.sourceLabel === null ? [] : [fact.sourceLabel]));
 }
 
 /**
@@ -610,11 +617,17 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   const claimById = new Map<string, AcceptedInterpretiveClaim>(inputPackage.claimGraph.claims.map((claim) => [claim.claimId, claim]));
   const planned = new Set(inputPackage.plan.constraints.allowedClaimRefs);
   const contrastPairs = new Set<string>();
+  const inAlternative = new Set<string>();
   for (const claim of inputPackage.claimGraph.claims) {
     for (const relation of claim.relations) {
       if (relation.type === 'CONTRASTS_WITH') contrastPairs.add(pairKey(claim.claimId, relation.targetClaimId));
+      if (relation.type === 'ALTERNATIVE_READING') {
+        inAlternative.add(claim.claimId);
+        inAlternative.add(relation.targetClaimId);
+      }
     }
   }
+  const groundingOf = (claims: readonly AcceptedInterpretiveClaim[]): (ChartFact | undefined)[] => claims.flatMap((claim) => claim.factRefs.map((id) => factById.get(id)));
   const resolveFact = (id: string, where: string): ChartFact => {
     if (excluded.has(id)) {
       throw new SkillRunError('READING_FACT_EXCLUDED', `${where} cites fact ${id}, which the input excludes from interpretation`, { where, factRef: id });
@@ -651,7 +664,10 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       throw new SkillRunError('READING_CHAPTER_PLAN_MISMATCH', `${where} is not the plan's chapter at that position (id or operation differs)`, { where });
     }
     checkSurface(chapter.title, `${where}.title`);
-    if (voice) checkVoiceSurface(chapter.title, `${where}.title`, planned_.claimRefs.map((id) => resolveClaim(id, `${where}.title`)), contrastPairs);
+    if (voice) {
+      const titleClaims = planned_.claimRefs.map((id) => resolveClaim(id, `${where}.title`));
+      checkVoiceSurface(chapter.title, `${where}.title`, titleClaims, contrastPairs, labelsOf(groundingOf(titleClaims)));
+    }
     const chapterClaims = new Set(planned_.claimRefs);
     const renderedHere = new Set<string>();
     const chapterFacts: ChartFact[] = [];
@@ -711,15 +727,16 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
 
       // Customer voice (1.1.0): uncertainty is carried, not added; tentativeness is visible; SUPPORTED is not hedged by template.
       if (voice) {
-        checkVoiceSurface(paragraph.text, at, claims, contrastPairs, facts.map((fact) => fact.sourceLabel ?? ''));
+        checkVoiceSurface(paragraph.text, at, claims, contrastPairs, labelsOf([...facts, ...groundingOf(claims)]));
         if (interpretive && !tentative && paragraph.posture === 'TENTATIVE') {
           throw new SkillRunError('READING_SUPPORTED_UNDERSTATED', `${at} renders SUPPORTED claims only but is written as TENTATIVE; uncertainty is carried, not added`, { where: at });
         }
         if (paragraph.posture === 'TENTATIVE' && !hasTentativeMarker(paragraph.text)) {
           throw new SkillRunError('READING_TENTATIVE_NOT_VISIBLE', `${at} is TENTATIVE but carries no visible tentative marker`, { where: at });
         }
-        // Over SUPPORTED claims only - INTERPRETATION, REFLECTION or FRAME alike - the text says it with no added doubt.
-        const plain = claims.length > 0 && !tentative;
+        // Over SUPPORTED claims only - INTERPRETATION, REFLECTION or FRAME alike - the text says it with no added doubt,
+        // unless the graph carries an ALTERNATIVE_READING for one of them (Lexicon 1.1 L3.4 keeps bounded wording there).
+        const plain = claims.length > 0 && !tentative && !claims.some((claim) => inAlternative.has(claim.claimId));
         const marker = plain ? findTentativeMarker(paragraph.text) : null;
         if (marker !== null) {
           throw new SkillRunError('READING_SUPPORTED_UNDERSTATED', `${at} cites SUPPORTED claims only but writes "${marker}"; uncertainty is carried, not added`, { where: at, phrase: marker });
@@ -804,7 +821,7 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
     const at = `reflectionQuestions[${String(index)}]`;
     checkSurface(question.text, at);
     const claims = question.claimRefs.map((id) => resolveClaim(id, at));
-    if (voice) checkVoiceSurface(question.text, at, claims, contrastPairs);
+    if (voice) checkVoiceSurface(question.text, at, claims, contrastPairs, labelsOf(groundingOf(claims)));
     for (const claim of claims) {
       if (!planned.has(claim.claimId)) {
         throw new SkillRunError('READING_CLAIM_NOT_PLANNED_HERE', `${at} rests on claim ${claim.claimId}, which the plan does not use`, { where: at, claimRef: claim.claimId });
@@ -821,6 +838,10 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   const methodNoteDomain = voice ? findLifeDomainWord(reading.methodNote.text) : null;
   if (methodNoteDomain !== null) {
     throw new SkillRunError('READING_LIFE_DOMAIN_INVENTED', `methodNote names a life domain or a person ("${methodNoteDomain}")`, { where: 'methodNote', phrase: methodNoteDomain });
+  }
+  const methodNoteCount = voice ? findCountWord(reading.methodNote.text) : null;
+  if (methodNoteCount !== null) {
+    throw new SkillRunError('READING_UNCITED_NUMERAL', `methodNote states a count ("${methodNoteCount}"); a count is derived, never a chart fact`, { where: 'methodNote', phrase: methodNoteCount });
   }
   checkSymbols(reading.methodNote.text, 'methodNote', chartCovered);
   if (!sameList(reading.methodNote.warningCodes, inputPackage.warnings)) {

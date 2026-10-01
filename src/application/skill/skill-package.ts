@@ -52,7 +52,7 @@ export interface SkillInputPackage {
   readonly skillRef: string;
   readonly bundleRef: string;
   readonly bundleStructuralHash: string;
-  /** The released contract set, as a run's evidence must record it. */
+  /** The bundle's contract set, as a run's evidence must record it: released, or - for an evaluation run of a candidate bundle - the candidate pages. */
   readonly contracts: readonly ReleasedContractBinding[];
   readonly subject: Readonly<{ displayName: string; birthTimeKnown: boolean }>;
   /** Hash of the exact `BazodiacInterpretationInput v1` the facts come from. */

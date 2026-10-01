@@ -26,7 +26,7 @@ import {
   renderPortableSkillContractBundle,
   skillReadingJsonSchema,
 } from '../../src/application/skill/index.js';
-import { ETBZ57_FIXTURE_DIR, deriveEtbz57Evidence, renderJson } from '../support/etbz57Evidence.js';
+import { ETBZ57_FIXTURE_DIR, ETBZ57_GENERATION, deriveEtbz57Evidence, renderJson } from '../support/etbz57Evidence.js';
 import { skillFixture, skillFixtureV1_1 } from '../support/skillFixture.js';
 
 // Every test here accepts a 4,400-word reading through every voice gate; under a loaded
@@ -173,6 +173,16 @@ describe('ETBZ-57: the fixture run evidence is what the chain produces', () => {
     expect(generation['repositoryHead']).toMatch(/^[0-9a-f]{40}$/u);
     expect(read(FIXTURE_DIR, 'skill-input.json')).toContain('Musterkundin A');
     expect(read(FIXTURE_DIR, 'skill-input.json')).not.toMatch(/"latitude"|"longitude"|baziRaw/u);
+  });
+
+  it('names in the evidence README the same committed pass as the generation record', () => {
+    const passOf = (file: string): string => {
+      const entry = ETBZ57_GENERATION.passes.find((pass) => pass.includes(`: ${file}`));
+      expect(entry, `no generation pass names ${file}`).toBeDefined();
+      return (entry as string).split(':')[0] as string;
+    };
+    const readme = readFileSync(resolve(REPO_ROOT, 'docs/evidence/etbz-57/README.md'), 'utf8');
+    expect(readme).toContain(`${passOf('semantic-reading.json')} and ${passOf('skill-reading.json')} (this fixture)`);
   });
 
   it('regenerates evals.json byte for byte', () => {
