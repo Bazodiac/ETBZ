@@ -156,7 +156,7 @@ blocked `RENDERER_ERROR` check, not only as a trace.
 `qa/run_canaries.py` breaks each gate once — the projection, a pin, the host fonts or
 one page builder — and runs the real renderer against it in a child process; six codes
 that need a doctored font or PDF writer have no canary (ADR 0012 limitation 8). Each of
-the 163 canaries must end `BLOCKED` at the expected check with the expected finding (the
+the 167 canaries must end `BLOCKED` at the expected check with the expected finding (the
 `partial-write` canary instead proves that no `--out` directory appears),
 exit 1, and leave no PDF and no manifest; four positive controls (a Wu Xing value of 0,
 body text and plain glyphs at opacity 0.7, a display name with a dotless `ı`) must pass with a PDF and a manifest. The results go to

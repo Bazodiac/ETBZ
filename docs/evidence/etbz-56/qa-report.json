@@ -7,7 +7,7 @@
   },
   {
    "detail": {
-    "projection": "sha256:a40c282aeec90f49dde357e683641ab6c41b14bf2d35926c4a900f7ab777f429",
+    "projection": "sha256:465d6b08e64ebaace4a2f72f6073ca9ce641062cacc14508feab2045c88d7d4a",
     "template": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
    },
    "id": "PROJECTION_IDENTITY",
@@ -48,7 +48,7 @@
    "detail": {
     "glyphPaths": 111,
     "pages": 29,
-    "printedPaths": 1475
+    "printedPaths": 1452
    },
    "id": "PAGE_STRINGS",
    "result": "PASS"
@@ -57,7 +57,7 @@
    "detail": {
     "displayGlyphs": 116,
     "pages": 29,
-    "textNodes": 1640
+    "textNodes": 1617
    },
    "id": "PAGE_QA",
    "result": "PASS"
@@ -84,8 +84,8 @@
    "detail": {
     "clippedUnits": 0,
     "pages": 29,
-    "printedStrings": 1640,
-    "textUnits": 33543
+    "printedStrings": 1617,
+    "textUnits": 32151
    },
    "id": "PDF_TEXT_LAYER",
    "result": "PASS"
@@ -110,7 +110,7 @@
      3
     ],
     "pages": 29,
-    "pdfSha256": "sha256:89865a31935cae2d79de3a7272d2b73869ed5ebfced4b8289262ed092a366021"
+    "pdfSha256": "sha256:87806e0ad2151bfadb30040d5c7d2fbd31c8630bb7a5bdd4468f73c020c7e14c"
    },
    "id": "DETERMINISM",
    "result": "PASS"
@@ -121,7 +121,7 @@
    "ceiling": 0.6,
    "floor": 0.005,
    "highest": 0.2627,
-   "items": 33399,
+   "items": 32007,
    "lowest": 0.0151
   },
   "glyph": {
@@ -149,7 +149,7 @@
    "ceiling": 0.5,
    "floor": 0.03,
    "highest": 0.1901,
-   "items": 1496,
+   "items": 1473,
    "lowest": 0.0808
   }
  },
@@ -164,7 +164,7 @@
     "Inter Medium|Inter-Medium",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:29128861e33432b7031d105886fd931538d6c83a0ef311207a5b1086b555b2de",
+   "pngSha256": "sha256:43c4e2b8688f254a6a369d2d1c401899c2b75b1c49bcaa29f692c50c8ca8a1d0",
    "textNodes": 13
   },
   {
@@ -191,7 +191,7 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:3b697357995ba6996330e36b447167044df775a4f399115543099cc99699d539",
+   "pngSha256": "sha256:4355a427a1f5d953714107dc510144d79b20c61801f063a4bc18d153ad5db8fb",
    "textNodes": 58
   },
   {
@@ -315,8 +315,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:a5169fc37ac1cb9ee5f5c922ab6913aaa250cfac599cf91491c627a1cf0ee526",
-   "textNodes": 87
+   "pngSha256": "sha256:de9a5c4d3b5e5a831173c98223db1d184f11d0ba42e7846ee07fad2d63c86b2c",
+   "textNodes": 90
   },
   {
    "displayGlyphs": 1,
@@ -328,8 +328,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:ea75bb7b951fad3f75d3936e34cbd6aaa27bdce49aba38ca1008cb0b2e38397c",
-   "textNodes": 57
+   "pngSha256": "sha256:08b3b69d46adb6095a70412a4e6fd4892c6be366025b136ee68f994b4e11d0a3",
+   "textNodes": 42
   },
   {
    "displayGlyphs": 0,
@@ -342,8 +342,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:f34d4423d8e7b538a102f13c10f7e61274d17cb5c8d86282f79a0b4f6a0ca618",
-   "textNodes": 90
+   "pngSha256": "sha256:2382631f8a506587730ff79411c6254e72be05265a41b7bae4614c958badbcf0",
+   "textNodes": 87
   },
   {
    "displayGlyphs": 1,
@@ -355,8 +355,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:7187d19cd87be93d0cff623015ec8afe409db8383c378d9e7a2838fb745c821d",
-   "textNodes": 53
+   "pngSha256": "sha256:c9520e0594580be837876bf3fd0ca361130d28f8b50c91b23b7abaad8d0acdc9",
+   "textNodes": 49
   },
   {
    "displayGlyphs": 0,
@@ -368,7 +368,7 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:e3f8a232684a93693d8b58b700fd8893dc6b15c814053ac14443ae10f3dd20a2",
+   "pngSha256": "sha256:3195afaf04bcb8f661e8dc122415790a92a342592f644ce45779a4b1463006dc",
    "textNodes": 88
   },
   {
@@ -381,8 +381,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:87502472af4ea33429d99f0f5c99dd7a239ee2149a41b1098d44147d997b1de1",
-   "textNodes": 58
+   "pngSha256": "sha256:c726a901b49ce4daa3f1c52d1381303db9abb536f6e4bc822e74e271d9a57819",
+   "textNodes": 53
   },
   {
    "displayGlyphs": 0,
@@ -394,8 +394,8 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:00894ffbaecbfa38607ec39cacef0be009e96f60fe970b6aa3dcfd8b57688314",
-   "textNodes": 88
+   "pngSha256": "sha256:cee76b983a66fdf9dbdca7d2cabd4de0faf221c3f9090fac058c513ee09fbc9c",
+   "textNodes": 90
   },
   {
    "displayGlyphs": 1,
@@ -407,8 +407,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:1fe6ce9da483d4f7d77c4c67355f3b9c80e37526188050bc07dfce1b6a49efa1",
-   "textNodes": 55
+   "pngSha256": "sha256:6a3312523554b859837a14b34d3f45975efc04cc352c592ecf0a318863012f03",
+   "textNodes": 48
   },
   {
    "displayGlyphs": 0,
@@ -421,7 +421,7 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:a535af0ef034381e882ef74c352505b20e7e5c6e05b522d6a9f8cc8468c174bc",
+   "pngSha256": "sha256:6b9287843c6f230460074a05107c3463cd93f1761485bb4bfcc4c3d59511c1ad",
    "textNodes": 87
   },
   {
@@ -434,8 +434,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:33e4a36017535d33aad9b9ff9178a6adbc22569f3a4f9277143413c11be419ae",
-   "textNodes": 48
+   "pngSha256": "sha256:07b0785eab5137f56efe7cc5bba1209638b0973519296fe385f59f3ad4fa92ea",
+   "textNodes": 52
   },
   {
    "displayGlyphs": 0,
@@ -447,8 +447,8 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:7dda2ac163e3c51a37782a859eae1afd412ce58e852861e3f2c97ad7a13706a1",
-   "textNodes": 87
+   "pngSha256": "sha256:1b8e98ec7022d592641154e7c9b9758cc1e81a03f3b7b820423ac56a1c79fa3d",
+   "textNodes": 86
   },
   {
    "displayGlyphs": 1,
@@ -460,8 +460,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:1eb7289178ed37506d98a4090a61d9565dc76d217e52f5e4dc48b28653af45b0",
-   "textNodes": 49
+   "pngSha256": "sha256:c37b8779074a40224954953c03afd9955419ee993e58868e61e67a2e25dd6909",
+   "textNodes": 53
   },
   {
    "displayGlyphs": 0,
@@ -473,8 +473,8 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:856eca0db3543934562d617919d1364a0d8d246984a62f8f75d3d2c8abddc17e",
-   "textNodes": 88
+   "pngSha256": "sha256:e1aa34551cb3964fe921635155f80d42086bb1dcb866a3e4d5d134a6355fcdb8",
+   "textNodes": 87
   },
   {
    "displayGlyphs": 1,
@@ -486,7 +486,7 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:cb4ab2b9066250c7b3ecfc5fb838fbeb3aa9da4736bd8a99655244b7044cac34",
+   "pngSha256": "sha256:0f20ede00577c3bfd41920ba20de169e717a2ea8e81d4ef602b38caf10998d90",
    "textNodes": 56
   },
   {
@@ -499,7 +499,7 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:2fb7fca41555f34286fef05b179c7c4b1103cf2278501107e77988c8916d2874",
+   "pngSha256": "sha256:1376ba8e78480a82b2f4f16801bcedff01cf2c23493481ad80b671ea77448b5e",
    "textNodes": 26
   },
   {
@@ -526,7 +526,7 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:ed93b9b9c24980266a1176b29b65f1c54113e8c29ffd7d711d7e151993e7850e",
+   "pngSha256": "sha256:2ba3598c78b1205aca091086a3cc3c0a4db4991f5ea793e23f44fb7347794e2a",
    "textNodes": 6
   },
   {
@@ -539,11 +539,11 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:307d3c78a814b3e63cf8fc28459d49b203bb44b170ac64672147976480bb8bed",
+   "pngSha256": "sha256:a633a000c7bfdaeaa057d639756d71dd10818cd4b48c8727b2b6addb08bf5293",
    "textNodes": 13
   }
  ],
- "projectionStructuralHash": "sha256:a40c282aeec90f49dde357e683641ab6c41b14bf2d35926c4a900f7ab777f429",
+ "projectionStructuralHash": "sha256:465d6b08e64ebaace4a2f72f6073ca9ce641062cacc14508feab2045c88d7d4a",
  "reportVersion": "bazodiac-pdf-qa-report.v1",
  "state": "QA_PASSED",
  "status": "PASSED"

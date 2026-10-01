@@ -120,6 +120,7 @@ describe('S1: the bundle must be the released identity this projection presents 
 
   it('refuses a bundle whose Ten-God wording or chart terms are not the ones the template prints', () => {
     expect(() => assertBundleCarriesTemplateWording(fixture.bundle)).not.toThrow();
+    expect(() => assertBundleCarriesTemplateWording(buildSkillContractBundle())).not.toThrow();
     const wording = structuredClone(fixture.bundle) as Mutable<SkillContractBundle>;
     const first = wording.wordingBoundaries.tenGodRelationWording[0];
     if (first === undefined) throw new Error('no wording');

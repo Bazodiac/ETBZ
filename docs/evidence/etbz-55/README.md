@@ -7,6 +7,13 @@ ETBZ-52 controlled fixture run, projected by `buildPresentationProjection` onto 
 template `bazodiac-final-template@1.0.0` and rendered by the local
 `bazodiac-pdf-renderer@1.0.0` (`tools/pdf-renderer/`). Decision record: ADR 0012.
 
+Re-rendered in ETBZ-56 (2026-10-01, ADR 0014): the projection gained the Earthly-Branch
+animal labels on every page that displays a branch and records the label table, and the
+renderer changed (the labels, the Ten Gods legend, the media attribute of a stylesheet), so
+the PDF, the manifest, the QA report, the contact sheet and the canary record were produced
+again on the new renderer digest. The text payload is unchanged. The accepted 1.1.0 Skill
+reading is presented by the same renderer in `docs/evidence/etbz-56/`.
+
 ## Files
 
 | File | What it is | Produced by |
@@ -16,7 +23,7 @@ template `bazodiac-final-template@1.0.0` and rendered by the local
 | `contact-sheet.png` | all 29 pages, for visual inspection | the renderer |
 | `qa-report.json` | every check of the render, per page, including the platform faces Chromium used, the ink band (lowest and highest share) each kind left on the page images, and the counts of the final-artifact readback of the PDF's text layer and painted shapes | the renderer |
 | `artifact-manifest.json` | PDF digest, length and page count; input, presentation, template (with its four drawing assets), renderer and font identities; QA state; the declared generation record | the renderer |
-| `renderer-canaries.json` | 163 executed negative runs and 4 positive controls: every renderer check and finding code broken at least once except the six ADR 0012 limitation 8 names, each negative run BLOCKED at the expected check with no PDF and no manifest (the `partial-write` run instead proves that no output directory appears), each positive control PASSED with a PDF and a manifest; bound to the renderer and canary source digests; plus the differential test of the renderer's hash mirror against the TypeScript `canonicalJson` | `tools/pdf-renderer/qa/run_canaries.py` |
+| `renderer-canaries.json` | 167 executed negative runs and 4 positive controls: every renderer check and finding code broken at least once except the six ADR 0012 limitation 8 names, each negative run BLOCKED at the expected check with no PDF and no manifest (the `partial-write` run instead proves that no output directory appears), each positive control PASSED with a PDF and a manifest; bound to the renderer and canary source digests; plus the differential test of the renderer's hash mirror against the TypeScript `canonicalJson` | `tools/pdf-renderer/qa/run_canaries.py` |
 
 `tests/contract/etbz55-presentation-evidence.contract.test.ts` re-derives in CI every
 claim that does not need a browser: the projection from the fixtures, the metrics from
@@ -57,21 +64,22 @@ both against the committed tree.
   must show is shown - against a mistaken builder or stylesheet edit, for the mechanisms
   ADR 0012 section 6 lists (limitation 8 names what the page QA does not measure).
 - The PDF itself says the same (final-artifact readback, ADR 0012 section 6): each of its
-  33,394 text units is bound to one of the 1,608 printed strings of its page, none clipped
+  33,543 text units is bound to one of the 1,640 printed strings of its page, none clipped
   away, and each string's glyphs spell its projection value in visual order, every glyph
   upright; every clip is one convex shape or a frame around one; its painted shapes are the
   116 display glyphs and 30 wordmarks (each with its dot) as canonical outlines, each wholly
   in its own box and clips, at its box's size and position, upright, drawn once, and 566
   single convex contours, nothing else (limitation 14 names what this leaves out).
 - Deterministic: runs 2 and 3 produced the same PDF bytes and the same 29 page images,
-  and a separate two-run render process produced the same PDF bytes again.
+  and a separate two-run render process produced the same PDF bytes again (re-measured for
+  the ETBZ-56 re-render).
 
 ## What it does not show
 
 - `ChartMotifSummary` and `ChapterDivider` — the template contract (ETBZ-43 / ETBZ-49)
   defines no such components; `KeyInsightPanel` exists only as an atomic long-form
-  block and the payload carries none. Motif and claim bindings arrive with the Skill
-  output in ETBZ-56.
+  block and the payload carries none. ETBZ-56 presents the Skill output on the same pages
+  and draws no motif or claim component either (ADR 0014).
 - The Day-Master content slots (`dayMaster.reading`, `dayMaster.pillarReading`) — the
   fixture payload carries no approved content for them; they are left empty and listed
   in `emptyContentSlots`, never filled with stock copy.
@@ -81,8 +89,7 @@ both against the committed tree.
 
 ## Observations for the human verdict and the contract owners
 
-- A paragraph is wrapped once, at the width of the opener column where it is first
-  placed: the tail of a paragraph that crosses onto a continuation page is narrower than
+- A paragraph is wrapped once, at the width of the column current when it comes up: the tail of a paragraph that crosses onto a continuation page is narrower than
   the rest (pages 13, 19, 21, 23), and a paragraph that cannot put two lines on the
   opener moves whole to the continuation page at the opener width (pages 15, 17, 25).
   This is the canonical ETBZ-49 paginator's behaviour, which the port reproduces on

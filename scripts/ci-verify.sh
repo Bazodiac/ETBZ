@@ -142,6 +142,11 @@ run_etbz55_presentation_guard() { node "${REPO_ROOT}/scripts/verify-etbz55-prese
 # to text-only change. They are prose gates: proven by mutation or they are wishes.
 run_etbz57_voice_guard() { node "${REPO_ROOT}/scripts/verify-etbz57-voice.mjs"; }
 
+# ETBZ-56 presents an accepted Skill reading on the same projection: the bundle
+# identity, the reading accepted again, the package bound to the chart, the spec
+# bindings, the branch animal labels and the every-word check over quotation marks.
+run_etbz56_presentation_guard() { node "${REPO_ROOT}/scripts/verify-etbz56-presentation.mjs"; }
+
 # --- 7. secret gate -----------------------------------------------------------
 run_secret_gate() { bash "${REPO_ROOT}/scripts/secret-scan.sh"; }
 
@@ -186,6 +191,9 @@ if [ "${RUN_MUTATIONS}" -eq 1 ]; then
 fi
 if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: ETBZ-57 customer voice (voice gates + editorial pass + candidate bundle mutation proofs)" run_etbz57_voice_guard
+fi
+if [ "${RUN_MUTATIONS}" -eq 1 ]; then
+  etbz_step "guards :: ETBZ-56 Skill-reading presentation (identity + binding + spec + animal-label + quotation mutation proofs)" run_etbz56_presentation_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan

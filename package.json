@@ -29,6 +29,7 @@
     "guards:etbz51": "node scripts/verify-etbz51-skill-contract-bundle.mjs",
     "guards:etbz52": "node scripts/verify-etbz52-skill-reading.mjs",
     "guards:etbz55": "node scripts/verify-etbz55-presentation.mjs",
+    "guards:etbz56": "node scripts/verify-etbz56-presentation.mjs",
     "guards:etbz57": "node scripts/verify-etbz57-voice.mjs",
     "etbz49:contract": "node scripts/etbz49-generate-visual-contract.mjs",
     "etbz49:assemble": "node scripts/etbz49-assemble-evidence.mjs",

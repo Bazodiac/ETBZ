@@ -17,6 +17,7 @@ import {
   assertReleasedBranchAnimalLabels,
   blockWords,
   branchAnimalLabel,
+  buildPresentationProjection,
   headerHeight,
   paginateLongForm,
   placedBlockText,
@@ -146,6 +147,13 @@ describe.each(projections)('ETBZ-56 AC 8: every displayed Earthly Branch carries
     expect(stemObjects.filter((stem) => 'animalLabel' in stem)).toEqual([]);
   });
 
+  it('refuses a chart whose animal label differs from the released table', () => {
+    const { model, content } = presentationFixture();
+    const changed = structuredClone(model) as { pillars: { hour: { tierDe: string } } };
+    changed.pillars.hour.tierDe = 'Schaf';
+    expect(refusal(() => buildPresentationProjection({ model: changed as unknown as typeof model, content })).code).toBe('PRESENTATION_FACT_MISMATCH');
+  });
+
   it('records the label table it used', () => {
     expect(projection.sources.branchAnimals).toEqual({ ref: BRANCH_ANIMAL_LABELS_REF, locale: 'de', structuralHash: RELEASED_BRANCH_ANIMAL_LABELS_HASHES[BRANCH_ANIMAL_LABELS_REF] });
   });
@@ -157,19 +165,27 @@ describe('ETBZ-56: the every-word check compares the placed text exactly (ADR 00
     { id: 'q1', kind: 'pullQuote', text: 'Ein Satz, der als Zitat hervorgehoben steht.' },
     { id: 'p2', kind: 'paragraph', text: 'Ein Absatz danach, mit \u201Cenglischen\u201D Zeichen im Text.' },
   ];
-  const layout = paginateLongForm(blocks, headerHeight([{ id: 'title', kind: 'sectionTitle', text: 'Probe' }]));
-  const placement = {
+  const header = headerHeight([{ id: 'title', kind: 'sectionTitle', text: 'Probe' }]);
+  const placementOf = (layout: ReturnType<typeof paginateLongForm>) => ({
     fixtureId: 'quotes',
     wordCount: blocks.map(blockWords).join(' ').split(/\s+/u).length,
     pages: layout.pages.map((page) => ({ pageNumber: page.pageNumber, template: page.template, lines: page.fragments.flatMap((fragment) => fragment.lines.map((line) => line.text)) })),
-  };
+  });
 
   it('places a pull quote and German quotation marks and passes the check', () => {
+    // The paginator's own every-word check runs inside paginateLongForm; it must not refuse its own placement.
+    let layout: ReturnType<typeof paginateLongForm> | undefined;
+    expect(() => {
+      layout = paginateLongForm(blocks, header);
+    }).not.toThrow();
+    if (layout === undefined) return;
+    const placement = placementOf(layout);
     expect(placedBlockText(blocks[1] as LongFormBlock)).toBe('\u201CEin Satz, der als Zitat hervorgehoben steht.\u201D');
     expect(() => assertEveryWordPlaced(blocks.map(placedBlockText).join(' '), placement)).not.toThrow();
   });
 
   it('refuses a placement that drops a quotation mark', () => {
+    const placement = placementOf(paginateLongForm(blocks, header));
     const dropped = {
       ...placement,
       pages: placement.pages.map((page) => ({ ...page, lines: page.lines.map((line) => line.replace('Zeichen\u201C', 'Zeichen')) })),
