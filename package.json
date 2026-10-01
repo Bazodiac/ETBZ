@@ -41,6 +41,7 @@
     "etbz55:projection": "vite-node tests/support/emit-etbz55-projection.ts",
     "etbz56:projection": "vite-node tests/support/emit-etbz56-projection.ts",
     "etbz57:evidence": "vite-node tests/support/emit-etbz57-evidence.ts",
+    "etbz58:live": "vite-node tests/support/run-etbz58-live.ts",
     "secret-scan": "bash scripts/secret-scan.sh",
     "deps:scan": "npm audit --audit-level=high --omit=dev",
     "build-dry-run": "bash scripts/build-dry-run.sh",
