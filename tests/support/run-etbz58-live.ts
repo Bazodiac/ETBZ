@@ -10,8 +10,8 @@
  *   ETBZ58_EXECUTED_AT                    YYYY-MM-DD of the run
  *   ETBZ58_REPOSITORY_HEAD                the 40-hex ETBZ commit the run executes
  *
- * Writes the three response bodies byte for byte, the runtime readback and the Skill input package derived from
- * the recorded bytes, and prints only digests.
+ * Writes the three response bodies as the client read them (after HTTP content decoding), the runtime readback and
+ * the Skill input package derived from the recorded bytes, and prints only digests.
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

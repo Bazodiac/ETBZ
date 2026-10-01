@@ -129,6 +129,12 @@ describe('ETBZ-58: the replay accepts only the recorded run', () => {
     expect(await codeOf(() => deriveRehearsalInput(other, responses))).toBe('REHEARSAL_REPLAY_REQUEST_MISMATCH');
   });
 
+  it('refuses a readback whose recorded calls are not each answered exactly once', async () => {
+    const { readback, responses } = loadRecordedRun();
+    const doubled = { ...readback, exchanges: [...readback.exchanges, ...readback.exchanges.filter((exchange) => exchange.label === 'natal')] };
+    expect(await codeOf(() => deriveRehearsalInput(doubled, responses))).toBe('REHEARSAL_REPLAY_CALL_COUNT');
+  });
+
   it('refuses a call the run did not record', async () => {
     const { readback, responses } = loadRecordedRun();
     const partial = { ...readback, exchanges: readback.exchanges.filter((exchange) => exchange.label !== 'natal') };

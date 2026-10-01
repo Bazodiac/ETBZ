@@ -1,6 +1,6 @@
 # ETBZ-58 — Pre-Golden rehearsal: evidence
 
-One non-Golden known-time case from a fresh call at the live FuFirE boundary to the final PDF, its ArtifactManifest and the visual proof, with no person editing the reading between the stages (Rebaseline 62128133 section 18; Jira ETBZ-58). Decision record: ADR 0015.
+One non-Golden known-time case from a fresh call at the live FuFirE boundary to the final PDF, its ArtifactManifest and the visual proof, without manual content editing between the stages (declared - see "What it does not show"; Rebaseline 62128133 section 18; Jira ETBZ-58). Decision record: ADR 0015.
 
 - **Case:** Musterkundin A, through the canonical fixture input `KNOWN_BIRTH` only. It is referenced from `tests/support/narrativeFixture.ts`, not copied (Product Owner, Jira ETBZ-58 comment 16976). The case is synthetic and is not the Golden case: `GOLDEN-KT-01` stays reserved for ETBZ-53.
 - **Graph and plan drafts:** the reviewed ETBZ-30A/30B drafts of that chart (PO decision D-58-1, comment 17021). They are used on the live chart only where the 11 facts they cite hold their reviewed values.
@@ -10,25 +10,25 @@ One non-Golden known-time case from a fresh call at the live FuFirE boundary to 
 | File | What it is | Produced by |
 | --- | --- | --- |
 | `run/runtime-readback.json` | the runtime readback of the live stage. It holds the attestation verdict (expectation and observation), the probes (health, readiness, a call without credentials), the case input reference and its canonical digest, and one record per calculation call (request and response digest, status, length) | `npm run etbz58:live`, on `96601c7`, 2026-10-01 |
-| `run/fufire/*.response.json` | the three response bodies (BaZi, Wu Xing, Natal), byte for byte | the same command |
+| `run/fufire/*.response.json` | the three response bodies (BaZi, Wu Xing, Natal) as the client read them - after HTTP content decoding; the wire encoding is not recorded | the same command |
 | `run/skill-input.json` | the `bazodiac-skill-input.v1` package, derived from the recorded bytes | the same command; re-derived by the suites |
 | `run/realise-attempt-1.refused.json` | the runtime's first REALISE reading, refused by the acceptance boundary | the Claude runtime (see Generation) |
 | `run/semantic-reading.json` | its one repair (wrapper step 5), accepted | the same runtime |
 | `run/skill-reading.json` | the EDIT revision (wrapper step 5a), accepted | the same runtime |
 | `run/accepted-reading.json` | the revision as `acceptEditorialRevision` accepts it, with its `structuralHash` | `npm run etbz58:assemble -- assemble` |
 | `presentation-projection.json` | the projection `buildSkillReadingProjection` builds from it | the same command |
-| `bazodiac-reading.pdf`, `artifact-manifest.json`, `qa-report.json`, `contact-sheet.png`, `pages/` | the renderer's output. The 15 page renders are the ones Rebaseline section 18 and Jira step 4 name | `tools/pdf-renderer/render_pdf.py` on `39719a1`, 2026-10-02; the PDF is identical across two render processes |
+| `bazodiac-reading.pdf`, `artifact-manifest.json`, `qa-report.json`, `contact-sheet.png`, `pages/` | the renderer's output. The 15 page renders are the ones Rebaseline section 18 and Jira step 4 name | `tools/pdf-renderer/render_pdf.py` on `39719a1`, 2026-10-02; the manifest's DETERMINISM check compares in-process renders; a second render process produced the same PDF digest (measured, not committed) |
 | `visual-verdict.json` | the visual evidence verdict | the Delivery Runner, by inspection |
 | `rehearsal-record.json` | every identity of the run, from the case input to the ArtifactManifest and the verdict | `npm run etbz58:assemble -- seal` |
 
-`tests/contract/etbz58-rehearsal-evidence.contract.test.ts` re-derives every machine-produced file and every digest. `tests/negative/etbz58-rehearsal.negative.test.ts` holds the orchestrator's negative paths, and `npm run guards:etbz58` proves its checks by source mutation.
+`tests/contract/etbz58-rehearsal-evidence.contract.test.ts` re-derives the Skill input package, the accepted reading, the projection and the run record byte for byte from the committed run, and binds the response bodies, the readback, the PDF, the QA report, the renders and the verdict by their digests; the live answers and the renders themselves are not re-derivable in CI. `tests/negative/etbz58-rehearsal.negative.test.ts` holds the orchestrator's negative paths, and `npm run guards:etbz58` proves its checks by source mutation.
 
 ## What the run shows
 
 - **The runtime is the accepted build (AC 5).**
-    - The expected OpenAPI document was reproduced from the FuFirE source at `8ad7dce6` before the run: 258,095 bytes, `24cd80c5…`. The live attestation observed the same digest and the same `source_revision`. Run with the parent revision `c914d567` instead, the attestation is BLOCKED.
+    - The expected OpenAPI document was reproduced from the FuFirE source at `8ad7dce6` before the run: 258,095 bytes, `24cd80c5…`. The live attestation observed the same digest and the same `source_revision`. Run with the parent revision `c914d567` instead, the attestation was BLOCKED (exit 2, `SOURCE_REVISION_MISMATCH`; measured before the run and recorded in Jira ETBZ-58 comment 17021, not committed here).
     - `/v1/health` and `/v1/ready` answered 200, and a calculation call without credentials was refused with 401.
-    - The live stage sends no calculation to a runtime that fails any of these checks (negative suite).
+    - The live stage sends no calculation to a runtime whose attestation fails or that is not ready (negative suite). The call without credentials is probed after the three calculations: a runtime that answers it is refused, the run fails, but it has already answered the authorised calls.
 - **The end-to-end path (AC 1, AC 2).**
     - The three known-time calls were answered and recorded.
     - The InterpretationInput is production-eligible: the attestation re-derives to PASS for the OpenAPI document the chart is pinned to, and the birth time is known.
@@ -47,13 +47,14 @@ One non-Golden known-time case from a fresh call at the live FuFirE boundary to 
 
 | Path | Where it is proven |
 | --- | --- |
-| attestation not passed, runtime not ready, no credential required | `etbz58-rehearsal.negative.test.ts` (no calculation is sent) |
-| recorded evidence tampered, another request, an unrecorded call | `etbz58-rehearsal.negative.test.ts` |
+| attestation not passed, runtime not ready | `etbz58-rehearsal.negative.test.ts` (no calculation is sent) |
+| a runtime that answers a call without credentials | `etbz58-rehearsal.negative.test.ts` (the run is refused; the probe follows the calculations) |
+| recorded evidence tampered, another request, an unrecorded call, a recorded call not answered exactly once | `etbz58-rehearsal.negative.test.ts` |
 | an attestation that is typed as PASS or does not pass | `etbz58-rehearsal.negative.test.ts` (`INTERPRETATION_INPUT_ATTESTATION_FOREIGN`, `REHEARSAL_NOT_PRODUCTION_ELIGIBLE`) |
 | a live chart that answers a fact the reviewed drafts cite differently | `etbz58-rehearsal.negative.test.ts` (`REHEARSAL_DRAFT_FACTS_DRIFTED`) |
 | an existing reading presented as this run's | `etbz58-rehearsal.negative.test.ts` (`READING_PACKAGE_MISMATCH`) |
 | invalid BirthInput (zero FuFirE calls) | `tests/unit/fufire-http-client.test.ts` (`BIRTH_INPUT_INVALID`) |
-| FuFirE unavailable, contract drift, response validation | `tests/unit/fufire-http-client.test.ts`, `fufire-natal-client.test.ts`, `wuxing-consumer-boundary.test.ts` (`FUFIRE_NETWORK_ERROR`, `FUFIRE_CONTRACT_ERROR`); `tests/unit/raw-evidence-binding.test.ts`, `interpretation-input.test.ts` (`INTERPRETATION_INPUT_RAW_EVIDENCE_*`); `tests/unit/runtime-attestation.test.ts` (OpenAPI and revision mismatch) |
+| FuFirE unavailable, contract drift, response validation | `tests/unit/fufire-http-client.test.ts`, `fufire-natal-client.test.ts`, `wuxing-consumer-boundary.test.ts` (`FUFIRE_SERVER_ERROR`, `FUFIRE_TIMEOUT`, `FUFIRE_NETWORK_ERROR` in the natal client, `FUFIRE_CONTRACT_ERROR`); `tests/unit/raw-evidence-binding.test.ts`, `interpretation-input.test.ts` (`INTERPRETATION_INPUT_RAW_EVIDENCE_*`); `tests/unit/runtime-attestation.test.ts` (OpenAPI and revision mismatch) |
 | unknown fact or method reference, schema failure | `tests/negative/etbz52-skill-reading.negative.test.ts` (`READING_FACT_UNKNOWN`, `READING_SCHEMA_INVALID`); `tests/unit/interpretive-claim.test.ts`, `method-registry.test.ts` (claim and method grounding) |
 | provisionality laundering | `etbz52-skill-reading.negative.test.ts`, `etbz57-voice.negative.test.ts` (`READING_PROVISIONALITY_LAUNDERED`) |
 | invalid visualization reference | `etbz52-skill-reading.negative.test.ts`, `etbz56-skill-presentation.negative.test.ts` |
@@ -76,6 +77,7 @@ One non-Golden known-time case from a fresh call at the live FuFirE boundary to 
 - Whether any sentence of the reading is true of a person, specific enough or sellable; that is ETBZ-54's Human SELLABLE gate.
 - No independent content review was run as a gate. The ETBZ-57 experience is that a direct voice drifts into overreach which the mechanical gates do not see.
 - Which model wrote the text: the generation record is a declaration.
+- That no person edited the reading between the stages: declared (`ETBZ58_GENERATION.noHumanEdit`). What is measured: the repair changed exactly one leaf, the EDIT revision exactly 36 customer-text leaves and nothing else.
 - That the instance read nothing but its input: this is its own report, not measured.
 - That the drafting step works for a chart without reviewed drafts (finding 4).
 - The prose-level anti-boilerplate checks that need a second reading.

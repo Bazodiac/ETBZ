@@ -9,7 +9,8 @@
  *
  * - `runLiveStage` (network; only the operator command `run-etbz58-live.ts` calls it): the runtime readback
  *   (attestation, health, readiness, a call without credentials) and the authorised known-time calls through
- *   the real FuFirE client and use case, over a transport that records the exact response bytes.
+ *   the real FuFirE client and use case, over a transport that records each response body as the client read it
+ *   (after HTTP content decoding - the wire encoding is not recorded).
  * - `deriveRehearsalInput` (offline, deterministic): replays the recorded bytes through the same client and
  *   use case - a response whose digest or a request whose body differs from the record is refused - and
  *   builds the InterpretationInput with the recorded attestation, the claim graph, the plan, the 1.1.0 bundle
@@ -105,6 +106,7 @@ export type RehearsalErrorCode =
   | 'REHEARSAL_PRODUCER_FAILED'
   | 'REHEARSAL_REPLAY_UNKNOWN_CALL'
   | 'REHEARSAL_REPLAY_REQUEST_MISMATCH'
+  | 'REHEARSAL_REPLAY_CALL_COUNT'
   | 'REHEARSAL_EVIDENCE_TAMPERED'
   | 'REHEARSAL_NOT_PRODUCTION_ELIGIBLE'
   | 'REHEARSAL_DRAFT_FACTS_DRIFTED';
@@ -173,8 +175,8 @@ type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
 
 const labelOfPath = (path: string): ExchangeLabel | undefined => EXCHANGE_LABELS.find((label) => EXCHANGE_PATHS[label] === path);
 
-async function probe(fetchImpl: FetchLike, url: string, init: RequestInit): Promise<Probe> {
-  const response = await fetchImpl(url, init);
+async function probe(fetchImpl: FetchLike, url: string, init: RequestInit, timeoutMs: number): Promise<Probe> {
+  const response = await fetchImpl(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
   const body = new Uint8Array(await response.arrayBuffer());
   return { path: new URL(url).pathname, status: response.status, bodySha256: sha256Of(body) };
 }
@@ -204,8 +206,8 @@ export async function runLiveStage(config: LiveStageConfig, fetchImpl: FetchLike
   const openapiSha256 = verdict.observation.openapi.sha256;
   const runtimeImage = `fufire-api-lunar@${config.expectedSourceRevision}`;
 
-  const health = await probe(fetchImpl, `${baseUrl}${HEALTH_PATH}`, { method: 'GET' });
-  const ready = await probe(fetchImpl, `${baseUrl}${READY_PATH}`, { method: 'GET' });
+  const health = await probe(fetchImpl, `${baseUrl}${HEALTH_PATH}`, { method: 'GET' }, timeoutMs);
+  const ready = await probe(fetchImpl, `${baseUrl}${READY_PATH}`, { method: 'GET' }, timeoutMs);
   if (health.status !== 200 || ready.status !== 200) {
     throw new RehearsalError('REHEARSAL_RUNTIME_NOT_READY', `health ${String(health.status)}, ready ${String(ready.status)}`);
   }
@@ -236,7 +238,7 @@ export async function runLiveStage(config: LiveStageConfig, fetchImpl: FetchLike
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: requests.bazi ?? '',
-  });
+  }, timeoutMs);
   const refused = unauthorisedProbe.status === 401 || unauthorisedProbe.status === 403;
   if (!refused) {
     throw new RehearsalError('REHEARSAL_RUNTIME_AUTH_NOT_ENFORCED', `a call without credentials returned HTTP ${String(unauthorisedProbe.status)}`);
@@ -268,6 +270,7 @@ export function replayTransport(
   readback: RuntimeReadback,
   responses: Readonly<Record<ExchangeLabel, Uint8Array>>,
   violations: RehearsalError[] = [],
+  used: Map<string, number> = new Map<string, number>(),
 ): { fetch: FetchLike } {
   const refuse = (code: RehearsalErrorCode, message: string): Promise<Response> => {
     const error = new RehearsalError(code, message);
@@ -285,6 +288,8 @@ export function replayTransport(
       if (sha256Of(bytes) !== exchange.responseSha256 || bytes.byteLength !== exchange.byteLength) {
         return refuse('REHEARSAL_EVIDENCE_TAMPERED', `the response bytes for ${path} are not the recorded ones`);
       }
+      const index = String(readback.exchanges.indexOf(exchange));
+      used.set(index, (used.get(index) ?? 0) + 1);
       return Promise.resolve(new Response(bytes, { status: exchange.status, headers: { 'Content-Type': 'application/json' } }));
     },
   };
@@ -328,13 +333,19 @@ export interface RehearsalInput {
 export async function deriveRehearsalInput(readback: RuntimeReadback, responses: Readonly<Record<ExchangeLabel, Uint8Array>>): Promise<RehearsalInput> {
   const { runtimeImage, openapiSha256 } = readback.runtime;
   const violations: RehearsalError[] = [];
+  const used = new Map<string, number>();
   const gateway = createFufireClient({
     config: { baseUrl: 'https://replay.invalid', apiKey: 'replay-no-network', timeoutMs: 30_000, runtimeImage, openapiSha256 },
-    transport: replayTransport(readback, responses, violations),
+    transport: replayTransport(readback, responses, violations, used),
   });
   const result = await createCalculateHoroscopeUseCase({ gateway, runtime: { runtimeImage, openapiSha256 } }).execute(KNOWN_BIRTH);
   const [violation] = violations;
   if (violation !== undefined) throw violation;
+  // The replay is the recorded run: every recorded call answered exactly once, no more, no fewer.
+  const counts = readback.exchanges.map((_, index) => used.get(String(index)) ?? 0);
+  if (result.ok && counts.some((count) => count !== 1)) {
+    throw new RehearsalError('REHEARSAL_REPLAY_CALL_COUNT', `each recorded call must be answered exactly once; answered ${JSON.stringify(counts)}`);
+  }
   if (!result.ok) {
     throw new RehearsalError('REHEARSAL_PRODUCER_FAILED', `replay: ${result.error.code}: ${'message' in result.error ? result.error.message : JSON.stringify(result.error.issues)}`);
   }

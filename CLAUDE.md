@@ -20,7 +20,7 @@ README on `main` still describes ETBZ-9; the code and `docs/adr/` are authoritat
 npm ci                      # deterministic install (lockfile drift fails here)
 npm run typecheck           # tsc --noEmit, strict
 npm run lint                # eslint, zero warnings: recommended rule sets + four type-aware defect rules, no formatting rules
-npm test                    # all five suites (1826 tests with ETBZ-58; the architecture leaf tests import dependency-direction.test.ts, so its 19 tests are also registered inside each of them)
+npm test                    # all five suites (1827 tests with ETBZ-58; the architecture leaf tests import dependency-direction.test.ts, so its 19 tests are also registered inside each of them)
 npm run build               # tsc -p tsconfig.build.json -> dist/
 ETBZ_ENV=local LOG_LEVEL=info npm start     # http://localhost:8120 — serves /health and /ready only
 ```
@@ -231,8 +231,8 @@ the ETBZ-55 evidence was re-rendered on the same renderer digest.
 
 ETBZ-58 (ADR 0015) ran the whole machine once against the live producer: `tests/support/etbz58Rehearsal.ts` composes
 the chain without re-implementing it. The live stage (`npm run etbz58:live`, an operator command, never a test)
-attests the FuFirE runtime before any calculation, probes health and readiness, records the three response bodies
-byte for byte and requires a call without credentials to be refused; everything after it is offline and replays
+attests the FuFirE runtime and probes health and readiness before any calculation, records the three response
+bodies as the client read them (after content decoding) and then requires a call without credentials to be refused; everything after it is offline and replays
 the recorded bytes through the same client and use case. The reviewed graph and plan drafts of Musterkundin A are
 used on the live chart only where the 11 facts they cite hold their reviewed values (`assertDraftFactsHold`,
 `REHEARSAL_DRAFT_FACTS_DRIFTED`) - the builders validate grounding and kinds, not that a claim's prose still fits a

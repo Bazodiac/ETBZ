@@ -1,8 +1,8 @@
 /**
  * ETBZ-58 — the committed evidence of the Pre-Golden rehearsal is what the chain produces.
  *
- * What CI can re-derive without the network or the browser: the live stage's recorded bytes against their
- * readback; the Skill input package from those bytes (replayed through the real client and use case); the
+ * What CI can check without the network or the browser: the live stage's recorded response bodies (as the client
+ * read them, after HTTP content decoding) against the digests of their readback; the Skill input package from those bytes (replayed through the real client and use case); the
  * runtime's readings accepted again - the refused first REALISE attempt refused, its one repair accepted, the
  * EDIT revision accepted - and the accepted reading and the projection byte for byte; the ArtifactManifest
  * against the committed PDF, drawn by the renderer sources whose canary record is ETBZ-55's; the QA report, the
@@ -15,6 +15,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
+import { canonicalJson } from '../../src/domain/canonical-json.js';
 import { evaluateRuntimeAttestation } from '../../src/application/attestation/runtime-attestation.js';
 import { RELEASED_TEMPLATE_HASHES } from '../../src/application/presentation/index.js';
 import { RELEASED_BUNDLE_HASHES, SkillRunError, acceptSkillReading } from '../../src/application/skill/index.js';
@@ -36,6 +37,7 @@ import {
   renderJson,
   responseFileOf,
 } from '../support/etbz58Rehearsal.js';
+import { KNOWN_BIRTH } from '../support/narrativeFixture.js';
 
 vi.setConfig({ testTimeout: 60_000 });
 
@@ -126,9 +128,10 @@ describe('ETBZ-58: the live stage, as recorded (AC 1, AC 5)', () => {
     expect(readback.probes.unauthorised).toMatchObject({ status: 401, refused: true });
     expect(isAncestor(readback.repositoryHead)).toBe(true);
     expect(readback.birthInput.ref).toBe('tests/support/narrativeFixture.ts#KNOWN_BIRTH');
+    expect(readback.birthInput.canonicalSha256).toBe(sha256Of(canonicalJson(KNOWN_BIRTH)));
   });
 
-  it('commits every response body byte for byte with the digest the readback recorded', () => {
+  it('commits every response body, as the client read it, with the digest the readback recorded', () => {
     const { readback } = loadRecordedRun();
     expect(readback.exchanges.map((exchange) => exchange.label)).toEqual([...EXCHANGE_LABELS]);
     for (const exchange of readback.exchanges) {
@@ -163,8 +166,11 @@ describe('ETBZ-58: the runtime readings, accepted by the boundary (AC 1, AC 2)',
     const leaves = (value: unknown, path = ''): [string, unknown][] =>
       value !== null && typeof value === 'object' ? Object.entries(value).flatMap(([key, child]) => leaves(child, `${path}.${key}`)) : [[path, value]];
     const before = new Map(leaves(refused));
-    const changed = leaves(readJsonFile(ETBZ58_SEMANTIC_READING)).filter(([path, value]) => before.get(path) !== value);
-    expect(changed.map(([path]) => path)).toEqual(['.chapters.2.paragraphs.3.text']);
+    const after = new Map(leaves(readJsonFile(ETBZ58_SEMANTIC_READING)));
+    // Both directions: a leaf added, removed or changed by the repair counts.
+    const paths = [...new Set([...before.keys(), ...after.keys()])].filter((path) => !after.has(path) || !before.has(path) || before.get(path) !== after.get(path));
+    expect(paths).toEqual(['.chapters.2.paragraphs.3.text']);
+    const changed = [...after].filter(([path]) => paths.includes(path));
     const [[, repaired]] = changed as [[string, string]];
     expect(String(before.get('.chapters.2.paragraphs.3.text')).replace('noch ehe ein', 'noch bevor ein')).toBe(repaired);
   });

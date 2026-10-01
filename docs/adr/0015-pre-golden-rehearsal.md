@@ -31,8 +31,8 @@ it, and nothing in `src/` changes.
 
 | Stage | What it does | Refusal |
 |---|---|---|
-| live (`npm run etbz58:live`, an operator command under `vite-node`, not a test) | attestation first (`runFufireAttestation`): no calculation unless PASS; then `/v1/health` and `/v1/ready` 200; then the three calls through `createFufireClient` and the ETBZ-24 use case over a transport that records the exact response bytes; then the BaZi call without credentials, which must be refused (401/403) | `REHEARSAL_RUNTIME_NOT_ATTESTED`, `_NOT_READY`, `_AUTH_NOT_ENFORCED`, `REHEARSAL_PRODUCER_FAILED` |
-| derive (offline) | replays the recorded bytes through the same client and use case: an unrecorded call, another request body or tampered bytes are refused with the rehearsal's own code; builds the InterpretationInput with the recorded attestation and requires it production-eligible; pins the facts the reviewed drafts cite (below); accepts the drafts; builds the 1.1.0 Skill input package | `REHEARSAL_REPLAY_*`, `REHEARSAL_EVIDENCE_TAMPERED`, `REHEARSAL_NOT_PRODUCTION_ELIGIBLE`, `REHEARSAL_DRAFT_FACTS_DRIFTED`, and every refusal of the chain unchanged |
+| live (`npm run etbz58:live`, an operator command under `vite-node`, not a test) | attestation first (`runFufireAttestation`): no calculation unless PASS; then `/v1/health` and `/v1/ready` 200; then the three calls through `createFufireClient` and the ETBZ-24 use case over a transport that records each response body as the client read it (after HTTP content decoding); then the BaZi call without credentials, which must be refused (401/403) - it follows the calculations, so it refuses the run, not the calls | `REHEARSAL_RUNTIME_NOT_ATTESTED`, `_NOT_READY`, `_AUTH_NOT_ENFORCED`, `REHEARSAL_PRODUCER_FAILED` |
+| derive (offline) | replays the recorded bytes through the same client and use case: an unrecorded call, another request body, tampered bytes or a recorded call not answered exactly once are refused with the rehearsal's own code; builds the InterpretationInput with the recorded attestation and requires it production-eligible; pins the facts the reviewed drafts cite (below); accepts the drafts; builds the 1.1.0 Skill input package | `REHEARSAL_REPLAY_*`, `REHEARSAL_EVIDENCE_TAMPERED`, `REHEARSAL_NOT_PRODUCTION_ELIGIBLE`, `REHEARSAL_DRAFT_FACTS_DRIFTED`, and every refusal of the chain unchanged |
 | assemble (offline) | `acceptSkillReading` on the runtime's REALISE reading, `acceptEditorialRevision` on its EDIT revision, `buildSkillReadingProjection` | the `SkillRunError` and presentation codes unchanged |
 
 **The draft-fact pin.** The graph and plan builders check a claim's grounding, fact kinds and methods; they cannot
@@ -49,8 +49,9 @@ generation is recorded as a declaration (`ETBZ58_GENERATION`): no repository gat
 **Evidence** (`docs/evidence/etbz-58/`): the readback and the response bodies, the package, the refused first
 attempt, both accepted readings, the projection, the renderer output, the visual verdict and a run record
 (`rehearsal-record.json`) that binds every identity from the case input to the ArtifactManifest. The contract
-suite re-derives all of it offline; `npm run guards:etbz58` (a `ci-verify` step) proves the orchestrator's checks by
-source mutation (10 mutants).
+suite re-derives the package, the accepted reading, the projection and the record offline and binds the rest by
+digest; `npm run guards:etbz58` (a `ci-verify` step) proves the orchestrator's checks by
+source mutation (11 mutants).
 
 ## Consequences
 
