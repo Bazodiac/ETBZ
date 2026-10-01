@@ -220,7 +220,7 @@ slot through the slot-to-fact vocabulary `SKILL_FACT_KIND_TO_PAGE_KIND` (cited f
 `sources.skill` carries the Skill, bundle, package, plan, graph, reading and contract identities into the manifest, and
 `sources.lexicon` is the bundle's Lexicon (1.1.0) - the fixture path `buildPresentationProjection` still records 1.0.0.
 Both call `projectPresentation`, which has no third caller (`tests/architecture/etbz56-skill-presentation-boundary.test.ts`).
-Every structured display of an Earthly Branch prints its Hanzi, canonical pinyin and its animal from the hash-frozen table
+Every structured display of an Earthly Branch prints its Hanzi and canonical pinyin (from the chart, checked against the glyph contract) and its animal from the hash-frozen table
 `bazodiac-branch-animal-labels@1.0.0` (German = the Sizhu `tierDe` column; Rebaseline section 20); an unmapped branch or language is refused, and prose stays as the Skill wrote it.
 The every-word check compares `placedBlockText` with the placed lines and strips nothing (it used to strip U+201C/D from
 the placed lines only, which refused any German `„…“` quotation). Evidence `docs/evidence/etbz-56/` (PDF, manifest, QA,

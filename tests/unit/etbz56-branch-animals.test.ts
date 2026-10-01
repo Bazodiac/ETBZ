@@ -119,7 +119,8 @@ const PINYIN = new Map(TWELVE_BRANCHES.map((entry) => [entry.hanzi, entry.pinyin
  * Every display of an Earthly Branch the template makes, with the label and the pinyin that display carries
  * (Rebaseline 62128133 section 20: Hanzi, canonical pinyin and the animal on every structured display): a glyph object
  * (`character`) carries its own `pinyin` and `animalLabel`, or - on the foundation page - its entry's `detail`; a
- * fact row whose CJK text names a branch carries the row's `detail`, and its value must spell the branch's pinyin. One
+ * fact row whose CJK text names a branch carries the row's `detail`, and its value must spell the branch's pinyin at the
+ * branch's own position (one value word per CJK character). One
  * entry per display, so a label on one row cannot stand in for a missing or wrong one on another. Long-form pages are
  * the reading's text throughout.
  */
@@ -140,12 +141,13 @@ function branchDisplays(page: PresentationProjection['pages'][number]): Display[
     for (const field of ['value', 'cjk']) {
       const text = record[field];
       if (typeof text !== 'string') continue;
-      for (const symbol of text) {
-        if (!BRANCHES.has(symbol)) continue;
-        const value = typeof record['value'] === 'string' ? record['value'] : '';
-        const canonical = PINYIN.get(symbol) ?? '';
-        found.push({ path: `${path}.${field}`, branch: symbol, label: record['detail'], pinyin: value.split(' ').includes(canonical) ? canonical : null });
-      }
+      const symbols = [...text];
+      const words = typeof record['value'] === 'string' ? record['value'].split(' ') : [];
+      symbols.forEach((symbol, index) => {
+        if (!BRANCHES.has(symbol)) return;
+        const pinyin = field === 'cjk' && words.length === symbols.length ? (words[index] ?? null) : null;
+        found.push({ path: `${path}.${field}`, branch: symbol, label: record['detail'], pinyin });
+      });
     }
     for (const [key, child] of Object.entries(record)) {
       if (path === 'content' && readingText(page, key)) continue;
@@ -172,8 +174,6 @@ describe.each(projections)('ETBZ-56 AC 8: every displayed Earthly Branch carries
       for (const display of displays) {
         expect(display.label, `${page.pageId} ${display.path} ${display.branch}`).toBe(branchAnimalLabel(display.branch, 'de'));
         expect(display.pinyin, `${page.pageId} ${display.path} ${display.branch}: canonical pinyin`).toBe(PINYIN.get(display.branch));
-        const pinyin = PINYIN.get(display.branch) ?? '';
-        expect(page.strings.some((text) => text.split(' ').includes(pinyin)), `${page.pageId} ${display.path}: pinyin printed`).toBe(true);
         expect(page.strings, `${page.pageId} ${display.path}`).toContain(branchAnimalLabel(display.branch, 'de'));
       }
     }

@@ -117,7 +117,9 @@ form "Wu (午)" in prose and forbids rewriting the Human-accepted reading to app
 The first merge of this slice (PR #20) printed the five-phases and reflection branches
 without their pinyin, although the issue's own required form (Hanzi, canonical pinyin,
 animal) already named it; its AC 8 test checked the animal only. The follow-up adds the
-pinyin and makes the test require all three per display.
+pinyin, and the test now requires, for every display it finds by the branch's Hanzi, that
+branch's canonical pinyin and its animal; that the page prints them is the renderer's page
+QA.
 
 The renderer prints each label bound to its path like every other string, so the page QA
 and the final PDF text layer hold it: two canaries make the check fail on a wrong label
@@ -150,7 +152,7 @@ report's digests, and the Delivery Runner's visual verdict (AC-V2, Rebaseline se
 `tests/contract/etbz56-skill-presentation-evidence.contract.test.ts`; the gates by
 `tests/negative/etbz56-skill-presentation.negative.test.ts`,
 `tests/unit/etbz56-branch-animals.test.ts` and the mutation proofs of
-`scripts/verify-etbz56-presentation.mjs` (32 mutants, a step of `ci-verify`; its header
+`scripts/verify-etbz56-presentation.mjs` (34 mutants, a step of `ci-verify`; its header
 names the guards no input reaches and why they are not mutated).
 
 ## Consequences

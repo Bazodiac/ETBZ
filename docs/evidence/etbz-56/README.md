@@ -40,8 +40,8 @@ in-process DETERMINISM check the manifest records.
   German quotation marks included (ADR 0012 limitation 12 is resolved, ADR 0014 section 4).
 - The chart the reading was written about: every fact of the input package equals the chart
   value at its path before a page is built; the pages draw the validated chart.
-- Every structured display of an Earthly Branch with its Hanzi, canonical pinyin and German
-  animal label from `bazodiac-branch-animal-labels@1.0.0` (Rebaseline 62128133 section 20) -
+- Every structured display of an Earthly Branch with its Hanzi, its canonical pinyin and its
+  German animal label from `bazodiac-branch-animal-labels@1.0.0` (Rebaseline 62128133 section 20) -
   glance, four pillars, foundation, day master, all twelve on the five-phases page, hidden
   stems, reflection and summary. Branches the
   reading's own text names ("Wu (午)", "Hai (亥)" and "Wei (未)" on page 12, "Wu (午)" on page 14) stay as the Skill wrote them: the

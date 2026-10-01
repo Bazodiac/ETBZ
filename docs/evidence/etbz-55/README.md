@@ -8,7 +8,7 @@ template `bazodiac-final-template@1.0.0` and rendered by the local
 `bazodiac-pdf-renderer@1.0.0` (`tools/pdf-renderer/`). Decision record: ADR 0012.
 
 Re-rendered in ETBZ-56 (2026-10-01, ADR 0014): the projection gained the Earthly-Branch
-animal labels and pinyin on every page that displays a branch and records the label table, and the
+animal labels on every page that displays a branch (and the pinyin on the five-phases and reflection pages) and records the label table, and the
 renderer changed (the labels and branch pinyin, the Ten Gods legend, the media attribute of a stylesheet), so
 the PDF, the manifest, the QA report, the contact sheet and the canary record were produced
 again on the new renderer digest. The text payload is unchanged. The accepted 1.1.0 Skill
