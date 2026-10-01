@@ -41,7 +41,7 @@ type Reading = Json & { title: string; chapters: Chapter[]; reflectionQuestions:
 
 const fixture = skillFixtureV1_1();
 const { bundle, inputPackage } = fixture;
-const context = { bundle, inputPackage, candidateEvaluation: true } as const;
+const context = { bundle, inputPackage };
 const FIXTURE_DIR = resolve(process.cwd(), 'docs/evidence/etbz-57/fixture');
 const baseline = JSON.parse(readFileSync(resolve(FIXTURE_DIR, 'skill-reading.json'), 'utf8')) as Reading;
 const semanticBaseline = JSON.parse(readFileSync(resolve(FIXTURE_DIR, 'semantic-reading.json'), 'utf8')) as Reading;
@@ -84,7 +84,7 @@ function contractRefusal(action: () => unknown): SkillContractError {
   return caught as SkillContractError;
 }
 
-const accept = (reading: unknown, pkg: SkillInputPackage = inputPackage) => acceptSkillReading(reading, { bundle, inputPackage: pkg, candidateEvaluation: true });
+const accept = (reading: unknown, pkg: SkillInputPackage = inputPackage) => acceptSkillReading(reading, { bundle, inputPackage: pkg });
 /** The accepted REALISE reading, built inside each test so a broken boundary fails an assertion, not the file load. */
 const semantic = () => accept(semanticBaseline);
 
@@ -459,23 +459,18 @@ describe('V6: the editorial pass changes customer text only (AC 12)', () => {
   });
 });
 
-describe('V7: a candidate bundle runs evaluations only', () => {
-  it('builds the 1.1.0 bundle as a frozen candidate that is not released', () => {
-    expect(() => assertCandidateSkillContractBundle(bundle)).not.toThrow();
-    expect(() => assertReleasedSkillContractBundle(bundle)).toThrow(SkillContractError);
+describe('V7: bundle 1.1.0 is released; the candidate boundary still holds', () => {
+  it('releases the 1.1.0 bundle at its frozen hash and never treats it as a candidate', () => {
+    expect(() => assertReleasedSkillContractBundle(bundle)).not.toThrow();
+    expect(() => assertCandidateSkillContractBundle(bundle)).toThrow(SkillContractError);
   });
 
-  it('refuses a package for a released run under the candidate bundle', () => {
-    const released = skillFixture();
-    expect(() => buildSkillInputPackage({
-      bundle,
-      input: fixture.input,
-      graph: fixture.graph,
-      plan: fixture.plan,
-      subject: inputPackage.subject,
-      allowedSlotIds: listSlotIds(),
-    })).toThrow(SkillContractError);
-    expect(() => assertCandidateSkillContractBundle(released.bundle)).toThrow(SkillContractError);
+  it('builds a released-run package under bundle 1.1.0 and refuses a candidate-evaluation package for it', () => {
+    const parts = { bundle, input: fixture.input, graph: fixture.graph, plan: fixture.plan, subject: inputPackage.subject, allowedSlotIds: listSlotIds() };
+    expect(() => buildSkillInputPackage(parts)).not.toThrow();
+    expect(buildSkillInputPackage(parts).structuralHash).toBe(inputPackage.structuralHash);
+    expect(() => buildSkillInputPackage(parts, { candidateEvaluation: true })).toThrow(SkillContractError);
+    expect(() => assertCandidateSkillContractBundle(skillFixture().bundle)).toThrow(SkillContractError);
   });
 
   it('refuses a CANDIDATE contract in a bundle version that is not a candidate', () => {
@@ -483,18 +478,16 @@ describe('V7: a candidate bundle runs evaluations only', () => {
     expect(() => validateSkillContractBundleCore(core, BAZI_METHOD_REGISTRY_V1)).toThrow(/DRAFT_CONTRACT_REFUSED|status "CANDIDATE"/u);
   });
 
-  it('refuses a CANDIDATE contract that claims a decision date, and a CURRENT one without', () => {
+  it('refuses a CURRENT contract without a decision date in bundle 1.1.0', () => {
     const base = buildSkillContractBundle(undefined, '1.1.0');
-    const dated: SkillContractBundleCore = { ...base, contracts: base.contracts.map((source) => (source.status === 'CANDIDATE' ? { ...source, releasedOn: '2026-10-01' } : source)) };
-    expect(() => validateSkillContractBundleCore(dated, BAZI_METHOD_REGISTRY_V1)).toThrow(SkillContractError);
-    const undated: SkillContractBundleCore = { ...base, contracts: base.contracts.map((source) => (source.key === 'METHOD_PROFILE' ? { ...source, releasedOn: null } : source)) };
+    expect(base.contracts.every((source) => source.status === 'CURRENT')).toBe(true);
+    const undated: SkillContractBundleCore = { ...base, contracts: base.contracts.map((source) => (source.key === 'INTERPRETATION_LENS' ? { ...source, releasedOn: null } : source)) };
     expect(() => validateSkillContractBundleCore(undated, BAZI_METHOD_REGISTRY_V1)).toThrow(SkillContractError);
   });
 
-  it('accepts the portable candidate copy only for an evaluation run, and only as itself', () => {
+  it('accepts the portable 1.1.0 copy as itself, with no opt-in now that it is released', () => {
     const portable = JSON.parse(renderPortableSkillContractBundle(bundle)) as Json;
-    expect(contractRefusal(() => acceptPortableSkillContractBundle(portable)).code).toBe('BUNDLE_NOT_RELEASED');
-    expect(acceptPortableSkillContractBundle(portable, undefined, { candidateEvaluation: true }).structuralHash).toBe(bundle.structuralHash);
+    expect(acceptPortableSkillContractBundle(portable).structuralHash).toBe(bundle.structuralHash);
   });
 
   it('refuses a portable copy of a bundle version this repository does not build, as such', () => {
@@ -504,9 +497,10 @@ describe('V7: a candidate bundle runs evaluations only', () => {
       expect(error.code).toBe('BUNDLE_SCHEMA_INVALID');
       expect(error.message).toMatch(/is not a version this repository builds/u);
     }
-    // A candidate copy under an unknown version is refused as unknown, not as a draft.
-    const candidatePortable = JSON.parse(renderPortableSkillContractBundle(bundle)) as Json;
-    const unknown = contractRefusal(() => acceptPortableSkillContractBundle({ ...candidatePortable, bundleVersion: '9.9.9', bundleRef: 'bazodiac-skill-contract-bundle@9.9.9' }, undefined, { candidateEvaluation: true }));
+    // A copy carrying a CANDIDATE contract under an unknown version is refused as unknown, not as a draft.
+    const candidatePortable = JSON.parse(renderPortableSkillContractBundle(bundle)) as Json & { contracts: Json[] };
+    const withCandidate = { ...candidatePortable, bundleVersion: '9.9.9', bundleRef: 'bazodiac-skill-contract-bundle@9.9.9', contracts: candidatePortable.contracts.map((source) => (source['key'] === 'INTERPRETATION_LENS' ? { ...source, status: 'CANDIDATE', releasedOn: null } : source)) };
+    const unknown = contractRefusal(() => acceptPortableSkillContractBundle(withCandidate, undefined, { candidateEvaluation: true }));
     expect(unknown.code).toBe('BUNDLE_SCHEMA_INVALID');
   });
 
@@ -516,9 +510,8 @@ describe('V7: a candidate bundle runs evaluations only', () => {
     }
   });
 
-  it('refuses a reading under the candidate bundle without the evaluation opt-in', () => {
-    const error = expectRefusal(() => acceptSkillReading(baseline, { bundle, inputPackage }), 'READING_BUNDLE_MISMATCH');
-    expect(error.message).toMatch(/candidate/u);
+  it('accepts a 1.1.0 reading without any opt-in now that the bundle is released', () => {
+    expect(() => acceptSkillReading(baseline, { bundle, inputPackage })).not.toThrow();
   });
 
   it('refuses a 1.1.0 reading under the 1.0.0 bundle and a 1.0.0 reading under the 1.1.0 bundle', () => {

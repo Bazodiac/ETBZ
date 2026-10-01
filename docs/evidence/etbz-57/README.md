@@ -1,6 +1,6 @@
 # ETBZ-57 — interpretation voice & edge: evidence
 
-The customer-voice revision of the Bazodiac Interpretation Skill (`bazodiac-interpretation-skill@1.1.0`, bundle `bazodiac-skill-contract-bundle@1.1.0`) and its controlled fixture rerun. Decision record: ADR 0013. Status: **CANDIDATE** — the bundle binds the Lens, Lexicon and Anti-Boilerplate revisions at their candidate pages and runs evaluation runs only, until the ETBZ-57 Human Editorial Gate returns ACCEPTED.
+The customer-voice revision of the Bazodiac Interpretation Skill (`bazodiac-interpretation-skill@1.1.0`, bundle `bazodiac-skill-contract-bundle@1.1.0`) and its controlled fixture rerun. Decision record: ADR 0013. Status: **RELEASED 2026-10-01** — the ETBZ-57 Human Editorial Gate returned ACCEPTED on this fixture (Jira ETBZ-57 comment 16969); the bundle binds the released Lens, Lexicon and Anti-Boilerplate pages (77561858 v6, 77529091 v4, 77266967 v3), and both readings were re-bound to those identities with their customer text unchanged.
 
 ## Files
 

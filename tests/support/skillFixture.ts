@@ -51,8 +51,8 @@ export function skillFixture(): SkillFixture {
 
 /**
  * ETBZ-57 - the same chart through the same chain under the voice revision:
- * the plan binds the 1.1.0 Lexicon and Lens, the bundle is 1.1.0, and the
- * package is built for an evaluation run of that CANDIDATE bundle. Claims,
+ * the plan binds the 1.1.0 Lexicon and Lens and the bundle is the released
+ * 1.1.0 (since 2026-10-01; before, a candidate for evaluation runs). Claims,
  * plan content and facts are those of `skillFixture()`; only the contract
  * identities differ.
  */
@@ -71,6 +71,6 @@ export function skillFixtureV1_1(): SkillFixture {
     plan,
     subject: { displayName: chart.model.displayName, birthTimeKnown: chart.model.precision.birthTimeKnown },
     allowedSlotIds: listSlotIds(),
-  }, { candidateEvaluation: true });
+  });
   return { bundle, input, graph, plan, inputPackage };
 }

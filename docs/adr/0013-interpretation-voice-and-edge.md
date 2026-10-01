@@ -1,10 +1,11 @@
 # ADR 0013 — Interpretation voice & edge: skill and bundle 1.1.0 beside 1.0.0 (ETBZ-57)
 
-- **Status:** Proposed — candidate. Merged to `main` as a frozen candidate on the Product
-  Owner's instruction of 2026-10-01 ("merge nach Delta-Review"). The contract revisions it
-  binds are CANDIDATE pages awaiting the ETBZ-57 Human Editorial Gate; nothing here is
-  released before the Product Owner returns ACCEPTED and the release step re-binds the
-  released pages.
+- **Status:** Accepted — released 2026-10-01. Merged to `main` as a frozen candidate on the
+  Product Owner's instruction of 2026-10-01 ("merge nach Delta-Review"; PR #18, `bdc9f544`);
+  the ETBZ-57 Human Editorial Gate then returned ACCEPTED and the Product Owner confirmed the
+  Method Profile reading of reconcile C5 (Jira ETBZ-57 comment 16969). The release step
+  re-bound bundle 1.1.0 to the released pages (Lens 77561858 v6, Lexicon 77529091 v4,
+  Anti-Boilerplate 77266967 v3) and marked the 1.0.0 pages superseded for new runs.
 - **Date:** 2026-10-01
 - **Slice:** ETBZ-57 [PRE-GOLDEN] — the customer-voice revision: new versioned revisions
   of the Interpretation Lens and the Terminology & Wording Lexicon, a binding-only
@@ -164,7 +165,9 @@ and fails the swap against the unknown-time foil.
   ("was du brauchst"); scoping a safety gate is outside this slice (reconcile C13).
 - Release is mechanical but not optional: page status lines, decision dates and titles,
   then the contract sources, plan bindings, candidate-to-released hash move, package
-  regeneration and evidence regeneration.
+  regeneration and evidence regeneration. Done on 2026-10-01; with no candidate version
+  left, four mutants of the candidate boundary cannot be observed and were retired (named
+  in `scripts/verify-etbz57-voice.mjs`); they are re-armed with the next candidate.
 
 ## What this ADR does not decide
 

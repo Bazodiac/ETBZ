@@ -2,35 +2,35 @@
   "schemaVersion": "bazodiac-skill-reading.v1",
   "skillRef": "bazodiac-interpretation-skill@1.1.0",
   "bundleRef": "bazodiac-skill-contract-bundle@1.1.0",
-  "bundleStructuralHash": "sha256:c584aa05ef0adc71a457ab7ded0543c27863d122427febef9416c0418b4298e1",
-  "inputPackageStructuralHash": "sha256:42899d717641950d3d0d7b627a325493bd1c2f3fb43ca4f18d2a443c50277110",
+  "bundleStructuralHash": "sha256:9e6762f3cf339f3e03e56d52770629bd30eebe79ab6b7a70cbcc9dbb9ea599c2",
+  "inputPackageStructuralHash": "sha256:3633a12d9f57496f2b776ef81a1470b1e19f731f349b909215463f1ea76d97cf",
   "claimGraphStructuralHash": "sha256:03d3be16991712327a4a73f2f9b006093f17646773ddc823197fe09609edcd2a",
-  "planStructuralHash": "sha256:b2fdcd667ec890a285bb68429c330ef6f72448bd9e74efabdef6a1c60aef4a18",
+  "planStructuralHash": "sha256:9ffcb07678660937a8ac65a47b033ebe3a63feea8734b528ceb5d8e4281e064b",
   "contracts": [
     {
+      "contractRef": "bazi-method-profile@1.0.0",
       "confluencePageId": "63012866",
-      "confluencePageVersion": "5",
-      "contractRef": "bazi-method-profile@1.0.0"
+      "confluencePageVersion": "5"
     },
     {
+      "contractRef": "confluence:57802765@2",
       "confluencePageId": "57802765",
-      "confluencePageVersion": "2",
-      "contractRef": "confluence:57802765@2"
+      "confluencePageVersion": "2"
     },
     {
+      "contractRef": "grounded-reflective-synthesis-lens@1.1.0",
       "confluencePageId": "77561858",
-      "confluencePageVersion": "5",
-      "contractRef": "grounded-reflective-synthesis-lens@1.1.0"
+      "confluencePageVersion": "6"
     },
     {
+      "contractRef": "terminology-wording-lexicon@1.1.0",
       "confluencePageId": "77529091",
-      "confluencePageVersion": "3",
-      "contractRef": "terminology-wording-lexicon@1.1.0"
+      "confluencePageVersion": "4"
     },
     {
+      "contractRef": "cross-reading-individuality-contract@1.1.0",
       "confluencePageId": "77266967",
-      "confluencePageVersion": "2",
-      "contractRef": "cross-reading-individuality-contract@1.1.0"
+      "confluencePageVersion": "3"
     }
   ],
   "title": "Dein BaZi-Reading: Ausdruck, Anforderung und dein Bezugspunkt Xin",

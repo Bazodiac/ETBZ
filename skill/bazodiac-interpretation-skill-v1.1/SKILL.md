@@ -1,7 +1,7 @@
 # Bazodiac Interpretation Skill v1.1
 
 **Skill identity:** `bazodiac-interpretation-skill@1.1.0` — the voice revision of `bazodiac-interpretation-skill@1.0.0` (Jira ETBZ-57; Confluence Rebaseline 62128133 section 17: "Safety below the surface, clarity on the surface").
-**Contract bundle:** `bazodiac-skill-contract-bundle@1.1.0` — `contract-bundle.json` in this package; its `structuralHash` is stated in `MANIFEST.json` and must equal the hash the input package names. While its Lens, Lexicon and Anti-Boilerplate revisions are CANDIDATE pages, this package runs evaluation runs only.
+**Contract bundle:** `bazodiac-skill-contract-bundle@1.1.0` — `contract-bundle.json` in this package; its `structuralHash` is stated in `MANIFEST.json` and must equal the hash the input package names. Its Lens, Lexicon and Anti-Boilerplate revisions were released on 2026-10-01 (Human Editorial Gate ACCEPTED, Jira ETBZ-57 comment 16969).
 **Reading schema:** `bazodiac-skill-reading.v1` — `reading-schema.json` in this package (unchanged from 1.0.0).
 **Modes:** REALISE (section 3) turns one input package into one reading. EDIT (section 4) turns one accepted reading into an editorial revision of its customer text.
 **Input:** REALISE — exactly one `bazodiac-skill-input.v1` package. EDIT — that package and the accepted reading. Nothing else is input.
