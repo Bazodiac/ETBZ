@@ -153,6 +153,38 @@ export const INTERPRETATION_LENS_BINDING = {
   confluencePageVersion: '1',
 } as const satisfies ReleasedContractBinding;
 
+/** The Lexicon and the Lens a plan is rendered under, as one pair. */
+export interface PlanContractBindings {
+  readonly terminologyLexicon: ReleasedContractBinding;
+  readonly interpretationLens: ReleasedContractBinding;
+}
+
+/** The 1.0.0 pair: what a plan binds when its context names none. */
+export const PLAN_CONTRACT_BINDINGS_V1_0: PlanContractBindings = {
+  terminologyLexicon: TERMINOLOGY_LEXICON_BINDING,
+  interpretationLens: INTERPRETATION_LENS_BINDING,
+};
+
+/**
+ * ETBZ-57 - the voice revision pair (`terminology-wording-lexicon@1.1.0`,
+ * `grounded-reflective-synthesis-lens@1.1.0`), each on its own page; the
+ * released 1.0.0 pages stay unchanged. A plan for skill-contract bundle 1.1.0
+ * binds these through `MetaNarrativePlanContext.contractBindings`. The page
+ * versions are the candidate pages' until the release step re-binds them.
+ */
+export const PLAN_CONTRACT_BINDINGS_V1_1: PlanContractBindings = {
+  terminologyLexicon: {
+    contractRef: 'terminology-wording-lexicon@1.1.0',
+    confluencePageId: '77529091',
+    confluencePageVersion: '3',
+  },
+  interpretationLens: {
+    contractRef: 'grounded-reflective-synthesis-lens@1.1.0',
+    confluencePageId: '77561858',
+    confluencePageVersion: '5',
+  },
+};
+
 export interface PlanReportThesis {
   /** The accepted claims the thesis is an interpretation OF. Each passes PD-5. */
   readonly claimRefs: readonly string[];
@@ -241,9 +273,9 @@ export interface MetaNarrativePlan {
   readonly methodProfileVersion: string;
   readonly methodRegistryStructuralHash: string;
   /** The released customer-wording contract. System-owned; never drafted. */
-  readonly terminologyLexicon: typeof TERMINOLOGY_LEXICON_BINDING;
+  readonly terminologyLexicon: ReleasedContractBinding;
   /** The released interpretation lens. System-owned; never drafted. */
-  readonly interpretationLens: typeof INTERPRETATION_LENS_BINDING;
+  readonly interpretationLens: ReleasedContractBinding;
   readonly reportThesis: PlanReportThesis;
   /** Sorted by `motifId`. */
   readonly primaryMotifs: readonly PlanPrimaryMotif[];
@@ -284,6 +316,8 @@ export interface MetaNarrativePlanDraft {
 export interface MetaNarrativePlanContext extends ClaimGraphContext {
   /** Verified intact for `model`, `brief` and `registry`, never trusted. */
   readonly graph: InterpretiveClaimGraph;
+  /** The Lexicon and Lens the plan is bound to; absent means the 1.0.0 pair. */
+  readonly contractBindings?: PlanContractBindings;
 }
 
 export type MetaNarrativePlanErrorCode =
@@ -674,6 +708,7 @@ export function buildMetaNarrativePlan(draft: unknown, context: MetaNarrativePla
     untouchedThemeRefs: sorted(themes.map((theme) => theme.id).filter((themeId) => !touched.has(themeId))),
   };
 
+  const bindings = context.contractBindings ?? PLAN_CONTRACT_BINDINGS_V1_0;
   const core = {
     planVersion: META_NARRATIVE_PLAN_VERSION,
     sourceBriefStructuralHash: context.brief.structuralHash,
@@ -681,8 +716,8 @@ export function buildMetaNarrativePlan(draft: unknown, context: MetaNarrativePla
     methodProfileRef: graph.methodProfileRef,
     methodProfileVersion: graph.methodProfileVersion,
     methodRegistryStructuralHash: graph.methodRegistryStructuralHash,
-    terminologyLexicon: { ...TERMINOLOGY_LEXICON_BINDING },
-    interpretationLens: { ...INTERPRETATION_LENS_BINDING },
+    terminologyLexicon: { ...bindings.terminologyLexicon },
+    interpretationLens: { ...bindings.interpretationLens },
     reportThesis,
     primaryMotifs: primaryMotifs.sort(byKey((motif) => motif.motifId)),
     tensions: tensions.sort(byKey((tension) => tension.tensionId)),

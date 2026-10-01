@@ -31,11 +31,11 @@ import { FEATURE_SET_VERSION } from '../interpretation/feature-set.js';
 import { INTERPRETATION_INPUT_SCHEMA_VERSION } from '../interpretation/interpretation-input.js';
 import { INTERPRETIVE_CLAIM_GRAPH_VERSION } from '../interpretation/interpretive-claim-graph.js';
 import {
-  INTERPRETATION_LENS_BINDING,
   META_NARRATIVE_PLAN_VERSION,
-  TERMINOLOGY_LEXICON_BINDING,
+  PLAN_CONTRACT_BINDINGS_V1_0,
+  PLAN_CONTRACT_BINDINGS_V1_1,
 } from '../interpretation/meta-narrative-plan.js';
-import type { ReleasedContractBinding } from '../interpretation/meta-narrative-plan.js';
+import type { PlanContractBindings, ReleasedContractBinding } from '../interpretation/meta-narrative-plan.js';
 import {
   BAZI_METHOD_REGISTRY_V1,
   METHOD_PROFILE_REF,
@@ -48,6 +48,7 @@ import type { MethodRegistry } from '../interpretation/method-registry.js';
 import {
   CONTRACT_DOMAINS,
   CONTRACT_KEYS,
+  CONTRACT_SOURCES_V1_1,
   CONTRACT_STATUSES,
   PARENT_DECISION,
   PRECEDENCE_TIERS,
@@ -60,14 +61,22 @@ import { INDIVIDUALITY_CONTRACT } from './individuality-contract.js';
 import type { IndividualityContract } from './individuality-contract.js';
 import { SEMANTIC_ENVELOPE } from './semantic-envelope.js';
 import type { SemanticEnvelope } from './semantic-envelope.js';
+import { SEMANTIC_ENVELOPE_V1_1 } from './semantic-envelope-v1-1.js';
+import type { SemanticEnvelopeV1_1 } from './semantic-envelope-v1-1.js';
 import { WORDING_BOUNDARIES } from './wording-boundaries.js';
 import type { WordingBoundaries } from './wording-boundaries.js';
+import { WORDING_BOUNDARIES_V1_1 } from './wording-boundaries-v1-1.js';
+import type { WordingBoundariesV1_1 } from './wording-boundaries-v1-1.js';
 
 export const SKILL_CONTRACT_BUNDLE_ID = 'bazodiac-skill-contract-bundle' as const;
 export const SKILL_CONTRACT_BUNDLE_VERSION = '1.0.0' as const;
 /** The identity a Skill run's evidence records. */
 export const SKILL_CONTRACT_BUNDLE_REF =
   `${SKILL_CONTRACT_BUNDLE_ID}@${SKILL_CONTRACT_BUNDLE_VERSION}` as const;
+/** ETBZ-57: the bundle of the voice revision (Lens, Lexicon and Anti-Boilerplate at 1.1.0). */
+export const SKILL_CONTRACT_BUNDLE_VERSION_V1_1 = '1.1.0' as const;
+export const SKILL_CONTRACT_BUNDLE_REF_V1_1 =
+  `${SKILL_CONTRACT_BUNDLE_ID}@${SKILL_CONTRACT_BUNDLE_VERSION_V1_1}` as const;
 
 /** The repository's own version markers the bundle pins beside the pages. */
 export interface RepositoryBindings {
@@ -88,8 +97,8 @@ export interface SkillContractBundleCore {
   readonly precedenceTiers: readonly (readonly ContractKey[])[];
   readonly domains: readonly ContractDomain[];
   readonly repository: RepositoryBindings;
-  readonly semanticEnvelope: SemanticEnvelope;
-  readonly wordingBoundaries: WordingBoundaries;
+  readonly semanticEnvelope: SemanticEnvelope | SemanticEnvelopeV1_1;
+  readonly wordingBoundaries: WordingBoundaries | WordingBoundariesV1_1;
   readonly individuality: IndividualityContract;
 }
 
@@ -113,6 +122,51 @@ export interface SkillRunContractEvidence {
 export const RELEASED_BUNDLE_HASHES: Readonly<Record<string, string>> = {
   '1.0.0': 'sha256:1c8f80c38b57748e65035a6bd2d671604fb19574cdf3355326352fbe0e19564e',
 };
+
+/**
+ * ETBZ-57: bundle versions whose contract set is still a CANDIDATE, frozen to
+ * their content hash exactly like a released version. A candidate authorises
+ * an evaluation run and nothing else - it is never a released version, and a
+ * release moves it from this table to RELEASED_BUNDLE_HASHES with a new hash.
+ */
+export const CANDIDATE_BUNDLE_HASHES: Readonly<Record<string, string>> = {
+  '1.1.0': 'sha256:c584aa05ef0adc71a457ab7ded0543c27863d122427febef9416c0418b4298e1',
+};
+
+function isCandidateVersion(bundleVersion: string): boolean {
+  return Object.hasOwn(CANDIDATE_BUNDLE_HASHES, bundleVersion);
+}
+
+/** What distinguishes one bundle version from another: its contract set and the contract values it carries. */
+interface BundleVersionSpec {
+  readonly contracts: readonly ContractSource[];
+  readonly planBindings: PlanContractBindings;
+  readonly semanticEnvelope: SemanticEnvelope | SemanticEnvelopeV1_1;
+  readonly wordingBoundaries: WordingBoundaries | WordingBoundariesV1_1;
+}
+
+/**
+ * Every bundle version this repository builds. 1.0.0 stays buildable so that
+ * evidence generated under it (ETBZ-52) is re-derived, never re-bound.
+ */
+const BUNDLE_VERSION_SPECS: Readonly<Record<string, BundleVersionSpec>> = {
+  '1.0.0': { contracts: RELEASED_CONTRACT_SOURCES, planBindings: PLAN_CONTRACT_BINDINGS_V1_0, semanticEnvelope: SEMANTIC_ENVELOPE, wordingBoundaries: WORDING_BOUNDARIES },
+  '1.1.0': { contracts: CONTRACT_SOURCES_V1_1, planBindings: PLAN_CONTRACT_BINDINGS_V1_1, semanticEnvelope: SEMANTIC_ENVELOPE_V1_1, wordingBoundaries: WORDING_BOUNDARIES_V1_1 },
+};
+export const SKILL_CONTRACT_BUNDLE_VERSIONS = ['1.0.0', '1.1.0'] as const;
+
+function specFor(bundleVersion: string): BundleVersionSpec {
+  const spec = Object.hasOwn(BUNDLE_VERSION_SPECS, bundleVersion) ? BUNDLE_VERSION_SPECS[bundleVersion] : undefined;
+  if (spec === undefined) {
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `bundle version ${bundleVersion} is not a version this repository builds`, { bundleVersion });
+  }
+  return spec;
+}
+
+/** The Lexicon and Lens pair a plan must bind to run under this bundle version. */
+export function planContractBindingsFor(bundleVersion: string): PlanContractBindings {
+  return specFor(bundleVersion).planBindings;
+}
 
 // -----------------------------------------------------------------------------
 // Invariants
@@ -275,10 +329,10 @@ export function validateSkillContractBundleCore(core: SkillContractBundleCore, r
     }
   }
   for (const source of core.contracts) {
-    if (source.status !== 'CURRENT') {
+    if (source.status !== 'CURRENT' && !(source.status === 'CANDIDATE' && isCandidateVersion(core.bundleVersion))) {
       throw new SkillContractError(
         'DRAFT_CONTRACT_REFUSED',
-        `contract "${source.key}" has status "${source.status}"; only a CURRENT released page authorises a run`,
+        `contract "${source.key}" has status "${source.status}"; only a CURRENT released page authorises a run, and a CANDIDATE page only a candidate bundle's evaluation run`,
         { key: source.key },
       );
     }
@@ -288,7 +342,7 @@ export function validateSkillContractBundleCore(core: SkillContractBundleCore, r
     if (!PAGE_ID_PATTERN.test(source.confluencePageId) || !PAGE_ID_PATTERN.test(source.confluencePageVersion)) {
       throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${source.key}" page id or page version is not a page reference`, { key: source.key });
     }
-    if (source.title.trim() === '' || !isCalendarDate(source.releasedOn)) {
+    if (source.title.trim() === '' || (source.status === 'CANDIDATE' ? source.releasedOn !== null : source.releasedOn === null || !isCalendarDate(source.releasedOn))) {
       throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${source.key}" has no title or no decision date`, { key: source.key });
     }
     if (new Set(source.dependsOn).size !== source.dependsOn.length) {
@@ -386,8 +440,9 @@ export function validateSkillContractBundleCore(core: SkillContractBundleCore, r
       );
     }
   };
-  expectBinding('TERMINOLOGY_LEXICON', lexicon, TERMINOLOGY_LEXICON_BINDING);
-  expectBinding('INTERPRETATION_LENS', lens, INTERPRETATION_LENS_BINDING);
+  const planBindings = specFor(core.bundleVersion).planBindings;
+  expectBinding('TERMINOLOGY_LEXICON', lexicon, planBindings.terminologyLexicon);
+  expectBinding('INTERPRETATION_LENS', lens, planBindings.interpretationLens);
   if (profile === undefined || profile.identity !== METHOD_PROFILE_REF) {
     throw new SkillContractError('BUNDLE_BINDING_MISMATCH', `the METHOD_PROFILE contract is not ${METHOD_PROFILE_REF}`);
   }
@@ -451,14 +506,18 @@ function coreOf(bundle: SkillContractBundle): SkillContractBundleCore {
  * The bundle this repository binds. Composes the registry release gate first:
  * a registry whose content is not released authorises no bundle either.
  */
-export function buildSkillContractBundle(registry: MethodRegistry = BAZI_METHOD_REGISTRY_V1): SkillContractBundle {
+export function buildSkillContractBundle(
+  registry: MethodRegistry = BAZI_METHOD_REGISTRY_V1,
+  bundleVersion: string = SKILL_CONTRACT_BUNDLE_VERSION,
+): SkillContractBundle {
   assertReleasedRegistry(registry);
+  const spec = specFor(bundleVersion);
   const core: SkillContractBundleCore = {
     bundleId: SKILL_CONTRACT_BUNDLE_ID,
-    bundleVersion: SKILL_CONTRACT_BUNDLE_VERSION,
-    bundleRef: SKILL_CONTRACT_BUNDLE_REF,
+    bundleVersion,
+    bundleRef: `${SKILL_CONTRACT_BUNDLE_ID}@${bundleVersion}`,
     parentDecision: PARENT_DECISION,
-    contracts: RELEASED_CONTRACT_SOURCES,
+    contracts: spec.contracts,
     precedenceTiers: PRECEDENCE_TIERS,
     domains: CONTRACT_DOMAINS,
     repository: {
@@ -469,8 +528,8 @@ export function buildSkillContractBundle(registry: MethodRegistry = BAZI_METHOD_
       interpretiveClaimGraphVersion: INTERPRETIVE_CLAIM_GRAPH_VERSION,
       metaNarrativePlanVersion: META_NARRATIVE_PLAN_VERSION,
     },
-    semanticEnvelope: SEMANTIC_ENVELOPE,
-    wordingBoundaries: WORDING_BOUNDARIES,
+    semanticEnvelope: spec.semanticEnvelope,
+    wordingBoundaries: spec.wordingBoundaries,
     individuality: INDIVIDUALITY_CONTRACT,
   };
   validateSkillContractBundleCore(core, registry);
@@ -486,6 +545,23 @@ export function assertReleasedSkillContractBundle(bundle: SkillContractBundle): 
       'BUNDLE_NOT_RELEASED',
       `bundle ${bundle.bundleVersion} has content hash ${actual}, which is ${released === undefined ? 'not a released version' : `not the released ${released}`}; reconcile the bundle, the pages it binds and this table before running`,
       { actual, released: released ?? null, published: bundle.structuralHash },
+    );
+  }
+}
+
+/**
+ * ETBZ-57: fails closed unless `bundle` is, in canonical content, a CANDIDATE
+ * bundle version. Only an evaluation run may accept a candidate; a released
+ * run asserts `assertReleasedSkillContractBundle`, which a candidate fails.
+ */
+export function assertCandidateSkillContractBundle(bundle: SkillContractBundle): void {
+  const actual = structuralHash(coreOf(bundle));
+  const candidate = isCandidateVersion(bundle.bundleVersion) ? CANDIDATE_BUNDLE_HASHES[bundle.bundleVersion] : undefined;
+  if (!HASH_PATTERN.test(bundle.structuralHash) || actual !== bundle.structuralHash || candidate === undefined || candidate !== actual) {
+    throw new SkillContractError(
+      'BUNDLE_NOT_RELEASED',
+      `bundle ${bundle.bundleVersion} has content hash ${actual}, which is ${candidate === undefined ? 'not a candidate version' : `not the candidate ${candidate}`}; an evaluation run binds only a frozen candidate`,
+      { actual, candidate: candidate ?? null, published: bundle.structuralHash },
     );
   }
 }
@@ -638,7 +714,7 @@ const portableSchema = z.strictObject({
       confluencePageId: z.string().min(1),
       confluencePageVersion: z.string().min(1),
       status: z.enum(CONTRACT_STATUSES),
-      releasedOn: z.string().min(1),
+      releasedOn: z.string().min(1).nullable(),
       owns: z.array(domainSchema),
       dependsOn: z.array(contractKeySchema),
     }),
@@ -718,7 +794,7 @@ export function acceptPortableSkillContractBundle(
     'bundle',
   );
   for (const source of portableCore.contracts) {
-    if (source.status !== 'CURRENT') {
+    if (source.status !== 'CURRENT' && !(source.status === 'CANDIDATE' && isCandidateVersion(portableCore.bundleVersion))) {
       throw new SkillContractError(
         'DRAFT_CONTRACT_REFUSED',
         `portable contract "${source.key}" has status "${source.status}"; a draft copy authorises nothing`,
@@ -726,7 +802,7 @@ export function acceptPortableSkillContractBundle(
       );
     }
   }
-  const reference = buildSkillContractBundle(registry);
+  const reference = buildSkillContractBundle(registry, portableCore.bundleVersion);
   const differing = firstDifference(coreOf(reference), portableCore, 'bundle');
   if (differing !== null) {
     throw new SkillContractError(
@@ -742,6 +818,10 @@ export function acceptPortableSkillContractBundle(
       { published, bound: reference.structuralHash },
     );
   }
-  assertReleasedSkillContractBundle(reference);
+  if (isCandidateVersion(reference.bundleVersion)) {
+    assertCandidateSkillContractBundle(reference);
+  } else {
+    assertReleasedSkillContractBundle(reference);
+  }
   return reference;
 }

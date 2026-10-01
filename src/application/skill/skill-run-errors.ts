@@ -81,6 +81,21 @@ export const SKILL_RUN_ERROR_CODES = [
   'READING_VISUAL_REF_INVALID',
   /** Two specs with one id. */
   'READING_VISUAL_SPEC_DUPLICATE',
+  // --- the reading: customer voice (skill 1.1.0, ETBZ-57) ------------------------------
+  /** An interpretive paragraph over SUPPORTED claims only, written with posture TENTATIVE: uncertainty added, not carried. */
+  'READING_SUPPORTED_UNDERSTATED',
+  /** A SUPPORTED paragraph using a retired template hedge ("kann als … gelesen werden", "Innerhalb dieses BaZi-Rahmens"). */
+  'READING_SUPPORTED_TEMPLATE_HEDGE',
+  /** A TENTATIVE paragraph without a visible tentative marker. */
+  'READING_TENTATIVE_NOT_VISIBLE',
+  /** A narrative surface talking about the source, validation, calculation, pipeline, chapters or the reading itself. */
+  'READING_META_NARRATION',
+  /** Tension language over claims the graph links by no CONTRASTS_WITH relation. */
+  'READING_TENSION_UNGROUNDED',
+  /** A biography, kinship, work, money or other life-domain word on a narrative surface. */
+  'READING_LIFE_DOMAIN_INVENTED',
+  /** An editorial revision that changes anything but customer text. */
+  'READING_EDITORIAL_EXPANSION',
 ] as const;
 
 export type SkillRunErrorCode = (typeof SKILL_RUN_ERROR_CODES)[number];
