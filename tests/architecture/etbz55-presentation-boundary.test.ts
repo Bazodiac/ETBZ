@@ -83,11 +83,13 @@ const ALLOWED_TARGETS = new Set(
 describe('ETBZ-55: the presentation projection is a pure leaf', () => {
   it('ships the declared modules, and no other file of any extension', () => {
     expect(MODULE_FILES.map((file) => relative(PRESENTATION_ROOT, file)).sort()).toEqual([
+      'branch-animals.ts',
       'errors.ts',
       'font-metrics.ts',
       'index.ts',
       'long-form.ts',
       'projection.ts',
+      'skill-presentation.ts',
       'template.ts',
       'text-measure.ts',
     ]);

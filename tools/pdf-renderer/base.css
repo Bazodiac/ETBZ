@@ -55,7 +55,8 @@ svg.disp use{color:inherit}
 .panel{background:var(--paper-100);border-radius:var(--radius-panel);padding:5mm}
 .panel.recessed{background:var(--paper-200)}
 .legend{display:flex;gap:6mm;align-items:center;flex-wrap:wrap}
-.legend .i{display:flex;align-items:center;gap:1.6mm;font-size:9pt;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-600)}
+.legend .i{display:flex;align-items:center;gap:1.6mm;font-size:9pt;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-600);white-space:nowrap}
+.legend .mark.both{margin:0 0.75mm}
 table.facts{width:100%;border-collapse:collapse}
 table.facts td{padding:2.6mm 0;border-top:0.25mm solid var(--rule-200);font-size:9.5pt;line-height:12pt;vertical-align:top}
 table.facts td:first-child{font-size:9pt;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-400);font-weight:500;width:38%}
@@ -78,6 +79,8 @@ table.tg tbody tr:last-child td{border-bottom:0.25mm solid var(--rule-200)}
 .hrow{display:grid;grid-template-columns:12mm 26mm 1fr 26mm;align-items:center;gap:3mm;padding:1.2mm 0;border-top:0.25mm solid var(--rule-200)}
 .hrow:first-child{border-top:none}
 .glyphrow{display:flex;justify-content:center;gap:1.5mm;flex-wrap:wrap}
+.brx{display:flex;flex-direction:column;align-items:center;gap:0.6mm;min-width:9mm}
+.brx-l{font-size:8.5pt;line-height:10pt;color:var(--ink-400)}
 .qrow{padding:6mm 0;border-top:0.25mm solid var(--rule-200);display:grid;grid-template-columns:10mm 1fr;gap:4mm}
 .refterm{padding:1.6mm 0;border-top:0.25mm solid var(--rule-200)}
 .wx-v{font-size:14pt;font-weight:300;margin-top:1.5mm;font-family:var(--font-display)}

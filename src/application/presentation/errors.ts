@@ -28,6 +28,14 @@ export const PRESENTATION_ERROR_CODES = [
   'PRESENTATION_LAYOUT_FINDING',
   /** A customer string carries wording the Lexicon prohibits or a method the profile defers. */
   'PRESENTATION_CUSTOMER_TEXT_REFUSED',
+  /** ETBZ-56: a displayed Earthly Branch has no animal label in the output language, or the label table is not its released identity. */
+  'PRESENTATION_BRANCH_ANIMAL_UNMAPPED',
+  /** ETBZ-56: the bundle is not a version this projection presents or not its released identity, or its Lexicon values are not the template's. A stale Skill or contract binding of the reading itself is refused by the run boundary (SkillRunError, SkillContractError). */
+  'PRESENTATION_SKILL_IDENTITY_REFUSED',
+  /** ETBZ-56: the reading, its input package and the chart do not belong together: the reading, the package, its claim graph or its plan does not hash to its own hash, or a fact value, the source warnings, the subject or the slot vocabulary differs. */
+  'PRESENTATION_SKILL_BINDING_MISMATCH',
+  /** ETBZ-56: a visualization spec binds a slot no page draws, or cites a fact kind the slot-to-fact vocabulary does not know. */
+  'PRESENTATION_VISUAL_SPEC_UNBOUND',
 ] as const;
 
 export type PresentationErrorCode = (typeof PRESENTATION_ERROR_CODES)[number];

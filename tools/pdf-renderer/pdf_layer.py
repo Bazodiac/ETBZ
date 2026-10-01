@@ -12,7 +12,8 @@ content, a list marker, a page margin box, a shadow tree), a missing or a duplic
 hyphenation character), a string printed out of its order (a right-to-left run) and a glyph turned or mirrored all
 block. Glyphs drawn invisibly (text render modes 3 and 7) do not count as printed; a glyph drawn under a frame clip or
 with its centre outside a clip blocks (the template clips no text). Not measured here: colour and size (the page QA's
-ink and size checks, on the same print rendering: it refuses media conditions page.pdf() would evaluate differently).
+ink and size checks, on the same print rendering: it refuses media conditions page.pdf() would evaluate differently, in a
+rule, an import or a stylesheet's own media attribute).
 
 Vector layer. Every clip path must be a single convex contour (turning once around), or a convex frame around one
 convex hole (a box shadow is painted outside its box that way). Every painted path (fill or stroke, form XObjects

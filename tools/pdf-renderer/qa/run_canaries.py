@@ -34,6 +34,7 @@ import platform  # noqa: E402
 import re  # noqa: E402
 import subprocess  # noqa: E402
 import tempfile  # noqa: E402
+import urllib.parse  # noqa: E402
 
 HERE = pathlib.Path(__file__).resolve().parent
 RENDERER = HERE.parent
@@ -1001,6 +1002,39 @@ def c_glyph_use_translate(work):
 
 
 
+# ETBZ-56: a stylesheet's own media attribute, and the animal label of a displayed Earthly Branch.
+def c_style_media_attribute(work):
+    # The media attribute of a <style> element, keyed on the page width: it would hide the titles in the PDF only.
+    wrap_page_html(lambda html, page: html.replace(
+        "</head>", '<style media="print and (min-width:794.1px)">.sheet .h1{color:var(--paper-000) !important}</style></head>', 1))
+
+
+def c_link_media_attribute(work):
+    # The same rule in a linked stylesheet, through the media attribute of its <link>.
+    css = urllib.parse.quote(".sheet .h1{color:var(--paper-000) !important}")
+    wrap_page_html(lambda html, page: html.replace(
+        "</head>", f'<link rel="stylesheet" media="print and (min-width:794.1px)" href="data:text/css,{css}"></head>', 1))
+
+
+def c_branch_animal_wrong(work):
+    # The five-phase page prints another animal under a branch, at that branch's own path (AC 9: a wrong label blocks).
+    def change(c):
+        label = c["phases"][0]["branches"][0]["animalLabel"]
+        c["phases"][0]["branches"][0]["animalLabel"] = P.PStr("Hund", label.path)
+    edit_builder("fivePhases", change)
+
+
+def c_branch_animal_dropped(work):
+    # The glance page leaves the year branch's animal label out (AC 9: a missing label blocks).
+    def drop(html, ctx, page, c):
+        path = P.path_of(c["pillars"][0]["branch"]["animalLabel"], "TEXT")
+        changed = re.sub(rf'<div class="caption" style="margin-top:0.5mm"><span data-p="{re.escape(path)}">[^<]*</span></div>', "", html, count=1)
+        if changed == html:
+            raise RuntimeError("canary anchor not found: the glance animal label")
+        return changed
+    wrap_builder("glance", drop)
+
+
 def c_print_width_media(work):
     # A print rule keyed on the page width: page.pdf() evaluates it against another box than the emulated viewport, so
     # it would hide the titles in the PDF only.
@@ -1232,6 +1266,10 @@ CANARIES = {
     "wordmark-clip": ("final PDF vector layer", "a clip path cuts the wordmark down to BAZO", "PDF_VECTOR_LAYER", "PDF_VECTOR_CLIPPED", c_wordmark_clip),
     "glyph-use-translate": ("final PDF vector layer", "every display glyph is drawn 40 % right of its box", "PDF_VECTOR_LAYER", "PDF_VECTOR_UNEXPECTED", c_glyph_use_translate),
     "print-width-media": ("print rendering", "a print rule keyed on the page width hides the titles", "PAGE_QA", "MEDIA_RULE_FORBIDDEN", c_print_width_media),
+    "style-media-attribute": ("print rendering", "a <style media> attribute keyed on the page width hides the titles", "PAGE_QA", "MEDIA_RULE_FORBIDDEN", c_style_media_attribute),
+    "link-media-attribute": ("print rendering", "a <link media> attribute keyed on the page width hides the titles", "PAGE_QA", "MEDIA_RULE_FORBIDDEN", c_link_media_attribute),
+    "branch-animal-wrong": ("page binding", "a branch on the five-phase page carries another animal", "PAGE_QA", "TEXT_NOT_IN_PROJECTION", c_branch_animal_wrong),
+    "branch-animal-dropped": ("page binding", "the glance page drops the year branch's animal label", "PAGE_QA", "TEXT_MISSING_FROM_PAGE", c_branch_animal_dropped),
     "clip-frame-hole-glyph": ("final PDF vector layer", "a frame clip's hole takes the stick of 申", "PDF_VECTOR_LAYER", "PDF_VECTOR_CLIPPED", c_clip_frame_hole_glyph),
     "clip-star-wordmark": ("final PDF vector layer", "a doubly wound star clips the wordmark away", "PDF_VECTOR_LAYER", "PDF_VECTOR_UNEXPECTED", c_clip_star_wordmark),
     "clip-crescent-blob": ("final PDF vector layer", "a crescent is bitten out of an atmosphere shape in tiny steps", "PDF_VECTOR_LAYER", "PDF_VECTOR_UNEXPECTED", c_clip_crescent_blob),

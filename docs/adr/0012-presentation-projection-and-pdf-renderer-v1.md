@@ -241,8 +241,10 @@ glyphs and wordmark, the PDF is the authority. Before it writes a PDF it checks:
   the colour scheme only (`MEDIA_RULE_FORBIDDEN`: `page.pdf()` evaluates width and height
   features against another box than the emulated viewport, so such a rule could change
   the PDF alone; measured, the two differ only in a sub-pixel window of width and height).
-  The `media` attribute of a `<style>` or `<link>` element is not read (the template's one
-  stylesheet has none; review round 10, recorded for ETBZ-56); no
+  The `media` attribute of a `<style>` or `<link>` element - the stylesheet's own media
+  list - is held to the same condition (ETBZ-56, ADR 0014; canaries `style-media-attribute`
+  and `link-media-attribute`); the walk covers every stylesheet in `document.styleSheets`
+  (a shadow root's or an adopted stylesheet is not in it); no
   text or element outside the sheet; no non-breaking pair split across lines. Text or
   shapes that reach the PDF another way (a list marker from `display:list-item`, a shadow
   tree, a hyphenation character, CSS `d` on a path, a clip path) are the final layers' to
@@ -298,8 +300,8 @@ then walks the merged PDF's content streams (form XObjects included), page by pa
   neither rotated, skewed nor mirrored. Text the page does not hold as a printed node, a
   missing or doubled string, an inserted character, a string printed out of its order and a
   turned or mirrored glyph block (`PDF_TEXT_UNBOUND`, `PDF_TEXT_MISMATCH`,
-  `PDF_TEXT_NOT_UPRIGHT`, `PDF_TEXT_CLIPPED`). On the evidence document: 33,394 text units
-  bound to 1,608 printed strings on 29 pages, none clipped;
+  `PDF_TEXT_NOT_UPRIGHT`, `PDF_TEXT_CLIPPED`). On the evidence document (re-rendered in ETBZ-56): 33,542
+  text units bound to 1,639 printed strings on 29 pages, none clipped;
 - *vector layer*: every painted path (fill or stroke) must be either a canonical outline -
   one of the 27 sprite glyphs or the wordmark path, recognised by its segment sequence
   (each of the 28 is unique) and an axis-aligned scale-and-shift fit to the pinned path
@@ -351,7 +353,7 @@ a PDF, and every run writes into a hidden sibling directory that is renamed into
 only when complete.
 `tools/pdf-renderer/qa/run_canaries.py` breaks every gate in its table at least once,
 runs the real renderer against it, and records the result in `renderer-canaries.json`:
-163 canaries, each of which must end BLOCKED at the expected check with the expected
+167 canaries (ETBZ-56 added four), each of which must end BLOCKED at the expected check with the expected
 finding, exit 1 and no PDF or manifest; the `partial-write` canary instead proves that a
 failure after a passing render leaves no `--out` directory at all. The record is bound
 to the renderer source digest and to the digest of the canary source; the contract
@@ -407,10 +409,10 @@ are a declaration.
 
 ## Consequences
 
-- ETBZ-56 feeds the accepted Skill reading through the same projection and renderer. It
-  validates `visualizationSpecs` against the page slots, binds claims and motifs, and
-  extends the manifest with Skill, contract and reading identities. The template stays
-  `1.0.0` unless a label changes.
+- ETBZ-56 feeds the accepted Skill reading through the same projection and renderer
+  (ADR 0014): it validates `visualizationSpecs` against the page slots, binds the reading,
+  its package and the chart, and records the Skill, contract and reading identities in the
+  manifest. The template stays `1.0.0`.
 - ETBZ-54 renders the real golden reading with the same renderer and hands the PDF to the
   human verdict.
 
@@ -427,7 +429,7 @@ are a declaration.
    as-is; the PO approval of the shipped style is recorded in Jira (ETBZ-49 comment 16514,
    ADR 0009 limitation 3).
 4. **The canonical paginator's wrap carries over.** A paragraph is wrapped once, at the
-   width of the opener column where it is first placed, and keeps that wrap: the tail of a
+   width of the column current when it comes up, and keeps that wrap: the tail of a
    paragraph that crosses onto a continuation page is set at the opener width (pages 13, 19,
    21 and 23), and a paragraph that cannot put two lines on the opener moves whole to the
    continuation page, still at the opener width (pages 15, 17 and 25). The port reproduces
@@ -497,8 +499,9 @@ are a declaration.
    carry those letters. Three characters inside the tables (U+01C5 ǅ, U+01C6 ǆ, U+023F ȿ)
    pass the projection but block every page with running chrome, because the template's
    upper-casing turns them into code points no pinned face carries (the platform-font scan
-   refuses the fallback face; it names it `LATIN_SET_IN_CJK_FACE` although the fallback is a
-   system face) - review round 10, fails closed.
+   refuses the fallback face, as `TEXT_SET_IN_UNPINNED_FACE` and `LATIN_SET_IN_CJK_FACE`
+   both, although the fallback is a system face, not the CJK face) - review round 10, fails
+   closed.
    Widening the tables changes the font metrics and the released template hash; it is a
    Product Owner decision for a new template version.
 10. **The rival-face scan covers the listed font directories.** A face with the pinned
@@ -513,10 +516,14 @@ are a declaration.
    31-character name of wide capitals was refused. A running head or foot with other than its
    two parts fails closed as well. The projection caps no name length; a length rule, or a
    smaller running-chrome type for long names, is a template decision.
-12. **A pull quote cannot pass the every-word check yet.** The long form wraps a pull quote
-   in quotation marks that the placement handed to `assertEveryWordPlaced` keeps; the
-   ETBZ-55 payload yields paragraphs only, so the path is unreachable here. ETBZ-56, which
-   maps pull quotes, must fix it.
+12. **A pull quote could not pass the every-word check - resolved in ETBZ-56 (ADR 0014).**
+   The paginator's own check stripped U+201C and U+201D from the placed lines but not from
+   the source, so a pull quote failed, and so did any paragraph quoting with German marks
+   (`„…“` closes with U+201C) - the first real 1.1.0 reading hit it. Both checks now compare
+   the text a block places (`placedBlockText`: a pull quote inside the marks it is wrapped
+   in) with the placed lines, stripping nothing. The quotation-mark style of a pull quote
+   stays the canonical paginator's `“…”` (a template decision); no Skill reading carries a
+   pull quote, so none is drawn yet.
 13. **A Wu Xing value far below the largest fails closed.** A value under about 0.5 % of the
    largest draws a bar fill narrower than half a pixel, which the phase-paint visibility rule
    refuses (`PHASE_INVISIBLE`). A value of exactly 0 draws no fill and passes (a positive

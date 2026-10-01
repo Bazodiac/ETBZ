@@ -2905,6 +2905,79 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   },
   {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MEDIA_RULE_FORBIDDEN",
+   "gate": "print rendering",
+   "id": "style-media-attribute",
+   "manifestWritten": false,
+   "mutation": "a <style media> attribute keyed on the page width hides the titles",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MEDIA_RULE_FORBIDDEN"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "MEDIA_RULE_FORBIDDEN",
+   "gate": "print rendering",
+   "id": "link-media-attribute",
+   "manifestWritten": false,
+   "mutation": "a <link media> attribute keyed on the page width hides the titles",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "MEDIA_RULE_FORBIDDEN"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_NOT_IN_PROJECTION",
+   "gate": "page binding",
+   "id": "branch-animal-wrong",
+   "manifestWritten": false,
+   "mutation": "a branch on the five-phase page carries another animal",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_MISSING_FROM_PAGE",
+     "TEXT_NOT_IN_PROJECTION"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
+   "expectedCheck": "PAGE_QA",
+   "expectedCode": "TEXT_MISSING_FROM_PAGE",
+   "gate": "page binding",
+   "id": "branch-animal-dropped",
+   "manifestWritten": false,
+   "mutation": "the glance page drops the year branch's animal label",
+   "observed": {
+    "check": "PAGE_QA",
+    "codes": [
+     "TEXT_MISSING_FROM_PAGE"
+    ],
+    "exitCode": 1,
+    "status": "BLOCKED"
+   },
+   "pdfWritten": false,
+   "verdict": "BLOCKED_AS_EXPECTED"
+  },
+  {
    "expectedCheck": "PDF_VECTOR_LAYER",
    "expectedCode": "PDF_VECTOR_CLIPPED",
    "gate": "final PDF vector layer",
@@ -3029,7 +3102,7 @@
    "verdict": "BLOCKED_AS_EXPECTED"
   }
  ],
- "canarySourceSha256": "sha256:cdb3a045eabbbf8ce8c83445ae11ae582da6885f03eb86e05c1fafc447cc37d0",
+ "canarySourceSha256": "sha256:e7df01c8f6f768342cd816d8183aedd5965a439a65f05e4685305a5c3a719e54",
  "canaryVersion": "bazodiac-renderer-canaries.v1",
  "canonicalJsonMirror": {
   "equal": true,
@@ -3093,16 +3166,16 @@
    "verdict": "PASSED_AS_EXPECTED"
   }
  ],
- "executedAt": "2026-09-30",
+ "executedAt": "2026-10-01",
  "host": "Darwin arm64",
- "projectionStructuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
+ "projectionStructuralHash": "sha256:a40c282aeec90f49dde357e683641ab6c41b14bf2d35926c4a900f7ab777f429",
  "renderer": {
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:534e96c9bd0c385a21f013cc5ca01c0f4045495ea3901808ef7a33d358a19f36"
+  "sourceSha256": "sha256:4924747390ce173a37b437b55d402cb70b582f316c2a06f0878914fe5a65096d"
  },
  "summary": {
-  "blockedAsExpected": 163,
-  "canaries": 163,
+  "blockedAsExpected": 167,
+  "canaries": 167,
   "controls": 4,
   "passedAsExpected": 4
  }

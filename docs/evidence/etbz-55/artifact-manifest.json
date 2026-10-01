@@ -1,7 +1,7 @@
 {
- "artifactId": "bazodiac-reading-462c182a6ecfa505",
- "byteLength": 1914205,
- "contactSheetSha256": "sha256:fa2dde5ed3e6eae1a65101b984361ca06817eba1dd5e2db4342ca72d562fdab5",
+ "artifactId": "bazodiac-reading-33f0cc8aa3fd5204",
+ "byteLength": 1921444,
+ "contactSheetSha256": "sha256:a7565ad535f19943b57605c2e74e0b2f52bc3b942ad8d55602430c32464ba207",
  "fonts": [
   {
    "family": "Inter",
@@ -56,11 +56,16 @@
  ],
  "generation": {
   "declared": true,
-  "executedAt": "2026-09-30",
+  "executedAt": "2026-10-01",
   "host": "Darwin arm64",
-  "repositoryHead": "7cbbed7d48a164a10d6922dedfad24b5dbd56149"
+  "repositoryHead": "aad37c074da595960665d6f724f26b542734f4a7"
  },
  "input": {
+  "branchAnimals": {
+   "locale": "de",
+   "ref": "bazodiac-branch-animal-labels@1.0.0",
+   "structuralHash": "sha256:b885bae1cce42bf219c4baa6a71c4750e177c162629704a26075c327e5a95cb3"
+  },
   "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
   "contentStructuralHash": "sha256:eed70be71b829b13fdee5b58b2045688f8781e21b44766b427c98301f64d6e01",
   "lexicon": {
@@ -73,9 +78,9 @@
  "mimeType": "application/pdf",
  "pageCount": 29,
  "presentation": {
-  "fileSha256": "sha256:547daabd9fe3c0e6b5aee7b00fe1fcc4a95211fd9dfa84371d73c65b5c72ef5f",
+  "fileSha256": "sha256:f353e1584932c0cf89ea3ef63e0bc45b456f25a03938b45f53141a8aab074d32",
   "projectionVersion": "bazodiac-presentation-projection.v1",
-  "structuralHash": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765"
+  "structuralHash": "sha256:a40c282aeec90f49dde357e683641ab6c41b14bf2d35926c4a900f7ab777f429"
  },
  "qa": {
   "checks": [
@@ -86,7 +91,7 @@
    },
    {
     "detail": {
-     "projection": "sha256:26886b8745f04a7601a006ef985caa1a0b84ae4ee7a89488bfa7db4f29b28765",
+     "projection": "sha256:a40c282aeec90f49dde357e683641ab6c41b14bf2d35926c4a900f7ab777f429",
      "template": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
     },
     "id": "PROJECTION_IDENTITY",
@@ -127,7 +132,7 @@
     "detail": {
      "glyphPaths": 111,
      "pages": 29,
-     "printedPaths": 1449
+     "printedPaths": 1475
     },
     "id": "PAGE_STRINGS",
     "result": "PASS"
@@ -136,7 +141,7 @@
     "detail": {
      "displayGlyphs": 116,
      "pages": 29,
-     "textNodes": 1608
+     "textNodes": 1639
     },
     "id": "PAGE_QA",
     "result": "PASS"
@@ -163,8 +168,8 @@
     "detail": {
      "clippedUnits": 0,
      "pages": 29,
-     "printedStrings": 1608,
-     "textUnits": 33394
+     "printedStrings": 1639,
+     "textUnits": 33542
     },
     "id": "PDF_TEXT_LAYER",
     "result": "PASS"
@@ -189,7 +194,7 @@
       3
      ],
      "pages": 29,
-     "pdfSha256": "sha256:462c182a6ecfa505cc19e2c359d29cbc35229f918fff80b849fead82e3c11938"
+     "pdfSha256": "sha256:33f0cc8aa3fd5204db9444beb294840536b1cb91370ab522398449a9546a7e3e"
     },
     "id": "DETERMINISM",
     "result": "PASS"
@@ -215,9 +220,9 @@
    "version": "136.0.7103.25"
   },
   "ref": "bazodiac-pdf-renderer@1.0.0",
-  "sourceSha256": "sha256:534e96c9bd0c385a21f013cc5ca01c0f4045495ea3901808ef7a33d358a19f36"
+  "sourceSha256": "sha256:4924747390ce173a37b437b55d402cb70b582f316c2a06f0878914fe5a65096d"
  },
- "sha256": "sha256:462c182a6ecfa505cc19e2c359d29cbc35229f918fff80b849fead82e3c11938",
+ "sha256": "sha256:33f0cc8aa3fd5204db9444beb294840536b1cb91370ab522398449a9546a7e3e",
  "state": "ARTIFACT_READY",
  "template": {
   "assets": [

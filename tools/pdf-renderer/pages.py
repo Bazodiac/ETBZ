@@ -247,7 +247,11 @@ def rows_table(rows: list, extra: str = "") -> str:
     out = []
     for row in rows:
         cjk = f' {t(row["cjk"], "cjk")}' if row.get("cjk") else ""
-        out.append(f'<tr{slot(row)}><td>{t(row["label"])}</td><td>{t(row["value"])}{cjk}</td></tr>')
+        value = f'{t(row["value"])}{cjk}'
+        if row.get("detail"):
+            # A second value (a branch's animal label) after its own separator, kept on one line with the first.
+            value = pair(value + SEP + t(row["detail"]))
+        out.append(f'<tr{slot(row)}><td>{t(row["label"])}</td><td>{value}</td></tr>')
     return f'<table class="facts">{"".join(out)}{extra}</table>'
 
 
@@ -320,7 +324,8 @@ def glance(ctx: Context, page: dict, c: dict) -> str:
     pil = "".join(
         f'<div{slot(p)} style="text-align:center"><div class="label" style="margin-bottom:2mm">{t(p["positionLabel"])}</div>'
         f'<div style="display:flex;flex-direction:column;align-items:center;gap:1mm">{ctx.glyph(p["stem"]["character"], 11)}{ctx.glyph(p["branch"]["character"], 11)}</div>'
-        f'<div class="pinyin" style="margin-top:2mm;color:var(--ink-600)">{t(p["stem"]["pinyin"])} {t(p["branch"]["pinyin"])}</div></div>'
+        f'<div class="pinyin" style="margin-top:2mm;color:var(--ink-600)">{t(p["stem"]["pinyin"])} {t(p["branch"]["pinyin"])}</div>'
+        f'<div class="caption" style="margin-top:0.5mm">{t(p["branch"]["animalLabel"])}</div></div>'
         for p in c["pillars"])
     tally = "".join(
         f'<div{slot(w)} style="text-align:center"><div style="display:flex;justify-content:center">{ctx.glyph(w["character"], 8, phase=w["phase"])}</div>'
@@ -437,7 +442,7 @@ def day_master(ctx: Context, page: dict, c: dict) -> str:
       <div class="rule gold" style="margin:6mm 0 7mm"></div>
       <div{slot(dp)} style="display:flex;gap:4mm;align-items:center">
         {disc(ctx, dp["stem"], 24, 16)}{disc(ctx, dp["branch"], 24, 16)}
-        <div>{t(dp["stem"]["pinyin"], "pinyin", "display:block;font-size:11pt")}{t(dp["branch"]["pinyin"], "pinyin", "display:block;font-size:11pt")}<div class="caption">{t(dp["positionLabel"])}</div></div>
+        <div>{t(dp["stem"]["pinyin"], "pinyin", "display:block;font-size:11pt")}{t(dp["branch"]["pinyin"], "pinyin", "display:block;font-size:11pt")}<div class="caption">{t(dp["branch"]["animalLabel"])}</div><div class="caption">{t(dp["positionLabel"])}</div></div>
       </div>
       <div class="label ink" style="margin:10mm 0 3mm">{t(c["hiddenStemsLabel"])}</div>
       <div>{hidden}<div class="rule"></div></div>
@@ -503,7 +508,9 @@ def five_phases(ctx: Context, page: dict, c: dict) -> str:
     cards = ""
     for p in c["phases"]:
         stems = "".join(ctx.glyph(s["character"], 6.5, entry=s) for s in p["stems"])
-        branches = "".join(ctx.glyph(b["character"], 6.5, entry=b) for b in p["branches"])
+        # A branch shows its animal label under it (ETBZ-56 AC 8): the glyph and the word are one slot.
+        branches = "".join(
+            f'<div class="brx"{slot(b)}>{ctx.glyph(b["character"], 6.5)}{t(b["animalLabel"], "brx-l")}</div>' for b in p["branches"])
         cards += (f'<div{slot(p)} style="text-align:center"><div class="disc f-{p["phase"]}"{phase_attrs(p["phase"])} style="width:30mm;height:30mm;margin:0 auto">{ctx.glyph(p["character"], 19)}</div>'
                   f'<div class="pinyin" style="margin-top:3.5mm;font-size:11pt;font-weight:400">{t(p["pinyin"])}</div><div class="label" style="margin-top:1mm">{t(p["label"])}</div>'
                   f'<div style="margin-top:5mm;border-top:0.25mm solid var(--rule-200);padding-top:3mm"><div class="caption"{PAGE_LABEL} style="margin-bottom:1.5mm">{t(c["stemsLabel"])}</div>'
@@ -643,6 +650,7 @@ def long_form(ctx: Context, page: dict, c: dict) -> str:
 def reflection(ctx: Context, page: dict, c: dict) -> str:
     eight = "".join(
         f'<div{slot(p)} style="display:flex;flex-direction:column;align-items:center;gap:2mm">{ctx.glyph(p["stem"]["character"], 13)}{ctx.glyph(p["branch"]["character"], 13)}'
+        f'<div class="caption">{t(p["branch"]["animalLabel"])}</div>'
         f'<div class="label" style="margin-top:1mm">{t(p["positionLabel"])}</div></div>' for p in c["characters"])
     questions = "".join(
         f'<div class="qrow"{slot(q)}>{t(q["number"], "label gold")}<div class="body" style="font-size:11.5pt;line-height:16pt;color:var(--ink-900)">{t(q["text"])}</div></div>'

@@ -97,8 +97,9 @@ and a separator after which a line may wrap carries a `<wbr>`.
      or pseudo-element, and no replaced content; exactly the template's `@page` rule among
      all stylesheet rules, imported ones included, and no page margin box; `@media` and
      `@import` conditions name a media type and the colour scheme only (a width or height
-     feature is evaluated by `page.pdf()` against another box than the emulation; a
-     `<style media>` attribute is not read); nothing outside the sheet; no
+     feature is evaluated by `page.pdf()` against another box than the emulation), and so
+     does the `media` attribute of a `<style>` or `<link>` (ETBZ-56) - for every stylesheet
+     in `document.styleSheets`, so not a shadow root's or an adopted one; nothing outside the sheet; no
      non-breaking pair split across lines;
    - ink, on the screenshot: every printed string (each line box, and each character in
      its own box), glyph, presence mark and phase paint leaves pixels of its own colour
@@ -156,7 +157,7 @@ blocked `RENDERER_ERROR` check, not only as a trace.
 `qa/run_canaries.py` breaks each gate once — the projection, a pin, the host fonts or
 one page builder — and runs the real renderer against it in a child process; six codes
 that need a doctored font or PDF writer have no canary (ADR 0012 limitation 8). Each of
-the 163 canaries must end `BLOCKED` at the expected check with the expected finding (the
+the 167 canaries must end `BLOCKED` at the expected check with the expected finding (the
 `partial-write` canary instead proves that no `--out` directory appears),
 exit 1, and leave no PDF and no manifest; four positive controls (a Wu Xing value of 0,
 body text and plain glyphs at opacity 0.7, a display name with a dotless `ı`) must pass with a PDF and a manifest. The results go to

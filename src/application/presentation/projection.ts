@@ -25,8 +25,12 @@
 //    prohibited wording or a deferred method is refused.
 //
 // The fixture-first payload is text only (title, chapters, reflection
-// questions, method note). Mapping an accepted Skill reading - its claims,
-// motifs and visualization specs - onto this projection is ETBZ-56.
+// questions, method note). ETBZ-56 maps an accepted Skill reading onto the
+// same projection through `buildSkillReadingProjection`
+// (skill-presentation.ts), which binds the reading, its input package and the
+// chart to each other and records the Skill, bundle, contract and reading
+// identities in `sources.skill`. Every displayed Earthly Branch carries its
+// animal label from the released, versioned table (branch-animals.ts).
 // =============================================================================
 
 import { z } from 'zod';
@@ -55,10 +59,11 @@ import {
 } from '../skill/index.js';
 import type { HoroscopeModel, PillarName } from '../horoscope-model.js';
 import type { FufireTenGodFact } from '../ports/fufire-gateway.js';
-import { TWELVE_BRANCHES, elementDeByEn, stemFactByName } from '../../domain/sizhu.js';
+import { elementDeByEn, stemFactByName } from '../../domain/sizhu.js';
 import { structuralHash, structuralHashOfCanonicalText } from '../../domain/structural-hash.js';
+import { BRANCH_ANIMAL_LABELS, BRANCH_ANIMAL_LABELS_REF, assertReleasedBranchAnimalLabels, branchAnimalLabel } from './branch-animals.js';
 import { PresentationError } from './errors.js';
-import { CONTENT_W, blockWords, headerHeight, layoutHeader, paginateLongForm } from './long-form.js';
+import { CONTENT_W, blockWords, headerHeight, layoutHeader, paginateLongForm, placedBlockText } from './long-form.js';
 import type { HeaderLine, LayoutFragment, LongFormBlock, LongFormHeaderBlock } from './long-form.js';
 import { TEMPLATE_LABELS, assertReleasedTemplate, label, templateBinding } from './template.js';
 import type { TemplateBinding, TemplateLabelId } from './template.js';
@@ -136,9 +141,17 @@ export interface StemValue extends GlyphText {
   readonly polarityLabel: string;
 }
 
-export interface BranchValue extends GlyphText {
-  readonly phaseLabel: string;
+/** A displayed Earthly Branch with its animal orientation label (ETBZ-56): the glyph and the word stay separate values. */
+export interface BranchGlyph extends GlyphRef {
   readonly animalLabel: string;
+}
+
+export interface BranchText extends GlyphText {
+  readonly animalLabel: string;
+}
+
+export interface BranchValue extends BranchText {
+  readonly phaseLabel: string;
 }
 
 /** A Ten-God relation by its Lexicon name. `code` is FuFirE's identity and is never printed. */
@@ -208,6 +221,8 @@ export interface FactRow {
   readonly value: string;
   /** Informational CJK text set beside the value, when the row has one. */
   readonly cjk?: string;
+  /** A second value printed after the first, when the row has one: the animal label of a pillar's branch. */
+  readonly detail?: string;
 }
 
 export interface ChapterReference {
@@ -224,16 +239,16 @@ export type PageContent =
   | Readonly<{ kind: 'cover'; dayMaster: StemValue; dayMasterLabel: string; brand: string; title: string; product: string; preparedFor: string; displayName: string; footerTerm: TermValue }>
   | Readonly<{ kind: 'identity'; kicker: string; title: string; rows: readonly FactRow[]; legend: readonly Readonly<{ tag: string; tagKind: 'chart' | 'general' | 'reading'; text: string }>[] }>
   | Readonly<{ kind: 'contents'; kicker: string; title: string; sections: readonly Readonly<{ title: string; entries: readonly Readonly<{ pageLabel: string; title: string }>[] }>[] }>
-  | Readonly<{ kind: 'glance'; kicker: string; title: string; dayMaster: StemValue; dayMasterLabel: string; pillarsLabel: TermValue; pillars: readonly Readonly<{ positionLabel: string; stem: GlyphText; branch: GlyphText }>[]; wuXingLabel: TermValue; tally: readonly WuXingTallyEntry[]; rows: readonly FactRow[] }>
+  | Readonly<{ kind: 'glance'; kicker: string; title: string; dayMaster: StemValue; dayMasterLabel: string; pillarsLabel: TermValue; pillars: readonly Readonly<{ positionLabel: string; stem: GlyphText; branch: BranchText }>[]; wuXingLabel: TermValue; tally: readonly WuXingTallyEntry[]; rows: readonly FactRow[] }>
   | Readonly<{ kind: 'fourPillars'; kicker: string; title: string; rowLabels: readonly TermValue[]; dayMasterLabel: string; pillars: readonly PillarValue[]; legend: readonly Readonly<{ phase: Phase; label: string; character: string }>[] }>
   | Readonly<{ kind: 'foundation'; kicker: string; title: string; characters: readonly Readonly<{ positionLabel: string; roleLabel: string; glyph: GlyphText & Readonly<{ phaseLabel: string }>; detail: string }>[] }>
-  | Readonly<{ kind: 'dayMaster'; kicker: string; title: string; dayMaster: StemValue; dayMasterLabel: string; rows: readonly FactRow[]; dayPillar: Readonly<{ positionLabel: string; stem: GlyphText; branch: GlyphText; hidden: readonly Readonly<GlyphText & { phaseLabel: string; qiLabel: string }>[] }>; hiddenStemsLabel: string }>
+  | Readonly<{ kind: 'dayMaster'; kicker: string; title: string; dayMaster: StemValue; dayMasterLabel: string; rows: readonly FactRow[]; dayPillar: Readonly<{ positionLabel: string; stem: GlyphText; branch: BranchText; hidden: readonly Readonly<GlyphText & { phaseLabel: string; qiLabel: string }>[] }>; hiddenStemsLabel: string }>
   | Readonly<{ kind: 'wuXing'; kicker: string; title: string; wuXing: WuXingValue; medallion: TermValue; captions: readonly string[] }>
-  | Readonly<{ kind: 'fivePhases'; kicker: string; title: string; stemsLabel: string; branchesLabel: string; phases: readonly Readonly<{ phase: Phase; character: string; pinyin: string; label: string; stems: readonly GlyphRef[]; branches: readonly GlyphRef[] }>[] }>
+  | Readonly<{ kind: 'fivePhases'; kicker: string; title: string; stemsLabel: string; branchesLabel: string; phases: readonly Readonly<{ phase: Phase; character: string; pinyin: string; label: string; stems: readonly GlyphRef[]; branches: readonly BranchGlyph[] }>[] }>
   | Readonly<{ kind: 'tenGods'; kicker: string; title: string; relationHeader: string; columns: readonly string[]; rows: readonly Readonly<{ tenGod: TenGodEntry; marks: readonly PresenceMark[] }>[]; legend: readonly Readonly<{ mark: PresenceMark; label: string }>[] }>
   | Readonly<{ kind: 'hiddenStems'; kicker: string; title: string; branchLabel: string; rows: readonly Readonly<{ positionLabel: string; branch: BranchValue; hidden: readonly HiddenStemValue[] }>[] }>
   | Readonly<{ kind: 'longForm'; chapterNumber: number; chapterPage: number; template: 'opener' | 'continuation'; headerLines: readonly HeaderLine[]; runningKicker: string | null; fragments: readonly LayoutFragment[]; sidebar: (Readonly<{ xCp: number; yCp: number; widthCp: number }> & ChapterReference) | null; referencePanel: (Readonly<{ xCp: number; yCp: number; widthCp: number }> & ChapterReference) | null }>
-  | Readonly<{ kind: 'reflection'; kicker: string; title: string; charactersLabel: string; characters: readonly Readonly<{ positionLabel: string; stem: GlyphRef; branch: GlyphRef }>[]; questions: readonly Readonly<{ number: string; text: string }>[] }>
+  | Readonly<{ kind: 'reflection'; kicker: string; title: string; charactersLabel: string; characters: readonly Readonly<{ positionLabel: string; stem: GlyphRef; branch: BranchGlyph }>[]; questions: readonly Readonly<{ number: string; text: string }>[] }>
   | Readonly<{ kind: 'summary'; kicker: string; title: string; rows: readonly FactRow[]; wuXingLabel: string; tally: readonly Readonly<{ phase: Phase; label: string; valueText: string }>[]; dayMaster: GlyphText; dayMasterLabel: string }>
   | Readonly<{ kind: 'closing'; kicker: string; title: string; preparedFor: string; displayName: string; product: string; pageNumberLabel: string }>
   | Readonly<{ kind: 'methodNote'; kicker: string; title: string; paragraphs: readonly string[]; dataNote: Readonly<{ label: string; text: string }> | null }>;
@@ -261,13 +276,55 @@ export interface PresentationPage {
   readonly strings: readonly string[];
 }
 
+/** The Lexicon release the template's terms and Ten-God names are recorded under. */
+export interface LexiconBinding {
+  readonly contractRef: string;
+  readonly confluencePageId: string;
+  readonly confluencePageVersion: string;
+}
+
+/**
+ * ETBZ-56: the identities of a presented Skill reading - never printed. The ArtifactManifest copies them verbatim.
+ * `visualBindings` records, per visualization spec, where the slot is drawn and its cited facts split by kind.
+ */
+export interface SkillPresentationSources {
+  readonly skillRef: string;
+  readonly bundleRef: string;
+  readonly bundleStructuralHash: string;
+  readonly inputPackageStructuralHash: string;
+  readonly claimGraphStructuralHash: string;
+  readonly planStructuralHash: string;
+  readonly readingStructuralHash: string;
+  readonly contracts: readonly Readonly<{ contractRef: string; confluencePageId: string; confluencePageVersion: string }>[];
+  readonly visualBindings: readonly VisualBinding[];
+}
+
+export interface VisualBinding {
+  readonly specId: string;
+  readonly slotId: string;
+  /** The pages that draw the slot; empty when the template leaves it empty (`emptyReason`). */
+  readonly pageNumbers: readonly number[];
+  readonly emptyReason: 'NO_APPROVED_CONTENT' | null;
+  /**
+   * Cited facts of a kind the slot consumes (the ETBZ-49 page family's declaration, plus the animal label wherever a
+   * branch is consumed). Classified by kind, not measured on the page; every package fact equals the chart value at
+   * its path, and the pages draw the chart.
+   */
+  readonly consumedKindFactRefs: readonly string[];
+  /** Cited facts of any other kind: recorded, never drawn because of the spec. */
+  readonly otherKindFactRefs: readonly string[];
+  readonly claimRefs: readonly string[];
+}
+
 export interface PresentationProjection {
   readonly projectionVersion: typeof PRESENTATION_PROJECTION_VERSION;
   readonly template: TemplateBinding;
   readonly sources: Readonly<{
     chartModelStructuralHash: string;
     contentStructuralHash: string;
-    lexicon: Readonly<{ contractRef: string; confluencePageId: string; confluencePageVersion: string }>;
+    lexicon: LexiconBinding;
+    branchAnimals: Readonly<{ ref: string; locale: 'de'; structuralHash: string }>;
+    skill?: SkillPresentationSources;
   }>;
   readonly language: 'de';
   /** The long-form text styles with their ascent - the renderer positions every line box from these. */
@@ -379,6 +436,8 @@ function bindTenGod(fact: FufireTenGodFact, where: string): TenGodName {
 
 const glyphText = (value: GlyphText): GlyphText => ({ character: value.character, pinyin: value.pinyin, phase: value.phase });
 const glyphRef = (value: GlyphRef): GlyphRef => ({ character: value.character, phase: value.phase });
+const branchText = (value: BranchText): BranchText => ({ ...glyphText(value), animalLabel: value.animalLabel });
+const branchGlyph = (value: BranchText): BranchGlyph => ({ ...glyphRef(value), animalLabel: value.animalLabel });
 
 // ---------------------------------------------------------------------------
 // the chart values
@@ -420,16 +479,16 @@ function chartValues(model: HoroscopeModel): ChartValues {
     }
     if (branchGlyph.pinyin !== pillar.branchPinyin) mismatch(`${where}: the branch pinyin differs from the glyph contract`, { where });
     if (pillar.tierDe.trim() === '') missing(`${where}: no animal label`, { where });
-    const released = TWELVE_BRANCHES.find((entry) => entry.hanzi === pillar.branchHanzi);
-    if (released === undefined || released.tierDe !== pillar.tierDe) {
-      mismatch(`${where}: the chart labels branch ${pillar.branchHanzi} "${pillar.tierDe}", the Sizhu table "${released?.tierDe ?? 'nothing'}"`, { where, character: pillar.branchHanzi });
+    const animalLabel = branchAnimalLabel(pillar.branchHanzi, 'de');
+    if (animalLabel !== pillar.tierDe) {
+      mismatch(`${where}: the chart labels branch ${pillar.branchHanzi} "${pillar.tierDe}", the released animal table "${animalLabel}"`, { where, character: pillar.branchHanzi });
     }
     const branch: BranchValue = {
       character: pillar.branchHanzi,
       pinyin: pillar.branchPinyin,
       phase: branchPhase,
       phaseLabel: elementDeByEn(branchPhase),
-      animalLabel: pillar.tierDe,
+      animalLabel,
     };
 
     if (natal.hiddenStems.length < 1) missing(`${where}: no hidden stems`, { where });
@@ -570,10 +629,9 @@ function longFormPages(content: PresentationContent, dayMaster: StemValue): Page
     ];
     const blocks: LongFormBlock[] = chapter.paragraphs.map((text, index) => ({ id: `p${String(index + 1)}`, kind: 'paragraph', text }));
     const layout = paginateLongForm(blocks, headerHeight(header));
-    const source = blocks.map(blockWords).join(' ');
     const placement = {
       fixtureId: `chapter-${pad2(chapterNumber)}`,
-      wordCount: countWords(source),
+      wordCount: countWords(blocks.map(blockWords).join(' ')),
       pages: layout.pages.map((page) => ({
         pageNumber: page.pageNumber,
         template: page.template,
@@ -581,7 +639,7 @@ function longFormPages(content: PresentationContent, dayMaster: StemValue): Page
       })),
     };
     validateLongFormPlacement(placement);
-    assertEveryWordPlaced(source, placement);
+    assertEveryWordPlaced(blocks.map(placedBlockText).join(' '), placement);
 
     const lastPage = layout.pages.length;
     const contentY = GEOMETRY_CENTIPOINTS.marginTop;
@@ -708,7 +766,7 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
         dayMaster,
         dayMasterLabel: label('dayMaster'),
         pillarsLabel: fourPillarsTerm,
-        pillars: pillars.map((pillar) => ({ positionLabel: pillar.positionLabel, stem: glyphText(pillar.stem), branch: glyphText(pillar.branch) })),
+        pillars: pillars.map((pillar) => ({ positionLabel: pillar.positionLabel, stem: glyphText(pillar.stem), branch: branchText(pillar.branch) })),
         wuXingLabel: wuXingTerm,
         tally: wuXing.phases.map((entry) => ({ phase: entry.phase, character: entry.character, label: entry.label, valueText: entry.valueText })),
         rows: [
@@ -777,12 +835,12 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
           { label: label('stem'), value: dayMaster.pinyin, cjk: dayMaster.character },
           { label: label('phase'), value: dayMaster.phaseLabel },
           { label: label('polarity'), value: dayMaster.polarityLabel },
-          { label: label('dayPillar'), value: `${day.stem.pinyin} ${day.branch.pinyin}`, cjk: `${day.stem.character}${day.branch.character}` },
+          { label: label('dayPillar'), value: `${day.stem.pinyin} ${day.branch.pinyin}`, cjk: `${day.stem.character}${day.branch.character}`, detail: day.branch.animalLabel },
         ],
         dayPillar: {
           positionLabel: day.positionLabel,
           stem: glyphText(day.stem),
-          branch: glyphText(day.branch),
+          branch: branchText(day.branch),
           hidden: day.hidden.map((entry) => ({ ...glyphText(entry), phaseLabel: entry.phaseLabel, qiLabel: entry.qiLabel })),
         },
         hiddenStemsLabel: label('hiddenStems'),
@@ -825,7 +883,10 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
           pinyin: entry.pinyin,
           label: entry.label,
           stems: DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'heavenly_stem' && glyph.phase === entry.phase).map(glyphRef),
-          branches: DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'earthly_branch' && glyph.phase === entry.phase).map(glyphRef),
+          branches: DISPLAY_GLYPH_SET.filter((glyph) => glyph.role === 'earthly_branch' && glyph.phase === entry.phase).map((glyph) => ({
+            ...glyphRef(glyph),
+            animalLabel: branchAnimalLabel(glyph.character, 'de'),
+          })),
         })),
       },
     },
@@ -884,7 +945,7 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
         kicker: label('tagReading'),
         title: label('reflectionTitle'),
         charactersLabel: label('reflectionCharacters'),
-        characters: pillars.map((pillar) => ({ positionLabel: pillar.positionLabel, stem: glyphRef(pillar.stem), branch: glyphRef(pillar.branch) })),
+        characters: pillars.map((pillar) => ({ positionLabel: pillar.positionLabel, stem: glyphRef(pillar.stem), branch: branchGlyph(pillar.branch) })),
         questions: content.reflectionQuestions.map((text, index) => ({ number: pad2(index + 1), text })),
       },
     },
@@ -906,6 +967,7 @@ function buildDrafts(model: HoroscopeModel, content: PresentationContent, chart:
             label: pillar.positionLabel,
             value: `${pillar.stem.pinyin} ${pillar.branch.pinyin}`,
             cjk: `${pillar.stem.character}${pillar.branch.character}`,
+            detail: pillar.branch.animalLabel,
           })),
         ],
         wuXingLabel: label('wuXing'),
@@ -1046,15 +1108,48 @@ function sortedUnique(values: Iterable<string>): string[] {
 // build
 // ---------------------------------------------------------------------------
 
+/** The Lexicon release the fixture-first path (`buildPresentationProjection`) records: the released 1.0.0 contract set. */
+function releasedLexiconBinding(): LexiconBinding {
+  const lexiconSource = RELEASED_CONTRACT_SOURCES.find((source) => source.key === 'TERMINOLOGY_LEXICON');
+  if (lexiconSource === undefined) return missing('the released contract set carries no Lexicon', {});
+  return {
+    contractRef: contractBindingRef(lexiconSource),
+    confluencePageId: lexiconSource.confluencePageId,
+    confluencePageVersion: lexiconSource.confluencePageVersion,
+  };
+}
+
+/**
+ * The fixture-first path (ETBZ-55): a validated chart and a text-only payload, recorded under the released 1.0.0
+ * Lexicon. An accepted Skill reading goes through `buildSkillReadingProjection` instead.
+ */
 export function buildPresentationProjection(input: PresentationInput): PresentationProjection {
-  const parsed = contentSchema.safeParse(input.content);
+  return projectPresentation(input.model, input.content, { lexicon: releasedLexiconBinding(), skill: null });
+}
+
+/** What a projection is recorded under besides the chart and the payload. */
+export interface PresentationBinding {
+  readonly lexicon: LexiconBinding;
+  readonly skill: SkillPresentationSources | null;
+}
+
+/**
+ * The one projection build behind both paths. Only `buildPresentationProjection` and `buildSkillReadingProjection`
+ * may use it, because the binding it records is only as true as the checks its caller ran. It is exported (the Skill
+ * path lives in its own module); tests/architecture/etbz56-skill-presentation-boundary.test.ts refuses any other
+ * reference to the name in the repository's code - a text-level guard against a mistake, not against a caller who
+ * builds the name at run time.
+ */
+export function projectPresentation(modelInput: HoroscopeModel, contentInput: unknown, binding: PresentationBinding): PresentationProjection {
+  const parsed = contentSchema.safeParse(contentInput);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const path = issue === undefined || issue.path.length === 0 ? '<root>' : issue.path.map(String).join('.');
     throw new PresentationError('PRESENTATION_INPUT_INVALID', `content ${path}: ${issue?.code ?? 'invalid'}`, { path });
   }
   const content = parsed.data;
-  const model = input.model;
+  const model = modelInput;
+  assertReleasedBranchAnimalLabels();
 
   const precisions = [model.precision, model.natal.precision, model.wuxing.precision];
   if (!model.birth.birthTimeKnown || precisions.some((precision) => !precision.birthTimeKnown || precision.provisionalFields.length > 0)) {
@@ -1155,20 +1250,15 @@ export function buildPresentationProjection(input: PresentationInput): Presentat
     }
   }
 
-  const lexiconSource = RELEASED_CONTRACT_SOURCES.find((source) => source.key === 'TERMINOLOGY_LEXICON');
-  if (lexiconSource === undefined) return missing('the released contract set carries no Lexicon', {});
-
   const core = {
     projectionVersion: PRESENTATION_PROJECTION_VERSION,
     template,
     sources: {
       chartModelStructuralHash: structuralHashOfCanonicalText(model.canonicalJson),
       contentStructuralHash: structuralHash(content),
-      lexicon: {
-        contractRef: contractBindingRef(lexiconSource),
-        confluencePageId: lexiconSource.confluencePageId,
-        confluencePageVersion: lexiconSource.confluencePageVersion,
-      },
+      lexicon: { ...binding.lexicon },
+      branchAnimals: { ref: BRANCH_ANIMAL_LABELS_REF, locale: 'de' as const, structuralHash: structuralHash(BRANCH_ANIMAL_LABELS) },
+      ...(binding.skill === null ? {} : { skill: binding.skill }),
     },
     language: 'de' as const,
     longFormStyles: Object.fromEntries(

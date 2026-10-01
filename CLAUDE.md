@@ -20,7 +20,7 @@ README on `main` still describes ETBZ-9; the code and `docs/adr/` are authoritat
 npm ci                      # deterministic install (lockfile drift fails here)
 npm run typecheck           # tsc --noEmit, strict
 npm run lint                # eslint, zero warnings: recommended rule sets + four type-aware defect rules, no formatting rules
-npm test                    # all five suites (1652 tests with ETBZ-55; the architecture leaf tests import dependency-direction.test.ts, so its 19 tests are also registered inside each of them)
+npm test                    # all five suites (1799 tests with ETBZ-56; the architecture leaf tests import dependency-direction.test.ts, so its 19 tests are also registered inside each of them)
 npm run build               # tsc -p tsconfig.build.json -> dist/
 ETBZ_ENV=local LOG_LEVEL=info npm start     # http://localhost:8120 — serves /health and /ready only
 ```
@@ -43,13 +43,14 @@ bash scripts/verify-guards.sh                # foundation guard mutation proofs 
 bash scripts/secret-scan.sh                  # gitleaks tree + history + scanner mutation proof
 bash scripts/build-dry-run.sh                # container build / provenance / smoke / reproducibility
 npm run guards:etbz34 | guards:etbz30a | guards:etbz30b   # slice source-mutation proofs (NOT part of ci-verify)
-npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz57   # slice mutation proofs that ARE steps of ci-verify
+npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57   # slice mutation proofs that ARE steps of ci-verify
 npm run build && npm run etbz51:bundle                   # print the portable Skill Contract Bundle (canonical JSON)
 npm run build && npm run etbz52:package                  # regenerate skill/bazodiac-interpretation-skill-v1/{contract-bundle,reading-schema,MANIFEST}.json
 npm run build && npm run etbz57:package                  # the same for skill/bazodiac-interpretation-skill-v1.1/ (bundle 1.1.0)
 npm run etbz57:evidence                                  # regenerate docs/evidence/etbz-57/{fixture/accepted-reading,fixture/customer-reading,fixture/manifest,evals}.json
 npm run etbz55:projection                                # regenerate docs/evidence/etbz-55/presentation-projection.json (runs vite-node, which is not a declared dependency: it resolves transitively through vitest 3.2.x)
 npm run etbz55:metrics                                   # regenerate src/application/presentation/font-metrics.ts from the Inter binaries
+npm run etbz56:projection                                # regenerate docs/evidence/etbz-56/presentation-projection.json (the accepted 1.1.0 Skill reading)
 ```
 
 `scripts/ci-verify.sh` is the single definition of "verified". `.github/workflows/ci.yml` runs that same
@@ -209,6 +210,23 @@ the canary digest: re-render and re-run the canaries. The evidence declares the 
 the contract suite requires that head to be in the tested history, so PR #17 merges with a merge commit (never a
 squash or rebase).
 
+ETBZ-56 presents an accepted Skill reading on the same projection and renderer (ADR 0014):
+`buildSkillReadingProjection({ model, reading, bundle, inputPackage })` refuses a bundle other than the released 1.1.0
+(`PRESENTED_SKILL_BUNDLE_VERSIONS`), requires the input package, its claim graph and its plan to hash to their own
+hashes, accepts the recorded reading again through `acceptSkillReading` and holds it to its own structural hash, requires
+every input-package fact to equal the chart value at its path and the package's source warnings to be the chart's (so the
+PDF shows the facts the reading was written about), and records each visualization spec against the pages that draw its
+slot through the slot-to-fact vocabulary `SKILL_FACT_KIND_TO_PAGE_KIND` (cited facts split by kind; nothing is drawn because of a spec).
+`sources.skill` carries the Skill, bundle, package, plan, graph, reading and contract identities into the manifest, and
+`sources.lexicon` is the bundle's Lexicon (1.1.0) - the fixture path `buildPresentationProjection` still records 1.0.0.
+Both call `projectPresentation`, which has no third caller (`tests/architecture/etbz56-skill-presentation-boundary.test.ts`).
+Every page that displays an Earthly Branch prints its animal from the hash-frozen table
+`bazodiac-branch-animal-labels@1.0.0` (German = the Sizhu `tierDe` column); an unmapped branch or language is refused.
+The every-word check compares `placedBlockText` with the placed lines and strips nothing (it used to strip U+201C/D from
+the placed lines only, which refused any German `„…“` quotation). Evidence `docs/evidence/etbz-56/` (PDF, manifest, QA,
+fifteen page renders, the visual verdict), checked by `tests/contract/etbz56-skill-presentation-evidence.contract.test.ts`;
+the ETBZ-55 evidence was re-rendered on the same renderer digest.
+
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:
 
@@ -320,7 +338,7 @@ Assemble credential-shaped test strings at runtime from fragments, never as one 
 - TypeScript is ESM + `NodeNext`: relative imports carry a `.js` extension, `verbatimModuleSyntax`
   requires `import type`, and `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess` are on (hence
   conditional spreads for optional overrides and checked array reads).
-- Decisions live in `docs/adr/0001`–`0012`. ADRs 0006 and 0007 record their merge commit in the status
+- Decisions live in `docs/adr/0001`–`0014`. ADRs 0006 and 0007 record their merge commit in the status
   line through a separate `docs/…` closeout PR after the merge; ADRs 0008 (merged with PR #10), 0009
   (merged with PR #11), 0010 (merged with PR #15) and 0011 (merged with PR #16) have not received that closeout yet and still read "Proposed". `docs/evidence/` records executed gates; transient output goes to the
   git-ignored `.etbz-verify/`. Durable evidence is a green CI run for a specific SHA.

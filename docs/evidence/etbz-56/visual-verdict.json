@@ -1,0 +1,174 @@
+{
+ "verdictVersion": "bazodiac-visual-verdict.v1",
+ "verdict": "VISUALLY_FIT_FOR_GOLDEN",
+ "scope": "Delivery Runner visual evidence verdict, Rebaseline 62128133 section 18 (ETBZ-55 comment 16818): no additional Product Owner stop, not a sellability verdict.",
+ "reviewedOn": "2026-10-01",
+ "artifact": {
+  "artifactId": "bazodiac-reading-9aec05c2fb0bd58e",
+  "pdfSha256": "sha256:9aec05c2fb0bd58ea3bcc0d3bc9a02a00a524109073cd83f440c3c3843e9b939",
+  "contactSheetSha256": "sha256:ebbbae6b6f52859e7ea2b4b28c77a54db899e9e8363b64dcd07123585a6f5edd",
+  "pageCount": 29
+ },
+ "inspected": [
+  "the contact sheet: all 29 pages of the same run",
+  "the full-size renders listed under pages (fifteen, committed)",
+  "each of the fifteen at full size - in this run, or in an earlier render whose page image is byte-identical (the projection changed between them only in its sources, which no page prints)"
+ ],
+ "checks": [
+  {
+   "check": "CJK, Hanzi and Pinyin correct and legible",
+   "result": "PASS",
+   "note": "Pillars 庚午 壬午 辛亥 乙未, hidden stems and Ten-God names as the chart states them; Pinyin with tone marks; CJK set in the pinned Noto Sans CJK SC face (QA report platform fonts)."
+  },
+  {
+   "check": "Chart facts on the pages equal the ArtifactManifest input",
+   "result": "PASS",
+   "note": "The manifest input is the projection sources; every input-package fact equals the chart value at its path (buildSkillReadingProjection), and the pages print the chart values (page QA value-at-path binding)."
+  },
+  {
+   "check": "Every display glyph the canonical glyph of its character",
+   "result": "PASS",
+   "note": "PDF_VECTOR_LAYER: every display glyph a canonical outline at its box."
+  },
+  {
+   "check": "No clipping, overlap, uncontrolled shrink or semantic truncation",
+   "result": "PASS",
+   "note": "Page QA and PDF text layer clean on all 29 pages; every word of every chapter placed (every-word check, German quotation marks included)."
+  },
+  {
+   "check": "Readable pagination",
+   "result": "PASS",
+   "note": "Seven chapters of two pages each; contents page numbers match."
+  },
+  {
+   "check": "The ArtifactManifest matches the file",
+   "result": "PASS",
+   "note": "PDF digest, length and page count re-derived by tests/contract/etbz56-skill-presentation-evidence.contract.test.ts."
+  },
+  {
+   "check": "Every Earthly Branch the template displays carries its animal label (ETBZ-56 AC 8, as ADR 0014 section 3 reads it)",
+   "result": "PASS",
+   "note": "Glance, four pillars, foundation, day master, five phases (all twelve), hidden stems, reflection, summary. Branches named in the reading’s own text (Wu (午), Hai (亥) and Wei (未) on page 12, Wu (午) on page 14) carry no label: the mapper adds no word to an accepted reading."
+  }
+ ],
+ "defects": [],
+ "observations": [
+  {
+   "page": "13",
+   "pageId": "chapter-01-p2",
+   "note": "The tail of a paragraph carried onto a continuation page keeps the opener column width (ADR 0012 limitation 4, the canonical ETBZ-49 paginator); not a defect."
+  },
+  {
+   "page": "09",
+   "pageId": "five-phases",
+   "note": "The Earth card holds four branches, which wrap to two rows under their labels; the branch rows of the five cards do not line up with each other. Legible, nothing clipped."
+  },
+  {
+   "page": "27",
+   "pageId": "summary",
+   "note": "The separator before an animal label is the renderer’s spaced separator, the Day-Master row’s separators are part of its value: the spacing differs within one table."
+  },
+  {
+   "page": "01",
+   "pageId": "cover",
+   "note": "The two-line title from the reading runs across the fire atmosphere shape; it stays legible (the same composition as ETBZ-55)."
+  },
+  {
+   "page": "29",
+   "pageId": "method-note",
+   "note": "The word \"Datenhinweis\" appears in the reading’s method note and again as the template’s data-note panel: an editorial repetition, not a presentation defect."
+  }
+ ],
+ "pages": [
+  {
+   "file": "pages/01-cover.png",
+   "pageLabel": "01",
+   "pageId": "cover",
+   "pngSha256": "sha256:43c4e2b8688f254a6a369d2d1c401899c2b75b1c49bcaa29f692c50c8ca8a1d0"
+  },
+  {
+   "file": "pages/02-identity.png",
+   "pageLabel": "02",
+   "pageId": "identity",
+   "pngSha256": "sha256:4ae6c7d3cfb9d21abeb7f226fd7fe85cb4f7a940e6cd5f4f399056f0dbb69bad"
+  },
+  {
+   "file": "pages/04-glance.png",
+   "pageLabel": "04",
+   "pageId": "glance",
+   "pngSha256": "sha256:d11d41b6e6e362496bc9ea5cefcc4bb530afba87495565ef6fb47eeff1dc3748"
+  },
+  {
+   "file": "pages/05-four-pillars.png",
+   "pageLabel": "05",
+   "pageId": "four-pillars",
+   "pngSha256": "sha256:ffa9a589823bf7cb68032520893a73422bb28dc0723bdc9e1f3200cf2164cdad"
+  },
+  {
+   "file": "pages/06-foundation.png",
+   "pageLabel": "06",
+   "pageId": "foundation",
+   "pngSha256": "sha256:94f57e4d2d21bc39abcefbc5f2f7dc4c82c30c9c48c24c9d197f0bd467bbf3c4"
+  },
+  {
+   "file": "pages/07-day-master.png",
+   "pageLabel": "07",
+   "pageId": "day-master",
+   "pngSha256": "sha256:e56c143e13407768410cb6070cea2e77a57554add7a1759a370fc0e6b8129c77"
+  },
+  {
+   "file": "pages/08-wu-xing-distribution.png",
+   "pageLabel": "08",
+   "pageId": "wu-xing-distribution",
+   "pngSha256": "sha256:dc1fef28ac0ab16b1ab11be355eec331e84dcf6c0351924d1ce13bfea0390617"
+  },
+  {
+   "file": "pages/09-five-phases.png",
+   "pageLabel": "09",
+   "pageId": "five-phases",
+   "pngSha256": "sha256:a38a0826f9581b284e702bcd64bfb0c9979bf45fd47390d62827228cb2692b1f"
+  },
+  {
+   "file": "pages/10-ten-gods.png",
+   "pageLabel": "10",
+   "pageId": "ten-gods",
+   "pngSha256": "sha256:629faf6cf267c63021d7b8948f7bef9b4ed6a76b1d874cb4dd7f847ebf1d80fa"
+  },
+  {
+   "file": "pages/11-hidden-stems.png",
+   "pageLabel": "11",
+   "pageId": "hidden-stems",
+   "pngSha256": "sha256:e468f5f38e23ed02a4fb854833a34ffeda07c99c91f7d51c94cc927f55aa6f8b"
+  },
+  {
+   "file": "pages/12-chapter-01-p1.png",
+   "pageLabel": "12",
+   "pageId": "chapter-01-p1",
+   "pngSha256": "sha256:de9a5c4d3b5e5a831173c98223db1d184f11d0ba42e7846ee07fad2d63c86b2c"
+  },
+  {
+   "file": "pages/13-chapter-01-p2.png",
+   "pageLabel": "13",
+   "pageId": "chapter-01-p2",
+   "pngSha256": "sha256:08b3b69d46adb6095a70412a4e6fd4892c6be366025b136ee68f994b4e11d0a3"
+  },
+  {
+   "file": "pages/26-reflection.png",
+   "pageLabel": "26",
+   "pageId": "reflection",
+   "pngSha256": "sha256:1376ba8e78480a82b2f4f16801bcedff01cf2c23493481ad80b671ea77448b5e"
+  },
+  {
+   "file": "pages/27-summary.png",
+   "pageLabel": "27",
+   "pageId": "summary",
+   "pngSha256": "sha256:1c43a468ee63266678759456dc1e6df49df876a2afc22144597e3a340820046c"
+  },
+  {
+   "file": "pages/29-method-note.png",
+   "pageLabel": "29",
+   "pageId": "method-note",
+   "pngSha256": "sha256:a633a000c7bfdaeaa057d639756d71dd10818cd4b48c8727b2b6addb08bf5293"
+  }
+ ]
+}

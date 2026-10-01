@@ -1,0 +1,630 @@
+{
+ "artifactId": "bazodiac-reading-9aec05c2fb0bd58e",
+ "byteLength": 1919129,
+ "contactSheetSha256": "sha256:ebbbae6b6f52859e7ea2b4b28c77a54db899e9e8363b64dcd07123585a6f5edd",
+ "fonts": [
+  {
+   "family": "Inter",
+   "file": "assets/visual-system-v1/fonts/Inter-Regular.ttf",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/fonts/OFL.txt",
+   "role": "text",
+   "sha256": "sha256:40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82"
+  },
+  {
+   "family": "Inter",
+   "file": "assets/visual-system-v1/fonts/Inter-Medium.ttf",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/fonts/OFL.txt",
+   "role": "text",
+   "sha256": "sha256:97ad806f526e41546d46365bb3a393145f75b7b1568913db74549ad8b8dba872"
+  },
+  {
+   "family": "Inter",
+   "file": "assets/visual-system-v1/fonts/Inter-SemiBold.ttf",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/fonts/OFL.txt",
+   "role": "text",
+   "sha256": "sha256:78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3"
+  },
+  {
+   "family": "Inter Display",
+   "file": "assets/visual-system-v1/fonts/InterDisplay-Light.ttf",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/fonts/OFL.txt",
+   "role": "text",
+   "sha256": "sha256:1d6072bc7807fa7bf08a6d273368f04ac68e77438258f32975057a61c8772811"
+  },
+  {
+   "family": "Inter Display",
+   "file": "assets/visual-system-v1/fonts/InterDisplay-Regular.ttf",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/fonts/OFL.txt",
+   "role": "text",
+   "sha256": "sha256:99614bda7ff423aaf470990692dd93613a5971ab4446e4a6d5a83b3d74865074"
+  },
+  {
+   "family": "Noto Sans CJK SC",
+   "file": "NotoSansCJK-Regular.ttc",
+   "installedAt": "host font directory",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/glyphs/OFL.txt",
+   "role": "informational-cjk",
+   "sha256": "sha256:b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+   "upstream": "https://github.com/notofonts/noto-cjk/raw/main/Sans/OTC/NotoSansCJK-Regular.ttc"
+  }
+ ],
+ "generation": {
+  "declared": true,
+  "executedAt": "2026-10-01",
+  "host": "Darwin arm64",
+  "repositoryHead": "aad37c074da595960665d6f724f26b542734f4a7"
+ },
+ "input": {
+  "branchAnimals": {
+   "locale": "de",
+   "ref": "bazodiac-branch-animal-labels@1.0.0",
+   "structuralHash": "sha256:b885bae1cce42bf219c4baa6a71c4750e177c162629704a26075c327e5a95cb3"
+  },
+  "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
+  "contentStructuralHash": "sha256:eb325d7f9240bada6454d79bfb82dc5eb3cbb4af329b297a17ec761951ced5fc",
+  "lexicon": {
+   "confluencePageId": "77529091",
+   "confluencePageVersion": "4",
+   "contractRef": "terminology-wording-lexicon@1.1.0"
+  },
+  "skill": {
+   "bundleRef": "bazodiac-skill-contract-bundle@1.1.0",
+   "bundleStructuralHash": "sha256:9e6762f3cf339f3e03e56d52770629bd30eebe79ab6b7a70cbcc9dbb9ea599c2",
+   "claimGraphStructuralHash": "sha256:03d3be16991712327a4a73f2f9b006093f17646773ddc823197fe09609edcd2a",
+   "contracts": [
+    {
+     "confluencePageId": "63012866",
+     "confluencePageVersion": "5",
+     "contractRef": "bazi-method-profile@1.0.0"
+    },
+    {
+     "confluencePageId": "57802765",
+     "confluencePageVersion": "2",
+     "contractRef": "confluence:57802765@2"
+    },
+    {
+     "confluencePageId": "77561858",
+     "confluencePageVersion": "6",
+     "contractRef": "grounded-reflective-synthesis-lens@1.1.0"
+    },
+    {
+     "confluencePageId": "77529091",
+     "confluencePageVersion": "4",
+     "contractRef": "terminology-wording-lexicon@1.1.0"
+    },
+    {
+     "confluencePageId": "77266967",
+     "confluencePageVersion": "3",
+     "contractRef": "cross-reading-individuality-contract@1.1.0"
+    }
+   ],
+   "inputPackageStructuralHash": "sha256:3633a12d9f57496f2b776ef81a1470b1e19f731f349b909215463f1ea76d97cf",
+   "planStructuralHash": "sha256:9ffcb07678660937a8ac65a47b033ebe3a63feea8734b528ceb5d8e4281e064b",
+   "readingStructuralHash": "sha256:a0911b08bcf66bc9175946161b3a77d28245137e6b062cf8bf2575e3d397d8d7",
+   "skillRef": "bazodiac-interpretation-skill@1.1.0",
+   "visualBindings": [
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.dayMaster.stemHanzi"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      1
+     ],
+     "slotId": "cover.primaryGlyph",
+     "specId": "spec.cover"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.dayMaster.stem",
+      "chart.dayMaster.stemHanzi",
+      "chart.dayMaster.element",
+      "chart.dayMaster.polarity"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      4
+     ],
+     "slotId": "glance.dayMaster",
+     "specId": "spec.glance.dayMaster"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.pillar.year.stem",
+      "chart.pillar.year.branch",
+      "chart.pillar.month.stem",
+      "chart.pillar.month.branch",
+      "chart.pillar.day.stem",
+      "chart.pillar.day.branch",
+      "chart.pillar.hour.stem",
+      "chart.pillar.hour.branch"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      4
+     ],
+     "slotId": "glance.pillars",
+     "specId": "spec.glance.pillars"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.wuxing.weight.Holz",
+      "chart.wuxing.weight.Feuer",
+      "chart.wuxing.weight.Erde",
+      "chart.wuxing.weight.Metall",
+      "chart.wuxing.weight.Wasser"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [
+      "chart.wuxing.dominant"
+     ],
+     "pageNumbers": [
+      4
+     ],
+     "slotId": "glance.wuXing",
+     "specId": "spec.glance.wuXing"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.pillar.year.stem",
+      "chart.pillar.year.stemHanzi",
+      "chart.pillar.year.stemElement",
+      "chart.pillar.month.stem",
+      "chart.pillar.month.stemHanzi",
+      "chart.pillar.month.stemElement",
+      "chart.pillar.day.stem",
+      "chart.pillar.day.stemHanzi",
+      "chart.pillar.day.stemElement",
+      "chart.pillar.hour.stem",
+      "chart.pillar.hour.stemHanzi",
+      "chart.pillar.hour.stemElement"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      5
+     ],
+     "slotId": "pillars.stem[*]",
+     "specId": "spec.pillars.stem"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.pillar.year.branch",
+      "chart.pillar.year.branchHanzi",
+      "chart.pillar.month.branch",
+      "chart.pillar.month.branchHanzi",
+      "chart.pillar.day.branch",
+      "chart.pillar.day.branchHanzi",
+      "chart.pillar.hour.branch",
+      "chart.pillar.hour.branchHanzi"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      5
+     ],
+     "slotId": "pillars.branch[*]",
+     "specId": "spec.pillars.branch"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.natal.pillar.year.hiddenStem.0.stem",
+      "chart.natal.pillar.year.hiddenStem.1.stem",
+      "chart.natal.pillar.month.hiddenStem.0.stem",
+      "chart.natal.pillar.month.hiddenStem.1.stem",
+      "chart.natal.pillar.day.hiddenStem.0.stem",
+      "chart.natal.pillar.day.hiddenStem.1.stem",
+      "chart.natal.pillar.hour.hiddenStem.0.stem",
+      "chart.natal.pillar.hour.hiddenStem.1.stem",
+      "chart.natal.pillar.hour.hiddenStem.2.stem"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      5
+     ],
+     "slotId": "pillars.hidden[*]",
+     "specId": "spec.pillars.hidden"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.natal.pillar.year.tenGod",
+      "chart.natal.pillar.month.tenGod",
+      "chart.natal.pillar.hour.tenGod"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      5
+     ],
+     "slotId": "pillars.tenGod[*]",
+     "specId": "spec.pillars.tenGod"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.dayMaster.stem",
+      "chart.dayMaster.stemHanzi",
+      "chart.dayMaster.stemPinyin",
+      "chart.dayMaster.element",
+      "chart.dayMaster.polarity"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      7
+     ],
+     "slotId": "dayMaster.hero",
+     "specId": "spec.dayMaster.hero"
+    },
+    {
+     "claimRefs": [
+      "claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57"
+     ],
+     "consumedKindFactRefs": [],
+     "emptyReason": "NO_APPROVED_CONTENT",
+     "otherKindFactRefs": [
+      "chart.dayMaster.stem"
+     ],
+     "pageNumbers": [],
+     "slotId": "dayMaster.reading",
+     "specId": "spec.dayMaster.reading"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.wuxing.weight.Holz",
+      "chart.wuxing.weight.Feuer",
+      "chart.wuxing.weight.Erde",
+      "chart.wuxing.weight.Metall",
+      "chart.wuxing.weight.Wasser"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      8
+     ],
+     "slotId": "wuXing.vector",
+     "specId": "spec.wuXing.vector"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.natal.pillar.year.tenGod",
+      "chart.natal.pillar.month.tenGod",
+      "chart.natal.pillar.hour.tenGod",
+      "chart.natal.pillar.year.hiddenStem.0.tenGod",
+      "chart.natal.pillar.year.hiddenStem.1.tenGod",
+      "chart.natal.pillar.month.hiddenStem.0.tenGod",
+      "chart.natal.pillar.month.hiddenStem.1.tenGod",
+      "chart.natal.pillar.day.hiddenStem.0.tenGod",
+      "chart.natal.pillar.day.hiddenStem.1.tenGod",
+      "chart.natal.pillar.hour.hiddenStem.0.tenGod",
+      "chart.natal.pillar.hour.hiddenStem.1.tenGod",
+      "chart.natal.pillar.hour.hiddenStem.2.tenGod"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      10
+     ],
+     "slotId": "tenGods.presence",
+     "specId": "spec.tenGods.presence"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.natal.pillar.year.hiddenStem.0.stem",
+      "chart.natal.pillar.year.hiddenStem.0.tenGod",
+      "chart.natal.pillar.year.hiddenStem.1.stem",
+      "chart.natal.pillar.year.hiddenStem.1.tenGod",
+      "chart.natal.pillar.month.hiddenStem.0.stem",
+      "chart.natal.pillar.month.hiddenStem.0.tenGod",
+      "chart.natal.pillar.month.hiddenStem.1.stem",
+      "chart.natal.pillar.month.hiddenStem.1.tenGod",
+      "chart.natal.pillar.day.hiddenStem.0.stem",
+      "chart.natal.pillar.day.hiddenStem.0.tenGod",
+      "chart.natal.pillar.day.hiddenStem.1.stem",
+      "chart.natal.pillar.day.hiddenStem.1.tenGod",
+      "chart.natal.pillar.hour.hiddenStem.0.stem",
+      "chart.natal.pillar.hour.hiddenStem.0.tenGod",
+      "chart.natal.pillar.hour.hiddenStem.1.stem",
+      "chart.natal.pillar.hour.hiddenStem.1.tenGod",
+      "chart.natal.pillar.hour.hiddenStem.2.stem",
+      "chart.natal.pillar.hour.hiddenStem.2.tenGod"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      11
+     ],
+     "slotId": "hidden.rows",
+     "specId": "spec.hidden.rows"
+    },
+    {
+     "claimRefs": [
+      "claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b",
+      "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff",
+      "claim.sha256:a1dbb87ff5e598f3d6a6bffbb20b3686b741ac29ed39b29bc372b8484e8501d1",
+      "claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a",
+      "claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57",
+      "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"
+     ],
+     "consumedKindFactRefs": [],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25
+     ],
+     "slotId": "chapter.longForm",
+     "specId": "spec.chapter.longForm"
+    },
+    {
+     "claimRefs": [
+      "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375",
+      "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff",
+      "claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b",
+      "claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57",
+      "claim.sha256:a1dbb87ff5e598f3d6a6bffbb20b3686b741ac29ed39b29bc372b8484e8501d1"
+     ],
+     "consumedKindFactRefs": [],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      26
+     ],
+     "slotId": "reflection.prompts",
+     "specId": "spec.reflection.prompts"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [
+      "chart.dayMaster.stem",
+      "chart.pillar.year.stem",
+      "chart.pillar.year.branch",
+      "chart.pillar.month.stem",
+      "chart.pillar.month.branch",
+      "chart.pillar.day.stem",
+      "chart.pillar.day.branch",
+      "chart.pillar.hour.stem",
+      "chart.pillar.hour.branch"
+     ],
+     "emptyReason": null,
+     "otherKindFactRefs": [
+      "chart.wuxing.dominant"
+     ],
+     "pageNumbers": [
+      27
+     ],
+     "slotId": "summary.facts",
+     "specId": "spec.summary.facts"
+    },
+    {
+     "claimRefs": [],
+     "consumedKindFactRefs": [],
+     "emptyReason": null,
+     "otherKindFactRefs": [],
+     "pageNumbers": [
+      29
+     ],
+     "slotId": "method.conventions",
+     "specId": "spec.method.conventions"
+    }
+   ]
+  }
+ },
+ "manifestVersion": "bazodiac-artifact-manifest.v1",
+ "mimeType": "application/pdf",
+ "pageCount": 29,
+ "presentation": {
+  "fileSha256": "sha256:d4819d54e9e57759e4ae49ac6f829f80dfc76478ab7dade63f492c579fd3c8da",
+  "projectionVersion": "bazodiac-presentation-projection.v1",
+  "structuralHash": "sha256:ce232a9859b8ad7cb34aa44db0e3a18f070872d2ecb30c082dae64e2c8f983b8"
+ },
+ "qa": {
+  "checks": [
+   {
+    "detail": "bazodiac-presentation-projection.v1",
+    "id": "PROJECTION_VERSION",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "projection": "sha256:ce232a9859b8ad7cb34aa44db0e3a18f070872d2ecb30c082dae64e2c8f983b8",
+     "template": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
+    },
+    "id": "PROJECTION_IDENTITY",
+    "result": "PASS"
+   },
+   {
+    "detail": [
+     "assets/visual-system-v1/fonts/Inter-Regular.ttf",
+     "assets/visual-system-v1/fonts/Inter-Medium.ttf",
+     "assets/visual-system-v1/fonts/Inter-SemiBold.ttf",
+     "assets/visual-system-v1/fonts/InterDisplay-Light.ttf",
+     "assets/visual-system-v1/fonts/InterDisplay-Regular.ttf",
+     "NotoSansCJK-Regular.ttc"
+    ],
+    "id": "FONT_PINS",
+    "result": "PASS"
+   },
+   {
+    "detail": [
+     "assets/visual-system-v1/tokens.css",
+     "assets/visual-system-v1/glyphs/sprite.svg",
+     "assets/visual-system-v1/brand/wordmark.svg",
+     "assets/visual-system-v1/glyphs/manifest.json"
+    ],
+    "id": "TEMPLATE_ASSET_PINS",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "cjkCharacters": 31,
+     "displayGlyphs": 27,
+     "unitsPerEm": 1000
+    },
+    "id": "GLYPHS_AND_CJK",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "glyphPaths": 111,
+     "pages": 29,
+     "printedPaths": 1452
+    },
+    "id": "PAGE_STRINGS",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "displayGlyphs": 116,
+     "pages": 29,
+     "textNodes": 1616
+    },
+    "id": "PAGE_QA",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "embeddedFonts": [
+      "AAAAAA+Inter-Medium",
+      "AAAAAA+InterDisplay-Light",
+      "BAAAAA+Inter-Medium",
+      "BAAAAA+Inter-Regular",
+      "BAAAAA+InterDisplay-Light",
+      "CAAAAA+Inter-Regular",
+      "DAAAAA+Inter-Regular",
+      "Type3"
+     ],
+     "mime": "application/pdf",
+     "pages": 29
+    },
+    "id": "PDF_READBACK",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "clippedUnits": 0,
+     "pages": 29,
+     "printedStrings": 1616,
+     "textUnits": 32150
+    },
+    "id": "PDF_TEXT_LAYER",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "canonicalOutlines": 146,
+     "convexShapes": 566,
+     "displayGlyphs": 116,
+     "pages": 29,
+     "placementDeviationPx": 0.937,
+     "wordmarkDots": 30,
+     "wordmarks": 30
+    },
+    "id": "PDF_VECTOR_LAYER",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "comparedRuns": [
+      2,
+      3
+     ],
+     "pages": 29,
+     "pdfSha256": "sha256:9aec05c2fb0bd58ea3bcc0d3bc9a02a00a524109073cd83f440c3c3843e9b939"
+    },
+    "id": "DETERMINISM",
+    "result": "PASS"
+   }
+  ],
+  "state": "QA_PASSED",
+  "status": "PASSED"
+ },
+ "renderer": {
+  "engine": {
+   "browser": "chromium",
+   "flags": [
+    "--deterministic-mode",
+    "--disable-gpu",
+    "--force-color-profile=srgb",
+    "--font-render-hinting=none"
+   ],
+   "fonttools": "4.61.1",
+   "pikepdf": "10.14.0",
+   "pillow": "11.3.0",
+   "playwright": "1.52.0",
+   "python": "3.13.3",
+   "version": "136.0.7103.25"
+  },
+  "ref": "bazodiac-pdf-renderer@1.0.0",
+  "sourceSha256": "sha256:4924747390ce173a37b437b55d402cb70b582f316c2a06f0878914fe5a65096d"
+ },
+ "sha256": "sha256:9aec05c2fb0bd58ea3bcc0d3bc9a02a00a524109073cd83f440c3c3843e9b939",
+ "state": "ARTIFACT_READY",
+ "template": {
+  "assets": [
+   {
+    "path": "assets/visual-system-v1/tokens.css",
+    "sha256": "sha256:66c737ec031a4a679a4545e44170eef3de054a6ec0690f3e7e0fde0d0b63fe50"
+   },
+   {
+    "path": "assets/visual-system-v1/glyphs/sprite.svg",
+    "sha256": "sha256:6a1851ac6da6d0b15a6ce6f58f938c70a0d1dacd9ed16ce722cf6f74417a4cba"
+   },
+   {
+    "path": "assets/visual-system-v1/brand/wordmark.svg",
+    "sha256": "sha256:c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1"
+   },
+   {
+    "path": "assets/visual-system-v1/glyphs/manifest.json",
+    "sha256": "sha256:a0c63cc99c1a9fb898255a807022a2e7d34eedb743e47d2736dfef86ab145c4c"
+   }
+  ],
+  "decisionSource": {
+   "pageId": "66650114",
+   "system": "confluence",
+   "version": "2"
+  },
+  "designSystem": {
+   "name": "Bazodiac Final",
+   "tokenVersion": 1,
+   "version": "1.0.0"
+  },
+  "glyphManifestSha256": "sha256:54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
+  "ref": "bazodiac-final-template@1.0.0",
+  "structuralHash": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6",
+  "wordmarkSha256": "sha256:c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1"
+ }
+}

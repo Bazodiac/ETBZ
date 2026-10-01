@@ -433,8 +433,8 @@ const MUTANTS = [
     null, [T.architecture], 'does not reach for a clock'],
 
   // --- the evidence on disk ---------------------------------------------------------------------------------------------
-  ['FACT: an animal label that differs from the Sizhu table is accepted', 'text', PROJECTION,
-    '    if (released === undefined || released.tierDe !== pillar.tierDe) {', '    if (false) {',
+  ['FACT: an animal label that differs from the released animal table is accepted', 'text', PROJECTION,
+    '    if (animalLabel !== pillar.tierDe) {', '    if (false) {',
     [T.negative], 'refuses an animal label the Sizhu table does not give the branch'],
   // Both run only inside `if foreign:`, so the added branch never executes; only the source changes.
   ['COVERAGE: the renderer gains a single-quoted finding code no canary observes', 'text', RENDERER_PY,

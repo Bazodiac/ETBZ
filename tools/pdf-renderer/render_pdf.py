@@ -495,7 +495,10 @@ DOM_QA = r"""
     if ((rule.type === 3 || rule.type === 4) && !mediaAllowed(rule.media)) findings.push({code: 'MEDIA_RULE_FORBIDDEN', media: rule.media.mediaText.slice(0, 80)});
     if (rule.type === 3) { try { walkRules(rule.styleSheet ? rule.styleSheet.cssRules : []); } catch (e) { findings.push({code: 'PAGE_RULE_FORBIDDEN', reason: 'unreadable imported stylesheet'}); } }
     if (rule.cssRules) walkRules(rule.cssRules); } };
-  for (const sheetOf of document.styleSheets) { try { walkRules(sheetOf.cssRules); } catch (e) { findings.push({code: 'PAGE_RULE_FORBIDDEN', reason: 'unreadable stylesheet'}); } }
+  // A stylesheet's own media condition - the media attribute of its <style> or <link> - is held to the same rule.
+  for (const sheetOf of document.styleSheets) {
+    if (!mediaAllowed(sheetOf.media)) findings.push({code: 'MEDIA_RULE_FORBIDDEN', media: sheetOf.media.mediaText.slice(0, 80), on: sheetOf.ownerNode ? sheetOf.ownerNode.nodeName.toLowerCase() : 'none'});
+    try { walkRules(sheetOf.cssRules); } catch (e) { findings.push({code: 'PAGE_RULE_FORBIDDEN', reason: 'unreadable stylesheet'}); } }
   const normalise = (text) => text.replace(/\s+/g, '');
   if (pageRules.length !== 1 || normalise(pageRules[0].cssText) !== normalise(q.pageRule)) findings.push({code: 'PAGE_RULE_FORBIDDEN', rules: pageRules.map((r) => r.cssText.slice(0, 80))});
   for (const el of sheet.querySelectorAll('.nw')) { const range = document.createRange(); range.selectNodeContents(el);
