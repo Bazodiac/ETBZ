@@ -29,6 +29,7 @@ const REHEARSAL = 'tests/support/etbz58Rehearsal.ts';
 
 const T = {
   negative: 'tests/negative/etbz58-rehearsal.negative.test.ts',
+  contract: 'tests/contract/etbz58-rehearsal-evidence.contract.test.ts',
 };
 
 /** [name, kind, file, find, replace, tests, killer] — kind 'text' (find occurs exactly once) or 'create'. */
@@ -117,7 +118,7 @@ const trackedState = () =>
   execFileSync('git', ['status', '--porcelain', '--', 'src', 'tests', 'scripts', 'skill', 'docs'], { encoding: 'utf8' }).trim();
 const stateBefore = trackedState();
 
-const ALL_SUITES = [T.negative];
+const ALL_SUITES = [T.negative, T.contract];
 const baseline = run(ALL_SUITES);
 if (baseline.outcome !== 'GREEN') {
   process.stdout.write(`BASELINE_NOT_GREEN (${baseline.outcome}): the unmutated suites fail, so a red mutant would prove nothing\n`);

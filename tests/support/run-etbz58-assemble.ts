@@ -6,6 +6,7 @@
  *                                             refusal code and path (wrapper step 5: the operator runs the boundary)
  *   check-edit <realise.json> <edit.json>     the same for the EDIT revision (acceptEditorialRevision)
  *   assemble                                  the committed readings -> accepted reading + PresentationProjection
+ *   seal                                      after the renderer and the visual verdict: the run record
  */
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -13,10 +14,12 @@ import { SkillRunError, acceptEditorialRevision, acceptSkillReading } from '../.
 import {
   ETBZ58_ACCEPTED_READING,
   ETBZ58_PROJECTION,
+  ETBZ58_RECORD,
   ETBZ58_SEMANTIC_READING,
   ETBZ58_SKILL_READING,
   assembleRehearsal,
   deriveRehearsalInput,
+  deriveRehearsalRecord,
   loadRecordedRun,
   readJsonFile,
   renderJson,
@@ -47,6 +50,10 @@ if (mode === 'check-realise' && first !== undefined) {
   writeFileSync(resolve(process.cwd(), ETBZ58_ACCEPTED_READING), renderJson(accepted));
   writeFileSync(resolve(process.cwd(), ETBZ58_PROJECTION), renderJson(projection));
   process.stdout.write(`semantic ${semantic.structuralHash}\naccepted ${accepted.structuralHash}\nprojection ${projection.structuralHash} pages ${String(projection.pageCount)}\n`);
+} else if (mode === 'seal') {
+  const record = await deriveRehearsalRecord();
+  writeFileSync(resolve(process.cwd(), ETBZ58_RECORD), renderJson(record));
+  process.stdout.write(`record written: ${ETBZ58_RECORD}\n`);
 } else {
-  throw new Error('usage: check-realise <reading.json> | check-edit <realise.json> <edit.json> | assemble');
+  throw new Error('usage: check-realise <reading.json> | check-edit <realise.json> <edit.json> | assemble | seal');
 }

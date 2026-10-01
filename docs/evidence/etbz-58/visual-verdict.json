@@ -1,0 +1,169 @@
+{
+ "verdictVersion": "bazodiac-visual-verdict.v1",
+ "verdict": "VISUALLY_FIT_FOR_GOLDEN",
+ "scope": "Delivery Runner visual evidence verdict for the ETBZ-58 Pre-Golden rehearsal, Rebaseline 62128133 section 18 and Jira ETBZ-58 step 4: no additional Product Owner stop, not a sellability verdict and not a judgement of the reading’s content.",
+ "reviewedOn": "2026-10-02",
+ "artifact": {
+  "artifactId": "bazodiac-reading-e96508bda0852591",
+  "pdfSha256": "sha256:e96508bda085259176321a2703732c6c8de11f37063729b63aef36fce591ef28",
+  "contactSheetSha256": "sha256:2f13c60c53ccf8cc9784a0bb08b8c116d93aee7984ecc33e0631985900c967f9",
+  "pageCount": 29
+ },
+ "inspected": [
+  "the contact sheet: all 29 pages of the same run",
+  "the full-size renders listed under pages (fifteen, committed)",
+  "each of the fifteen at full size: 01-cover, 05-four-pillars, 11-hidden-stems, 12-chapter-01-p1, 13-chapter-01-p2, 26-reflection, 29-method-note in this run; 02-identity, 04-glance, 06-foundation, 07-day-master, 08-wu-xing-distribution, 09-five-phases, 10-ten-gods, 27-summary are byte-identical to the ETBZ-56 renders inspected for its verdict"
+ ],
+ "checks": [
+  {
+   "check": "CJK, Hanzi and Pinyin correct and legible",
+   "result": "PASS",
+   "note": "Pillars 庚午 壬午 辛亥 乙未; the hour branch 未 with its hidden stems 己 丁 乙 (principal, central, residual) as the live FuFirE runtime answered them; Pinyin with tone marks; CJK set in the pinned Noto Sans CJK SC face (QA report platform fonts)."
+  },
+  {
+   "check": "Chart facts on the pages equal the ArtifactManifest input",
+   "result": "PASS",
+   "note": "The manifest input is the projection sources; the chart is the live one replayed from the committed FuFirE responses, every input-package fact equals the chart value at its path (buildSkillReadingProjection), and the pages print the chart values (page QA value-at-path binding)."
+  },
+  {
+   "check": "Every display glyph the canonical glyph of its character",
+   "result": "PASS",
+   "note": "PDF_VECTOR_LAYER: 116 display glyphs, each a canonical outline at its box."
+  },
+  {
+   "check": "No clipping, overlap, uncontrolled shrink or semantic truncation",
+   "result": "PASS",
+   "note": "Page QA and PDF text layer clean on all 29 pages (35066 text units on 1701 printed strings, none clipped); every word of every chapter placed."
+  },
+  {
+   "check": "Readable pagination",
+   "result": "PASS",
+   "note": "Seven chapters of two pages each; contents page numbers match."
+  },
+  {
+   "check": "The ArtifactManifest matches the file",
+   "result": "PASS",
+   "note": "PDF digest, length and page count re-derived by tests/contract/etbz58-rehearsal-evidence.contract.test.ts."
+  },
+  {
+   "check": "Every structured display of an Earthly Branch shows its Hanzi, canonical pinyin and animal label (ETBZ-56 AC 8, Rebaseline 62128133 section 20)",
+   "result": "PASS",
+   "note": "Glance, four pillars, foundation, day master, five phases (all twelve), hidden stems, reflection, summary. Branches named in the reading’s own text stay as the runtime wrote them (section 20)."
+  }
+ ],
+ "defects": [],
+ "observations": [
+  {
+   "page": "13",
+   "pageId": "chapter-01-p2",
+   "note": "The tail of a paragraph carried onto a continuation page keeps the opener column width (ADR 0012 limitation 4, the canonical ETBZ-49 paginator); not a defect."
+  },
+  {
+   "page": "29",
+   "pageId": "method-note",
+   "note": "The word \"Datenhinweis\" appears in the reading’s method note and again as the template’s data-note panel: an editorial repetition, not a presentation defect."
+  },
+  {
+   "page": "01",
+   "pageId": "cover",
+   "note": "The reading title the runtime wrote begins with the display name (\"Musterkundin A – …\"), which the cover prints again under \"Erstellt für\": an editorial repetition the template does not suppress."
+  },
+  {
+   "page": "05",
+   "pageId": "four-pillars",
+   "note": "The hour branch shows its hidden stems in the order the live runtime answered (己 丁 乙); the ETBZ-56 fixture pages show 己 乙 丁 (the fixture chart’s order, recorded as a finding of this run). Same on page 11."
+  }
+ ],
+ "pages": [
+  {
+   "file": "pages/01-cover.png",
+   "pageLabel": "01",
+   "pageId": "cover",
+   "pngSha256": "sha256:d52cc4343b8552e8f6d62bc026f2251a9312a6ec0a30733eab69b5aae6c5e3bb"
+  },
+  {
+   "file": "pages/02-identity.png",
+   "pageLabel": "02",
+   "pageId": "identity",
+   "pngSha256": "sha256:4ae6c7d3cfb9d21abeb7f226fd7fe85cb4f7a940e6cd5f4f399056f0dbb69bad"
+  },
+  {
+   "file": "pages/04-glance.png",
+   "pageLabel": "04",
+   "pageId": "glance",
+   "pngSha256": "sha256:d11d41b6e6e362496bc9ea5cefcc4bb530afba87495565ef6fb47eeff1dc3748"
+  },
+  {
+   "file": "pages/05-four-pillars.png",
+   "pageLabel": "05",
+   "pageId": "four-pillars",
+   "pngSha256": "sha256:a42914bc620ee54dd8ea61b6988d4b9556f09b89797862af60bd2c1c585ca4de"
+  },
+  {
+   "file": "pages/06-foundation.png",
+   "pageLabel": "06",
+   "pageId": "foundation",
+   "pngSha256": "sha256:94f57e4d2d21bc39abcefbc5f2f7dc4c82c30c9c48c24c9d197f0bd467bbf3c4"
+  },
+  {
+   "file": "pages/07-day-master.png",
+   "pageLabel": "07",
+   "pageId": "day-master",
+   "pngSha256": "sha256:e56c143e13407768410cb6070cea2e77a57554add7a1759a370fc0e6b8129c77"
+  },
+  {
+   "file": "pages/08-wu-xing-distribution.png",
+   "pageLabel": "08",
+   "pageId": "wu-xing-distribution",
+   "pngSha256": "sha256:dc1fef28ac0ab16b1ab11be355eec331e84dcf6c0351924d1ce13bfea0390617"
+  },
+  {
+   "file": "pages/09-five-phases.png",
+   "pageLabel": "09",
+   "pageId": "five-phases",
+   "pngSha256": "sha256:d67eef73ad9f61bd9037f87b8aadd770df3c4bba88035ce916d40a99a4487b21"
+  },
+  {
+   "file": "pages/10-ten-gods.png",
+   "pageLabel": "10",
+   "pageId": "ten-gods",
+   "pngSha256": "sha256:629faf6cf267c63021d7b8948f7bef9b4ed6a76b1d874cb4dd7f847ebf1d80fa"
+  },
+  {
+   "file": "pages/11-hidden-stems.png",
+   "pageLabel": "11",
+   "pageId": "hidden-stems",
+   "pngSha256": "sha256:e59de4907177709f797baf69b35d8e5ebc1ed45c792b898792598f8f9c531c1f"
+  },
+  {
+   "file": "pages/12-chapter-01-p1.png",
+   "pageLabel": "12",
+   "pageId": "chapter-01-p1",
+   "pngSha256": "sha256:1f592699cce9900e3806d6615234e78ab0a1bfe5f0d78e35e3ccaa3a5ec80c88"
+  },
+  {
+   "file": "pages/13-chapter-01-p2.png",
+   "pageLabel": "13",
+   "pageId": "chapter-01-p2",
+   "pngSha256": "sha256:a27502357118160a2c86f5aa8e60f35db1b132d1dd71473d3bd0b19fadab93b9"
+  },
+  {
+   "file": "pages/26-reflection.png",
+   "pageLabel": "26",
+   "pageId": "reflection",
+   "pngSha256": "sha256:5352d84972a71fc4b7f008a71c95b454e0f65164cc05ce3d1f174b9de6f5a9c7"
+  },
+  {
+   "file": "pages/27-summary.png",
+   "pageLabel": "27",
+   "pageId": "summary",
+   "pngSha256": "sha256:1c43a468ee63266678759456dc1e6df49df876a2afc22144597e3a340820046c"
+  },
+  {
+   "file": "pages/29-method-note.png",
+   "pageLabel": "29",
+   "pageId": "method-note",
+   "pngSha256": "sha256:0ba57ccbbc92f49eac521eec710054674893fd949b81d249c85c59c67d492bd8"
+  }
+ ]
+}

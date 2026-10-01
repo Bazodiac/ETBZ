@@ -59,6 +59,33 @@ export const ETBZ58_SKILL_READING = `${ETBZ58_RUN_DIR}/skill-reading.json`;
 export const ETBZ58_ACCEPTED_READING = `${ETBZ58_RUN_DIR}/accepted-reading.json`;
 export const ETBZ58_PROJECTION = `${ETBZ58_DIR}/presentation-projection.json`;
 export const ETBZ58_RECORD = `${ETBZ58_DIR}/rehearsal-record.json`;
+export const ETBZ58_REFUSED_REALISE = `${ETBZ58_RUN_DIR}/realise-attempt-1.refused.json`;
+export const ETBZ58_ARTIFACT_MANIFEST = `${ETBZ58_DIR}/artifact-manifest.json`;
+export const ETBZ58_PDF = `${ETBZ58_DIR}/bazodiac-reading.pdf`;
+export const ETBZ58_VISUAL_VERDICT = `${ETBZ58_DIR}/visual-verdict.json`;
+
+/** The ETBZ-57 reading the Human Editorial Gate accepted for the fixture package: not this run's reading. */
+export const ETBZ57_ACCEPTED_READING_HASH = 'sha256:a0911b08bcf66bc9175946161b3a77d28245137e6b062cf8bf2575e3d397d8d7';
+
+/**
+ * Declared, not measured: who wrote the readings, with what, when, on which head, and the operator's handling.
+ * Nothing in the repository can prove which model wrote a text (as in ETBZ-52 and ETBZ-57).
+ */
+export const ETBZ58_GENERATION = {
+  declared: true,
+  runtime: 'a fresh Claude Code subagent instance, dispatched by the Delivery Runner under skill/bazodiac-interpretation-skill-v1.1/wrappers/claude.md (PO decision D2, Jira ETBZ-2 comment 16690)',
+  model: 'claude-opus-5-5 (as the runtime reported it)',
+  executedAt: '2026-10-01/2026-10-02',
+  operator: 'Delivery Runner (ETBZ-58)',
+  repositoryHead: 'c0d21665617b777091ec0184fe5672cd45bf58a1',
+  inputBoundary: 'the instance read only wrappers/claude.md, SKILL.md, contract-bundle.json, reading-schema.json, MANIFEST.json and run/skill-input.json, and used only Read and Write (its own report; not measured)',
+  passes: [
+    'REALISE attempt 1: realise-attempt-1.refused.json - refused READING_UNSUPPORTED_METHOD_LANGUAGE at chapters[2].paragraphs[3], term "ehe" (the German conjunction, "noch ehe ein Ergebnis vorliegt"); a false positive of the marriage word list',
+    'REALISE repair (wrapper step 5, once): semantic-reading.json - exactly one leaf differs from attempt 1 ("ehe" -> "bevor"); accepted',
+    'EDIT (wrapper step 5a): skill-reading.json - 36 customer-text leaves revised, nothing else; accepted at the first attempt',
+  ],
+  noHumanEdit: 'no person edited the reading between the stages',
+} as const;
 
 /** The canonical case input, referenced, not copied (Jira ETBZ-58 comment 16976). */
 export const ETBZ58_BIRTH_INPUT_REF = 'tests/support/narrativeFixture.ts#KNOWN_BIRTH';
@@ -357,6 +384,83 @@ export function loadRecordedRun(root: string = process.cwd()): { readback: Runti
 }
 
 export const readJsonFile = (path: string, root: string = process.cwd()): unknown => JSON.parse(readFileSync(resolve(root, path), 'utf8')) as unknown;
+
+const fileSha = (path: string, root: string): string => sha256Of(readFileSync(resolve(root, path)));
+
+/**
+ * The run record: every identity of the run, from the case input to the ArtifactManifest, each either a digest of
+ * a committed file or a hash the chain re-derives. Written last (`npm run etbz58:assemble -- seal`), after the
+ * renderer and the visual verdict; the contract suite re-derives it byte for byte.
+ */
+export async function deriveRehearsalRecord(root: string = process.cwd()): Promise<Record<string, unknown>> {
+  const { readback, responses } = loadRecordedRun(root);
+  const rehearsal = await deriveRehearsalInput(readback, responses);
+  const { semantic, accepted, projection } = assembleRehearsal(rehearsal, readJsonFile(ETBZ58_SEMANTIC_READING, root), readJsonFile(ETBZ58_SKILL_READING, root));
+  const manifest = readJsonFile(ETBZ58_ARTIFACT_MANIFEST, root) as {
+    artifactId: string; state: string; sha256: string; pageCount: number;
+    template: Record<string, unknown>; renderer: Record<string, unknown>; qa: { status: string; state: string };
+  };
+  const verdict = readJsonFile(ETBZ58_VISUAL_VERDICT, root) as { verdict: string; defects: readonly unknown[] };
+  const skillManifest = readJsonFile('skill/bazodiac-interpretation-skill-v1.1/MANIFEST.json', root) as { packageStructuralHash: string };
+  return {
+    recordVersion: 'etbz58-rehearsal-record.v1',
+    runId: 'etbz58-pre-golden-rehearsal-known-time-2026-10-01',
+    case: {
+      displayName: rehearsal.model.displayName,
+      birthInput: readback.birthInput,
+      golden: false,
+      decision: 'Jira ETBZ-58 comment 16976 (synthetic non-Golden known-time case; GOLDEN-KT-01 stays reserved for ETBZ-53)',
+    },
+    runtime: {
+      readbackFileSha256: fileSha(ETBZ58_READBACK, root),
+      executedAt: readback.executedAt,
+      repositoryHead: readback.repositoryHead,
+      baseUrlHost: readback.runtime.baseUrlHost,
+      runtimeImage: readback.runtime.runtimeImage,
+      attestation: { status: readback.attestation.status, expectation: readback.attestation.expectation },
+      probes: readback.probes,
+      exchanges: readback.exchanges.map(({ label, status, responseSha256, byteLength }) => ({ label, status, responseSha256, byteLength })),
+    },
+    interpretationInput: { structuralHash: rehearsal.input.structuralHash, productionEligible: rehearsal.input.productionEligibility.eligible },
+    drafting: {
+      decision: 'PO decision D-58-1, Jira ETBZ-58 comment 17021: the reviewed ETBZ-30A/30B drafts, accepted against the live chart',
+      pinnedFacts: Object.fromEntries(draftFactPins()),
+      claimGraphStructuralHash: rehearsal.graph.structuralHash,
+      planStructuralHash: rehearsal.plan.structuralHash,
+    },
+    skill: {
+      skillRef: rehearsal.inputPackage.skillRef,
+      skillPackageStructuralHash: skillManifest.packageStructuralHash,
+      bundleRef: rehearsal.bundle.bundleRef,
+      bundleStructuralHash: rehearsal.bundle.structuralHash,
+      contracts: rehearsal.inputPackage.contracts,
+      inputPackageStructuralHash: rehearsal.inputPackage.structuralHash,
+      inputPackageFileSha256: fileSha(ETBZ58_SKILL_INPUT, root),
+    },
+    readings: {
+      refusedRealiseFileSha256: fileSha(ETBZ58_REFUSED_REALISE, root),
+      semanticFileSha256: fileSha(ETBZ58_SEMANTIC_READING, root),
+      semanticStructuralHash: semantic.structuralHash,
+      editFileSha256: fileSha(ETBZ58_SKILL_READING, root),
+      acceptedStructuralHash: accepted.structuralHash,
+      acceptedFileSha256: fileSha(ETBZ58_ACCEPTED_READING, root),
+      notTheEtbz57Reading: accepted.structuralHash !== ETBZ57_ACCEPTED_READING_HASH,
+    },
+    presentation: { structuralHash: projection.structuralHash, fileSha256: fileSha(ETBZ58_PROJECTION, root), pageCount: projection.pageCount },
+    artifact: {
+      manifestFileSha256: fileSha(ETBZ58_ARTIFACT_MANIFEST, root),
+      artifactId: manifest.artifactId,
+      state: manifest.state,
+      qa: manifest.qa.state,
+      pdfSha256: manifest.sha256,
+      pageCount: manifest.pageCount,
+      template: manifest.template,
+      renderer: manifest.renderer,
+    },
+    visualVerdict: { verdict: verdict.verdict, defects: verdict.defects.length, fileSha256: fileSha(ETBZ58_VISUAL_VERDICT, root) },
+    generation: ETBZ58_GENERATION,
+  };
+}
 
 export function renderJson(value: unknown): string {
   return `${canonicalJson(value)}\n`;
