@@ -6,9 +6,11 @@
 // model; the local PDF renderer under tools/pdf-renderer/ draws it.
 // =============================================================================
 
+export * from './branch-animals.js';
 export * from './errors.js';
 export * from './font-metrics.js';
 export * from './long-form.js';
 export * from './projection.js';
+export * from './skill-presentation.js';
 export * from './template.js';
 export * from './text-measure.js';

@@ -97,8 +97,8 @@ and a separator after which a line may wrap carries a `<wbr>`.
      or pseudo-element, and no replaced content; exactly the template's `@page` rule among
      all stylesheet rules, imported ones included, and no page margin box; `@media` and
      `@import` conditions name a media type and the colour scheme only (a width or height
-     feature is evaluated by `page.pdf()` against another box than the emulation; a
-     `<style media>` attribute is not read); nothing outside the sheet; no
+     feature is evaluated by `page.pdf()` against another box than the emulation), and so
+     does the `media` attribute of a `<style>` or `<link>` (ETBZ-56); nothing outside the sheet; no
      non-breaking pair split across lines;
    - ink, on the screenshot: every printed string (each line box, and each character in
      its own box), glyph, presence mark and phase paint leaves pixels of its own colour

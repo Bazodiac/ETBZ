@@ -258,9 +258,20 @@ function spaceBefore(kind: LongFormBlock['kind']): number {
   return kind === 'pullQuote' || kind === 'keyInsight' || kind === 'subhead' ? BASELINE_CP : 0;
 }
 
-/** The text a block contributes to the every-word check. */
+/** The words a block contributes to the chapter's word budget. */
 export function blockWords(block: LongFormBlock): string {
   return block.kind === 'keyInsight' ? `${block.title} ${block.text}` : block.text;
+}
+
+/**
+ * The text a block places, character for character - what the every-word check compares the placed lines with. A
+ * pull quote is placed inside the quotation marks the layout wraps it in; every other block places its words as
+ * written. ETBZ-56: the check used to strip U+201C/U+201D from the placed lines only, so a pull quote could never
+ * pass (ADR 0012 limitation 12) and neither could any paragraph quoting with German marks („…“, closing U+201C).
+ * Nothing is stripped now: a dropped or added quotation mark is a mismatch like any other character.
+ */
+export function placedBlockText(block: LongFormBlock): string {
+  return block.kind === 'pullQuote' ? `\u201C${block.text}\u201D` : blockWords(block);
 }
 
 // ---------------------------------------------------------------------------
@@ -559,11 +570,10 @@ export function paginateLongForm(blocks: readonly LongFormBlock[], headerHeightC
       boxes.push(box);
     }
   }
-  const sourceWords = blocks.map(blockWords).join(' ').split(/\s+/u).filter((word) => word.length > 0);
+  const sourceWords = blocks.map(placedBlockText).join(' ').split(/\s+/u).filter((word) => word.length > 0);
   const placedWords = pages
     .flatMap((p) => p.fragments.flatMap((f) => f.lines.map((line) => line.text)))
     .join(' ')
-    .replace(/[\u201C\u201D]/gu, '')
     .split(/\s+/u)
     .filter((word) => word.length > 0);
   const same = sourceWords.length === placedWords.length && sourceWords.every((word, index) => word === placedWords[index]);
