@@ -22,6 +22,7 @@
  */
 
 import { structuralHash, structuralHashOfCanonicalText } from '../../domain/structural-hash.js';
+import { withEvaluationWithdrawal } from '../horoscope-model.js';
 import type { HoroscopeModel, PillarName } from '../horoscope-model.js';
 import { WUXING_ELEMENTS } from '../ports/fufire-gateway.js';
 import { InterpretationError } from './errors.js';
@@ -73,7 +74,21 @@ export type ChartFactKind =
  * birth. It stays in the fact set as source evidence and is excluded from
  * interpretation. ETBZ neither invents nor substitutes that time.
  */
-export type FactExclusionReason = 'ASSUMED_TIME_DERIVED';
+export type FactExclusionReason =
+  | 'ASSUMED_TIME_DERIVED'
+  /**
+   * ETBZ-59 (PO decision D-59-1, Jira ETBZ-59 comment 17034): withdrawn from interpretation on an evaluation
+   * variant for the Anti-Boilerplate removal case (contract 77266967, section 6.4). Set only through
+   * `withdrawFactsForEvaluation`; an input built from such a chart is never production-eligible.
+   */
+  | 'WITHDRAWN_FOR_EVALUATION';
+
+/**
+ * The facts the narrative chain anchors its themes on (`buildThemeGraph`: the day-master and month-command themes).
+ * They cannot be withdrawn for evaluation: without them no theme graph exists, and a missing anchor is a refusal
+ * here, not a crash further down (ETBZ-59).
+ */
+export const NARRATIVE_ANCHOR_FACT_IDS = ['chart.dayMaster.stem', 'chart.natal.monthCommand.branch'] as const;
 
 /**
  * One addressable chart fact.
@@ -458,7 +473,7 @@ export function deriveInterpretationFeatureSet(
   model: HoroscopeModel,
 ): InterpretationFeatureSet {
   const provisionalPillars = resolveProvisionalPillars(model);
-  const facts = buildFacts(model, provisionalPillars);
+  const facts = applyEvaluationWithdrawal(buildFacts(model, provisionalPillars), model);
   const methodScope = buildMethodScope(facts);
 
   const core = {
@@ -483,4 +498,69 @@ export function deriveInterpretationFeatureSet(
   };
 
   return { ...core, structuralHash: structuralHash(core) };
+}
+
+function refuseAnchors(factIds: readonly string[]): void {
+  const anchors = factIds.filter((id) => (NARRATIVE_ANCHOR_FACT_IDS as readonly string[]).includes(id));
+  if (anchors.length > 0) {
+    throw new InterpretationError('WITHDRAWAL_STRUCTURAL_ANCHOR', `${anchors.join(', ')} anchor the narrative chain's themes and cannot be withdrawn for evaluation`);
+  }
+}
+
+/**
+ * ETBZ-59 — applies a recorded evaluation withdrawal: each named fact stays in the chart as evidence but is
+ * excluded from interpretation (and therefore provisional, like every excluded fact). A model built by hand with a
+ * withdrawal the chart cannot carry is refused here too, not only in `withdrawFactsForEvaluation`.
+ */
+function applyEvaluationWithdrawal(facts: readonly ChartFact[], model: HoroscopeModel): ChartFact[] {
+  const withdrawal = model.evaluationWithdrawal;
+  if (withdrawal === undefined) return [...facts];
+  if (!model.precision.birthTimeKnown) {
+    throw new InterpretationError('WITHDRAWAL_UNKNOWN_TIME', 'an evaluation withdrawal is recorded on an unknown-time chart; its exclusions belong to PD-10 alone');
+  }
+  const known = new Set(facts.map((fact) => fact.id));
+  const unknown = withdrawal.factIds.filter((id) => !known.has(id));
+  if (unknown.length > 0) {
+    throw new InterpretationError('WITHDRAWAL_UNKNOWN_FACT', `the recorded evaluation withdrawal names ${unknown.join(', ')}, which this chart does not carry`);
+  }
+  refuseAnchors(withdrawal.factIds);
+  const withdrawn = new Set(withdrawal.factIds);
+  return facts.map((fact) =>
+    withdrawn.has(fact.id) ? { ...fact, provisional: true, interpretable: false, exclusionReason: 'WITHDRAWN_FOR_EVALUATION' as const } : fact,
+  );
+}
+
+/**
+ * ETBZ-59 (PO decision D-59-1, Jira ETBZ-59 comment 17034) — the removal case of the Anti-Boilerplate contract
+ * (77266967, section 6.4): withdraws the named facts of a known-time chart from interpretation and returns the
+ * evaluation variant. Every claim that cites a withdrawn fact is then refused by the ordinary builders
+ * (`CLAIM_EXCLUDED_FACT_CITED`), the withdrawal is part of the canonical text, and an input built from the variant
+ * carries `EVALUATION_WITHDRAWAL_PRESENT`, so it is never production-eligible. Pure; the source model is untouched.
+ */
+export function withdrawFactsForEvaluation(model: HoroscopeModel, factIds: readonly string[], reference: string): HoroscopeModel {
+  if (reference.trim() === '') {
+    throw new InterpretationError('WITHDRAWAL_REFERENCE_MISSING', 'an evaluation withdrawal must name the decision that allows it');
+  }
+  if (model.evaluationWithdrawal !== undefined) {
+    throw new InterpretationError('WITHDRAWAL_ALREADY_APPLIED', 'this chart already carries an evaluation withdrawal; variants are not stacked');
+  }
+  if (!model.precision.birthTimeKnown || !model.birth.birthTimeKnown) {
+    throw new InterpretationError('WITHDRAWAL_UNKNOWN_TIME', 'an unknown-time chart is not withdrawn from: its exclusions belong to PD-10 alone');
+  }
+  if (factIds.length === 0) {
+    throw new InterpretationError('WITHDRAWAL_EMPTY', 'an evaluation withdrawal names at least one fact');
+  }
+  const seen = new Set<string>();
+  for (const id of factIds) {
+    if (seen.has(id)) throw new InterpretationError('WITHDRAWAL_DUPLICATE_FACT', `the evaluation withdrawal names ${id} twice`);
+    seen.add(id);
+  }
+  const known = new Set(deriveInterpretationFeatureSet(model).factIds);
+  const unknown = factIds.filter((id) => !known.has(id));
+  if (unknown.length > 0) {
+    throw new InterpretationError('WITHDRAWAL_UNKNOWN_FACT', `the evaluation withdrawal names ${unknown.join(', ')}, which this chart does not carry`);
+  }
+  refuseAnchors(factIds);
+  const sortedIds = [...factIds].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
+  return withEvaluationWithdrawal(model, { factIds: sortedIds, reference });
 }

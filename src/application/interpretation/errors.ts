@@ -16,7 +16,21 @@ export type InterpretationErrorCode =
    *  statement would be a claim without evidence. */
   | 'FEATURE_SET_METHOD_WITHOUT_SOURCE_FACTS'
   /** Two occurrences of the same FuFirE Ten God carry different source labels. */
-  | 'THEME_LABEL_CONTRADICTION';
+  | 'THEME_LABEL_CONTRADICTION'
+  /** ETBZ-59 (D-59-1) — an evaluation withdrawal names no fact. */
+  | 'WITHDRAWAL_EMPTY'
+  /** ETBZ-59 — an evaluation withdrawal names a fact the chart does not carry. */
+  | 'WITHDRAWAL_UNKNOWN_FACT'
+  /** ETBZ-59 — an evaluation withdrawal names the same fact twice. */
+  | 'WITHDRAWAL_DUPLICATE_FACT'
+  /** ETBZ-59 — an evaluation withdrawal carries no reference to the decision that allows it. */
+  | 'WITHDRAWAL_REFERENCE_MISSING'
+  /** ETBZ-59 — withdrawal on an unknown-time chart: its exclusions are PD-10's, and the two must not mix. */
+  | 'WITHDRAWAL_UNKNOWN_TIME'
+  /** ETBZ-59 — a second withdrawal on a chart that already carries one. */
+  | 'WITHDRAWAL_ALREADY_APPLIED'
+  /** ETBZ-59 — a withdrawal of a fact the narrative chain anchors its themes on (`NARRATIVE_ANCHOR_FACT_IDS`). */
+  | 'WITHDRAWAL_STRUCTURAL_ANCHOR';
 
 export class InterpretationError extends Error {
   readonly code: InterpretationErrorCode;

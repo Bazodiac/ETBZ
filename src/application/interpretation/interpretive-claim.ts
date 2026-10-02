@@ -170,7 +170,11 @@ export function validateInterpretiveClaim(
     if (!fact.interpretable) {
       throw new ClaimError(
         'CLAIM_EXCLUDED_FACT_CITED',
-        `claim "${claim.claimId}" cites "${fact.id}", which is excluded from interpretation (${fact.exclusionReason ?? 'excluded'}); an assumed time of day is not the customer's birth`,
+        `claim "${claim.claimId}" cites "${fact.id}", which is excluded from interpretation (${fact.exclusionReason ?? 'excluded'}); ${
+          fact.exclusionReason === 'WITHDRAWN_FOR_EVALUATION'
+            ? 'it is withdrawn for evaluation, and a withdrawn fact grounds nothing'
+            : "an assumed time of day is not the customer's birth"
+        }`,
       );
     }
     cited.push(fact);
