@@ -80,12 +80,13 @@ describe('ETBZ-61: the printed text of a Wu Xing weight', () => {
 
   it('prints every sum of short decimals as its exact decimal (deterministic sweep)', () => {
     const units = [1, 2, 3, 5, 7, 10, 15, 25, 30, 50];
+    // Park-Miller: seed * 48271 stays below 2^53, so the generator is exact in doubles and does not cycle early.
     let seed = 2026;
     const next = (): number => {
-      seed = (seed * 1103515245 + 12345) % 2147483648;
-      return seed / 2147483648;
+      seed = (seed * 48271) % 2147483647;
+      return seed / 2147483647;
     };
-    let noisy = 0;
+    const noisy = new Set<number>();
     for (let i = 0; i < 20000; i += 1) {
       let sum = 0;
       let hundredths = 0;
@@ -97,10 +98,10 @@ describe('ETBZ-61: the printed text of a Wu Xing weight', () => {
         hundredths += tenths ? unit * 10 : unit;
       }
       const exact = String(hundredths / 100);
-      if (String(sum) !== exact) noisy += 1;
+      if (String(sum) !== exact) noisy.add(sum);
       expect(textOf(sum), String(sum)).toBe(exact);
     }
-    expect(noisy, 'the sweep must contain noisy sums').toBeGreaterThan(1000);
+    expect(noisy.size, 'distinct noisy sums the sweep covered').toBeGreaterThan(1000);
   });
 
   it('refuses a printed text further from the delivered value than representation noise', () => {
@@ -109,6 +110,8 @@ describe('ETBZ-61: the printed text of a Wu Xing weight', () => {
     expect(codeOf(() => { assertWuXingValueText(2, 'zwei', 'test'); })).toBe('PRESENTATION_FACT_MISMATCH');
     expect(codeOf(() => { assertWuXingValueText(0.1 + 0.2, '0.3', 'test'); })).toBe('ACCEPTED');
     expect(codeOf(() => { assertWuXingValueText(3.7e-13, '4e-13', 'test'); })).toBe('PRESENTATION_FACT_MISMATCH');
+    // Relative, not absolute below 1: a text 1.2e-15 off a value of 1.2e-5 lies inside 2^-48 absolute but far outside it relative.
+    expect(codeOf(() => { assertWuXingValueText(0.000012345678901234, '0.0000123456789', 'test'); })).toBe('PRESENTATION_FACT_MISMATCH');
     expect(codeOf(() => { assertWuXingValueText(2.5, '2.5', 'test'); })).toBe('ACCEPTED');
   });
 

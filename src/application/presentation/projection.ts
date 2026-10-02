@@ -397,7 +397,8 @@ export function assertWuXingValueText(value: number, text: string, phase: string
  * ETBZ-61: the text a Wu Xing weight is printed as - the shortest decimal within the noise bound of the delivered
  * number. FuFirE serialises a weight that is a floating-point sum with its binary representation noise (a sum such as
  * 0.1 + 0.2 arrives as 0.30000000000000004: seventeen significant digits that overflow the distribution page). A
- * weight without noise prints exactly as before (`String(value)`); `value` and `ratio` are never touched.
+ * weight without noise and of up to fourteen significant digits prints exactly as before (`String(value)`); `value`
+ * and `ratio` are never touched.
  */
 export function wuXingValueText(value: number, phase: string): string {
   let text = String(value);

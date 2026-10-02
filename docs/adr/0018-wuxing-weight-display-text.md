@@ -26,7 +26,7 @@ weights such as 1.8, 2.5 and 2.
    number: `|printed - value| <= 2^-48 * |value|`.
    - The bound is purely relative. Binary64 noise is one unit in the last place, 2^-52 of the value, and the bound
      allows sixteen of them.
-   - A weight without noise prints exactly `String(value)`. Zero prints `0`.
+   - A weight without noise and of up to 14 significant digits prints exactly `String(value)`. Zero prints `0`.
 2. **The guard.** `assertWuXingValueText` refuses, with `PRESENTATION_FACT_MISMATCH`, a printed text that is outside
    the bound or is not the canonical text of its number (for example `" 2 "`, `"2e0"` or `""`). It is the formatter's
    postcondition. For the finite, non-negative weights the vector schema admits (`visualSystem.ts`), the formatter never
@@ -34,15 +34,17 @@ weights such as 1.8, 2.5 and 2.
 3. **Nothing else moves.** `value` and `ratio` stay the delivered numbers, and the fact layer keeps the producer's value
    (`feature-set.ts`, `JSON.stringify`). Template 1.0.0 (`d595ab7c…`), its caption "Werte wie geliefert" and the
    renderer are unchanged. `projectionVersion` stays `bazodiac-presentation-projection.v1`, because the output for every
-   weight without noise is unchanged.
+   weight without noise and of up to 14 significant digits is unchanged.
 4. **Rejected: fixed decimals with a changed footnote.** A new or changed label is part of the released template hash.
    That would have meant template 1.1.0, a new renderer pin, a re-run of the canary record, and pinning every committed
    projection made under 1.0.0. The Product Owner chose the noise-only rule (D-54-2).
 
-## Measured behaviour (review round 1 of PR #27 and the runner's probes)
+## Measured behaviour (the runner's probes, re-measured under the 2^-48 rule in review round 2 of PR #27)
 
 - **Sums.** 300,000 synthetic sums of 2 to 15 short decimals (tenths and hundredths); about 110,000 of them carry
-  noise. Every one prints as its exact decimal. The suite runs a deterministic sweep of 20,000 such sums.
+  noise. Every one prints as its exact decimal; so did 300,000 more of 16 to 40 terms and of products of two weights
+  (review round 2). The suite runs a deterministic sweep of 20,000 such sums and asserts how many distinct noisy sums it
+  covered.
 - **Real decimals.** 20,000 random decimals per length:
   - up to 14 significant digits, across exponents -3 to +3: none is changed;
   - 15 significant digits: about 30 % are shortened, each within 2^-48 of the value;
@@ -55,7 +57,7 @@ weights such as 1.8, 2.5 and 2.
   authorised that re-render in D-54-2.
 - For a weight with noise, the page prints the short text while the chart fact keeps the producer's text. A reading
   that quotes the fact therefore quotes the noisy text. The Skill boundary governs that, not the projection.
-- `npm run guards:etbz61` holds nine source mutants, and each is killed by an assertion in the test named for it.
+- `npm run guards:etbz61` holds ten source mutants, and each is killed by an assertion in the test named for it.
   Removing the guard call alone is an equivalent mutant for every finite value. ROUND and LOOSE show the guard
   refusing a formatter that rounds.
 
@@ -65,5 +67,7 @@ weights such as 1.8, 2.5 and 2.
   are sums of short ledger weights, so none has that many digits.
 - The rule bounds no length. A real weight with 14 significant digits prints all of them, and the renderer's `PAGE_QA`
   would block it as before.
-- Noise is judged relative to the value itself. A value that is pure noise around zero (a difference of sums, never a
-  sum of non-negative weights) is printed as its own shortest text, not as `0`.
+- Noise is judged relative to the value itself. A difference of sums - pure noise around zero, or a partial
+  cancellation such as 100.1 - 99.8 - keeps the noise that is large relative to its own small value: it prints as its
+  own shortest text within the bound (for example `0.299999999999997`), not as the decimal the operands meant. A sum of
+  non-negative weights never cancels, and an overlong text is still blocked by `PAGE_QA`.
