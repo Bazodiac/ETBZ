@@ -7,6 +7,9 @@
  *                                 review/chart-<label>.txt); `near` needs the variant, `removal` the drafts
  *   emit                          writes each case's Skill input package (cases/<label>/skill-input.json)
  *   cones                         writes the pre-run cones, BEFORE any reading exists; prints their keyed digest
+ *   check-realise <label> <file>  runs the acceptance boundary on one REALISE attempt (wrapper step 5: the operator runs
+ *                                 it; a refusal lists every violation of one full pass - what the one repair receives)
+ *   check-edit <label> <realise> <edit>   the same for an EDIT revision (acceptEditorialRevision)
  *   accept <label>                runs the acceptance boundary on the case's REALISE reading and, when present, its
  *                                 EDIT revision; writes accepted-reading.json when both pass
  *   packets                       writes the judges' packets (judges/) from the accepted readings
@@ -30,6 +33,7 @@ import {
   GOLDEN_LABELS,
   archiveHas,
   assertTreePrivate,
+  attemptsDir,
   caseFile,
   goldenChart,
   loadGoldenDrafts,
@@ -60,7 +64,7 @@ const out = (line: string): void => {
 async function main(): Promise<void> {
   const raw = readInput(config);
   const key = loadOrCreateKey(config.archiveDir, false);
-  const [command, argument] = process.argv.slice(2);
+  const [command, argument, first, second] = process.argv.slice(2);
   try {
     if (command === 'facts' && isLabel(argument)) {
       const source = await goldenChart(config, raw);
@@ -78,11 +82,18 @@ async function main(): Promise<void> {
     } else if (command === 'cones') {
       const path = workPath(config, CONES_FILE);
       if (archiveHas(path)) throw new Error('the pre-run cones exist already; they are written once, before any reading');
-      const readings = GOLDEN_LABELS.filter((label) => archiveHas(caseFile(config, label, 'semantic-reading')));
+      const readings = GOLDEN_LABELS.filter((label) => archiveHas(caseFile(config, label, 'semantic-reading')) || archiveHas(attemptsDir(config, label)));
       if (readings.length > 0) throw new Error(`a reading exists already (${readings.join(', ')}); the cones must precede every reading`);
       const text = renderJson(await deriveGoldenCones(config));
       writePrivateFile(path, text);
       out(`cones written: ${path} · ${keyed(key, text)}`);
+    } else if ((command === 'check-realise' || command === 'check-edit') && isLabel(argument) && first !== undefined) {
+      const { runs } = await loadGoldenRun(config);
+      const context = { bundle: runs[argument].bundle, inputPackage: runs[argument].inputPackage };
+      const semantic = acceptSkillReading(readPrivateJson(first), context);
+      if (command === 'check-realise') out(`${argument}: REALISE ACCEPTED ${keyed(key, semantic.structuralHash)}`);
+      else if (second !== undefined) out(`${argument}: EDIT ACCEPTED ${keyed(key, acceptEditorialRevision(semantic, readPrivateJson(second), context).structuralHash)}`);
+      else throw new Error('check-edit needs the accepted REALISE file and the EDIT file');
     } else if (command === 'accept' && isLabel(argument)) {
       const { runs } = await loadGoldenRun(config);
       const run = runs[argument];
@@ -115,7 +126,7 @@ async function main(): Promise<void> {
         if (!equal) process.exitCode = 1;
       }
     } else {
-      process.stderr.write('usage: etbz54 facts <source|near|removal> | emit | cones | accept <source|near|removal> | packets | assemble | record | verify\n');
+      process.stderr.write('usage: etbz54 facts <label> | emit | cones | check-realise <label> <file> | check-edit <label> <realise> <edit> | accept <label> | packets | assemble | record | verify\n');
       process.exitCode = 2;
       return;
     }

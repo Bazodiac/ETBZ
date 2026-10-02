@@ -361,6 +361,8 @@ export async function deriveGoldenCases(config: GoldenConfig): Promise<Record<Ca
 export type ReadingFile = 'skill-input' | 'semantic-reading' | 'skill-reading' | 'accepted-reading';
 export const caseFile = (config: GoldenConfig, label: CaseLabel, file: ReadingFile): string => workPath(config, 'cases', label, `${file}.json`);
 export const caseDir = (config: GoldenConfig, label: CaseLabel): string => workPath(config, 'cases', label);
+/** Every REALISE and EDIT attempt of a case, kept unchanged (realise-1.json, realise-2.json, edit-1.json). */
+export const attemptsDir = (config: GoldenConfig, label: CaseLabel): string => workPath(config, 'cases', label, 'attempts');
 export const CONES_FILE = 'pre-run-cones.json';
 
 export const readPrivateJson = (path: string): unknown => parseQuietly(readFileSync(path, 'utf8'), 'an archive file');
