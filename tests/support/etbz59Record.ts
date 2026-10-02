@@ -3,6 +3,10 @@
  * each section-8 item, re-derived from the committed files (`npm run etbz59 -- record` writes it; the contract suite
  * re-derives it byte for byte). The deterministic checks are re-run here; the qualitative judgements are read from
  * `judgements.json`, which records the independent instances' verdicts with the packets they judged.
+ *
+ * Bound to the boundary of e5ccc94c, where ETBZ-59 merged: ETBZ-60's READING_POSITION_UNGROUNDED refuses the three
+ * ETBZ-59 readings, so `record` reproduces the committed file only at that commit. The contract suite pins the file
+ * and checks every file it names instead of re-deriving it.
  */
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';

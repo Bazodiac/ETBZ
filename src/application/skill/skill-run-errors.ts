@@ -96,6 +96,9 @@ export const SKILL_RUN_ERROR_CODES = [
   'READING_LIFE_DOMAIN_INVENTED',
   /** An editorial revision that changes anything but customer text. */
   'READING_EDITORIAL_EXPANSION',
+  // --- the reading: position statements (ETBZ-60, PO decisions D-59-5, D-59-6) ---------------
+  /** A statement of the chart's positions as a whole (no pillar, not on any pillar, never on the surface, only in one place) without a cited fact of every pillar. */
+  'READING_POSITION_UNGROUNDED',
 ] as const;
 
 export type SkillRunErrorCode = (typeof SKILL_RUN_ERROR_CODES)[number];

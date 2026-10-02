@@ -137,6 +137,10 @@ describe('AC8: the verification contract still contains every mandatory gate', (
       'ETBZ-59 Anti-Boilerplate rehearsal guard',
       /etbz_step\s+"guards :: ETBZ-59[^"]*"\s+run_etbz59_individuality_guard/,
     ],
+    [
+      'ETBZ-60 position-statement guard',
+      /etbz_step\s+"guards :: ETBZ-60[^"]*"\s+run_etbz60_position_guard/,
+    ],
     ['secret scan', /secret-scan\.sh/],
     ['dependency risk scan', /npm audit/],
     ['container build dry run', /build-dry-run\.sh/],

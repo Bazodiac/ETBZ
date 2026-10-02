@@ -16,11 +16,12 @@ import { canonicalJson } from '../../src/domain/canonical-json.js';
 import type { HoroscopeModel, PillarName } from '../../src/application/horoscope-model.js';
 import { deriveInterpretationFeatureSet } from '../../src/application/interpretation/feature-set.js';
 import { INDIVIDUALITY_REASON_CODES } from '../../src/application/skill/index.js';
-import { loadRecordedRun, renderJson } from '../support/etbz58Rehearsal.js';
+import { structuralHash } from '../../src/domain/structural-hash.js';
+import { loadRecordedRun } from '../support/etbz58Rehearsal.js';
 import { caseFile, deriveCase } from '../support/etbz59Cases.js';
 import type { CaseLabel } from '../support/etbz59Cases.js';
 import { ETBZ59_JUDGES_DIR, deriveJudgePackets } from '../support/etbz59Judges.js';
-import { ETBZ59_JUDGEMENTS, ETBZ59_RECORD, deriveIndividualityRecord } from '../support/etbz59Record.js';
+import { ETBZ59_JUDGEMENTS, ETBZ59_RECORD } from '../support/etbz59Record.js';
 import { VARIANT_BIRTH_INPUTS, VARIANT_DEFINITIONS, VARIANT_LABELS, loadVariantRun, sourceChart, variantChart, variantReadbackFile } from '../support/etbz59Variants.js';
 
 const read = (path: string): Buffer => readFileSync(resolve(process.cwd(), path));
@@ -104,9 +105,34 @@ describe('ETBZ-59: the run record, the judges\' packets and the judgements', () 
     return reading.chapters[Number(match[1])]?.paragraphs[Number(match[2])]?.text ?? '';
   };
 
-  it('re-derives the run record byte for byte from the committed files', async () => {
-    expect(renderJson(await deriveIndividualityRecord())).toBe(read(ETBZ59_RECORD).toString('utf8'));
-  }, 60_000);
+  // ETBZ-60 (D-59-6) added READING_POSITION_UNGROUNDED to the boundary, which refuses the three ETBZ-59 readings at
+  // their position statements (tests/negative/etbz60-position-statements.negative.test.ts). The record was made under
+  // the boundary of e5ccc94c and stays as merged there: pinned byte for byte, every file it names checked against the
+  // committed bytes, and every accepted hash recomputed from the reading itself - nothing here re-runs the boundary.
+  it('keeps the run record as merged at e5ccc94c, byte for byte', () => {
+    expect(sha256Of(read(ETBZ59_RECORD))).toBe('sha256:f5a3e2e46bc5286da5e5c06fa548e9cc5046a0bc4fe2c888a37730ee5a8ac672');
+  });
+
+  it('finds every file the run record names at the hash it records, and every accepted hash in the reading itself', () => {
+    type Attempt = { file: string; sha256: string };
+    type CaseEntry = { skillInput: { fileSha256: string }; runs: { attempts: Attempt[] }[]; accepted: { semanticFileSha256: string; semanticStructuralHash: string; editFileSha256: string; acceptedStructuralHash: string; acceptedFileSha256: string } };
+    const record = JSON.parse(read(ETBZ59_RECORD).toString('utf8')) as { cases: Record<CaseLabel, CaseEntry>; variants: Record<string, { readbackFileSha256: string }>; preRunCones: Attempt; judgements: { file: { path: string; sha256: string }; judgeFiles: Record<string, string> } };
+    const named: [string, string][] = [
+      ...Object.entries(record.variants).map(([label, entry]): [string, string] => [variantReadbackFile(label as (typeof VARIANT_LABELS)[number]), entry.readbackFileSha256]),
+      [record.preRunCones.file, record.preRunCones.sha256],
+      [record.judgements.file.path, record.judgements.file.sha256],
+      ...Object.entries(record.judgements.judgeFiles).map(([file, digest]): [string, string] => [`${ETBZ59_JUDGES_DIR}/${file}`, digest]),
+    ];
+    for (const [label, entry] of Object.entries(record.cases) as [CaseLabel, CaseEntry][]) {
+      named.push([caseFile(label, 'skill-input'), entry.skillInput.fileSha256], [caseFile(label, 'semantic-reading'), entry.accepted.semanticFileSha256], [caseFile(label, 'skill-reading'), entry.accepted.editFileSha256], [caseFile(label, 'accepted-reading'), entry.accepted.acceptedFileSha256]);
+      for (const attempt of entry.runs.flatMap((run) => run.attempts)) named.push([attempt.file, attempt.sha256]);
+      const hashOf = (file: string): string => structuralHash(JSON.parse(read(file).toString('utf8')) as unknown);
+      expect(hashOf(caseFile(label, 'semantic-reading')), label).toBe(entry.accepted.semanticStructuralHash);
+      expect(hashOf(caseFile(label, 'skill-reading')), label).toBe(entry.accepted.acceptedStructuralHash);
+    }
+    expect(named.length).toBeGreaterThan(40);
+    for (const [file, digest] of named) expect(sha256Of(read(file)), file).toBe(digest);
+  });
 
   it('re-derives every file each judge read, byte for byte, from the accepted readings and the validated charts', async () => {
     const packets = await deriveJudgePackets();
