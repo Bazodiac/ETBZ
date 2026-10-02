@@ -29,6 +29,8 @@ import { passagesOf } from './etbz59Judges.js';
 import {
   CONES_FILE,
   DRAFTS_FILE,
+  ETBZ54_PREREGISTRATION,
+  PREREGISTERED_FILES,
   GOLDEN_LABELS,
   GoldenRunError,
   NEAR_DISPLAY_NAME,
@@ -197,9 +199,13 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
     drafting: {
       drafter: 'the Delivery Runner, from the frozen chart facts alone (D-53-4); D-59-2 and D-60-1 applied',
       drafts: file(workPath(config, DRAFTS_FILE)),
-      review: review === null ? NOT_RUN : review.rounds.map((round) => ({ round: round.round, verdict: round.verdict, report: k(round.report), findings: round.findings.map(({ id, severity, resolution }) => ({ id, severity, resolution })) })),
+      review: review === null ? NOT_RUN : review.rounds.map((round) => ({ round: round.round, verdict: round.verdict, report: file(workPath(config, round.report)), findings: round.findings.map(({ id, severity, resolution }) => ({ id, severity, resolution })) })),
     },
     preRunCones: existsSync(workPath(config, CONES_FILE)) ? { file: file(workPath(config, CONES_FILE)) } : NOT_RUN,
+    preRegistration: existsSync(resolve(root, ETBZ54_PREREGISTRATION)) ? {
+      fileSha256: repoSha(ETBZ54_PREREGISTRATION, root),
+      archiveUnchanged: PREREGISTERED_FILES.every((name) => (readJsonFile(ETBZ54_PREREGISTRATION, root) as { files: Record<string, string> }).files[name] === file(workPath(config, name))),
+    } : NOT_RUN,
     cases,
     deterministic: {
       swap: {

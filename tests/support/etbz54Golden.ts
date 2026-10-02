@@ -48,6 +48,10 @@ import type { ReplayedChart } from './etbz59Variants.js';
 
 export const ETBZ54_DIR = 'docs/evidence/etbz-54';
 export const ETBZ54_RECORD = `${ETBZ54_DIR}/golden-run-record.json`;
+/** Keyed digests of the drafts, their review, the packages and the cones, committed before any reading exists. */
+export const ETBZ54_PREREGISTRATION = `${ETBZ54_DIR}/pre-registration.json`;
+/** The archive files the pre-registration binds (below `<archive>/etbz54/`). */
+export const PREREGISTERED_FILES = ['drafts.json', 'draft-review.json', 'pre-run-cones.json', 'cases/source/skill-input.json', 'cases/near/skill-input.json', 'cases/removal/skill-input.json', 'variants/near/runtime-readback.json'] as const;
 /** The run's working folder below the archive directory. */
 export const ETBZ54_WORK = 'etbz54';
 export const GOLDEN_LABELS = ['source', 'near', 'removal'] as const satisfies readonly CaseLabel[];

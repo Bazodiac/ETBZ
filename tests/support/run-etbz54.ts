@@ -7,6 +7,8 @@
  *                                 review/chart-<label>.txt); `near` needs the variant, `removal` the drafts
  *   emit                          writes each case's Skill input package (cases/<label>/skill-input.json)
  *   cones                         writes the pre-run cones, BEFORE any reading exists; prints their keyed digest
+ *   preregister                   writes docs/evidence/etbz-54/pre-registration.json: keyed digests of the drafts, their
+ *                                 review, the packages and the cones - committed before any reading exists
  *   check-realise <label> <file>  runs the acceptance boundary on one REALISE attempt (wrapper step 5: the operator runs
  *                                 it; a refusal lists every violation of one full pass - what the one repair receives)
  *   check-edit <label> <realise> <edit>   the same for an EDIT revision (acceptEditorialRevision)
@@ -29,7 +31,9 @@ import type { CaseLabel } from './etbz59Cases.js';
 import { chartSheet } from './etbz59Judges.js';
 import {
   CONES_FILE,
+  ETBZ54_PREREGISTRATION,
   ETBZ54_RECORD,
+  PREREGISTERED_FILES,
   GOLDEN_LABELS,
   archiveHas,
   assertTreePrivate,
@@ -87,6 +91,17 @@ async function main(): Promise<void> {
       const text = renderJson(await deriveGoldenCones(config));
       writePrivateFile(path, text);
       out(`cones written: ${path} · ${keyed(key, text)}`);
+    } else if (command === 'preregister') {
+      const readings = GOLDEN_LABELS.filter((label) => archiveHas(caseFile(config, label, 'semantic-reading')) || archiveHas(attemptsDir(config, label)));
+      if (readings.length > 0) throw new Error(`a reading exists already (${readings.join(', ')}); the pre-registration must precede every reading`);
+      writeFileSync(resolve(process.cwd(), ETBZ54_PREREGISTRATION), renderJson({
+        recordVersion: 'etbz54-pre-registration.v1',
+        caseRef: 'GOLDEN-KT-01',
+        note: 'committed before any reading of the three cases existed (contract 77266967 v3, 6.3 step 1 and 8.2; D-53-4 review before the reading); the files stay in the private archive; digests are HMAC-SHA256 keyed with the archive key',
+        keyFingerprint: keyed(key, 'etbz53-golden-freeze-key-fingerprint'),
+        files: Object.fromEntries(PREREGISTERED_FILES.map((name) => [name, keyed(key, readFileSync(workPath(config, name)))])),
+      }));
+      out(`pre-registration written: ${ETBZ54_PREREGISTRATION}`);
     } else if ((command === 'check-realise' || command === 'check-edit') && isLabel(argument) && first !== undefined) {
       const { runs } = await loadGoldenRun(config);
       const context = { bundle: runs[argument].bundle, inputPackage: runs[argument].inputPackage };
@@ -126,7 +141,7 @@ async function main(): Promise<void> {
         if (!equal) process.exitCode = 1;
       }
     } else {
-      process.stderr.write('usage: etbz54 facts <label> | emit | cones | check-realise <label> <file> | check-edit <label> <realise> <edit> | accept <label> | packets | assemble | record | verify\n');
+      process.stderr.write('usage: etbz54 facts <label> | emit | cones | preregister | check-realise <label> <file> | check-edit <label> <realise> <edit> | accept <label> | packets | assemble | record | verify\n');
       process.exitCode = 2;
       return;
     }
