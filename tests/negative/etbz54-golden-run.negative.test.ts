@@ -48,6 +48,8 @@ import {
 import type { CaseDraft, GoldenCharts, GoldenConfig, GoldenDrafts } from '../support/etbz54Golden.js';
 import { namedDifference } from '../support/etbz59Individuality.js';
 import { removalClaimSheet, scrubGolden } from '../support/etbz54Run.js';
+import { assertGoldenRecordPrivate } from '../support/etbz54Record.js';
+import { deriveInterpretationFeatureSet } from '../../src/application/interpretation/feature-set.js';
 
 vi.setConfig({ testTimeout: 60_000 });
 
@@ -334,5 +336,27 @@ describe('ETBZ-54: the judge packets', () => {
 
   it('replaces the case reference in a blind packet', () => {
     expect(scrubGolden('Erstellt für GOLDEN-KT-01, für GOLDEN-KT-01.')).toBe('Erstellt für [Name], für [Name].');
+  });
+});
+
+describe('ETBZ-54: the run record carries no case data', () => {
+  it('accepts codes, public identities and keyed digests, and refuses each kind of case data', async () => {
+    const { charts, drafts } = await fixtureDrafts();
+    const runs = { source: deriveGoldenCase('source', charts, drafts), near: deriveGoldenCase('near', charts, drafts), removal: deriveGoldenCase('removal', charts, drafts) };
+    const raw = JSON.parse(JSON.stringify(KNOWN_BIRTH)) as unknown;
+    const models = [charts.source.model, charts.near.model];
+    const clean = { caseRef: 'GOLDEN-KT-01', codes: ['READING_VALIDATES_AGAINST_FOIL'], bundle: runs.source.bundle.structuralHash, digest: `hmac-sha256:${'a'.repeat(64)}`, cites: ['source chapters[2].paragraphs[3]'] };
+    const check = (record: unknown): Promise<string> => codeOf(() => { assertGoldenRecordPrivate(record, raw, models, { runs, drafts }, []); });
+    expect(await check(clean)).toBe('ACCEPTED');
+    expect(await check({ ...clean, note: `born ${String((raw as { birthDate: string }).birthDate)}` })).toBe('FREEZE_RECORD_LEAKS_CASE_DATA');
+    expect(await check({ ...clean, pdf: sha256Of('a PDF of the case') })).toBe('GOLDEN_RECORD_LEAKS_CASE_DATA');
+    const dayMaster = String(deriveInterpretationFeatureSet(charts.source.model).facts.find((fact) => fact.id === 'chart.dayMaster.stem')?.value);
+    expect(await check({ ...clean, note: `day master ${dayMaster}` })).toBe('GOLDEN_RECORD_LEAKS_CASE_DATA');
+    expect(await check({ ...clean, note: drafts.cases.source.claims[0]?.statement })).toBe('GOLDEN_RECORD_LEAKS_CASE_DATA');
+    const reading = { chapters: [{ paragraphs: [{ text: 'Dieser Satz steht in der Lesung und darf nicht ins Record gelangen. Noch ein Satz.' }] }] };
+    const leaked = codeOf(() => { assertGoldenRecordPrivate({ ...clean, quote: 'Dieser Satz steht in der Lesung und darf nicht ins Record gelangen.' }, raw, models, { runs, drafts }, [reading]); });
+    expect(await leaked).toBe('GOLDEN_RECORD_LEAKS_CASE_DATA');
+    // The refusal names the kind of leak, never the content.
+    expect(await messageOf(() => { assertGoldenRecordPrivate({ ...clean, note: `day master ${dayMaster}` }, raw, models, { runs, drafts }, []); })).not.toContain(dayMaster);
   });
 });
