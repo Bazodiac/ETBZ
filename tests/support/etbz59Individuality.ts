@@ -254,15 +254,30 @@ export interface Passage {
   readonly text: string;
 }
 
+/** True when `text` contains `term` as a whole word or phrase (Unicode letters and digits bound it), ignoring case. */
+export function containsTerm(text: string, term: string): boolean {
+  if (term.trim() === '') return false;
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'iu').test(text);
+}
+
 /**
- * Candidate passages for model-memory rescue (6.4): a passage of the reduced reading that names a removed fact's
- * value or source label. Not a verdict - the symbol rule of the acceptance boundary proves a symbol was cited, not
- * its role (chart-symbol-lexicon.ts), and paraphrases escape any string scan - so every candidate goes to the
- * independent judgement, which decides `MODEL_MEMORY_RESCUE`.
+ * Candidate passages for model-memory rescue (6.4): a passage of the reduced reading that names a withdrawn value or
+ * label (`subjectTerms`) together with the position it was withdrawn from (`positionTerms`), each as a whole word.
+ * The month and year branches keep the same Ten God in S⁻, so a subject term alone is legitimate content (draft
+ * review round 3, H1). Not a verdict - the symbol rule proves a symbol was cited, not its role
+ * (chart-symbol-lexicon.ts), and paraphrases escape any string scan - so every candidate goes to the independent
+ * judgement, which decides `MODEL_MEMORY_RESCUE`.
  */
-export function rescueCandidates(passages: readonly Passage[], terms: readonly string[]): Passage[] {
-  const needles = terms.map((term) => term.toLowerCase()).filter((term) => term.length > 0);
-  return passages.filter((passage) => needles.some((needle) => passage.text.toLowerCase().includes(needle)));
+export function rescueCandidates(passages: readonly Passage[], subjectTerms: readonly string[], positionTerms: readonly string[]): Passage[] {
+  return passages.filter(
+    (passage) => subjectTerms.some((term) => containsTerm(passage.text, term)) && positionTerms.some((term) => containsTerm(passage.text, term)),
+  );
+}
+
+/** Passages that name any of `terms` as a whole word or phrase (e.g. a single leading element in N's reading). */
+export function termCandidates(passages: readonly Passage[], terms: readonly string[]): Passage[] {
+  return passages.filter((passage) => terms.some((term) => containsTerm(passage.text, term)));
 }
 
 // ---------------------------------------------------------------------------------------------------------------

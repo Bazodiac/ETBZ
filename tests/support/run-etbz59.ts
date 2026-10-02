@@ -12,7 +12,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { acceptEditorialRevision, acceptSkillReading } from '../../src/application/skill/index.js';
 import { renderJson, readJsonFile } from './etbz58Rehearsal.js';
-import { CASE_LABELS, ETBZ59_CONES, NEAR_CONTRADICTION_TERMS, REMOVED_FACT_IDS, RESCUE_TERMS, RESCUE_TERMS_WHY, caseFile, deriveCase } from './etbz59Cases.js';
+import { CASE_LABELS, ETBZ59_CONES, NEAR_CONTRADICTION_TERMS, REMOVED_FACT_IDS, RESCUE_POSITION_TERMS, RESCUE_SUBJECT_TERMS, RESCUE_TERMS_WHY, caseFile, deriveCase } from './etbz59Cases.js';
 import type { CaseLabel, CaseRun } from './etbz59Cases.js';
 import { dependencyCone, namedDifference } from './etbz59Individuality.js';
 import type { Cone } from './etbz59Individuality.js';
@@ -62,7 +62,7 @@ if (command === 'emit') {
     nearNeighbourDifference: { variant: 'near', factIds: delta },
     nearNeighbourAndMutationCone: describe(dependencyCone(s, delta), s),
     removal: { factIds: [...REMOVED_FACT_IDS], cone: describe(dependencyCone(s, REMOVED_FACT_IDS), s) },
-    rescueTerms: { terms: [...RESCUE_TERMS], why: RESCUE_TERMS_WHY },
+    rescueTerms: { subjectTerms: [...RESCUE_SUBJECT_TERMS], positionTerms: [...RESCUE_POSITION_TERMS], why: RESCUE_TERMS_WHY },
     nearContradictionTerms: { terms: [...NEAR_CONTRADICTION_TERMS], why: 'N ties Feuer and Metall at the top; FuFirE still names Feuer dominant (a tie-break the tie claim does not cite), so prose naming one leading element contradicts the tie claim (draft review round 2, G3)' },
     graphs: { source: s.graph.structuralHash, near: n.graph.structuralHash, removal: r.graph.structuralHash },
     plans: { source: s.plan.structuralHash, near: n.plan.structuralHash, removal: r.plan.structuralHash },

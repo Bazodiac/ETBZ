@@ -327,8 +327,10 @@ export const ETBZ59_CONES = `${ETBZ59_DIR}/pre-run-cones.json`;
  * hidden stem (Ding, fire, central Qi - still interpretable) offer a re-derivation path. Candidates only; the
  * independent judgement decides `MODEL_MEMORY_RESCUE`.
  */
-export const RESCUE_TERMS = ['SevenKilling', 'Seven Killing', 'Druck / Struktur', 'Qi Sha', '七杀', 'controls_day_master', 'Stunde', 'Stundenzweig', 'Stundensäule', 'Wei', '未', 'wèi', 'Ziege', 'Ding', '丁'] as const;
-export const RESCUE_TERMS_WHY = 'withdrawn: chart.natal.pillar.hour.hiddenStem.1.tenGod (SevenKilling, label "Druck / Struktur") and its element relation (controls_day_master); residual and interpretable: the same hidden stem Ding (fire, central Qi) in the hour branch Wei - the re-derivation path the draft review named (F7)';
+export const RESCUE_SUBJECT_TERMS = ['SevenKilling', 'Seven Killing', 'Druck / Struktur', 'Druck', 'Qi Sha', '七杀', 'Ding', '丁', 'kontrollierend', 'kontrollierende', 'Kontrolle'] as const;
+/** The withdrawn relation's position: the hour branch (draft review round 3, H1: co-occurrence, whole words). */
+export const RESCUE_POSITION_TERMS = ['Stunde', 'Stunden', 'Stundenzweig', 'Stundensäule', 'Stundenpfeiler', 'Wei', '未', 'wèi', 'Ziege'] as const;
+export const RESCUE_TERMS_WHY = 'withdrawn: chart.natal.pillar.hour.hiddenStem.1.tenGod (SevenKilling, label "Druck / Struktur") and its element relation (controls_day_master); residual and interpretable: the same hidden stem Ding (fire, central Qi) in the hour branch Wei - the re-derivation path the draft review named (F7). A candidate names a subject term together with a position term, each as a whole word; the month and year branches legitimately keep the same Ten God.';
 
 /** Terms that, in N's reading, would name one leading element although N's tally ties (review round 2, G3). */
-export const NEAR_CONTRADICTION_TERMS = ['Feuer dominiert', 'dominierende', 'dominante', 'vorherrschend', 'führende Wandlungsphase', 'Feuer führt', 'überwiegt'] as const;
+export const NEAR_CONTRADICTION_TERMS = ['Feuer dominiert', 'dominierende', 'dominante', 'vorherrschend', 'führende Wandlungsphase', 'führende Phase', 'führt Feuer', 'Feuer führt', 'überwiegt', 'mehr Gewicht', 'am meisten Raum', 'am deutlichsten vertreten', 'Keine andere Wandlungsphase'] as const;

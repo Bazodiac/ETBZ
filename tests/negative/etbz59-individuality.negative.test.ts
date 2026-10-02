@@ -16,8 +16,10 @@ import {
   dependencyCone,
   namedDifference,
   removalCheck,
+  containsTerm,
   rescueCandidates,
   reuseCandidates,
+  termCandidates,
   swapRevalidation,
 } from '../support/etbz59Individuality.js';
 import { variantChart } from '../support/etbz59Variants.js';
@@ -129,9 +131,19 @@ describe('ETBZ-59 candidate finders (6.4 prose, 6.7)', () => {
     { path: 'chapters[1].paragraphs[0]', text: 'Die Ressource bleibt im Hintergrund und trägt leise mit.' },
   ];
 
-  it('finds the passages that name a removed fact, case-insensitively, and nothing else', () => {
-    expect(rescueCandidates(passages, ['STUNDENZWEIG']).map((passage) => passage.path)).toEqual(['chapters[0].paragraphs[0]']);
-    expect(rescueCandidates(passages, [''])).toEqual([]);
+  it('finds a passage only where a withdrawn subject and its position co-occur, as whole words, case-insensitively', () => {
+    expect(rescueCandidates(passages, ['KONTROLLE'], ['stundenzweig']).map((passage) => passage.path)).toEqual(['chapters[0].paragraphs[0]']);
+    // The subject alone is legitimate (the month keeps the same Ten God); an empty term matches nothing.
+    expect(rescueCandidates(passages, ['Kontrolle'], ['Jahr'])).toEqual([]);
+    expect(rescueCandidates(passages, [''], [''])).toEqual([]);
+  });
+
+  it('matches whole words only: "Wei" is not inside "Zweig" or "weitere", and a phrase matches as a phrase', () => {
+    const text = [{ path: 'p', text: 'Der Erdzweig trägt weitere Zweige.' }];
+    expect(termCandidates(text, ['Wei', 'Ding'])).toEqual([]);
+    expect(termCandidates([{ path: 'q', text: 'Im Zweig Wei liegt Ding.' }], ['Wei']).map((passage) => passage.path)).toEqual(['q']);
+    expect(termCandidates([{ path: 'r', text: 'Keine andere Wandlungsphase erhält mehr Gewicht.' }], ['mehr Gewicht']).map((passage) => passage.path)).toEqual(['r']);
+    expect(containsTerm('Druck / Struktur', 'Druck / Struktur')).toBe(true);
   });
 
   it('finds a verbatim interpretive sentence shared by two readings, and ignores short framing', () => {
