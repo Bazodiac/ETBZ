@@ -53,8 +53,14 @@ Three kinds of sentence are not position statements:
 - sentences in which "nirgends" or "überall" says nothing about a position ("eine Erwartung, die nirgends formuliert
   ist").
 
-The check runs last in the paragraph pass. Every other refusal therefore keeps its code, and the result joins the
-D-59-4 diagnostics like any other check.
+The check runs last in the paragraph pass, and its result joins the D-59-4 diagnostics like any other check. Every
+diagnostic entry of another check keeps its code. The first refusal of a reading changes wherever a position
+statement comes earlier in pass order than its first other violation. Re-running the archived ETBZ-59 attempts
+measured this for 6 of 9: for example, a near-run-1 attempt that was refused for chapter length is now refused for
+position.
+
+The text is NFC-normalised before matching, as every other phrase check here. The exemption sets aside only the
+defining clause, never the rest of its sentence (PR #25 review, MINOR-6).
 
 ### 2. What was measured before it was built
 
@@ -78,7 +84,9 @@ It therefore stays as merged:
 - every accepted structural hash is recomputed from the reading itself.
 
 Its re-derivation test is replaced, and the guard's RECORD mutant is replaced by mutants on the pin and on a named
-file.
+file. The pin also freezes record fields the boundary does not touch (the cone counts, the rescue triage, the S⁻
+hashes). Those outcomes stay covered by the ETBZ-59 negative suite: swap, 6.1, 6.3, removal and the IND-8 direction.
+The record's `runsNote` describes the e5ccc94c boundary under which it was made.
 
 ### 4. Round 1: the re-reading under the boundary alone (D-59-5)
 
@@ -124,7 +132,9 @@ invocation.
 
 - **R(S)** was accepted at the first attempt, then its EDIT.
 - **R(N)** was refused once, with two entries in one diagnostics list:
-  - `READING_POSITION_UNGROUNDED` for a surface statement about the day pillar its paragraph does not cite;
+  - `READING_POSITION_UNGROUNDED` for "ohne an der Oberfläche zu stehen", which speaks of one pillar (the day's own) while
+    the paragraph cites no year or hour fact. This refusal comes from the check's strictness, not from catching a
+    statement about the whole chart;
   - `READING_META_NARRATION` for "der Indirekten Quelle", an inflected form of the cited label. This is the same
     false reading of the ETBZ-57 meta check that ETBZ-59 hit; it is outside this slice and recorded for the Product
     Owner.
@@ -162,8 +172,16 @@ invocation.
 1. The coverage counts pillars, not layers. A paragraph that cites a hidden-stem fact of every pillar could still
    state something of every pillar's surface. Every case measured cites far fewer pillars.
 2. The forms are German phrase patterns. A paraphrase outside them ("an keiner Stelle sichtbar", "Was nach außen
-   erscheint, ist ...") is not refused; round 1 measured this. The drafting rule of D-60-1 grounds the surface the
+   erscheint, ist ...") is not refused; round 1 measured this. So are variants inside the listed forms: "auf keiner
+   der vier sichtbaren Säulen", "nicht in einer der Säulen", "lediglich im Monatszweig", "allein die Stundensäule",
+   "in allen vier Zweigen", "auf jeder Säule" and "nicht an die Oberfläche". These forms were deliberately not extended
+   further (review convergence). The drafting rule of D-60-1 grounds the surface the
    paraphrase speaks of, and the independent 6.7 judgement remains the backstop.
 3. Titles, reflection questions and the method note are not checked; the defect class surfaced in paragraphs.
 4. The drafting rule covers surface/interior contrasts. Other chart-wide summaries a thesis might invite are not
    covered by a claim; the 6.7 judgement remains the backstop for them.
+5. The check is strict, and that has a cost. It also refuses sentences that are not about the whole chart. Measured
+   examples are "Keine Säule spricht für sich allein" (framework, in an archived ETBZ-59 attempt), "an keiner der
+   beiden Positionen" (two positions), the idiom "keine klare Position", the one-pillar "ohne an der Oberfläche zu
+   stehen" (round-2 R(N)) and the negative test's own "Keine Säule steht dabei ohne Bezug zum Tagesmeister". Each such
+   refusal adds one entry to the one repair a run allows. In every measured run the repair fixed all entries at once.

@@ -3,9 +3,10 @@
  *
  * The variants were computed live by FuFirE through the ETBZ-58 live stage (`npm run etbz59:variants`); the suite
  * replays the recorded bytes offline and checks what the run claims: the attested runtime of ETBZ-58, readiness, the
- * call without credentials refused, and that each variant differs from Musterkundin A exactly as defined. The run
- * record, the judges' packets and the judgements are re-derived from the committed files, and every quote a judgement
- * rests on is checked verbatim against the accepted reading at its path.
+ * call without credentials refused, and that each variant differs from Musterkundin A exactly as defined. The judges'
+ * packets and the judgements are re-derived from the committed files; the run record is pinned as merged at e5ccc94c
+ * (ETBZ-60 changed the boundary, ADR 0017 section 3); every quote a judgement rests on is checked verbatim against the
+ * accepted reading at its path.
  */
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';

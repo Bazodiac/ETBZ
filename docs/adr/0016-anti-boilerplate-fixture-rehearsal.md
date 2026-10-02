@@ -114,7 +114,7 @@ reason code (contract section 10). The runner measured the chart facts and claim
 verdict, and the suite re-derives them. The ADVISORY codes rest on judge B's reading alone: they are candidates
 until the Product Owner judges the quoted passages, to whom they go.
 
-### 9. The outcome (`docs/evidence/etbz-59/individuality-record.json`, re-derived byte for byte)
+### 9. The outcome (`docs/evidence/etbz-59/individuality-record.json`, re-derived byte for byte until ETBZ-60; pinned since, ADR 0017 section 3)
 
 | Section 8 item | Outcome |
 | --- | --- |

@@ -18,9 +18,11 @@ or viewed.
 | `judgements.json` | every verdict with its reason code, quoting the passages by path; for the BLOCKING code, the runner's corroboration and the smallest repair | the Delivery Runner, from the two reports |
 | `individuality-record.json` | the run record: identities, runs, accepted hashes, the deterministic outcomes, the IND-8 direction and the section-8 items | `npm run etbz59 -- record` |
 
-`tests/contract/etbz59-individuality-evidence.contract.test.ts` re-derives the record, the 14 packet files with the
-operator key, and the BLOCKING facts from the committed files. It finds every quote of `judgements.json` verbatim at its path, and checks
-that each judge read only its own packet. `npm run guards:etbz59` holds 46 source mutants. Each one must be killed by
+`tests/contract/etbz59-individuality-evidence.contract.test.ts` re-derives the 14 packet files with the operator key and
+the BLOCKING facts from the committed files. It pins the run record as merged at e5ccc94c and checks every file the
+record names at its hash, because ETBZ-60's boundary refuses these readings (ADR 0017 section 3). It finds every quote
+of `judgements.json` verbatim at its path, and checks that each judge read only its own packet. `npm run guards:etbz59`
+holds 47 source mutants. Each one must be killed by
 an assertion of the test named for it.
 
 ## The outcome

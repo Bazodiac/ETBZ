@@ -16,9 +16,9 @@ import { acceptEditorialRevision, acceptSkillReading, findPositionStatement } fr
 import type { AcceptedSkillReading } from '../../src/application/skill/index.js';
 import { caseFile as etbz59CaseFile, deriveCase } from './etbz59Cases.js';
 import type { CaseRun } from './etbz59Cases.js';
-import { reuseCandidates } from './etbz59Individuality.js';
+import { dependencyCone, namedDifference, reuseCandidates } from './etbz59Individuality.js';
 import { chartSheet, claimSheet, passagesOf, readingText } from './etbz59Judges.js';
-import { deriveRound2Case } from './etbz60Cases.js';
+import { SURFACE_CLAIM_ID, SURFACE_FACT_IDS, SURFACE_STATEMENTS, deriveRound2Case } from './etbz60Cases.js';
 
 export const ETBZ60_DIR = 'docs/evidence/etbz-60';
 export const ETBZ60_RECORD = `${ETBZ60_DIR}/rereading-record.json`;
@@ -78,6 +78,23 @@ export async function deriveJudgePacket(round: Etbz60Round, root: string = proce
     positionStatements: ETBZ60_LABELS.flatMap((label) => passages[label].filter((passage) => findPositionStatement(passage.text) !== null).map((passage) => `${label} ${passage.path}`)),
   }, null, 1);
   return files;
+}
+
+/** Round 2's pre-run cones (contract 6.3 step 1, section 8.2): written before any round-2 reading, re-derived by the suite. */
+export async function deriveRound2Cones(root: string = process.cwd()): Promise<Record<string, unknown>> {
+  const [s, n] = [await deriveRound2Case('source', root), await deriveRound2Case('near', root)];
+  const delta = namedDifference(s.model, n.model);
+  const cone = dependencyCone(s, delta);
+  return {
+    recordVersion: 'etbz60-round2-pre-run-cones.v1',
+    note: 'written before any round-2 reading exists; the round-2 readings are judged against these cones (PO decision D-60-1)',
+    surfaceClaim: { claimId: SURFACE_CLAIM_ID, factIds: [...SURFACE_FACT_IDS], statements: SURFACE_STATEMENTS },
+    nearNeighbourDifference: { variant: 'near', factIds: delta },
+    nearNeighbourCone: { ...cone, claimStatements: cone.claims.map((id) => s.graph.claims.find((claim) => claim.claimId === id)?.statement ?? null) },
+    graphs: { source: s.graph.structuralHash, near: n.graph.structuralHash },
+    plans: { source: s.plan.structuralHash, near: n.plan.structuralHash },
+    packages: { source: s.inputPackage.structuralHash, near: n.inputPackage.structuralHash },
+  };
 }
 
 function runsOf(round: Etbz60Round, label: Etbz60Label, run: CaseRun, root: string): unknown[] {

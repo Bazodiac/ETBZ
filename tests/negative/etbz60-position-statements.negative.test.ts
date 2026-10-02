@@ -14,6 +14,12 @@ import { SkillRunError, acceptSkillReading, findPositionStatement } from '../../
 import { caseFile, deriveCase } from '../support/etbz59Cases.js';
 import type { CaseLabel } from '../support/etbz59Cases.js';
 import { skillFixtureV1_1 } from '../support/skillFixture.js';
+import { casePlanDraft } from '../support/etbz59Cases.js';
+import { deriveRound2Case, placeSurfaceClaim } from '../support/etbz60Cases.js';
+import { caseFile as roundCaseFile } from '../support/etbz60Rereading.js';
+import { planContextFor } from '../support/metaNarrativePlanFixture.js';
+import { contextFor } from '../support/claimGraphFixture.js';
+import { PLAN_CONTRACT_BINDINGS_V1_1 } from '../../src/application/interpretation/meta-narrative-plan.js';
 
 // Each acceptance runs a 4,000-word reading through every gate; a default 5 s timeout would read as a gate failure.
 vi.setConfig({ testTimeout: 60_000 });
@@ -80,6 +86,12 @@ describe('ETBZ-60: what a position statement is', () => {
     expect(findPositionStatement('Diese Stimme liegt nur im Monatszweig.')).toBe('nur im Monatszweig');
   });
 
+  it('sets aside only the defining clause, not its sentence, and reads decomposed Unicode (PR #25 review, MINOR-6)', () => {
+    expect(findPositionStatement('Die Stämme, die nicht sichtbar sind, liegen in den Zweigen, und die fordernde Stimme steht auf keiner Säule oben.')).toBe('keiner Säule');
+    expect(findPositionStatement('Sie steht auf keiner Säule oben.'.normalize('NFD'))).toBe('keiner Säule');
+    expect(findPositionStatement('Die Anforderung tritt nicht an der Oberfläche einer Säule auf.'.normalize('NFD'))).toBe('nicht an der Oberfläche einer Säule');
+  });
+
   it('leaves framework sentences alone: a defining clause about stems, "every pillar has", and "not only in"', () => {
     // The ETBZ-57 reading the Product Owner accepted at the Editorial Gate, chapters[2].paragraphs[3].
     expect(findPositionStatement('Himmelsstämme, die nicht auf der Oberfläche einer Säule stehen, sondern im Zweig enthalten sind.')).toBeNull();
@@ -115,5 +127,25 @@ describe('ETBZ-60: a statement of every position is grounded by a fact of every 
 
   it('accepts the Editorial-Gate reading of ETBZ-57 unchanged', () => {
     expect(() => acceptSkillReading(baseline, { bundle, inputPackage })).not.toThrow();
+  });
+});
+
+describe('ETBZ-60: grounding through claims, and the round-2 placement rule', () => {
+  it('accepts a statement of every position grounded through its claims alone (round-2 R(S) [2.5] with its own facts removed)', async () => {
+    const run = await deriveRound2Case('source');
+    const reading = readJson(roundCaseFile('round-2', 'source', 'skill-reading'));
+    const target = reading.chapters[2]?.paragraphs[5];
+    expect(findPositionStatement(target?.text ?? '')).not.toBeNull();
+    if (target !== undefined) target.factRefs = [];
+    expect(() => acceptSkillReading(reading, { bundle: run.bundle, inputPackage: run.inputPackage })).not.toThrow();
+  });
+
+  it('refuses a plan without a CONTRAST chapter over the thesis or without an INTEGRATE chapter (REHEARSAL_DRAFT_PLAN_SHAPE)', async () => {
+    const run = await deriveRound2Case('source');
+    const context = contextFor(run.model);
+    const base = casePlanDraft('source', { ...planContextFor(context, run.graph), contractBindings: PLAN_CONTRACT_BINDINGS_V1_1 });
+    const withoutIntegrate = { ...base, chapterPlan: base.chapterPlan.filter((chapter) => chapter.narrativeOperation !== 'INTEGRATE') };
+    expect(() => placeSurfaceClaim(withoutIntegrate, 'draft.surface', 'source')).toThrow(/REHEARSAL_DRAFT_PLAN_SHAPE|no CONTRAST chapter over the thesis or no INTEGRATE chapter/u);
+    expect(placeSurfaceClaim(base, 'draft.surface', 'source').chapterPlan.filter((chapter) => chapter.claimRefs.includes('draft.surface')).map((chapter) => chapter.narrativeOperation)).toEqual(['CONTRAST', 'INTEGRATE']);
   });
 });

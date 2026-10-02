@@ -27,7 +27,9 @@ Round 1 used ETBZ-59's packages (`docs/evidence/etbz-59/cases/<label>/skill-inpu
 
 `tests/contract/etbz60-rereading-evidence.contract.test.ts` checks, for each round:
 
-- every reading passes this boundary to its committed accepted bytes and carries no position statement;
+- every reading passes this boundary to its committed accepted bytes;
+- every statement of the chart's positions as a whole stands in a paragraph that cites every pillar, and round 1 has none (round-2 R(S) has five, each grounded by the surface claim);
+- round 2's packages and cones are the derivation of the reviewed drafts, and the swap, 6.1 and 6.3 outcomes ADR 0017 states hold;
 - the record and each packet are re-derived byte for byte;
 - the judge read only its packet;
 - every quote stands at its path;

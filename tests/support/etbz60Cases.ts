@@ -79,8 +79,11 @@ export function round2Claims(label: Round2Label, model: HoroscopeModel): Interpr
  * either chapter is refused, never silently left without the claim.
  */
 export function round2PlanDraft(label: Round2Label, planContext: MetaNarrativePlanContext): MutablePlanDraft {
-  const base = casePlanDraft(label, planContext);
-  const surface = idOf(surfaceClaim(label), planContext.graph);
+  return placeSurfaceClaim(casePlanDraft(label, planContext), idOf(surfaceClaim(label), planContext.graph), label);
+}
+
+/** The placement rule itself, exported so that its refusal can be tested on a plan that lacks the chapters. */
+export function placeSurfaceClaim(base: MutablePlanDraft, surface: string, label: string): MutablePlanDraft {
   const thesis = base.reportThesis.claimRefs;
   const contrastIndex = base.chapterPlan.findIndex((chapter) => chapter.narrativeOperation === 'CONTRAST' && thesis.every((id) => chapter.claimRefs.includes(id)));
   const integrateIndex = base.chapterPlan.findIndex((chapter) => chapter.narrativeOperation === 'INTEGRATE');

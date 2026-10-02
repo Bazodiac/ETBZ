@@ -13,9 +13,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { renderJson } from './etbz58Rehearsal.js';
-import { dependencyCone, namedDifference } from './etbz59Individuality.js';
-import { SURFACE_CLAIM_ID, SURFACE_FACT_IDS, SURFACE_STATEMENTS } from './etbz60Cases.js';
-import { ETBZ60_LABELS, ETBZ60_RECORD, ETBZ60_ROUNDS, ROUND2_CONES, acceptCase, caseFile, deriveJudgePacket, deriveRereadingRecord, deriveRoundCase, judgeDir } from './etbz60Rereading.js';
+import { ETBZ60_LABELS, ETBZ60_RECORD, ETBZ60_ROUNDS, ROUND2_CONES, acceptCase, caseFile, deriveJudgePacket, deriveRereadingRecord, deriveRound2Cones, deriveRoundCase, judgeDir } from './etbz60Rereading.js';
 import type { Etbz60Label, Etbz60Round } from './etbz60Rereading.js';
 
 const write = (path: string, data: string): void => {
@@ -36,20 +34,9 @@ if (command === 'emit') {
   }
 } else if (command === 'cones') {
   // Contract 6.3 step 1 and section 8.2: the cones are listed BEFORE the round-2 readings exist (committed first).
-  const [s, n] = [await deriveRoundCase('round-2', 'source'), await deriveRoundCase('round-2', 'near')];
-  const delta = namedDifference(s.model, n.model);
-  const cone = dependencyCone(s, delta);
-  write(ROUND2_CONES, renderJson({
-    recordVersion: 'etbz60-round2-pre-run-cones.v1',
-    note: 'written before any round-2 reading exists; the round-2 readings are judged against these cones (PO decision D-60-1)',
-    surfaceClaim: { claimId: SURFACE_CLAIM_ID, factIds: [...SURFACE_FACT_IDS], statements: SURFACE_STATEMENTS },
-    nearNeighbourDifference: { variant: 'near', factIds: delta },
-    nearNeighbourCone: { ...cone, claimStatements: cone.claims.map((id) => s.graph.claims.find((claim) => claim.claimId === id)?.statement ?? null) },
-    graphs: { source: s.graph.structuralHash, near: n.graph.structuralHash },
-    plans: { source: s.plan.structuralHash, near: n.plan.structuralHash },
-    packages: { source: s.inputPackage.structuralHash, near: n.inputPackage.structuralHash },
-  }));
-  process.stdout.write(`cones written: ${ROUND2_CONES} (cone ${String(cone.claims.length)} claims)\n`);
+  const cones = await deriveRound2Cones();
+  write(ROUND2_CONES, renderJson(cones));
+  process.stdout.write(`cones written: ${ROUND2_CONES}\n`);
 } else if (command === 'accept' && isRound(first) && isLabel(second)) {
   try {
     const { semantic, edited } = acceptCase(first, second, await deriveRoundCase(first, second));

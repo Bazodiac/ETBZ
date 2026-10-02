@@ -426,15 +426,17 @@ const POSITION_STATEMENTS: readonly RegExp[] = [
   // "nur im Monatszweig" (not "nicht nur im ...")
   new RegExp(`(?<!\\bnicht\\s)\\b(?:nur|ausschließlich|einzig)\\s+(?:\\p{L}+\\s+){0,3}(?:im|in\\s+der|in\\s+den|auf\\s+der|an\\s+der)\\s+\\p{L}*${POSITION_NOUNS}(?![\\p{L}])`, 'iu'),
 ];
-const DEFINING_CLAUSE = /\b(?:Himmelsstämme|Stämme)\s*,\s*die\s+nicht\b/iu;
+// The defining clause itself, up to its end; only the clause is set aside, never the rest of its sentence (PR #25 review, MINOR-6).
+const DEFINING_CLAUSE = /\b(?:Himmelsstämme|Stämme)\s*,\s*die\s+nicht\b[^,.;:]*/giu;
 const PILLAR_NAMES = ['year', 'month', 'day', 'hour'] as const;
 
 /** The first phrase that states something of the chart's positions as a whole, or null (ETBZ-60). */
 export function findPositionStatement(text: string): string | null {
-  for (const sentence of text.split(/(?<=[.!?;:])\s+/u)) {
-    if (DEFINING_CLAUSE.test(sentence)) continue;
+  // NFC first, as every other phrase check here (a decomposed "Säule" would otherwise slip through).
+  for (const sentence of text.normalize('NFC').split(/(?<=[.!?;:])\s+/u)) {
+    const rest = sentence.replace(DEFINING_CLAUSE, ' ');
     for (const pattern of POSITION_STATEMENTS) {
-      const match = pattern.exec(sentence);
+      const match = pattern.exec(rest);
       if (match !== null) return match[0];
     }
   }

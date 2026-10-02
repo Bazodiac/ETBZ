@@ -1,7 +1,7 @@
 /**
  * ETBZ-60 — the committed evidence of both re-reading rounds under READING_POSITION_UNGROUNDED (PO decisions D-59-5,
- * D-59-6, D-60-1). For each round, every reading passes this boundary to its committed accepted bytes and carries no
- * position statement. The judge read exactly the packet the accepted readings derive, and every quote of the judgement
+ * D-59-6, D-60-1). For each round, every reading passes this boundary to its committed accepted bytes, and every
+ * statement of the chart's positions as a whole stands in a paragraph that cites every pillar (round 1 has none). The judge read exactly the packet the accepted readings derive, and every quote of the judgement
  * stands at its path. Round 1 (the boundary repair alone) keeps the BLOCKING STOCK_PARAGRAPH_REUSE its judge raised;
  * round 2 (the graph grounds the surface) raises no BLOCKING code. The Skill package and the bundle are those ETBZ-57
  * released: nothing under skill/ changed against e5ccc94c.
@@ -12,7 +12,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { INDIVIDUALITY_REASON_CODES, findPositionStatement } from '../../src/application/skill/index.js';
 import { renderJson } from '../support/etbz58Rehearsal.js';
-import { ETBZ60_LABELS, ETBZ60_RECORD, ETBZ60_ROUNDS, acceptCase, caseFile, deriveJudgePacket, deriveRereadingRecord, deriveRoundCase, judgeDir, judgementsFile, roundDir } from '../support/etbz60Rereading.js';
+import { PLAN_CONTRACT_BINDINGS_V1_1 } from '../../src/application/interpretation/meta-narrative-plan.js';
+import { compareUnderDifference, namedDifference, swapRevalidation } from '../support/etbz59Individuality.js';
+import { variantChart } from '../support/etbz59Variants.js';
+import { ETBZ60_LABELS, ETBZ60_RECORD, ETBZ60_ROUNDS, ROUND2_CONES, acceptCase, caseFile, deriveJudgePacket, deriveRereadingRecord, deriveRound2Cones, deriveRoundCase, judgeDir, judgementsFile, roundDir } from '../support/etbz60Rereading.js';
 import type { Etbz60Label, Etbz60Round } from '../support/etbz60Rereading.js';
 
 vi.setConfig({ testTimeout: 60_000 });
@@ -51,6 +54,28 @@ describe('ETBZ-60: the re-readings', () => {
     expect(renderJson(await deriveRereadingRecord())).toBe(read(ETBZ60_RECORD));
   });
 
+  it.each(ETBZ60_LABELS)('round-2 %s: the committed Skill input package is the derivation of the reviewed drafts, byte for byte', async (label) => {
+    expect(renderJson((await deriveRoundCase('round-2', label)).inputPackage)).toBe(read(caseFile('round-2', label, 'skill-input')));
+  });
+
+  it('round 2: the pre-run cones are the derivation of the reviewed drafts, byte for byte, and hold the surface claim', async () => {
+    const cones = await deriveRound2Cones();
+    expect(renderJson(cones)).toBe(read(ROUND2_CONES));
+    expect((cones['nearNeighbourCone'] as { claims: string[] }).claims).toHaveLength(3);
+  });
+
+  it('round 2: the swap is refused on N and on D, and no dependent claim survives the named difference (6.1, 6.3)', async () => {
+    const [s, n] = [await deriveRoundCase('round-2', 'source'), await deriveRoundCase('round-2', 'near')];
+    const d = (await variantChart('distant')).model;
+    expect([swapRevalidation(s, n.model, PLAN_CONTRACT_BINDINGS_V1_1).refusal, swapRevalidation(s, d, PLAN_CONTRACT_BINDINGS_V1_1).refusal]).toEqual([{ stage: 'graph', code: 'CLAIM_METHOD_WITHOUT_EVIDENCE' }, { stage: 'graph', code: 'CLAIM_UNKNOWN_FACT' }]);
+    const delta = namedDifference(s.model, n.model);
+    for (const check of ['6.1', '6.3'] as const) {
+      const result = compareUnderDifference(check, s, n, delta);
+      expect(result.dependentClaims.filter((claim) => claim.statementSurvives), check).toEqual([]);
+      expect(result.findings.filter((finding) => finding.class === 'BLOCKING'), check).toEqual([]);
+    }
+  });
+
   it('changes nothing under skill/ against e5ccc94c: Skill 1.1.0 and bundle 1.1.0 stay as ETBZ-57 released them (D-59-6)', () => {
     expect(() => execFileSync('git', ['diff', '--quiet', 'e5ccc94c52abef01c7e1d537f4bb4575095d0be3', '--', 'skill/'])).not.toThrow();
   });
@@ -70,6 +95,9 @@ describe.each(ETBZ60_ROUNDS)('ETBZ-60 %s: the independent 6.7 judgement', (round
     const calls = read(`${roundDir(round)}/${judge.toolCalls}`).trim().split('\n');
     expect(calls.map((call) => call.split(' ')[0])).toEqual(judge.packet.map(() => 'Read'));
     expect(calls.map((call) => `judge/${call.split('/judge/')[1] ?? ''}`).sort()).toEqual([...judge.packet].sort());
+    // The packet of this round: round 1's judge read it before it moved under round-1/ (bytes unchanged, git mv).
+    const where = round === 'round-1' ? '/docs/evidence/etbz-60/judge/' : '/docs/evidence/etbz-60/round-2/judge/';
+    for (const call of calls) expect(call, call).toContain(where);
   });
 
   it('finds every quote verbatim at its path in the accepted reading', () => {

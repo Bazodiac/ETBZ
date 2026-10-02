@@ -23,6 +23,8 @@ const T = {
 const REREAD = 'tests/support/etbz60Rereading.ts';
 const R2_JUDGEMENTS = 'docs/evidence/etbz-60/round-2/judgements.json';
 const R2_TOOL_CALLS = 'docs/evidence/etbz-60/round-2/judge/tool-calls.txt';
+const CASES60 = 'tests/support/etbz60Cases.ts';
+const R2_CONES = 'docs/evidence/etbz-60/round-2/pre-run-cones.json';
 
 /** [name, kind, file, find, replace, tests, killer] - kind 'text' (find occurs exactly once). */
 const MUTANTS = [
@@ -43,8 +45,8 @@ const MUTANTS = [
     '(?:nurZ)',
     [T.positions], "finds each form in the sentence the ETBZ-59 readings wrote"],
   ["EXEMPT: a defining clause about stems counts as a statement about this chart", 'text', READING,
-    '    if (DEFINING_CLAUSE.test(sentence)) continue;',
-    '    if (DEFINING_CLAUSE.test(sentence) && sentence === "") continue;',
+    "    const rest = sentence.replace(DEFINING_CLAUSE, ' ');",
+    '    const rest = sentence;',
     [T.positions], "leaves framework sentences alone"],
   ["EXEMPT: 'nicht nur im ...' counts as a restriction", 'text', READING,
     '(?<!\\\\bnicht\\\\s)',
@@ -86,6 +88,26 @@ const MUTANTS = [
     '    positionStatements: ETBZ60_LABELS.flatMap(',
     '    positionStatements: [].flatMap(',
     [T.evidence], "re-derives every file the judge read, byte for byte"],
+  ["MECHANISM: the text is matched without NFC (a decomposed 'Säule' slips through)", 'text', READING,
+    "  for (const sentence of text.normalize('NFC').split(",
+    "  for (const sentence of text.split(",
+    [T.positions], "sets aside only the defining clause, not its sentence, and reads decomposed Unicode"],
+  ["MECHANISM: a defining clause sets aside its whole sentence", 'text', READING,
+    "    const rest = sentence.replace(DEFINING_CLAUSE, ' ');",
+    "    const rest = sentence.search(DEFINING_CLAUSE) >= 0 ? '' : sentence;",
+    [T.positions], "sets aside only the defining clause, not its sentence, and reads decomposed Unicode"],
+  ["COVER: only the paragraph's own facts ground a statement, not its claims'", 'text', READING,
+    '      checkPositions(paragraph.text, at, coveredFacts);',
+    '      checkPositions(paragraph.text, at, facts);',
+    [T.positions], "accepts a statement of every position grounded through its claims alone"],
+  ["PLAN: a plan without the surface claim's chapters passes", 'text', CASES60,
+    '  if (contrastIndex < 0 || integrateIndex < 0) throw',
+    '  if (contrastIndex < -1 || integrateIndex < -1) throw',
+    [T.positions], "refuses a plan without a CONTRAST chapter over the thesis or without an INTEGRATE chapter"],
+  ["EVIDENCE: the committed round-2 cones change", 'text', R2_CONES,
+    '"recordVersion":"etbz60-round2-pre-run-cones.v1"',
+    '"recordVersion":"etbz60-round2-pre-run-cones.v9"',
+    [T.evidence], "the pre-run cones are the derivation of the reviewed drafts"],
   ["CALL: the paragraph pass does not check position statements", 'text', READING,
     '      checkPositions(paragraph.text, at, coveredFacts);\n',
     '',
