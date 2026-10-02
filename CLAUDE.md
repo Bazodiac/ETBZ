@@ -43,7 +43,7 @@ bash scripts/verify-guards.sh                # foundation guard mutation proofs 
 bash scripts/secret-scan.sh                  # gitleaks tree + history + scanner mutation proof
 bash scripts/build-dry-run.sh                # container build / provenance / smoke / reproducibility
 npm run guards:etbz34 | guards:etbz30a | guards:etbz30b   # slice source-mutation proofs (NOT part of ci-verify)
-npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59   # slice mutation proofs that ARE steps of ci-verify
+npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59 | guards:etbz60   # slice mutation proofs that ARE steps of ci-verify
 npm run build && npm run etbz51:bundle                   # print the portable Skill Contract Bundle (canonical JSON)
 npm run build && npm run etbz52:package                  # regenerate skill/bazodiac-interpretation-skill-v1/{contract-bundle,reading-schema,MANIFEST}.json
 npm run build && npm run etbz57:package                  # the same for skill/bazodiac-interpretation-skill-v1.1/ (bundle 1.1.0)
@@ -55,7 +55,8 @@ npm run etbz58:live                                      # ETBZ-58 live stage ag
 npm run etbz58:assemble -- check-realise|check-edit|assemble|seal   # ETBZ-58 offline stages from the committed live stage
 npm run etbz53:freeze -- freeze|record|verify                    # ETBZ-53 Golden freeze (operator only; the case data stays in /Users/Shared/ETBZ-golden, docs/evidence/etbz-53/README.md)
 npm run etbz59:variants                                  # ETBZ-59 synthetic variants N and D through the ETBZ-58 live stage (operator only)
-npm run etbz59 -- emit|cones|accept <label>|packets|record   # ETBZ-59 offline stages (docs/evidence/etbz-59/README.md)
+npm run etbz59 -- emit|cones|accept <label>|packets|record   # ETBZ-59 offline stages (docs/evidence/etbz-59/README.md; record reproduces only at e5ccc94c)
+npm run etbz60 -- accept <source|near>|packet|record    # ETBZ-60 re-reading under READING_POSITION_UNGROUNDED (docs/evidence/etbz-60/README.md)
 ```
 
 `scripts/ci-verify.sh` is the single definition of "verified". `.github/workflows/ci.yml` runs that same
@@ -265,6 +266,12 @@ unchanged. A refusal of `acceptSkillReading` carries every violation of one full
 (D-59-4); the refusal code is still the first violation. The judges' packets, the run record and the judgements are
 re-derived by `tests/contract/etbz59-individuality-evidence.contract.test.ts`. The rehearsal raised one BLOCKING
 `STOCK_PARAGRAPH_REUSE`, recorded with its smallest repair, which is not applied (docs/evidence/etbz-59/README.md).
+
+ETBZ-60 (ADR 0017) repaired it in the boundary only, with Skill 1.1.0 and bundle 1.1.0 unchanged (D-59-6). A sentence that
+states something of the chart's positions as a whole ("auf keiner Säule", "nicht an der Oberfläche einer Säule", "ohne
+an die Oberfläche", "nur im Monatszweig") is refused with `READING_POSITION_UNGROUNDED` unless the paragraph cites a
+fact of every pillar; a defining clause about stems as a class and "nicht nur ..." are not such statements. The ETBZ-59
+run record was made under the earlier boundary and is pinned as merged at e5ccc94c, not re-derived.
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:

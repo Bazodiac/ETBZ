@@ -18,7 +18,11 @@ const T = {
   positions: 'tests/negative/etbz60-position-statements.negative.test.ts',
   reading: 'tests/negative/etbz52-skill-reading.negative.test.ts',
   voice: 'tests/negative/etbz57-voice.negative.test.ts',
+  evidence: 'tests/contract/etbz60-rereading-evidence.contract.test.ts',
 };
+const REREAD = 'tests/support/etbz60Rereading.ts';
+const R2_JUDGEMENTS = 'docs/evidence/etbz-60/round-2/judgements.json';
+const R2_TOOL_CALLS = 'docs/evidence/etbz-60/round-2/judge/tool-calls.txt';
 
 /** [name, kind, file, find, replace, tests, killer] - kind 'text' (find occurs exactly once). */
 const MUTANTS = [
@@ -62,6 +66,26 @@ const MUTANTS = [
     '  const cited = new Set(facts.map((fact) => fact.pillar));',
     '  const cited = new Set<string | null>();',
     [T.positions], "accepts it in a paragraph that cites a fact of all four pillars"],
+  ["EVIDENCE: round 2 records a BLOCKING code", 'text', R2_JUDGEMENTS,
+    '"codes": ["FIXED_METAPHOR_REUSE"],',
+    '"codes": ["STOCK_PARAGRAPH_REUSE"],',
+    [T.evidence], "raises no BLOCKING code (AC5)"],
+  ["EVIDENCE: a round-2 quote is not what the reading says", 'text', R2_JUDGEMENTS,
+    '"text": "Kein sichtbarer Himmelsstamm wirkt fordernd auf Xin ein."',
+    '"text": "Kein Himmelsstamm wirkt fordernd auf Xin ein."',
+    [T.evidence], "finds every quote verbatim at its path in the accepted reading"],
+  ["EVIDENCE: the round-2 judge read another file", 'text', R2_TOOL_CALLS,
+    'round-2/judge/candidates.json',
+    'round-2/cases/source/skill-input.json',
+    [T.evidence], "shows the judge reading its packet and nothing else"],
+  ["EVIDENCE: the record drops the round-2 cones", 'text', REREAD,
+    "...(round === 'round-2' && existsSync(resolve(root, ROUND2_CONES))",
+    "...(round === 'never' && existsSync(resolve(root, ROUND2_CONES))",
+    [T.evidence], "re-derives the run record byte for byte from the committed files"],
+  ["EVIDENCE: the packet stops listing position statements", 'text', REREAD,
+    '    positionStatements: ETBZ60_LABELS.flatMap(',
+    '    positionStatements: [].flatMap(',
+    [T.evidence], "re-derives every file the judge read, byte for byte"],
   ["CALL: the paragraph pass does not check position statements", 'text', READING,
     '      checkPositions(paragraph.text, at, coveredFacts);\n',
     '',
@@ -110,7 +134,7 @@ const trackedState = () =>
   execFileSync('git', ['status', '--porcelain', '--', 'src', 'tests', 'scripts', 'skill', 'docs'], { encoding: 'utf8' }).trim();
 const stateBefore = trackedState();
 
-const ALL_SUITES = [T.positions, T.reading, T.voice];
+const ALL_SUITES = [T.positions, T.reading, T.voice, T.evidence];
 const baseline = run(ALL_SUITES);
 if (baseline.outcome !== 'GREEN') {
   process.stdout.write(`BASELINE_NOT_GREEN (${baseline.outcome}): the unmutated suites fail, so a red mutant would prove nothing\n`);

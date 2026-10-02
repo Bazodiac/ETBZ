@@ -1,0 +1,7 @@
+Read /Users/benjaminpoersch/Projects/etbz-wt-ETBZ-60-position/docs/evidence/etbz-60/round-2/judge/reading-source.md
+Read /Users/benjaminpoersch/Projects/etbz-wt-ETBZ-60-position/docs/evidence/etbz-60/round-2/judge/reading-near.md
+Read /Users/benjaminpoersch/Projects/etbz-wt-ETBZ-60-position/docs/evidence/etbz-60/round-2/judge/claims-source.txt
+Read /Users/benjaminpoersch/Projects/etbz-wt-ETBZ-60-position/docs/evidence/etbz-60/round-2/judge/claims-near.txt
+Read /Users/benjaminpoersch/Projects/etbz-wt-ETBZ-60-position/docs/evidence/etbz-60/round-2/judge/chart-source.txt
+Read /Users/benjaminpoersch/Projects/etbz-wt-ETBZ-60-position/docs/evidence/etbz-60/round-2/judge/chart-near.txt
+Read /Users/benjaminpoersch/Projects/etbz-wt-ETBZ-60-position/docs/evidence/etbz-60/round-2/judge/candidates.json
