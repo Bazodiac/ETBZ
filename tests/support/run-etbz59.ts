@@ -47,8 +47,8 @@ if (command === 'emit') {
     const path = (error as { path?: unknown }).path;
     process.stdout.write(`${label}: REFUSED ${codeOf(error)}${typeof path === 'string' ? ` at ${path}` : ''}: ${error instanceof Error ? error.message : ''}\n`);
     // D-59-4: the whole list one full pass found - what the operator hands to the one repair.
-    const diagnostics = (error as { diagnostics?: readonly Error[] }).diagnostics ?? [];
-    for (const entry of diagnostics) process.stdout.write(`  - ${entry.message}\n`);
+    const diagnostics = (error as { diagnostics?: readonly (Error & { detail?: unknown })[] }).diagnostics ?? [];
+    for (const entry of diagnostics) process.stdout.write(`  - ${entry.message} ${JSON.stringify(entry.detail ?? {})}\n`);
     process.exitCode = 1;
   }
 } else if (command === 'cones') {
