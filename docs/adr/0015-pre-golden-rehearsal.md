@@ -61,6 +61,9 @@ source mutation (11 mutants).
 - Findings for the Product Owner: the fixture chart swaps the central and residual hidden stems of the hour branch
   (FuFirE answers Ji, Ding, Yi); the method-language word list matches the conjunction "ehe"; drafting graph and
   plan for a chart without reviewed drafts (GOLDEN-KT-01) has no contract yet.
+- The secret gate reads the attested OpenAPI digest (`openapiSha256`) in the readback and the record as a
+  `generic-api-key` finding. The Product Owner added `.gitleaksignore` bar C (2026-10-02): a public content digest in
+  evidence whose file bytes a contract test pins as literals, with the digest the only credential-shaped pair.
 - The orchestrator lives in `tests/support/` like the other evidence emitters; promoting it to a production surface
   is not part of this decision.
 

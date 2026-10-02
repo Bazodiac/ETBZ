@@ -278,6 +278,35 @@ describe('ETBZ-58: the ArtifactManifest, the renderer and the visual evidence (A
   });
 });
 
+describe('ETBZ-58: the secret-scanner exemptions (.gitleaksignore bar C)', () => {
+  // The two files are exempted from gitleaks' generic-api-key rule by a whole-line fingerprint (one-line JSON).
+  // The exemption is safe only while these bytes are exactly these, and the only credential-shaped pair is the
+  // public OpenAPI digest the attestation pinned.
+  const PINNED: Readonly<Record<string, string>> = {
+    'docs/evidence/etbz-58/run/runtime-readback.json': 'sha256:4ccb44fde615a897b8f0d37437d8876f1d87a7515cb7be35938c142a8963fd18',
+    'docs/evidence/etbz-58/rehearsal-record.json': 'sha256:25dbed2991e5e806321fe7eed28ddce7af103cd7e187c6dbc8cdcebb1be11a6c',
+  };
+  it('pins the exempted files byte for byte and names them in .gitleaksignore', () => {
+    const ignore = read('.gitleaksignore').toString('utf8').split('\n');
+    for (const [path, digest] of Object.entries(PINNED)) {
+      expect(sha256Of(read(path)), path).toBe(digest);
+      expect(ignore, path).toContain(`${path}:generic-api-key:1`);
+    }
+  });
+
+  it('holds no credential-shaped pair in them but the attested OpenAPI digest', () => {
+    const { readback } = loadRecordedRun();
+    const attested = readback.attestation.expectation.openapiSha256;
+    expect(attested).toMatch(/^[0-9a-f]{64}$/u);
+    for (const path of Object.keys(PINNED)) {
+      const text = read(path).toString('utf8');
+      const pairs = [...text.matchAll(/"([^"]*(?:api|key|token|secret|passw|auth|credential)[^"]*)":"([^"]{10,})"/giu)].map((match) => [match[1], match[2]]);
+      expect(pairs.length, path).toBeGreaterThan(0);
+      for (const [key, value] of pairs) expect([key, value], path).toEqual(['openapiSha256', attested]);
+    }
+  });
+});
+
 describe('ETBZ-58: the run record', () => {
   it('is re-derived byte for byte from the committed run', async () => {
     expect(read(ETBZ58_RECORD).toString('utf8')).toBe(renderJson(await deriveRehearsalRecord()));
