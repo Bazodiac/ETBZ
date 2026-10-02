@@ -43,7 +43,7 @@ export const VARIANT_DEFINITIONS: Readonly<Record<VariantLabel, Readonly<{ ref: 
   near: {
     ref: 'tests/support/etbz59Variants.ts#VARIANT_BIRTH_INPUTS.near',
     change: 'birthTime 14:30 -> 16:30 (civil time: Wei block -> Shen block); displayName marks the synthetic variant',
-    role: 'near-neighbour chart N (6.1, 6.2) and fact-mutation case (6.3); named difference: the hour pillar',
+    role: 'near-neighbour chart N (6.1, 6.2) and fact-mutation case (6.3); named difference: the hour pillar and the Wu Xing tally it feeds (N ties Feuer and Metall at the top)',
   },
   distant: {
     ref: 'tests/support/etbz59Variants.ts#VARIANT_BIRTH_INPUTS.distant',

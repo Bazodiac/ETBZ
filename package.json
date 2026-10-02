@@ -47,6 +47,7 @@
     "etbz58:assemble": "vite-node tests/support/run-etbz58-assemble.ts",
     "etbz53:freeze": "vite-node tests/support/run-etbz53-freeze.ts",
     "etbz59:variants": "vite-node tests/support/run-etbz59-variants.ts",
+    "etbz59": "vite-node tests/support/run-etbz59.ts",
     "secret-scan": "bash scripts/secret-scan.sh",
     "deps:scan": "npm audit --audit-level=high --omit=dev",
     "build-dry-run": "bash scripts/build-dry-run.sh",

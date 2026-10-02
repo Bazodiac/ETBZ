@@ -3,15 +3,19 @@
  * to the Skill input package (contract 77266967 v3, section 8; Jira ETBZ-59 comment 17034).
  *
  * The drafts are the Delivery Runner's (the drafter of ADR 0008; D-53-4 applied to the rehearsal) and are reviewed
- * by an independent instance before any reading. They reuse the ETBZ-30A/30B claims of Musterkundin A, whose cited
- * facts are identical on S, N and S⁻, and add one claim on the hour pillar (PO decision D-59-2):
+ * by an independent instance before any reading. They reuse the ETBZ-30A/30B claims of Musterkundin A; the
+ * distribution claim cites the five Wu Xing weights it describes, and one claim on the hour pillar is added (PO
+ * decision D-59-2). Independent draft review round 1 (2026-10-02): FAIL on the distribution claim, which was false
+ * on N's tied tally, plus a major and minors; this text is the repair.
  *
- * - source (S, Musterkundin A): the hour branch carries, the same, the controlling voice (Seven Killing) of the month
- *   branch; the claim joins the pressure motif's core and its developing chapter.
- * - near (N, the hour-pillar variant): its hour branch carries instead the expressive voice (Hurting Officer) of the
- *   month pillar; the claim joins the expression motif's core and its reinforcing chapter.
+ * - source (S, Musterkundin A): the hour branch's hidden stems repeat the month branch's controlling Ten-God voice
+ *   (Seven Killing); the claim is local - named in the chapter that develops the pressure motif, in no core.
+ * - near (N, the hour-pillar variant): the hour branch's hidden stems repeat the month pillar's expressive Ten-God
+ *   voice (Hurting Officer) instead; local in the chapter that reinforces the expression motif. Its tally ties
+ *   (Feuer 3, Metall 3): N's distribution claim names two elements at the top and does not contrast with the day
+ *   master, whose element is one of them.
  * - removal (S⁻): S with the hour branch's Seven Killing relation withdrawn (`withdrawFactsForEvaluation`, D-59-1);
- *   the hour claim cannot be drafted and the plan is the ETBZ-30B baseline.
+ *   the hour claim cannot be drafted, the rest is S's.
  *
  * Every case pins the values of the facts its claims cite (as ETBZ-58 did): a chart on which a cited value differs
  * is refused before any builder runs. A claim's statement is prose the builders cannot compare with a value.
@@ -30,9 +34,9 @@ import { SKILL_CONTRACT_BUNDLE_VERSION_V1_1, buildSkillContractBundle, buildSkil
 import type { SkillContractBundle, SkillInputPackage } from '../../src/application/skill/index.js';
 import { listSlotIds } from '../../src/application/visual/index.js';
 import { fufireResponseMapper } from '../../src/adapters/fufire/http-client.js';
-import { H, MONTH_TEN_GOD, contextFor, draftOf } from './claimGraphFixture.js';
+import { DOMINANT, H, MONTH_TEN_GOD, MONTH_TEN_GOD_RELATION, contextFor, dayMasterClaim, dominantClaim, draftOf, recurrenceClaim, relationClaim } from './claimGraphFixture.js';
 import { RehearsalError, loadRecordedRun } from './etbz58Rehearsal.js';
-import { MONTH_HIDDEN_0_TEN_GOD, PLAN_H, chapter, idOf, planClaims, planContextFor, validPlanDraft } from './metaNarrativePlanFixture.js';
+import { M, MONTH_HIDDEN_0_RELATION, MONTH_HIDDEN_0_TEN_GOD, PLAN_H, T, idOf, planClaims, planContextFor, pressureClaim, resourceClaim } from './metaNarrativePlanFixture.js';
 import type { MutablePlanDraft } from './metaNarrativePlanFixture.js';
 import { sourceChart, variantChart } from './etbz59Variants.js';
 import type { ReplayedChart } from './etbz59Variants.js';
@@ -49,12 +53,18 @@ export const REMOVAL_REFERENCE = 'Jira ETBZ-59 comment 17034, PO decision D-59-1
 
 export const HOUR_H = { pressure: 'draft.hourPressure', expression: 'draft.hourExpression' } as const;
 
-/** S: the hour branch repeats the month branch's controlling voice (Seven Killing on both). */
+/** The five Wu Xing weights: the tally the distribution claims describe (contract section 3 names it a feature). */
+export const WEIGHT_IDS = ['Erde', 'Feuer', 'Holz', 'Metall', 'Wasser'].map((element) => `chart.wuxing.weight.${element}`);
+
+/**
+ * S: the hour branch's hidden stems repeat the month branch's controlling Ten-God voice (Seven Killing on both, each
+ * `controls_day_master`). It names no layer, Qi role or parity (review finding F4): only the recurrence.
+ */
 export function hourPressureClaim(): InterpretiveClaim {
   return {
     claimId: HOUR_H.pressure,
-    statement: 'The controlling voice of the month branch sits, the same, inside the hour branch as well.',
-    factRefs: [HOUR_HIDDEN_1_TEN_GOD, MONTH_HIDDEN_0_TEN_GOD, HOUR_HIDDEN_1_RELATION],
+    statement: 'The controlling Ten-God voice of the month branch recurs among the hidden stems of the hour branch.',
+    factRefs: [HOUR_HIDDEN_1_TEN_GOD, MONTH_HIDDEN_0_TEN_GOD, HOUR_HIDDEN_1_RELATION, MONTH_HIDDEN_0_RELATION],
     themeRefs: [],
     methodRefs: ['ten_gods', 'fact_relations', 'wu_xing_relations'],
     epistemicClass: 'SUPPORTED_INTERPRETATION',
@@ -63,46 +73,117 @@ export function hourPressureClaim(): InterpretiveClaim {
   };
 }
 
-/** N: the hour branch repeats the month pillar's expressive voice (Hurting Officer on both). */
+/** N: the hour branch's hidden stems repeat the month pillar's expressive Ten-God voice (Hurting Officer on both). */
 export function hourExpressionClaim(): InterpretiveClaim {
   return {
     claimId: HOUR_H.expression,
-    statement: 'The expressive voice of the month pillar sits, the same, inside the hour branch as well.',
-    factRefs: [HOUR_HIDDEN_1_TEN_GOD, MONTH_TEN_GOD, HOUR_HIDDEN_1_RELATION],
+    statement: 'The expressive Ten-God voice of the month pillar recurs among the hidden stems of the hour branch.',
+    factRefs: [HOUR_HIDDEN_1_TEN_GOD, MONTH_TEN_GOD, HOUR_HIDDEN_1_RELATION, MONTH_TEN_GOD_RELATION],
     themeRefs: [],
     methodRefs: ['ten_gods', 'fact_relations', 'wu_xing_relations'],
     epistemicClass: 'SUPPORTED_INTERPRETATION',
     provisionalFactRefs: [],
-    relations: [{ type: 'DEVELOPS', targetClaimId: H.recurrence }],
+    relations: [{ type: 'SUPPORTS', targetClaimId: H.recurrence }],
+  };
+}
+
+/**
+ * S and S⁻: the ETBZ-30A distribution claim, now citing the five weights its statement is about (review finding
+ * F1): "named more often than the others" is a statement about the whole tally, so the tally is pinned and in the
+ * dependency cone. True on S: one maximum (Feuer 2.5).
+ */
+export function tallyClaim(): InterpretiveClaim {
+  return dominantClaim({ factRefs: [DOMINANT, ...WEIGHT_IDS] });
+}
+
+/**
+ * N: the tally ties (Feuer 3, Metall 3). FuFirE names one of the tied maxima dominant, which ETBZ allows; the Method
+ * Profile's `wu_xing_distribution` names all tied maxima. So N's claim is a different statement over the weights,
+ * without the single dominant, and without the day-master contrast: the day master's own element shares the top.
+ */
+export function tieClaim(): InterpretiveClaim {
+  return {
+    claimId: H.dominant,
+    statement: 'Two elements share the highest weight in the tally the source reports.',
+    factRefs: [...WEIGHT_IDS],
+    themeRefs: [],
+    methodRefs: ['wu_xing_distribution'],
+    epistemicClass: 'SUPPORTED_INTERPRETATION',
+    provisionalFactRefs: [],
+    relations: [],
   };
 }
 
 export function caseClaims(label: CaseLabel, model: HoroscopeModel): InterpretiveClaim[] {
-  const base = planClaims(contextFor(model));
+  const base = planClaims(contextFor(model)).map((claim) => (claim.claimId === H.dominant ? (label === 'near' ? tieClaim() : tallyClaim()) : claim));
   if (label === 'source') return [...base, hourPressureClaim()];
   if (label === 'near') return [...base, hourExpressionClaim()];
   return base;
 }
 
-/** The plan draft of a case: the ETBZ-30B baseline, with the hour claim placed in its motif and chapter. */
+/**
+ * The plan draft of a case: the ETBZ-30B baseline (`validPlanDraft`: thesis, three motifs, threads, seven chapters),
+ * written out here because the distribution claim differs per case. The hour claim stays local - it is named in one
+ * chapter and in no motif core or thesis (review finding F2: it carries no central weight). N's tie claim does not
+ * contrast with the day master, so N drops that tension.
+ */
 export function casePlanDraft(label: CaseLabel, planContext: MetaNarrativePlanContext): MutablePlanDraft {
-  const draft = validPlanDraft(planContext);
-  const motif = (id: string): MutablePlanDraft['primaryMotifs'][number] => {
-    const found = draft.primaryMotifs.find((candidate) => candidate.motifId === id);
-    if (found === undefined) throw new Error(`etbz59: the baseline plan has no motif ${id}`);
-    return found;
+  const graph = planContext.graph;
+  const c = {
+    recurrence: idOf(recurrenceClaim(), graph),
+    relation: idOf(relationClaim(), graph),
+    dayMaster: idOf(dayMasterClaim(), graph),
+    tally: idOf(label === 'near' ? tieClaim() : tallyClaim(), graph),
+    pressure: idOf(pressureClaim(), graph),
+    resource: idOf(resourceClaim(), graph),
   };
-  if (label === 'source') {
-    const hour = idOf(hourPressureClaim(), planContext.graph);
-    motif('motif.pressure').coreClaimRefs.push(hour);
-    chapter(draft, 5).claimRefs.push(hour);
-  }
-  if (label === 'near') {
-    const hour = idOf(hourExpressionClaim(), planContext.graph);
-    motif('motif.expression').coreClaimRefs.push(hour);
-    chapter(draft, 1).claimRefs.push(hour);
-  }
-  return draft;
+  const hour = label === 'source' ? [idOf(hourPressureClaim(), graph)] : label === 'near' ? [idOf(hourExpressionClaim(), graph)] : [];
+  return {
+    sourceBriefStructuralHash: planContext.brief.structuralHash,
+    claimGraphStructuralHash: graph.structuralHash,
+    reportThesis: { claimRefs: [c.recurrence, c.pressure] },
+    primaryMotifs: [
+      { motifId: M.expression, coreClaimRefs: [c.recurrence, c.relation] },
+      { motifId: M.pressure, coreClaimRefs: [c.pressure] },
+      { motifId: M.resource, coreClaimRefs: [c.resource] },
+    ],
+    tensions: [
+      { claimRefs: [c.pressure, c.recurrence] },
+      { claimRefs: [c.pressure, c.resource] },
+      ...(label === 'near' ? [] : [{ claimRefs: [c.tally, c.dayMaster] }]),
+    ],
+    openThreads: [
+      { threadId: T.pressure, claimRefs: [c.pressure, c.recurrence], resolution: 'CLOSE' },
+      { threadId: T.resource, claimRefs: [c.resource], resolution: 'LEAVE_OPEN' },
+    ],
+    chapterPlan: [
+      { narrativeOperation: 'ESTABLISH', claimRefs: [c.dayMaster, c.recurrence], motifTransitions: [{ motifRef: M.expression, toState: 'SEEDED' }], opensThreadRefs: [], closesThreadRefs: [] },
+      { narrativeOperation: 'REINFORCE', claimRefs: [c.relation, ...(label === 'near' ? hour : [])], motifTransitions: [{ motifRef: M.expression, toState: 'DEVELOPED' }], opensThreadRefs: [], closesThreadRefs: [] },
+      {
+        narrativeOperation: 'CONTRAST',
+        claimRefs: [c.pressure, c.recurrence],
+        motifTransitions: [{ motifRef: M.pressure, toState: 'SEEDED' }, { motifRef: M.expression, toState: 'COMPLICATED' }],
+        opensThreadRefs: [T.pressure],
+        closesThreadRefs: [],
+      },
+      { narrativeOperation: 'CONTEXTUALIZE', claimRefs: [c.tally, c.resource], motifTransitions: [{ motifRef: M.resource, toState: 'SEEDED' }], opensThreadRefs: [T.resource], closesThreadRefs: [] },
+      { narrativeOperation: 'QUALIFY', claimRefs: [c.dayMaster, c.tally], motifTransitions: [], opensThreadRefs: [], closesThreadRefs: [] },
+      {
+        narrativeOperation: 'CONTRAST',
+        claimRefs: [c.pressure, c.resource, ...(label === 'source' ? hour : [])],
+        motifTransitions: [{ motifRef: M.pressure, toState: 'DEVELOPED' }, { motifRef: M.resource, toState: 'DEVELOPED' }],
+        opensThreadRefs: [],
+        closesThreadRefs: [],
+      },
+      {
+        narrativeOperation: 'INTEGRATE',
+        claimRefs: [c.pressure, c.recurrence, c.relation],
+        motifTransitions: [{ motifRef: M.expression, toState: 'INTEGRATED' }, { motifRef: M.pressure, toState: 'INTEGRATED' }],
+        opensThreadRefs: [],
+        closesThreadRefs: [T.pressure],
+      },
+    ],
+  };
 }
 
 /** The value of every fact the case's claims cite, read from the chart the drafts were written for. */
@@ -131,6 +212,11 @@ export const REVIEWED_PINS: Readonly<Record<CaseLabel, Readonly<Record<string, s
     'chart.natal.pillar.year.hiddenStem.0.tenGod': '"SevenKilling"',
     'chart.natal.pillar.year.hiddenStem.1.tenGod': '"IndirectRes"',
     'chart.wuxing.dominant': '"Feuer"',
+    'chart.wuxing.weight.Erde': '"2"',
+    'chart.wuxing.weight.Feuer': '"2.5"',
+    'chart.wuxing.weight.Holz': '"1.8"',
+    'chart.wuxing.weight.Metall': '"2"',
+    'chart.wuxing.weight.Wasser': '"2"',
   },
   near: {
     'chart.dayMaster.stem': '"Xin"',
@@ -145,7 +231,11 @@ export const REVIEWED_PINS: Readonly<Record<CaseLabel, Readonly<Record<string, s
     'chart.natal.pillar.month.tenGod.elementRelation': '"produced_by_day_master"',
     'chart.natal.pillar.year.hiddenStem.0.tenGod': '"SevenKilling"',
     'chart.natal.pillar.year.hiddenStem.1.tenGod': '"IndirectRes"',
-    'chart.wuxing.dominant': '"Feuer"',
+    'chart.wuxing.weight.Erde': '"1.3"',
+    'chart.wuxing.weight.Feuer': '"3"',
+    'chart.wuxing.weight.Holz': '"0.5"',
+    'chart.wuxing.weight.Metall': '"3"',
+    'chart.wuxing.weight.Wasser': '"2.5"',
   },
   removal: {
     'chart.dayMaster.stem': '"Xin"',
@@ -159,6 +249,11 @@ export const REVIEWED_PINS: Readonly<Record<CaseLabel, Readonly<Record<string, s
     'chart.natal.pillar.year.hiddenStem.0.tenGod': '"SevenKilling"',
     'chart.natal.pillar.year.hiddenStem.1.tenGod': '"IndirectRes"',
     'chart.wuxing.dominant': '"Feuer"',
+    'chart.wuxing.weight.Erde': '"2"',
+    'chart.wuxing.weight.Feuer': '"2.5"',
+    'chart.wuxing.weight.Holz': '"1.8"',
+    'chart.wuxing.weight.Metall': '"2"',
+    'chart.wuxing.weight.Wasser': '"2"',
   },
 };
 

@@ -41,14 +41,16 @@ describe('ETBZ-59 6.2: the swap re-validation', () => {
     expect(swap.findings[0]?.class).toBe('BLOCKING');
   });
 
-  it('raises it for the removal case\'s reading on the near neighbour, which never cited the hour pillar', () => {
-    expect(codes(swapRevalidation(r, n.model, PLAN_CONTRACT_BINDINGS_V1_1).findings)).toEqual(['READING_VALIDATES_AGAINST_FOIL']);
+  it('raises it for the removal case\'s reading on the source chart, whose every cited value the source shares', () => {
+    expect(codes(swapRevalidation(r, s.model, PLAN_CONTRACT_BINDINGS_V1_1).findings)).toEqual(['READING_VALIDATES_AGAINST_FOIL']);
+    // ... and refuses it on the near neighbour, because its distribution claim cites the tally the hour pillar feeds.
+    expect(swapRevalidation(r, n.model, PLAN_CONTRACT_BINDINGS_V1_1).refused).toBe(true);
   });
 
   it('refuses the near neighbour\'s reading on the source (its hour claim names an identity the source does not carry)', () => {
     const swap = swapRevalidation(n, s.model, PLAN_CONTRACT_BINDINGS_V1_1);
     expect(swap).toMatchObject({ refused: true, refusal: { stage: 'graph', code: 'CLAIM_METHOD_WITHOUT_EVIDENCE' }, findings: [] });
-    expect(swap.differingCitations).toHaveLength(1);
+    expect(swap.differingCitations).toHaveLength(2);
   });
 });
 
@@ -58,17 +60,29 @@ describe('ETBZ-59 6.1 and 6.3: comparisons under the named difference', () => {
     expect(delta.every((id) => /\.hour\./u.test(id) || id.startsWith('chart.wuxing.weight.'))).toBe(true);
   });
 
-  it('passes S against N: the hour-dependent claim is recomposed, the shared claims coincide', () => {
+  it('passes S against N: the hour claim and the tally claim are recomposed, the shared claims coincide', () => {
     const result = compareUnderDifference('6.1', s, n, delta);
-    expect(result.cone.claims).toHaveLength(1);
-    expect(result.dependentClaims).toEqual([{ claimId: result.cone.claims[0], statementSurvives: false }]);
+    expect(result.cone.claims).toHaveLength(2);
+    expect(result.cone.tensions).toEqual([2]);
+    expect(result.dependentClaims.map((claim) => claim.statementSurvives)).toEqual([false, false]);
     expect(codes(result.findings)).toEqual(['LEGITIMATE_SHARED_CLAIM']);
     expect(codes(compareUnderDifference('6.3', s, n, delta).findings)).toEqual([]);
   });
 
   it('raises the blocking codes when the variant is the source itself (nothing recomposed)', () => {
     const result = compareUnderDifference('6.1', s, s, delta);
-    expect(codes(result.findings)).toEqual(['DEPENDENT_CLAIM_UNCHANGED_UNDER_MUTATION', 'LEGITIMATE_SHARED_CLAIM', 'SHARED_PRIMITIVE_MOTIF', 'STYLE_VARIANCE_ONLY']);
+    expect(codes(result.findings)).toEqual(['DEPENDENT_CLAIM_UNCHANGED_UNDER_MUTATION', 'DEPENDENT_CLAIM_UNCHANGED_UNDER_MUTATION', 'LEGITIMATE_SHARED_CLAIM', 'STYLE_VARIANCE_ONLY']);
+  });
+
+  it('raises SHARED_PRIMITIVE_THESIS and SHARED_PRIMITIVE_MOTIF when the difference reaches the thesis and a motif core and they coincide', () => {
+    const pressure = s.graph.claims.find((claim) => claim.statement.startsWith('A controlling voice sits'));
+    expect(pressure).toBeDefined();
+    const cone = dependencyCone(s, pressure?.factRefs ?? []);
+    expect(cone.thesis).toBe(true);
+    expect(cone.motifs).toHaveLength(1);
+    expect(codes(compareUnderDifference('6.1', s, s, pressure?.factRefs ?? []).findings)).toEqual(
+      expect.arrayContaining(['SHARED_PRIMITIVE_MOTIF', 'SHARED_PRIMITIVE_THESIS']),
+    );
   });
 
   it('raises THESIS_UNCHANGED_UNDER_CENTRAL_MUTATION when the mutated facts reach the thesis and it does not move', () => {
