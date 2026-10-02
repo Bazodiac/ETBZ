@@ -109,7 +109,9 @@ export type RehearsalErrorCode =
   | 'REHEARSAL_REPLAY_CALL_COUNT'
   | 'REHEARSAL_EVIDENCE_TAMPERED'
   | 'REHEARSAL_NOT_PRODUCTION_ELIGIBLE'
-  | 'REHEARSAL_DRAFT_FACTS_DRIFTED';
+  | 'REHEARSAL_DRAFT_FACTS_DRIFTED'
+  /** ETBZ-60: a draft plan lacks the chapter a claim must be placed in. */
+  | 'REHEARSAL_DRAFT_PLAN_SHAPE';
 
 export class RehearsalError extends Error {
   readonly code: RehearsalErrorCode;

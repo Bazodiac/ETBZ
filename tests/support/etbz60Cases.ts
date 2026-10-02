@@ -4,9 +4,10 @@
  *
  * Why: the plan's thesis rests on a surface/interior contrast (the expressive voice on the month stem, the
  * controlling voice in the branches), but its claims cite the surface of the month pillar only. Round 1 showed the
- * Skill summarising that contrast over the whole chart ("Was nach außen erscheint, ist der Ausdruck"), which held for
- * S and failed for N, whose hour stem (DirectOfficer) controls the day master - and no claim of N cited it, so the
- * reading could not respond to the named difference. The distribution claim cites every pillar's visible Ten-God
+ * Skill summarising that contrast over the whole chart ("Was nach außen erscheint, ist der Ausdruck"): its control
+ * half held for S and failed for N, whose hour stem (DirectOfficer) controls the day master, and its expression half
+ * held for neither (the year and hour stems show other voices) - no claim cited any of it, so the reading could not
+ * respond to the named difference. The distribution claim cites every pillar's visible Ten-God
  * fact and its relation to the day master (Lens section 14: visible-vs-hidden distribution is an authorised
  * feature), so the surface the contrast speaks of is grounded and differs where the charts differ.
  *
@@ -44,10 +45,14 @@ export const SURFACE_FACT_IDS = [
   'chart.natal.pillar.hour.tenGod.elementRelation',
 ] as const;
 
-/** What the surface shows, per chart: S has no controlling voice on any stem; N has one, on the hour stem. */
+/**
+ * What the surface shows, pillar by pillar (draft review round 1, F1: a statement over the controlling voice alone
+ * left "what shows outside is the expression" ungrounded - the year and hour stems show other voices). S has no
+ * visible stem that controls the day master; N has one, the hour stem.
+ */
 export const SURFACE_STATEMENTS: Readonly<Record<Round2Label, string>> = {
-  source: 'Of the four pillars, no visible stem carries a Ten-God voice that controls the day master.',
-  near: 'Of the four pillars, only the hour stem carries a visible Ten-God voice that controls the day master.',
+  source: 'On the surface of the four pillars the year stem carries a voice of the same element as the day master, the month stem the expressive voice the day master produces, the day stem is the day master itself, and the hour stem a voice the day master controls; no visible stem controls the day master.',
+  near: 'On the surface of the four pillars the year stem carries a voice of the same element as the day master, the month stem the expressive voice the day master produces, the day stem is the day master itself, and the hour stem a voice that controls the day master; it is the only visible stem that does.',
 };
 
 export function surfaceClaim(label: Round2Label): InterpretiveClaim {
@@ -69,13 +74,17 @@ export function round2Claims(label: Round2Label, model: HoroscopeModel): Interpr
 
 /**
  * ETBZ-59's plan with the distribution claim placed where the surface/interior contrast is rendered: the CONTRAST
- * chapter that seeds the pressure motif against the expressive voice, and the INTEGRATE chapter that closes it.
+ * chapter that renders both thesis claims (it seeds the pressure motif against the expressive voice), and the
+ * INTEGRATE chapter that closes it. Chosen by content, not by position (draft review round 1, F4); a plan without
+ * either chapter is refused, never silently left without the claim.
  */
 export function round2PlanDraft(label: Round2Label, planContext: MetaNarrativePlanContext): MutablePlanDraft {
   const base = casePlanDraft(label, planContext);
   const surface = idOf(surfaceClaim(label), planContext.graph);
-  const contrastIndex = base.chapterPlan.findIndex((chapter) => chapter.narrativeOperation === 'CONTRAST');
+  const thesis = base.reportThesis.claimRefs;
+  const contrastIndex = base.chapterPlan.findIndex((chapter) => chapter.narrativeOperation === 'CONTRAST' && thesis.every((id) => chapter.claimRefs.includes(id)));
   const integrateIndex = base.chapterPlan.findIndex((chapter) => chapter.narrativeOperation === 'INTEGRATE');
+  if (contrastIndex < 0 || integrateIndex < 0) throw new RehearsalError('REHEARSAL_DRAFT_PLAN_SHAPE', `the round-2 ${label} plan has no CONTRAST chapter over the thesis or no INTEGRATE chapter for the surface claim`);
   return {
     ...base,
     chapterPlan: base.chapterPlan.map((chapter, index) => (index === contrastIndex || index === integrateIndex ? { ...chapter, claimRefs: [...chapter.claimRefs, surface] } : chapter)),
