@@ -35,6 +35,7 @@
     "guards:etbz53": "node scripts/verify-etbz53-freeze.mjs",
     "guards:etbz59": "node scripts/verify-etbz59-individuality.mjs",
     "guards:etbz60": "node scripts/verify-etbz60-position-statements.mjs",
+    "guards:etbz61": "node scripts/verify-etbz61-wuxing-value-text.mjs",
     "etbz49:contract": "node scripts/etbz49-generate-visual-contract.mjs",
     "etbz49:assemble": "node scripts/etbz49-assemble-evidence.mjs",
     "etbz51:bundle": "node scripts/etbz51-print-bundle.mjs",

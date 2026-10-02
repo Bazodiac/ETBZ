@@ -371,6 +371,43 @@ function missing(message: string, detail: Readonly<Record<string, unknown>>): ne
   throw new PresentationError('PRESENTATION_FACT_MISSING', message, detail);
 }
 
+/**
+ * ETBZ-61 (PO decision D-54-2, Jira ETBZ-54 comment 17123): how far a printed Wu Xing weight may lie from the
+ * delivered number, relative to its size. Binary64 noise of a short decimal sum is about 2^-52; 2^-40 leaves room for
+ * a few operations and stays far below any decimal a producer could mean.
+ */
+export const WUXING_VALUE_NOISE = 2 ** -40;
+
+/**
+ * Refuses a printed text that is not the delivered weight up to binary representation noise: "Werte wie geliefert"
+ * stays true, so a real decimal is never rounded away (`PRESENTATION_FACT_MISMATCH`).
+ */
+export function assertWuXingValueText(value: number, text: string, phase: string): void {
+  const printed = Number(text);
+  if (!Number.isFinite(printed) || Math.abs(printed - value) > WUXING_VALUE_NOISE * Math.max(1, Math.abs(value))) {
+    mismatch(`wuxing.${phase}: the printed text is not the delivered value up to representation noise`, { phase, value, text });
+  }
+}
+
+/**
+ * ETBZ-61: the text a Wu Xing weight is printed as - the shortest decimal that is the delivered number up to binary
+ * representation noise. FuFirE serialises a weight that is a floating-point sum with that noise (a sum such as 0.1 + 0.2
+ * arrives as 0.30000000000000004: seventeen significant digits that overflow the distribution page); a weight without noise
+ * prints exactly as before (`String(value)`). `value` and `ratio` are never touched.
+ */
+export function wuXingValueText(value: number, phase: string): string {
+  let text = String(value);
+  for (let digits = 1; digits < 17; digits += 1) {
+    const candidate = String(Number(value.toPrecision(digits)));
+    if (Math.abs(Number(candidate) - value) <= WUXING_VALUE_NOISE * Math.max(1, Math.abs(value))) {
+      text = candidate;
+      break;
+    }
+  }
+  assertWuXingValueText(value, text, phase);
+  return text;
+}
+
 /** The phase of a German element label, through the released element vocabulary. */
 function phaseOfGerman(labelDe: string, where: string): Phase {
   for (const phase of PHASES) {
@@ -563,7 +600,7 @@ function chartValues(model: HoroscopeModel): ChartValues {
         pinyin: glyph.pinyin,
         label: elementDeByEn(phase),
         value: presentation.vector[phase],
-        valueText: String(presentation.vector[phase]),
+        valueText: wuXingValueText(presentation.vector[phase], phase),
         ratio: presentation.ratio[phase],
       };
     }),

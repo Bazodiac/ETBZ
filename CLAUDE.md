@@ -283,6 +283,12 @@ ETBZ-60 (ADR 0017) repaired it in two layers, with Skill 1.1.0 and bundle 1.1.0 
 
 The ETBZ-59 run record was made under the earlier boundary and is pinned as merged at e5ccc94c, not re-derived.
 
+ETBZ-61 (ADR 0018) repaired the PDF-QA block that stopped the ETBZ-54 Golden run (PO decision D-54-2). FuFirE
+serialises a Wu Xing weight that is a floating-point sum with its binary noise, and the projection printed it with
+`String(value)`. `wuXingValueText` (`src/application/presentation/projection.ts`) now prints the shortest decimal
+that is the delivered number up to that noise. It never rounds a real decimal: `assertWuXingValueText` refuses one
+with `PRESENTATION_FACT_MISMATCH`. `value`, `ratio`, the template (1.0.0) and the renderer are unchanged.
+
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:
 
@@ -394,7 +400,7 @@ Assemble credential-shaped test strings at runtime from fragments, never as one 
 - TypeScript is ESM + `NodeNext`: relative imports carry a `.js` extension, `verbatimModuleSyntax`
   requires `import type`, and `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess` are on (hence
   conditional spreads for optional overrides and checked array reads).
-- Decisions live in `docs/adr/0001`–`0017`. An ADR records its merge commit in the status line through a
+- Decisions live in `docs/adr/0001`–`0018`. An ADR records its merge commit in the status line through a
   separate `docs/…` closeout PR after the merge; the GOLDEN_RUN_READY reconciliation of 2026-10-02 did so for 0008-0012
   and 0014-0017 (0013 recorded its own release). `docs/evidence/` records executed gates; transient output goes to the
   git-ignored `.etbz-verify/`. Durable evidence is a green CI run for a specific SHA.
