@@ -5,9 +5,9 @@
  * check is weakened in exactly one place, and the named test must fail an assertion (the ETBZ-30B semantics). Files
  * are restored from bytes in memory.
  *
- * Not listed: removing the guard call from wuXingValueText alone is an equivalent mutant - the formatter never
- * produces a text beyond the noise, so the call is its postcondition; MUT-4 shows the guard refusing a formatter that
- * rounds.
+ * Not listed: removing the guard call from wuXingValueText alone is an equivalent mutant for every finite value (the
+ * vector schema admits no other, src/application/visual/visualSystem.ts) - the formatter never produces a text the
+ * guard refuses, so the call is its postcondition; ROUND and LOOSE show the guard refusing a formatter that rounds.
  *
  *   npm run guards:etbz61
  */
@@ -24,6 +24,7 @@ const T = {
 };
 
 /** [name, kind, file, find, replace, tests, killer] - kind 'text' (find occurs exactly once). */
+const LOOP = '    if (Math.abs(Number(candidate) - value) <= WUXING_VALUE_NOISE * Math.abs(value)) {';
 const MUTANTS = [
   ["PAGES: the projection prints String(value) again", 'text', PROJECTION,
     '        valueText: wuXingValueText(presentation.vector[phase], phase),',
@@ -33,18 +34,34 @@ const MUTANTS = [
     '  for (let digits = 1; digits < 17; digits += 1) {',
     '  for (let digits = 17; digits < 17; digits += 1) {',
     [T.value], 'drops the representation noise of a floating-point sum'],
-  ["GUARD: a text two hundredths off passes as the delivered value", 'text', PROJECTION,
-    '  if (!Number.isFinite(printed) || Math.abs(printed - value) > WUXING_VALUE_NOISE * Math.max(1, Math.abs(value))) {',
-    '  if (!Number.isFinite(printed) || Math.abs(printed - value) > 0.05 * Math.max(1, Math.abs(value))) {',
+  ["GUARD: a text five hundredths off passes as the delivered value", 'text', PROJECTION,
+    '|| Math.abs(printed - value) > WUXING_VALUE_NOISE * Math.abs(value)) {',
+    '|| Math.abs(printed - value) > 0.05 * Math.max(1, Math.abs(value))) {',
     [T.value], 'refuses a printed text further from the delivered value than representation noise'],
+  ["CANON: a text in another form (' 2 ', '2e0', '') passes", 'text', PROJECTION,
+    '  if (!Number.isFinite(printed) || String(printed) !== text || ',
+    '  if (!Number.isFinite(printed) || ',
+    [T.value], 'refuses a text that is not the canonical text of its number'],
   ["ROUND: the formatter rounds to two decimals (the guard must refuse it)", 'text', PROJECTION,
-    '    if (Math.abs(Number(candidate) - value) <= WUXING_VALUE_NOISE * Math.max(1, Math.abs(value))) {',
-    '    if (Math.abs(Number(candidate) - value) <= 0.01 * Math.max(1, Math.abs(value))) {',
+    LOOP,
+    '    if (Math.abs(Number(candidate) - value) <= 0.01 * Math.abs(value)) {',
     [T.value], 'prints a weight without noise exactly as String(value), real decimals included'],
-  ["NOISE: the tolerance is loose enough to swallow a real digit", 'text', PROJECTION,
-    'export const WUXING_VALUE_NOISE = 2 ** -40;',
+  ["LOOSE: the formatter's bound swallows the seventh digit (the guard must refuse it)", 'text', PROJECTION,
+    LOOP,
+    '    if (Math.abs(Number(candidate) - value) <= 1e-6 * Math.abs(value)) {',
+    [T.value], 'keeps every real digit near the bound, small values and fourteen-digit decimals included'],
+  ["ABSOLUTE: the formatter's bound is absolute below 1", 'text', PROJECTION,
+    LOOP,
+    '    if (Math.abs(Number(candidate) - value) <= WUXING_VALUE_NOISE * Math.max(1, Math.abs(value))) {',
+    [T.value], 'keeps every real digit near the bound, small values and fourteen-digit decimals included'],
+  ["TIGHT: the bound is tighter than the noise of a sum", 'text', PROJECTION,
+    'export const WUXING_VALUE_NOISE = 2 ** -48;',
+    'export const WUXING_VALUE_NOISE = 2 ** -60;',
+    [T.value], 'prints every sum of short decimals as its exact decimal (deterministic sweep)'],
+  ["LOOSE CONSTANT: the bound is loose enough to swallow a real digit", 'text', PROJECTION,
+    'export const WUXING_VALUE_NOISE = 2 ** -48;',
     'export const WUXING_VALUE_NOISE = 2 ** -20;',
-    [T.value], 'bounds the noise far below any decimal a producer could mean'],
+    [T.value], 'bounds the noise relative to the value, at sixteen units in the last place'],
 ];
 
 const REPORT_DIR = mkdtempSync(join(tmpdir(), 'etbz61-mutants-'));

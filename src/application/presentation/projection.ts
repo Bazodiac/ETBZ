@@ -373,33 +373,37 @@ function missing(message: string, detail: Readonly<Record<string, unknown>>): ne
 
 /**
  * ETBZ-61 (PO decision D-54-2, Jira ETBZ-54 comment 17123): how far a printed Wu Xing weight may lie from the
- * delivered number, relative to its size. Binary64 noise of a short decimal sum is about 2^-52; 2^-40 leaves room for
- * a few operations and stays far below any decimal a producer could mean.
+ * delivered number, relative to the number itself. Binary64 noise is one unit in the last place, 2^-52 of the value;
+ * 2^-48 allows sixteen of them, which covers the sums FuFirE builds (measured: 300,000 synthetic sums of short
+ * decimals, every one printed as its exact decimal). A real decimal of up to fourteen significant digits lies further
+ * from every shorter text than this bound, so it prints unchanged (measured).
  */
-export const WUXING_VALUE_NOISE = 2 ** -40;
+export const WUXING_VALUE_NOISE = 2 ** -48;
 
 /**
- * Refuses a printed text that is not the delivered weight up to binary representation noise: "Werte wie geliefert"
- * stays true, so a real decimal is never rounded away (`PRESENTATION_FACT_MISMATCH`).
+ * Refuses a printed text that is not the canonical text of a number within the noise bound of the delivered weight
+ * (`PRESENTATION_FACT_MISMATCH`): neither rounded beyond the noise nor written in another form (" 2 ", "2e0", "").
+ * It is the formatter's postcondition; for the finite, non-negative weights the vector schema admits, the formatter
+ * never produces a text it refuses.
  */
 export function assertWuXingValueText(value: number, text: string, phase: string): void {
   const printed = Number(text);
-  if (!Number.isFinite(printed) || Math.abs(printed - value) > WUXING_VALUE_NOISE * Math.max(1, Math.abs(value))) {
+  if (!Number.isFinite(printed) || String(printed) !== text || Math.abs(printed - value) > WUXING_VALUE_NOISE * Math.abs(value)) {
     mismatch(`wuxing.${phase}: the printed text is not the delivered value up to representation noise`, { phase, value, text });
   }
 }
 
 /**
- * ETBZ-61: the text a Wu Xing weight is printed as - the shortest decimal that is the delivered number up to binary
- * representation noise. FuFirE serialises a weight that is a floating-point sum with that noise (a sum such as 0.1 + 0.2
- * arrives as 0.30000000000000004: seventeen significant digits that overflow the distribution page); a weight without noise
- * prints exactly as before (`String(value)`). `value` and `ratio` are never touched.
+ * ETBZ-61: the text a Wu Xing weight is printed as - the shortest decimal within the noise bound of the delivered
+ * number. FuFirE serialises a weight that is a floating-point sum with its binary representation noise (a sum such as
+ * 0.1 + 0.2 arrives as 0.30000000000000004: seventeen significant digits that overflow the distribution page). A
+ * weight without noise prints exactly as before (`String(value)`); `value` and `ratio` are never touched.
  */
 export function wuXingValueText(value: number, phase: string): string {
   let text = String(value);
   for (let digits = 1; digits < 17; digits += 1) {
     const candidate = String(Number(value.toPrecision(digits)));
-    if (Math.abs(Number(candidate) - value) <= WUXING_VALUE_NOISE * Math.max(1, Math.abs(value))) {
+    if (Math.abs(Number(candidate) - value) <= WUXING_VALUE_NOISE * Math.abs(value)) {
       text = candidate;
       break;
     }

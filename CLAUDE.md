@@ -286,8 +286,9 @@ The ETBZ-59 run record was made under the earlier boundary and is pinned as merg
 ETBZ-61 (ADR 0018) repaired the PDF-QA block that stopped the ETBZ-54 Golden run (PO decision D-54-2). FuFirE
 serialises a Wu Xing weight that is a floating-point sum with its binary noise, and the projection printed it with
 `String(value)`. `wuXingValueText` (`src/application/presentation/projection.ts`) now prints the shortest decimal
-that is the delivered number up to that noise. It never rounds a real decimal: `assertWuXingValueText` refuses one
-with `PRESENTATION_FACT_MISMATCH`. `value`, `ratio`, the template (1.0.0) and the renderer are unchanged.
+within `2^-48 * |value|` of the delivered number. A real decimal of up to 14 significant digits prints unchanged (measured).
+`assertWuXingValueText` refuses, with `PRESENTATION_FACT_MISMATCH`, a text outside the bound or not the canonical text
+of its number. `value`, `ratio`, the template (1.0.0) and the renderer are unchanged.
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:

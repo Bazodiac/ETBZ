@@ -72,17 +72,55 @@ describe('ETBZ-61: the printed text of a Wu Xing weight', () => {
     }
   });
 
+  it('keeps every real digit near the bound, small values and fourteen-digit decimals included', () => {
+    for (const value of [1.0000001, 0.123456789012, 9.00000000001, 3.7e-13, 1.2345678901234, 0.000012345678901234, 98765.432109876]) {
+      expect(textOf(value), String(value)).toBe(String(value));
+    }
+  });
+
+  it('prints every sum of short decimals as its exact decimal (deterministic sweep)', () => {
+    const units = [1, 2, 3, 5, 7, 10, 15, 25, 30, 50];
+    let seed = 2026;
+    const next = (): number => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return seed / 2147483648;
+    };
+    let noisy = 0;
+    for (let i = 0; i < 20000; i += 1) {
+      let sum = 0;
+      let hundredths = 0;
+      const terms = 2 + Math.floor(next() * 14);
+      for (let j = 0; j < terms; j += 1) {
+        const unit = units[Math.floor(next() * units.length)] ?? 1;
+        const tenths = next() < 0.5;
+        sum += unit / (tenths ? 10 : 100);
+        hundredths += tenths ? unit * 10 : unit;
+      }
+      const exact = String(hundredths / 100);
+      if (String(sum) !== exact) noisy += 1;
+      expect(textOf(sum), String(sum)).toBe(exact);
+    }
+    expect(noisy, 'the sweep must contain noisy sums').toBeGreaterThan(1000);
+  });
+
   it('refuses a printed text further from the delivered value than representation noise', () => {
     expect(codeOf(() => { assertWuXingValueText(2.25, '2.3', 'test'); })).toBe('PRESENTATION_FACT_MISMATCH');
     expect(codeOf(() => { assertWuXingValueText(1.005, '1', 'test'); })).toBe('PRESENTATION_FACT_MISMATCH');
     expect(codeOf(() => { assertWuXingValueText(2, 'zwei', 'test'); })).toBe('PRESENTATION_FACT_MISMATCH');
     expect(codeOf(() => { assertWuXingValueText(0.1 + 0.2, '0.3', 'test'); })).toBe('ACCEPTED');
+    expect(codeOf(() => { assertWuXingValueText(3.7e-13, '4e-13', 'test'); })).toBe('PRESENTATION_FACT_MISMATCH');
     expect(codeOf(() => { assertWuXingValueText(2.5, '2.5', 'test'); })).toBe('ACCEPTED');
   });
 
-  it('bounds the noise far below any decimal a producer could mean', () => {
-    expect(WUXING_VALUE_NOISE).toBeLessThan(1e-9);
-    expect(Math.abs(0.1 + 0.2 - 0.3)).toBeLessThan(WUXING_VALUE_NOISE);
+  it('refuses a text that is not the canonical text of its number', () => {
+    for (const [value, text] of [[0, ''], [2, ' 2 '], [2, '0x2'], [2, '2e0'], [2, '2.0'], [0.5, '.5']] as const) {
+      expect(codeOf(() => { assertWuXingValueText(value, text, 'test'); }), JSON.stringify(text)).toBe('PRESENTATION_FACT_MISMATCH');
+    }
+  });
+
+  it('bounds the noise relative to the value, at sixteen units in the last place', () => {
+    expect(WUXING_VALUE_NOISE).toBe(2 ** -48);
+    expect(Math.abs(0.1 + 0.2 - 0.3)).toBeLessThan(WUXING_VALUE_NOISE * 0.3);
   });
 });
 
