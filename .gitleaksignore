@@ -7,7 +7,7 @@
 # cannot exempt a different value, a later edit of the same line, or the same
 # string appearing anywhere else. No rule is disabled and no path is excluded.
 #
-# A line may be added under exactly one of two bars, and nothing else.
+# A line may be added under exactly one of three bars, and nothing else.
 #
 #   A — SYNTHETIC FIXTURE, ALREADY REWRITTEN. The flagged value exists only to
 #       prove a guard works, and has since been rewritten so the CURRENT working
@@ -23,6 +23,16 @@
 #       hash pin means that line cannot change to anything else without a test
 #       turning red first. An entry under bar B without that hash pin is not
 #       permitted.
+#
+#   C — PUBLIC CONTENT DIGEST IN PINNED EVIDENCE (Product Owner decision,
+#       2026-10-02, ETBZ-58). The flagged value is a public content digest (the
+#       SHA-256 of a producer's OpenAPI document) inside a committed evidence
+#       file, and a contract test pins BOTH the file's SHA-256 as a literal AND
+#       that the only credential-shaped key/value pairs in the file are that
+#       digest. The file pin is what makes a whole-line fingerprint safe for a
+#       one-line JSON file: the file cannot change - not even by re-generating it
+#       consistently - without editing the test. Written without a commit, like
+#       bar B. An entry under bar C without both pins is not permitted.
 #
 # `scripts/secret-scan.sh` scans the working tree and the history as two
 # separate gates. A bar-A entry carries a commit and covers history only. A
@@ -68,3 +78,15 @@ b939b596c05ec23d3895e31adaf47cda4e63245f:tests/unit/narrative-draft.test.ts:gene
 # the contract suite asserts that the exempted line still names `"tokens.json"`,
 # so this fingerprint cannot quietly come to cover anything else.
 assets/visual-system-v1/render-receipt.json:generic-api-key:373
+
+# --- bar C -------------------------------------------------------------------
+# ETBZ-58 — the Pre-Golden rehearsal's runtime readback and run record. Both are
+# one-line canonical JSON; the upstream `generic-api-key` rule fires on the key
+# `openapiSha256` (it contains "api") next to the 64-hex SHA-256 of the FuFirE
+# OpenAPI document the attestation pinned - public, recorded in Jira ETBZ-58
+# comment 17021, not a credential. Pinned by
+# `tests/contract/etbz58-rehearsal-evidence.contract.test.ts` ("the secret-scanner
+# exemptions (.gitleaksignore bar C) ..."): each file's SHA-256 as a literal, and
+# the only credential-shaped pairs in it are `openapiSha256` = that digest.
+docs/evidence/etbz-58/run/runtime-readback.json:generic-api-key:1
+docs/evidence/etbz-58/rehearsal-record.json:generic-api-key:1

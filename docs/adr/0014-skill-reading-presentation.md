@@ -134,7 +134,7 @@ quotation mark is a mismatch like any other character.
 
 ### 5. The renderer, and the items carried from ETBZ-55
 
-Renderer changes: the animal labels on five pages; the Ten Gods legend keeps each entry on
+Renderer changes: the animal labels on five pages; the pinyin of the five-phases and reflection branches (PR #21); the Ten Gods legend keeps each entry on
 one line and gives the "both" mark room for its halo; a stylesheet's own media list (the
 `media` attribute of a `<style>` or `<link>`) is held to the media rule
 (`MEDIA_RULE_FORBIDDEN`, two canaries). The renderer digest changed, so the ETBZ-55

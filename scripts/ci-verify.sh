@@ -147,6 +147,12 @@ run_etbz57_voice_guard() { node "${REPO_ROOT}/scripts/verify-etbz57-voice.mjs"; 
 # bindings, the branch animal labels and the every-word check over quotation marks.
 run_etbz56_presentation_guard() { node "${REPO_ROOT}/scripts/verify-etbz56-presentation.mjs"; }
 
+# ETBZ-58 runs one non-Golden known-time case from a live FuFirE call to the PDF.
+# Its orchestrator's own checks (attestation, readiness and credential gates; the
+# replay's integrity; production eligibility; the pin of the facts the reviewed
+# drafts cite) are proven by mutation; the live call itself is not repeated in CI.
+run_etbz58_rehearsal_guard() { node "${REPO_ROOT}/scripts/verify-etbz58-rehearsal.mjs"; }
+
 # --- 7. secret gate -----------------------------------------------------------
 run_secret_gate() { bash "${REPO_ROOT}/scripts/secret-scan.sh"; }
 
@@ -194,6 +200,9 @@ if [ "${RUN_MUTATIONS}" -eq 1 ]; then
 fi
 if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: ETBZ-56 Skill-reading presentation (identity + binding + spec + animal-label + quotation mutation proofs)" run_etbz56_presentation_guard
+fi
+if [ "${RUN_MUTATIONS}" -eq 1 ]; then
+  etbz_step "guards :: ETBZ-58 Pre-Golden rehearsal orchestrator (live gates + replay integrity + eligibility + draft-fact pin mutation proofs)" run_etbz58_rehearsal_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan
