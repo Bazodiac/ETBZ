@@ -669,6 +669,8 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   // wrapper's step 5). The reading is refused with the FIRST of them, the very error it was refused with before, so
   // what is accepted and which code a refusal carries are unchanged. A later entry may follow from an earlier one.
   const diagnostics: SkillRunError[] = [];
+  // An error that is not a SkillRunError, thrown before any violation, escapes as before. After the first violation it
+  // is dropped: the reading is refused with that first violation either way, and before D-59-4 no code after it ran.
   const recordViolation = (error: unknown): void => {
     if (error instanceof SkillRunError) diagnostics.push(error);
     else if (diagnostics.length === 0) throw error;
@@ -690,6 +692,7 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
   }
   const renderedBefore = new Set<string>();
   const renderedAnywhere = new Set<string>();
+  let lengthReported = false;
   reading.chapters.forEach(collect((chapter: (typeof reading.chapters)[number], index: number) => {
     const where = `chapters[${String(index)}]`;
     const planned_ = planChapters[index];
@@ -807,16 +810,19 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       // ETBZ-59 (PO decision D-59-3, Jira ETBZ-59 comment 17037): the refusal names EVERY chapter outside the budget,
       // not only this one - the one repair a run allows (the Skill wrapper's step 5) has to see them all; a refusal
       // naming only the first ended a fixture run that was otherwise repairable. The check keeps its place, so which
-      // code a reading gets is unchanged; chapters before this one are within the budget, or this check would have
-      // refused at them.
+      // code a reading gets is unchanged. The list is recorded once, at the first chapter whose length check runs and
+      // fails; later chapters outside the budget are already named in it (D-59-4 goes on past this refusal).
       const outOfBudget = reading.chapters
         .map((other, otherIndex) => ({ at: `chapters[${String(otherIndex)}]`, count: other.paragraphs.reduce((sum, p) => sum + countWords(p.text), 0) }))
         .filter((entry) => entry.count < CHAPTER_WORD_BUDGET.min || entry.count > CHAPTER_WORD_BUDGET.max);
-      throw new SkillRunError(
-        'READING_CHAPTER_LENGTH_OUT_OF_CONTRACT',
-        `${outOfBudget.map((entry) => `${entry.at} has ${String(entry.count)} words`).join('; ')}; the long-form budget is ${String(CHAPTER_WORD_BUDGET.min)}-${String(CHAPTER_WORD_BUDGET.max)}`,
-        { where, words },
-      );
+      if (!lengthReported) {
+        lengthReported = true;
+        throw new SkillRunError(
+          'READING_CHAPTER_LENGTH_OUT_OF_CONTRACT',
+          `${outOfBudget.map((entry) => `${entry.at} has ${String(entry.count)} words`).join('; ')}; the long-form budget is ${String(CHAPTER_WORD_BUDGET.min)}-${String(CHAPTER_WORD_BUDGET.max)}`,
+          { where, words },
+        );
+      }
     }
 
     // Semantic delta: at least one, over claims this chapter renders.

@@ -106,26 +106,29 @@ Two fresh instances, independent of the drafter, of the Skill instances and of e
 read only its packet with the Read tool (recorded in `judges/<A|B>/tool-calls.txt`, checked by the contract suite).
 Judge A attributed two unlabelled readings to three mixed charts (6.1 step 4). Judge B judged ablation (6.5), reuse
 (6.7) and the prose side of the removal (6.4), and N's tie. The packets are a function of the committed evidence
-(`tests/support/etbz59Judges.ts`, `npm run etbz59 -- packets`); the suite re-derives all 15 files byte for byte.
+(`tests/support/etbz59Judges.ts`, `npm run etbz59 -- packets`); the suite re-derives the 14 packet files and the
+operator key byte for byte.
 `judgements.json` records each verdict and its reason code, and quotes the passages it rests on with their paths. The
 suite finds every quote verbatim in the accepted reading at that path. An LLM judge is never the sole oracle for a
-reason code (contract section 10): the runner measured the chart facts and claim citations behind the BLOCKING
-verdict, and the suite re-derives them.
+reason code (contract section 10). The runner measured the chart facts and claim citations behind the BLOCKING
+verdict, and the suite re-derives them. The ADVISORY codes rest on judge B's reading alone: they are candidates
+until the Product Owner judges the quoted passages, to whom they go.
 
 ### 9. The outcome (`docs/evidence/etbz-59/individuality-record.json`, re-derived byte for byte)
 
 | Section 8 item | Outcome |
 | --- | --- |
 | 8.1 near neighbour (6.1) | the hour claim and the tally claim are recomposed, no dependent claim survives; `LEGITIMATE_SHARED_CLAIM` for the rest; blind attribution PASS for both readings against both foils |
-| 8.2 mutation and removal (6.3, 6.4) | the cones were committed before the readings; no in-cone claim survives the mutation and the thesis is outside its cone; the withdrawn claim is blocked (`CLAIM_EXCLUDED_FACT_CITED`) and absent; no rescue in R(S⁻); provisionality direction (IND-8): only EQUAL and REMOVED |
-| 8.3 ablation (6.5) | the thesis passages of R(S) and R(N) pass; one illustrative passage of each leaves `BARNUM_RESIDUE` (ADVISORY) |
+| 8.2 mutation and removal (6.3, 6.4) | the cones were committed before the readings; the mutation case is N itself (D-53-6: the time shift is also the 6.3 mutation), so its cone is the near-neighbour cone; no in-cone claim survives and the thesis is outside the cone, so `THESIS_UNCHANGED_UNDER_CENTRAL_MUTATION` is exercised only by the negative tests; the withdrawn claim is blocked (`CLAIM_EXCLUDED_FACT_CITED`) and absent; no rescue in R(S⁻); provisionality direction (IND-8): only EQUAL and REMOVED |
+| 8.3 ablation (6.5) | of four thesis passages, R(S) [2.4] and R(N) [2.3] pass; R(S) [2.5] and R(N) [2.5] leave `BARNUM_RESIDUE` (ADVISORY) |
 | 8.4 swap (6.2) | refused on N (`CLAIM_METHOD_WITHOUT_EVIDENCE`) and on D (`CLAIM_UNKNOWN_FACT`) |
 | 8.5 reuse (6.7) | no verbatim sentence; four `FIXED_METAPHOR_REUSE` (ADVISORY); one `STOCK_PARAGRAPH_REUSE` (BLOCKING) |
 | 8.6 codes | all recorded with passages; the BLOCKING code carries its smallest repair, not applied |
 
 The BLOCKING code: R(S) and R(N) both state that the controlling Ten-God family shows on no pillar's surface. No
-claim of either reading cites a visible Ten God other than the month's. The statement holds for S. It is false for N,
-whose hour stem DirectOfficer controls the day master, a fact in N's package. The paragraph was produced from the
+claim of either reading cites a visible Ten God other than the month's. The statement holds for S. For N it is false
+on the family reading N's own [2.1] defines (a stem that controls the day master): N's hour stem DirectOfficer does,
+a fact in N's package. Read narrowly as the Seven Killing alone, it is true for N but cited by no claim. The paragraph was produced from the
 shared primitive family and did not respond to the named difference. Judge B notes that the verdict rests on this one
 proposition. Outside the contract's codes, judge B also records the sentence as an ungrounded generalisation for N
 (OVERREACH belongs to the Lens and Lexicon gates). Smallest repair: on fixtures, confine the statement to the cited
@@ -151,8 +154,11 @@ slice.
 ## Accepted limitations
 
 1. The qualitative steps (blind attribution, ablation, reuse judgement, the paraphrase side of rescue) are judged by
-   independent LLM instances, not mechanised; their verdicts are recorded with the passages they cite, and are never
-   the sole oracle for a code (contract section 10).
+   independent LLM instances, not mechanised; their verdicts are recorded with the passages they cite. The BLOCKING
+   verdict is corroborated by measured facts; the ADVISORY codes are candidates until the Product Owner judges the
+   quoted passages (contract section 10).
+6. The judges' briefs, reports and tool calls were extracted by the runner from the judges' transcripts, which are
+   not in the repository; the suite checks the files, not the transcripts.
 2. Which model wrote a reading is declared, not measured (as in ETBZ-52/57/58).
 3. The diagnostics list the first violation per paragraph, chapter, reflection question and visual spec, not every
    violation inside one paragraph.

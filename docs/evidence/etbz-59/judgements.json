@@ -5,7 +5,7 @@
   "confluencePageId": "77266967",
   "confluencePageVersion": "3"
  },
- "policy": "Each verdict is the qualitative judgement of one independent instance (Jira ETBZ-59 AC4), never the sole oracle for a reason code (contract section 10): the Delivery Runner corroborated every BLOCKING verdict by measuring the chart facts and claim citations it rests on, and the contract suite checks every quote below verbatim against the accepted reading at its path. ADVISORY codes go to the Product Owner; a BLOCKING code is recorded with the smallest repair the runner can propose, and the repair itself is a separate decision (Jira ETBZ-59, out of scope).",
+ "policy": "Each verdict is the qualitative judgement of one independent instance (Jira ETBZ-59 AC4), never the sole oracle for a reason code (contract section 10): the Delivery Runner corroborated every BLOCKING verdict by measuring the chart facts and claim citations it rests on, the ADVISORY codes are candidates until the Product Owner judges their quoted passages, and the contract suite checks every quote below verbatim against the accepted reading at its path. ADVISORY codes go to the Product Owner; a BLOCKING code is recorded with the smallest repair the runner can propose, and the repair itself is a separate decision (Jira ETBZ-59, out of scope).",
  "judges": [
   {
    "judge": "A",
@@ -109,7 +109,7 @@
    "subject": "R(S) and R(N): the chart-wide visibility statement",
    "verdict": "FINDING",
    "codes": ["STOCK_PARAGRAPH_REUSE"],
-   "why": "the same semantic content recurs in both readings, including the chart-wide statement that the controlling family shows on no pillar's surface. No claim of either reading cites it; it holds for S and is false for N, so the paragraph did not respond to the named difference. Judge B: the verdict rests on that one proposition; without it the rest is shared claims plus a fixed image.",
+   "why": "the same semantic content recurs in both readings, including the chart-wide statement that the controlling family shows on no pillar's surface. No claim of either reading cites it; it holds for S; for N it is false on the family reading N's own [2.1] defines and ungrounded on any reading, so the paragraph did not respond to the named difference. Judge B: the verdict rests on that one proposition; without it the rest is shared claims plus a fixed image.",
    "quotes": [
     { "case": "source", "path": "chapters[2].paragraphs[6]", "text": "an der Oberfläche der Monatssäule tritt der Ausdruck offen hervor, während die Anforderung darunter verborgen bleibt" },
     { "case": "source", "path": "chapters[2].paragraphs[2]", "text": "Sie steht nicht offen oben auf einer Säule, sondern liegt im Inneren der Zweige" },

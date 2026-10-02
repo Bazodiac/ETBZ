@@ -18,9 +18,9 @@ or viewed.
 | `judgements.json` | every verdict with its reason code, quoting the passages by path; for the BLOCKING code, the runner's corroboration and the smallest repair | the Delivery Runner, from the two reports |
 | `individuality-record.json` | the run record: identities, runs, accepted hashes, the deterministic outcomes, the IND-8 direction and the section-8 items | `npm run etbz59 -- record` |
 
-`tests/contract/etbz59-individuality-evidence.contract.test.ts` re-derives the record, the 15 packet files and the
-BLOCKING facts from the committed files. It finds every quote of `judgements.json` verbatim at its path, and checks
-that each judge read only its own packet. `npm run guards:etbz59` holds 43 source mutants. Each one must be killed by
+`tests/contract/etbz59-individuality-evidence.contract.test.ts` re-derives the record, the 14 packet files with the
+operator key, and the BLOCKING facts from the committed files. It finds every quote of `judgements.json` verbatim at its path, and checks
+that each judge read only its own packet. `npm run guards:etbz59` holds 46 source mutants. Each one must be killed by
 an assertion of the test named for it.
 
 ## The outcome
@@ -28,19 +28,23 @@ an assertion of the test named for it.
 | Section 8 | Result |
 | --- | --- |
 | 8.1 near neighbour (6.1) | no dependent claim unchanged; blind attribution PASS for R(S) and R(N) against both foils |
-| 8.2 mutation and removal (6.3, 6.4) | cones listed before the run; no finding; the withdrawn claim blocked and absent; no rescue in R(S⁻); IND-8: EQUAL or REMOVED only |
-| 8.3 ablation (6.5) | `BARNUM_RESIDUE` x2 (ADVISORY), one in each thesis chapter of R(S) and R(N) |
+| 8.2 mutation and removal (6.3, 6.4) | cones listed before the run; the mutation case is N itself (D-53-6), whose cone does not reach the thesis; no finding; the withdrawn claim blocked and absent; no rescue in R(S⁻); IND-8: EQUAL or REMOVED only |
+| 8.3 ablation (6.5) | two thesis passages pass; two others leave `BARNUM_RESIDUE` (ADVISORY): R(S) [2.5], R(N) [2.5] |
 | 8.4 swap (6.2) | refused on N and on D |
 | 8.5 reuse (6.7) | `FIXED_METAPHOR_REUSE` x4 (ADVISORY); **`STOCK_PARAGRAPH_REUSE` x1 (BLOCKING)** |
 
 The BLOCKING code concerns one statement that both readings make: the controlling family appears on no pillar's
-surface. No claim cites it. It holds for S and is false for N. Its smallest repair is recorded and not applied:
+surface. No claim cites it. It holds for S. For N it is false on the family reading N's own chapter 2 defines (its
+hour stem DirectOfficer controls the day master); read narrowly as the Seven Killing alone it is true but uncited.
+Judge B notes that the verdict rests on this one proposition. Its smallest repair is recorded and not applied:
 the repair is a separate Product Owner decision (Jira ETBZ-59). In a Golden run this code ends the run with no reroll
 (contract section 11).
 
 ## Limits
 
-- The judges are LLM instances. Their verdicts are evidence, and never the sole oracle for a code (contract
-  section 10). The ADVISORY codes go to the Product Owner.
+- The judges are LLM instances, never the sole oracle for a code (contract section 10). The BLOCKING verdict is
+  corroborated by measured facts; the ADVISORY codes are candidates until the Product Owner judges the quoted passages.
+- The judges' briefs, reports and tool calls were extracted by the runner from transcripts that are not in the
+  repository.
 - Which model wrote a reading or judged it is declared, not measured.
 - The candidate finders only locate passages. Judge B read every reading in full.

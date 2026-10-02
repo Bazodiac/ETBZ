@@ -79,7 +79,14 @@ export interface SwapResult {
   readonly findings: readonly Finding[];
 }
 
-const codeOf = (error: unknown): string => (typeof (error as { code?: unknown }).code === 'string' ? (error as { code: string }).code : `THREW:${error instanceof Error ? error.name : typeof error}`);
+/**
+ * A builder refusal is a typed error carrying a code. Anything else is a crash: it is rethrown, never read as a
+ * refusal, so that a crashing re-validation cannot pass a swap (6.2) or a removal (6.4).
+ */
+export function refusalCodeOf(error: unknown): string {
+  if (typeof (error as { code?: unknown }).code === 'string') return (error as { code: string }).code;
+  throw error;
+}
 
 /**
  * Re-validates the source's accepted graph and plan against the foil's chart through the ordinary builders, as if
@@ -99,7 +106,7 @@ export function swapRevalidation(source: GraphAndPlan, foil: HoroscopeModel, con
   try {
     graph = buildInterpretiveClaimGraph({ ...claimGraphDraftOf(source.graph), sourceBriefStructuralHash: context.brief.structuralHash }, context);
   } catch (error) {
-    return { refused: true, refusal: { stage: 'graph', code: codeOf(error) }, differingCitations, findings: [] };
+    return { refused: true, refusal: { stage: 'graph', code: refusalCodeOf(error) }, differingCitations, findings: [] };
   }
   try {
     buildMetaNarrativePlan(
@@ -107,7 +114,7 @@ export function swapRevalidation(source: GraphAndPlan, foil: HoroscopeModel, con
       { ...context, graph, contractBindings },
     );
   } catch (error) {
-    return { refused: true, refusal: { stage: 'plan', code: codeOf(error) }, differingCitations, findings: [] };
+    return { refused: true, refusal: { stage: 'plan', code: refusalCodeOf(error) }, differingCitations, findings: [] };
   }
   return {
     refused: false,
@@ -237,7 +244,7 @@ export function removalCheck(source: GraphAndPlan, reduced: GraphAndPlan, remove
     try {
       buildInterpretiveClaimGraph({ sourceBriefStructuralHash: context.brief.structuralHash, methodProfileRef: draft.methodProfileRef, claims: claim === undefined ? [] : [{ ...claim, relations: [] }] }, context);
     } catch (error) {
-      blockedCode = codeOf(error);
+      blockedCode = refusalCodeOf(error);
     }
     const absent = !reducedIds.has(claimId) && !reducedStatements.has(statementOf(source.graph, claimId));
     return { claimId, blockedCode, absent };

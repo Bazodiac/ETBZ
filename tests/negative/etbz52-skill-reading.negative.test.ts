@@ -326,6 +326,8 @@ describe('N4: text', () => {
     }
     expect(refusal?.code).toBe('READING_CHAPTER_LENGTH_OUT_OF_CONTRACT');
     expect(refusal?.message).toMatch(/chapters\[0\] has \d+ words; chapters\[2\] has \d+ words; the long-form budget is 600-900/u);
+    // The list is recorded once, not again at each chapter it names (D-59-4 goes on past the first refusal).
+    expect(refusal?.diagnostics.filter((entry) => entry.code === 'READING_CHAPTER_LENGTH_OUT_OF_CONTRACT')).toHaveLength(1);
   });
 
   it('carries every violation one full pass finds, refusing with the first as before (ETBZ-59, PO decision D-59-4)', () => {
@@ -344,6 +346,18 @@ describe('N4: text', () => {
     expect(refusal?.diagnostics[0]).toBe(refusal);
     expect(refusal?.diagnostics.map((entry) => entry.code)).toEqual(['READING_CHAPTER_LENGTH_OUT_OF_CONTRACT', 'READING_EVIDENCE_CHROME', 'READING_EVIDENCE_CHROME']);
     expect(refusal?.diagnostics[1]?.message).toContain('chapters[2].paragraphs[2]');
+  });
+
+  it('serialises a refusal that carries its diagnostics (the list holds the refusal itself, so it is not enumerable)', () => {
+    let refusal: SkillRunError | undefined;
+    try {
+      accept(readingWith((r) => { paragraph(r, 0, 2).text += ' (sha256:abc)'; paragraph(r, 2, 2).text += ' (sha256:abc)'; }));
+    } catch (error) {
+      refusal = error as SkillRunError;
+    }
+    expect(refusal?.diagnostics).toHaveLength(2);
+    expect(() => JSON.stringify(refusal)).not.toThrow();
+    expect((JSON.parse(JSON.stringify(refusal)) as { code: string }).code).toBe('READING_EVIDENCE_CHROME');
   });
 
   it('does not report a claim as unrendered because every paragraph rendering it carries another violation', () => {
@@ -365,7 +379,14 @@ describe('N4: text', () => {
       refusal = error as SkillRunError;
     }
     expect(refusal?.diagnostics.map((entry) => entry.code)).toEqual(['READING_EVIDENCE_CHROME']);
-    expect(new SkillRunError('READING_SCHEMA_INVALID', 'x').diagnostics).toEqual([]);
+    let early: SkillRunError | undefined;
+    try {
+      accept(readingWith((r) => { r.chapters.pop(); }));
+    } catch (error) {
+      early = error as SkillRunError;
+    }
+    expect(early?.code).toBe('READING_CHAPTER_PLAN_MISMATCH');
+    expect(early?.diagnostics).toEqual([]);
   });
 });
 

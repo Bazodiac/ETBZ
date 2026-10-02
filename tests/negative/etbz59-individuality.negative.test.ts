@@ -16,6 +16,7 @@ import {
   dependencyCone,
   namedDifference,
   provisionalityDirection,
+  refusalCodeOf,
   removalCheck,
   containsTerm,
   rescueCandidates,
@@ -36,6 +37,12 @@ function withoutClaim(run: CaseRun, claimId: string): CaseRun {
 }
 
 describe('ETBZ-59 6.2: the swap re-validation', () => {
+  it('reads a typed builder refusal as its code and rethrows a crash, so a crash never passes 6.2 or 6.4', () => {
+    expect(refusalCodeOf(Object.assign(new Error('refused'), { code: 'CLAIM_UNKNOWN_FACT' }))).toBe('CLAIM_UNKNOWN_FACT');
+    const crash = new TypeError('boom');
+    expect(() => refusalCodeOf(crash)).toThrow(crash);
+  });
+
   it('refuses the source reading on the near neighbour (the hour claim no longer holds) and on the distant foil', () => {
     expect(swapRevalidation(s, n.model, PLAN_CONTRACT_BINDINGS_V1_1)).toMatchObject({ refused: true, refusal: { stage: 'graph', code: 'CLAIM_METHOD_WITHOUT_EVIDENCE' }, findings: [] });
     expect(swapRevalidation(s, d, PLAN_CONTRACT_BINDINGS_V1_1)).toMatchObject({ refused: true, refusal: { stage: 'graph', code: 'CLAIM_UNKNOWN_FACT' }, findings: [] });

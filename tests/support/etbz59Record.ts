@@ -118,6 +118,7 @@ export async function deriveIndividualityRecord(root: string = process.cwd()): P
         planStructuralHash: run.plan.structuralHash,
         reviewedPins: REVIEWED_PINS[label],
         skillInput: { structuralHash: run.inputPackage.structuralHash, fileSha256: fileSha(caseFile(label, 'skill-input'), root) },
+        runsNote: 'each archived attempt re-run through the current boundary: its code is the one it was refused with; the diagnostics are what the boundary reports since D-59-3 and D-59-4',
         runs: runsOf(label, run, root),
         accepted: {
           semanticFileSha256: fileSha(caseFile(label, 'semantic-reading'), root),
