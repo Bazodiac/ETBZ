@@ -1,0 +1,109 @@
+{
+ "judgementsVersion": "etbz60-judgements.v1",
+ "contract": {
+  "contractRef": "cross-reading-individuality-contract@1.1.0",
+  "confluencePageId": "77266967",
+  "confluencePageVersion": "3"
+ },
+ "policy": "The verdicts are the qualitative judgement of one independent instance, which is never the sole oracle for a reason code (contract section 10). The Delivery Runner corroborated the BLOCKING verdict by measuring the facts and citations it rests on, and the contract suite checks every quote below verbatim at its path. ADVISORY codes are candidates until the Product Owner judges the quoted passages.",
+ "judge": {
+  "checks": ["6.7"],
+  "instance": "fresh Claude Code general-purpose subagent, claude-opus-5-5 (declared), dispatched 2026-10-02 by the Delivery Runner. It is not the drafter, not a Skill instance, and not one of the ETBZ-59 judges.",
+  "brief": "judge/brief.md",
+  "report": "judge/report.md",
+  "toolCalls": "judge/tool-calls.txt",
+  "packet": ["judge/reading-source.md", "judge/reading-near.md", "judge/claims-source.txt", "judge/claims-near.txt", "judge/chart-source.txt", "judge/chart-near.txt", "judge/candidates.json"]
+ },
+ "judgements": [
+  {
+   "check": "6.7",
+   "subject": "R(S) and R(N): what shows outside is the expression, the demand stays beneath",
+   "verdict": "FINDING",
+   "codes": ["STOCK_PARAGRAPH_REUSE"],
+   "why": "Both readings carry the same thesis, which no claim carries: the expression is what appears outside, and the demand runs only beneath. Both readings define the demand by its relation to the day master (the phase that limits it). On that reading the thesis holds for S and fails for N, whose hour stem Bing (DirectOfficer, controls_day_master) is visible. The hour pillar is the only input that differs between S and N, and the thesis did not respond to it. Read narrowly as the Seven Killing label, the statement would hold for both charts; the judge did not adopt that reading, because the claims cite the relation.",
+   "quotes": [
+    { "case": "source", "path": "chapters[6].paragraphs[3]", "text": "Die Anforderung erscheint in diesem Chart also nicht an der Oberfläche" },
+    { "case": "near", "path": "chapters[2].paragraphs[7]", "text": "Was nach außen erscheint, ist der Ausdruck; was darunter wirkt, ist der Druck." },
+    { "case": "near", "path": "chapters[2].paragraphs[0]", "text": "Seine Phase ist diejenige, die den Tagesmeister begrenzt" }
+   ],
+   "runnerCorroboration": {
+    "near": "N's package carries chart.natal.pillar.hour.tenGod = DirectOfficer with elementRelation controls_day_master; the hour stem is Bing.",
+    "claims": "No claim of N cites chart.natal.pillar.hour.tenGod (0 occurrences in judge/claims-near.txt).",
+    "boundary": "The ETBZ-60 boundary does not refuse either sentence. 'erscheint ... nicht an der Oberfläche' has no indefinite position noun, and the positive form 'Was nach außen erscheint, ist ...' has no negation or quantifier. This is the limitation ADR 0017 names: a paraphrase outside the phrase patterns."
+   },
+   "smallestRepair": {
+    "applied": false,
+    "note": "This is the same defect class as ETBZ-59's BLOCKING code, in a new wording. Adding phrase patterns cannot close a semantic class. The remediation is a Product Owner decision (Jira ETBZ-60)."
+   }
+  },
+  {
+   "check": "6.7",
+   "subject": "deadlines and demands bound to Druck / Struktur",
+   "verdict": "FINDING",
+   "codes": ["FIXED_METAPHOR_REUSE"],
+   "quotes": [
+    { "case": "source", "path": "chapters[2].paragraphs[2]", "text": "in denen eine Frist feststeht, ohne dass sie laut ausgesprochen wurde" },
+    { "case": "near", "path": "chapters[2].paragraphs[2]", "text": "Erkennbar etwa in Momenten, in denen eine Frist näher rückt" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "subject": "one's own wording versus a given template, bound to Disruptive Ausgabe",
+   "verdict": "FINDING",
+   "codes": ["FIXED_METAPHOR_REUSE"],
+   "quotes": [
+    { "case": "source", "path": "chapters[1].paragraphs[5]", "text": "in denen eine Formulierung erst dann stimmig wirkt, wenn sie aus der eigenen Sicht heraus neu gebaut wurde" },
+    { "case": "near", "path": "chapters[5].paragraphs[2]", "text": "wo eine Formulierung erst dann stimmig ist, wenn sie in eigenen Worten dasteht" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "subject": "a piece of knowledge that fits exactly where it was missing, bound to Indirekte Quelle",
+   "verdict": "FINDING",
+   "codes": ["FIXED_METAPHOR_REUSE"],
+   "quotes": [
+    { "case": "source", "path": "chapters[3].paragraphs[1]", "text": "als spezialisiertes Stück Wissen, das genau an einer Lücke ansetzt" },
+    { "case": "near", "path": "chapters[3].paragraphs[3]", "text": "ein Stück Wissen, das genau an die Stelle passt, an der es fehlte" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "subject": "the margin image bound to Disruptive Ausgabe (the weakest of the four)",
+   "verdict": "FINDING",
+   "codes": ["FIXED_METAPHOR_REUSE"],
+   "quotes": [
+    { "case": "source", "path": "chapters[0].paragraphs[5]", "text": "Der unterscheidende Ausdruck ist damit kein Randmotiv" },
+    { "case": "near", "path": "chapters[0].paragraphs[5]", "text": "kein Zufallsfund am Rand" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "subject": "everything else that recurs across R(S) and R(N)",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "Everything else that recurs is fixed framing or legitimate shared claims: method notes, Ten-God glosses, the day master as vantage point, the month stem the day master produces, the controlling and resourcing voices in the year and month branches, the shared tension thesis and the month pillar as its densest point. No interpretive sentence is reproduced verbatim; the closest are a shared clause in S [2.6] / N [5.6] and a near-identical question in S [6.7] / N [2.9].",
+   "quotes": [
+    { "case": "source", "path": "chapters[2].paragraphs[6]", "text": "Der Ausdruck reicht bis in den Tageszweig, also bis unmittelbar unter den Tagesmeister; die Anforderung sitzt in den Zweigen" },
+    { "case": "near", "path": "chapters[5].paragraphs[6]", "text": "Der Ausdruck reicht bis in den Tageszweig, also bis unmittelbar unter den Tagesmeister; die Anforderung sitzt in den Zweigen" }
+   ]
+  }
+ ],
+ "outsideContract": [
+  {
+   "subject": "N never names its visible hour stem Bing (DirectOfficer)",
+   "verdict": "OBSERVATION",
+   "codes": [],
+   "why": "No claim of N cites the visible hour Ten God; the readings' surface/interior synthesis therefore cannot respond to the named difference (the hour pillar).",
+   "quotes": []
+  },
+  {
+   "subject": "R(S) [5.5]",
+   "verdict": "OBSERVATION",
+   "codes": [],
+   "why": "The paragraph confines both voices to the year and month branches, but S's hour branch holds both too (hidden Ji and Ding); no claim cites hour hidden stem 0.",
+   "quotes": [
+    { "case": "source", "path": "chapters[5].paragraphs[5]", "text": "ins Innere von Jahr und Monat" }
+   ]
+  }
+ ]
+}

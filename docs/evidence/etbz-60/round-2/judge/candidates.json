@@ -1,0 +1,16 @@
+{
+ "reuseVerbatimSentences": [
+  {
+   "sentence": "die tagessäule trägt xin den tagesmeister selbst",
+   "left": "chapters[2].paragraphs[1]",
+   "right": "chapters[2].paragraphs[4]"
+  }
+ ],
+ "positionStatements": [
+  "source chapters[2].paragraphs[5]",
+  "source chapters[6].paragraphs[0]",
+  "source chapters[6].paragraphs[4]",
+  "source chapters[6].paragraphs[5]",
+  "source chapters[6].paragraphs[6]"
+ ]
+}

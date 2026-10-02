@@ -1,0 +1,113 @@
+{
+ "judgementsVersion": "etbz60-judgements.v1",
+ "contract": {
+  "contractRef": "cross-reading-individuality-contract@1.1.0",
+  "confluencePageId": "77266967",
+  "confluencePageVersion": "3"
+ },
+ "policy": "The verdicts are the qualitative judgement of one independent instance, which is never the sole oracle for a reason code (contract section 10). The contract suite checks every quote below verbatim at its path. ADVISORY codes are candidates until the Product Owner judges the quoted passages.",
+ "judge": {
+  "checks": ["6.7"],
+  "instance": "fresh Claude Code general-purpose subagent, claude-opus-5-5 (declared), dispatched 2026-10-02 by the Delivery Runner. It is not the drafter, not the draft reviewer, not a Skill instance, and not an earlier judge.",
+  "brief": "judge/brief.md",
+  "report": "judge/report.md",
+  "toolCalls": "judge/tool-calls.txt",
+  "packet": ["judge/reading-source.md", "judge/reading-near.md", "judge/claims-source.txt", "judge/claims-near.txt", "judge/chart-source.txt", "judge/chart-near.txt", "judge/candidates.json"]
+ },
+ "judgements": [
+  {
+   "check": "6.7",
+   "subject": "the surface statements: the same position in each reading, opposite content at the hour, each grounded in its own surface claim",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "What recurs is the year, month and day part, which both surface claims carry. The hour content is opposite in the two readings and matches each chart's hour line (IndirectWealth for S, DirectOfficer for N). All five S paragraphs the finder lists stay in S only.",
+   "quotes": [
+    { "case": "source", "path": "chapters[2].paragraphs[5]", "text": "Kein sichtbarer Himmelsstamm wirkt fordernd auf Xin ein." },
+    { "case": "near", "path": "chapters[2].paragraphs[4]", "text": "Sichtbar fordernd ist an der Oberfläche also allein die Stundensäule" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "subject": "the verbatim sentence the finder found",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "It is a fact, not an interpretation, and part of both surface claims (the day stem is the day master itself); not TEMPLATE_SENTENCE_REUSE.",
+   "quotes": [
+    { "case": "source", "path": "chapters[2].paragraphs[1]", "text": "Die Tagessäule trägt Xin, den Tagesmeister selbst." },
+    { "case": "near", "path": "chapters[2].paragraphs[4]", "text": "Die Tagessäule trägt Xin, den Tagesmeister selbst." }
+   ]
+  },
+  {
+   "check": "6.7",
+   "subject": "the controlling voice not on the surface (S [2.2], N [2.3])",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "The statement is a shared claim and true for both charts: the visible stems are Geng, Ren, Xin and Yi in S, and Geng, Ren, Xin and Bing in N. Neither chart shows a Ding stem.",
+   "quotes": [
+    { "case": "source", "path": "chapters[2].paragraphs[2]", "text": "tritt nicht an der Oberfläche der Säulen hervor" },
+    { "case": "near", "path": "chapters[2].paragraphs[3]", "text": "steht sie nicht offen vorne" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "subject": "terrain imagery bound to the Wu Xing tally",
+   "verdict": "FINDING",
+   "codes": ["FIXED_METAPHOR_REUSE"],
+   "why": "Both readings tie the same image, a terrain profile with a peak, to the tally. The tally content differs, and each is correct.",
+   "quotes": [
+    { "case": "source", "path": "chapters[3].paragraphs[8]", "text": "Die Verteilung ist damit weder flach noch zerklüftet, sondern hat eine klare Spitze" },
+    { "case": "near", "path": "chapters[3].paragraphs[7]", "text": "Bildlich gesprochen hat die Verteilung keinen einzelnen Gipfel, sondern einen breiten Grat" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "subject": "everything else that recurs across R(S) and R(N)",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "Everything else that recurs is legitimate shared claims or fixed framing: the vantage point, Hurting Officer on the month surface and in the day branch, the month expressing what the day master gives rise to, Seven Killing and Indirect Resource in the year and month branches, the shared tension thesis, the Ten-God glosses, the Wu Xing method note, and recurrence is not priority. The hour-branch recurrence rests on different claims in S and N, with different Ten Gods and different paragraph theses.",
+   "quotes": [
+    { "case": "source", "path": "chapters[5].paragraphs[1]", "text": "Die fordernde Stimme des Monatszweigs kehrt unter den verborgenen Stämmen des Stundenzweigs wieder." },
+    { "case": "near", "path": "chapters[1].paragraphs[5]", "text": "Die Disruptive Ausgabe der Monatssäule kehrt unter den verborgenen Stämmen deines Stundenzweigs wieder." }
+   ]
+  }
+ ],
+ "outsideContract": [
+  {
+   "subject": "(d) the hour pillar given a 'late, after it was finished' meaning in both readings",
+   "verdict": "OBSERVATION",
+   "codes": [],
+   "why": "No claim carries this meaning. It is no life-stage reading (later life, children and old age are absent), but it is a frame below the paragraph level that recurs, for the Product Owner.",
+   "quotes": [
+    { "case": "near", "path": "chapters[1].paragraphs[4]", "text": "Die Stundensäule ist dabei die Position, die die Reihe der Säulen abschließt" },
+    { "case": "source", "path": "chapters[5].paragraphs[1]", "text": "noch eine letzte, nicht verhandelbare Bedingung" }
+   ]
+  },
+  {
+   "subject": "(c) comparisons no claim carries",
+   "verdict": "OBSERVATION",
+   "codes": [],
+   "why": "N compares the visible regulated voice with the hidden one ('sharper than the rule'). No claim makes this comparison.",
+   "quotes": [
+    { "case": "near", "path": "chapters[2].paragraphs[5]", "text": "der schärfer ist als die Regel selbst" }
+   ]
+  },
+  {
+   "subject": "(a) soft points of the surface wording in R(S)",
+   "verdict": "OBSERVATION",
+   "codes": [],
+   "why": "In S [2.4], 'Oberfläche' is used in an everyday sense that, read as a chart statement, assumes the demand later becomes visible. In addition, S [5.1] ('in neuer Gestalt') stands against S [5.2] ('in unveränderter Gestalt').",
+   "quotes": [
+    { "case": "source", "path": "chapters[2].paragraphs[4]", "text": "der Anspruch ist da, bevor er an der Oberfläche zu sehen ist" }
+   ]
+  },
+  {
+   "subject": "(b) N's visible hour voice kept apart from the hidden controlling voice",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "The two voices are always named and placed separately.",
+   "quotes": [
+    { "case": "near", "path": "chapters[2].paragraphs[5]", "text": "an der sichtbaren Oberfläche ist es allein die Verantwortung der Stundensäule, die den Tagesmeister kontrolliert" }
+   ]
+  }
+ ]
+}

@@ -43,7 +43,7 @@ bash scripts/verify-guards.sh                # foundation guard mutation proofs 
 bash scripts/secret-scan.sh                  # gitleaks tree + history + scanner mutation proof
 bash scripts/build-dry-run.sh                # container build / provenance / smoke / reproducibility
 npm run guards:etbz34 | guards:etbz30a | guards:etbz30b   # slice source-mutation proofs (NOT part of ci-verify)
-npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59   # slice mutation proofs that ARE steps of ci-verify
+npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59 | guards:etbz60   # slice mutation proofs that ARE steps of ci-verify
 npm run build && npm run etbz51:bundle                   # print the portable Skill Contract Bundle (canonical JSON)
 npm run build && npm run etbz52:package                  # regenerate skill/bazodiac-interpretation-skill-v1/{contract-bundle,reading-schema,MANIFEST}.json
 npm run build && npm run etbz57:package                  # the same for skill/bazodiac-interpretation-skill-v1.1/ (bundle 1.1.0)
@@ -55,7 +55,8 @@ npm run etbz58:live                                      # ETBZ-58 live stage ag
 npm run etbz58:assemble -- check-realise|check-edit|assemble|seal   # ETBZ-58 offline stages from the committed live stage
 npm run etbz53:freeze -- freeze|record|verify                    # ETBZ-53 Golden freeze (operator only; the case data stays in /Users/Shared/ETBZ-golden, docs/evidence/etbz-53/README.md)
 npm run etbz59:variants                                  # ETBZ-59 synthetic variants N and D through the ETBZ-58 live stage (operator only)
-npm run etbz59 -- emit|cones|accept <label>|packets|record   # ETBZ-59 offline stages (docs/evidence/etbz-59/README.md)
+npm run etbz59 -- emit|cones|accept <label>|packets|record   # ETBZ-59 offline stages (docs/evidence/etbz-59/README.md; record reproduces only at e5ccc94c)
+npm run etbz60 -- emit|cones|accept <round-1|round-2> <source|near>|packet <round>|record   # ETBZ-60 re-readings (docs/evidence/etbz-60/README.md)
 ```
 
 `scripts/ci-verify.sh` is the single definition of "verified". `.github/workflows/ci.yml` runs that same
@@ -262,9 +263,25 @@ S⁻ uses `withdrawFactsForEvaluation`: a withdrawn fact stays as evidence, is e
 day master and the month command cannot be withdrawn. The deterministic checks (`tests/support/etbz59Individuality.ts`:
 swap, comparison under a named difference, removal, IND-8 direction, candidate finders) are the tool ETBZ-54 reuses
 unchanged. A refusal of `acceptSkillReading` carries every violation of one full pass on `SkillRunError.diagnostics`
-(D-59-4); the refusal code is still the first violation. The judges' packets, the run record and the judgements are
-re-derived by `tests/contract/etbz59-individuality-evidence.contract.test.ts`. The rehearsal raised one BLOCKING
+(D-59-4); each diagnostic keeps its code, the first is the refusal. The judges' packets and the judgements are re-derived,
+the run record is pinned as merged at e5ccc94c (ETBZ-60 changed the boundary), by
+`tests/contract/etbz59-individuality-evidence.contract.test.ts`. The rehearsal raised one BLOCKING
 `STOCK_PARAGRAPH_REUSE`, recorded with its smallest repair, which is not applied (docs/evidence/etbz-59/README.md).
+
+ETBZ-60 (ADR 0017) repaired it in two layers, with Skill 1.1.0 and bundle 1.1.0 unchanged.
+
+- **The boundary (D-59-6).** A sentence that states something of the chart's positions as a whole ("auf keiner Säule",
+  "nicht an der Oberfläche einer Säule", "ohne an die Oberfläche", "nur im Monatszweig") is refused with
+  `READING_POSITION_UNGROUNDED` unless the paragraph cites a fact of every pillar, directly or through its claims. A
+  defining clause about stems as a class and "nicht nur ..." are exempt. On its own this layer did not close the class:
+  round 1's judge found the same reuse in a paraphrase the patterns miss.
+- **The drafting rule (D-60-1), binding the ETBZ-54 Golden drafts.** When a thesis or primary motif rests on a
+  surface/interior contrast, the claim graph carries a distribution claim. It describes what each of the four pillars
+  shows on its surface and cites every pillar's visible Ten-God fact with its relation to the day master, plus the day
+  master (`tests/support/etbz60Cases.ts`, `SURFACE_FACT_IDS`). The independent draft review checks it. With it, round
+  2's judge raised no BLOCKING code.
+
+The ETBZ-59 run record was made under the earlier boundary and is pinned as merged at e5ccc94c, not re-derived.
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:

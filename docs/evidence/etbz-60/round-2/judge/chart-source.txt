@@ -1,0 +1,6 @@
+year: stem Geng 庚 (Metall), branch Wu 午 (Pferd); visible Ten God RobWealth; hidden Ding (SevenKilling), Ji (IndirectRes)
+month: stem Ren 壬 (Wasser), branch Wu 午 (Pferd); visible Ten God HurtingOfficer; hidden Ding (SevenKilling), Ji (IndirectRes)
+day: stem Xin 辛 (Metall), branch Hai 亥 (Schwein); visible Ten God -; hidden Ren (HurtingOfficer), Jia (DirectWealth)
+hour: stem Yi 乙 (Holz), branch Wei 未 (Ziege); visible Ten God IndirectWealth; hidden Ji (IndirectRes), Ding (SevenKilling), Yi (IndirectWealth)
+day master: Xin
+Wu Xing weights: Holz 1.8, Feuer 2.5, Erde 2, Metall 2, Wasser 2

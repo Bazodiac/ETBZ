@@ -25,7 +25,6 @@ const CASES = 'tests/support/etbz59Cases.ts';
 const READING = 'src/application/skill/skill-reading.ts';
 const NEAR_READBACK = 'docs/evidence/etbz-59/variants/near/runtime-readback.json';
 const JUDGES = 'tests/support/etbz59Judges.ts';
-const RECORD = 'tests/support/etbz59Record.ts';
 const JUDGEMENTS = 'docs/evidence/etbz-59/judgements.json';
 const TOOL_CALLS_A = 'docs/evidence/etbz-59/judges/A/tool-calls.txt';
 
@@ -186,10 +185,16 @@ const MUTANTS = [
     "  files['A/chart-1.txt'] = chartSheet(distant);",
     "  files['A/chart-1.txt'] = chartSheet(runs.near.model);",
     [T.contract], "re-derives every file each judge read, byte for byte, from the accepted readings and the validated charts"],
-  ["RECORD: the judged codes are dropped from the section-8 items", 'text', RECORD,
-    "judgements.judgements.filter((entry) => entry.check === check)",
-    "judgements.judgements.filter((entry) => entry.check === 'never')",
-    [T.contract], "re-derives the run record byte for byte from the committed files"],
+  // ETBZ-60: the run record is frozen as merged at e5ccc94c (the ETBZ-60 boundary refuses the ETBZ-59 readings), so
+  // the mutants hold the pin and the files the record names instead of its re-derivation.
+  ["RECORD: the frozen run record changes", 'text', 'docs/evidence/etbz-59/individuality-record.json',
+    '"recordVersion":"etbz59-individuality-record.v1"',
+    '"recordVersion":"etbz59-individuality-record.v9"',
+    [T.contract], "keeps the run record as merged at e5ccc94c, byte for byte"],
+  ["RECORD: a file the record names changes", 'text', 'docs/evidence/etbz-59/pre-run-cones.json',
+    '{"graphs":{"near":"sha256:cb81ed04',
+    '{"graphs":{"near":"sha256:cb81ed05',
+    [T.contract], "finds every file the run record names at the hash it records"],
   ["JUDGEMENTS: a quote is not what the reading says", 'text', JUDGEMENTS,
     "\"text\": \"sie steht auf keiner Säule oben\"",
     "\"text\": \"sie steht auf jeder Säule oben\"",

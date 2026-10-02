@@ -408,6 +408,43 @@ export function findTentativeMarker(text: string): string | null {
   return firstPhrase(text, TENTATIVE_MARKERS);
 }
 
+// ETBZ-60 (PO decisions D-59-5, D-59-6; Jira ETBZ-60): a sentence that states something of the chart's positions as
+// a whole - on no pillar, not on any pillar, never at the surface, only in one place - says something of every pillar,
+// so the paragraph has to cite a fact of every pillar (SKILL.md law 3 and step 2: a paragraph names only facts its
+// claims are grounded in). It closes the ETBZ-59 BLOCKING STOCK_PARAGRAPH_REUSE: "die Anforderung tritt nicht an der
+// Oberfläche einer Säule auf" held for one chart and was false for its near neighbour, and no claim carried it. A
+// defining relative clause about stems as a class ("Himmelsstämme, die nicht ...") is framework, not a statement
+// about this chart.
+const POSITION_NOUNS = '(?:Säule|Säulen|Pfeiler|Zweig|Zweige|Zweigen|Zweiges|Erdzweig|Erdzweige|Erdzweigen|Stamm|Stämme|Stämmen|Himmelsstamm|Himmelsstämme|Himmelsstämmen|Position|Positionen)';
+const POSITION_STATEMENTS: readonly RegExp[] = [
+  // "auf keiner Säule", "in keinem Zweig"
+  new RegExp(`\\b(?:kein|keine|keiner|keinem|keinen)\\s+(?:\\p{L}+\\s+){0,2}${POSITION_NOUNS}(?![\\p{L}])`, 'iu'),
+  // "nicht offen oben auf einer Säule", "nicht an der Oberfläche einer Säule" (not "nicht nur an einer ...")
+  new RegExp(`\\bnicht\\s+(?!nur\\b)(?:\\p{L}+\\s+){0,4}(?:auf|an|in|über)\\s+(?:der\\s+Oberfläche\\s+)?(?:einer|einem|eines)\\s+${POSITION_NOUNS}(?![\\p{L}])`, 'iu'),
+  // "ohne an die Oberfläche zu treten", "nie an der Oberfläche"
+  /\b(?:ohne|nie|niemals|nirgends|nirgendwo)\s+(?:\p{L}+\s+){0,3}(?:an|auf)\s+(?:die|der)\s+Oberfläche(?![\p{L}])/iu,
+  // "nur im Monatszweig" (not "nicht nur im ...")
+  new RegExp(`(?<!\\bnicht\\s)\\b(?:nur|ausschließlich|einzig)\\s+(?:\\p{L}+\\s+){0,3}(?:im|in\\s+der|in\\s+den|auf\\s+der|an\\s+der)\\s+\\p{L}*${POSITION_NOUNS}(?![\\p{L}])`, 'iu'),
+];
+// The defining clause itself, up to its end; only the clause is set aside, never the rest of its sentence (PR #25 review,
+// MINOR-6). It defines stems as a class only where it opens its sentence ("…: Himmelsstämme, die nicht …"); after a
+// determiner ("die fordernden Stämme, die nicht …") it states something of this chart (MINOR-11).
+const DEFINING_CLAUSE = /^\s*(?:Himmelsstämme|Stämme)\s*,\s*die\s+nicht\b[^,.;:]*/iu;
+const PILLAR_NAMES = ['year', 'month', 'day', 'hour'] as const;
+
+/** The first phrase that states something of the chart's positions as a whole, or null (ETBZ-60). */
+export function findPositionStatement(text: string): string | null {
+  // NFC first, as every other phrase check here (a decomposed "Säule" would otherwise slip through).
+  for (const sentence of text.normalize('NFC').split(/(?<=[.!?;:])\s+/u)) {
+    const rest = sentence.replace(DEFINING_CLAUSE, ' ');
+    for (const pattern of POSITION_STATEMENTS) {
+      const match = pattern.exec(rest);
+      if (match !== null) return match[0];
+    }
+  }
+  return null;
+}
+
 /** The count word a text carries, or null. */
 export function findCountWord(text: string): string | null {
   return firstPhrase(text, COUNT_WORDS);
@@ -510,6 +547,17 @@ function checkSymbols(text: string, where: string, covered: Set<string>): void {
   const uncitedNumerals = findUncitedNumerals(text, covered);
   if (uncitedNumerals.length > 0) {
     throw new SkillRunError('READING_UNCITED_NUMERAL', `${where} states a number no cited fact carries`, { where, numerals: uncitedNumerals });
+  }
+}
+
+/** ETBZ-60: a statement of the chart's positions as a whole needs a cited fact of every pillar. */
+function checkPositions(text: string, where: string, facts: readonly ChartFact[]): void {
+  const statement = findPositionStatement(text);
+  if (statement === null) return;
+  const cited = new Set(facts.map((fact) => fact.pillar));
+  const missing = PILLAR_NAMES.filter((pillar) => !cited.has(pillar));
+  if (missing.length > 0) {
+    throw new SkillRunError('READING_POSITION_UNGROUNDED', `${where} states something of the chart's positions as a whole ("${statement}") but cites no fact of the ${missing.join(', ')} pillar`, { where, phrase: statement, missingPillars: missing });
   }
 }
 
@@ -793,6 +841,7 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       const coveredFacts = [...facts, ...claims.flatMap((claim) => claim.factRefs.map((id) => factById.get(id)).filter((fact): fact is ChartFact => fact !== undefined))];
       chapterFacts.push(...coveredFacts);
       checkSymbols(paragraph.text, at, coveredValuesOf(coveredFacts));
+      checkPositions(paragraph.text, at, coveredFacts);
     }));
 
     // ETBZ-59 (D-59-4): the chapter checks run in try/finally, so that the bookkeeping at their end runs after a

@@ -1,0 +1,553 @@
+{
+  "schemaVersion": "bazodiac-skill-reading.v1",
+  "skillRef": "bazodiac-interpretation-skill@1.1.0",
+  "bundleRef": "bazodiac-skill-contract-bundle@1.1.0",
+  "bundleStructuralHash": "sha256:9e6762f3cf339f3e03e56d52770629bd30eebe79ab6b7a70cbcc9dbb9ea599c2",
+  "inputPackageStructuralHash": "sha256:cb8f2e2a88da4c5dcf4db921551289106f65fa33360668bb9548b24993a31fdc",
+  "claimGraphStructuralHash": "sha256:93ff951f8d65bc7a7b9a923d85095941918bb89f89debd4277d9db58582ec27d",
+  "planStructuralHash": "sha256:594861d9dd53aed470edb0595b575b81d839dcc1411ccde242d982da523b5d65",
+  "contracts": [
+    {"confluencePageId": "63012866", "confluencePageVersion": "5", "contractRef": "bazi-method-profile@1.0.0"},
+    {"confluencePageId": "57802765", "confluencePageVersion": "2", "contractRef": "confluence:57802765@2"},
+    {"confluencePageId": "77561858", "confluencePageVersion": "6", "contractRef": "grounded-reflective-synthesis-lens@1.1.0"},
+    {"confluencePageId": "77529091", "confluencePageVersion": "4", "contractRef": "terminology-wording-lexicon@1.1.0"},
+    {"confluencePageId": "77266967", "confluencePageVersion": "3", "contractRef": "cross-reading-individuality-contract@1.1.0"}
+  ],
+  "title": "BaZi-Chart für Variante N (synthetisch)",
+  "chapters": [
+    {
+      "chapterRef": "chapter.sha256:2dd764004829631327fe86c37e6f32d366577b6d20b2483a99942c82f4d128f0",
+      "narrativeOperation": "ESTABLISH",
+      "title": "Xin als Blickpunkt, die Disruptive Ausgabe als Ausdruck",
+      "paragraphs": [
+        {
+          "kind": "FACT",
+          "posture": "NONE",
+          "text": "Dein Chart zeigt in der Tagessäule den Himmelsstamm Xin, geschrieben 辛 und ausgesprochen xīn, in der Wandlungsphase Metall. Dieser Stamm ist dein Tagesmeister. Unter ihm steht der Erdzweig Hai, geschrieben 亥 und ausgesprochen hài, dem als Tierbild das Schwein zugeordnet ist. Die Tagessäule ist eine der Säulen deines Charts: Jahr, Monat, Tag und Stunde der Geburt bilden je eine Säule, und jede Säule besteht aus einem Himmelsstamm oben und einem Erdzweig unten. Die Himmelsstämme bilden die sichtbare obere Schicht des Charts. Die Erdzweige bilden die untere Schicht und tragen in sich verborgene Stämme, eine innere Ebene, die nicht an der Oberfläche steht.",
+          "factRefs": ["chart.dayMaster.stem", "chart.dayMaster.stemHanzi", "chart.dayMaster.stemPinyin", "chart.dayMaster.element", "chart.pillar.day.branch", "chart.pillar.day.branchHanzi", "chart.pillar.day.branchPinyin", "chart.pillar.day.tier"],
+          "claimRefs": []
+        },
+        {
+          "kind": "FRAME",
+          "posture": "NONE",
+          "text": "Der Tagesmeister ist der Bezugspunkt eines BaZi-Charts. Jede andere Position wird von ihm aus betrachtet: Ob ein Stamm stützt, fordert, auf gleicher Höhe steht oder etwas hervorbringt, ergibt sich erst aus seinem Verhältnis zu Xin. Der Tagesmeister ist kein Persönlichkeitstyp und keine fertige Charakterbeschreibung. Er ist die Stelle, an der die Perspektive des ganzen Charts festgemacht ist, so wie eine Karte erst dann etwas zeigt, wenn der eigene Standort darauf markiert ist. Alle Verhältnisse, die in den übrigen Säulen erscheinen, sind Verhältnisse zu diesem Punkt.",
+          "factRefs": ["chart.dayMaster.stem"],
+          "claimRefs": ["claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Dein Chart ordnet sich um Xin. Was die übrigen Säulen tragen, erscheint deshalb nicht als lose Sammlung von Eigenschaften, sondern als eine Reihe von Beziehungen, die alle auf denselben Standpunkt zulaufen. Eine Anforderung ist in diesem Chart eine Anforderung an Xin; etwas, das hervorgebracht wird, geht von Xin aus; eine Stütze ist etwas, das Xin erreicht. Erkennbar wird dieser Blickpunkt etwa in Momenten, in denen eine Lage erst dann Sinn ergibt, wenn klar ist, von welcher Stelle aus auf sie geschaut wird: Dieselbe Situation sieht von einem anderen Standort aus anders aus, und erst der Standort entscheidet, was in ihr fordert, was stützt und was hervortritt. Der Tagesmeister legt diesen Standort für das ganze Chart fest.",
+          "factRefs": ["chart.dayMaster.stem"],
+          "claimRefs": ["claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57"]
+        },
+        {
+          "kind": "FACT",
+          "posture": "NONE",
+          "text": "In deiner Monatssäule steht im Himmelsstamm Ren, geschrieben 壬 und ausgesprochen rén, in der Wandlungsphase Wasser. Zum Tagesmeister steht dieser Stamm in der Beziehung Disruptive Ausgabe: Er gehört zu der Phase, die der Tagesmeister hervorbringt. In BaZi bekommt jedes Verhältnis eines Stammes zum Tagesmeister einen eigenen Namen, und diese Namen sind die Sprache, in der das Chart seine Beziehungen ausweist. Im Erdzweig der Tagessäule liegt unter den verborgenen Stämmen ebenfalls Ren, und auch dort steht die Disruptive Ausgabe, wieder als Phase, die der Tagesmeister hervorbringt.",
+          "factRefs": ["chart.pillar.month.stem", "chart.pillar.month.stemHanzi", "chart.pillar.month.stemPinyin", "chart.pillar.month.stemElement", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation", "chart.natal.pillar.day.hiddenStem.0.stem", "chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.day.hiddenStem.0.tenGod.elementRelation"],
+          "claimRefs": []
+        },
+        {
+          "kind": "FRAME",
+          "posture": "NONE",
+          "text": "Die Disruptive Ausgabe gehört in BaZi zur Familie von Ausdruck, Hervorbringen und Differenzierung. Gemeint ist der Weg, auf dem etwas Inneres nach außen tritt und Gestalt annimmt. In dieser Familie steht die Disruptive Ausgabe für die schärfere Ausprägung: einen differenzierenden, kritischen Ausdruck, der an einem bestehenden Rahmen ansetzt, ihn prüft und Unterschiede benennt, statt ihn bloß fortzuführen. Sie beschreibt eine Richtung, in die sich das Hervorgebrachte bewegt, nämlich hin zur Unterscheidung.",
+          "factRefs": ["chart.natal.pillar.month.tenGod", "chart.natal.pillar.day.hiddenStem.0.tenGod"],
+          "claimRefs": ["claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Die Disruptive Ausgabe steht in deinem Chart an der Oberfläche der Monatssäule und kehrt im Inneren des Tageszweigs wieder. Differenzierender Ausdruck liegt damit sowohl sichtbar am Himmelsstamm der Monatssäule als auch verborgen im Erdzweig der Säule, in der der Tagesmeister selbst steht. Der Ausdruck ist also kein Zug, der nur nach außen weist; er reicht bis in die unmittelbare Nähe des Bezugspunkts. Das zeigt sich als ein Ausdruck, der nicht beim Weitergeben stehen bleibt, sondern unterscheidet, schärft und an Vorhandenem ansetzt. Erkennbar ist das Muster in Situationen, in denen ein Entwurf vorliegt und der spontane Impuls nicht Zustimmung ist, sondern die Frage, an welcher Stelle er nicht stimmt; oder in Momenten, in denen ein Gedanke erst dann fertig wirkt, wenn er gegen eine bestehende Formulierung abgegrenzt ist.",
+          "factRefs": ["chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.month.tenGod"],
+          "claimRefs": ["claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Die Positionen geben diesem Ausdruck seinen Ort. An der Oberfläche der Monatssäule steht die Disruptive Ausgabe dort, wo ein Stamm offen sichtbar ist; im Tageszweig liegt sie dort, wo die verborgenen Stämme ruhen, im Erdzweig direkt unter dem Tagesmeister. Ausdruck ist in diesem Chart deshalb etwas, das nach außen hin erkennbar ist, und zugleich etwas, das in der eigenen Säule mitläuft, ohne an der Oberfläche zu stehen. Wiederzuerkennen ist das etwa dort, wo eine kritische Anmerkung bereits innerlich formuliert ist, bevor sie ausgesprochen wird, und ebenso dort, wo sie offen auf dem Tisch liegt und eine bestehende Fassung verändert.",
+          "factRefs": ["chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.month.tenGod"],
+          "claimRefs": ["claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Weil Xin der Blickpunkt des Charts ist, ist die Disruptive Ausgabe hier keine Größe, die von irgendwoher kommt, sondern eine Bewegung, die vom Tagesmeister ausgeht. Der Blickpunkt bestimmt die Richtung: Was in der Monatssäule und im Tageszweig als differenzierender Ausdruck erscheint, ist Ausdruck von Xin, nicht Ausdruck über Xin. Das gibt ihm seine Richtung. Es geht um das, was aus diesem Standpunkt heraus hervortritt, etwa in einem Moment, in dem eine Unterscheidung getroffen wird, die nur von genau dieser Stelle aus sichtbar war.",
+          "factRefs": ["chart.dayMaster.stem", "chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.month.tenGod"],
+          "claimRefs": ["claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "REFLECTION",
+          "posture": "SUPPORTED",
+          "text": "Wann hast du zuletzt bemerkt, dass ein Gedanke erst dann Kontur bekam, als du ihn von einer vorhandenen Fassung abgesetzt hast – und war dieser Unterschied nach außen sichtbar oder zunächst nur für dich selbst klar?",
+          "factRefs": [],
+          "claimRefs": ["claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        }
+      ],
+      "semanticDelta": [
+        {"kind": "NEW_CLAIM", "claimRefs": ["claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]},
+        {"kind": "NEW_QUALIFICATION", "claimRefs": ["claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]}
+      ],
+      "callbacks": []
+    },
+    {
+      "chapterRef": "chapter.sha256:1bc9652090af2f5d2edf095ddabc4f4995eeed7c38672fbc4b5a7f762d19ed9f",
+      "narrativeOperation": "REINFORCE",
+      "title": "Die Disruptive Ausgabe kehrt im Stundenzweig wieder",
+      "paragraphs": [
+        {
+          "kind": "FACT",
+          "posture": "NONE",
+          "text": "In deiner Stundensäule steht der Himmelsstamm Bing, geschrieben 丙 und ausgesprochen bǐng, in der Wandlungsphase Feuer. Darunter liegt der Erdzweig Shen, geschrieben 申 und ausgesprochen shēn, dem als Tierbild der Affe zugeordnet ist. Unter den verborgenen Stämmen dieses Erdzweigs findet sich Ren. Zum Tagesmeister steht dieser verborgene Stamm in der Beziehung Disruptive Ausgabe: Er gehört zu der Phase, die der Tagesmeister hervorbringt. Dieselbe Beziehung trägt der sichtbare Himmelsstamm deiner Monatssäule, ebenfalls als Phase, die der Tagesmeister hervorbringt.",
+          "factRefs": ["chart.pillar.hour.stem", "chart.pillar.hour.stemHanzi", "chart.pillar.hour.stemPinyin", "chart.pillar.hour.stemElement", "chart.pillar.hour.branch", "chart.pillar.hour.branchHanzi", "chart.pillar.hour.branchPinyin", "chart.pillar.hour.tier", "chart.natal.pillar.hour.hiddenStem.1.stem", "chart.natal.pillar.hour.hiddenStem.1.tenGod", "chart.natal.pillar.hour.hiddenStem.1.tenGod.elementRelation", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation"],
+          "claimRefs": []
+        },
+        {
+          "kind": "FRAME",
+          "posture": "NONE",
+          "text": "Hervorbringen hat in BaZi eine feste Richtung. Jede Wandlungsphase nährt eine bestimmte andere, und die Phase, die der Tagesmeister nährt, steht für das, was aus ihm heraus entsteht. Eine Beziehung zu dieser Phase beschreibt deshalb keinen Einfluss, der von außen auf den Tagesmeister trifft, sondern einen Weg, der von ihm wegführt: Etwas Eigenes nimmt eine Form an, die sich zeigen lässt. Die Disruptive Ausgabe ist eine solche Beziehung, und zwar diejenige, die das Hervorgebrachte zuspitzt und unterscheidend macht.",
+          "factRefs": ["chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation"],
+          "claimRefs": ["claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Was deine Monatssäule ausdrückt, bringt der Tagesmeister selbst hervor. Die Disruptive Ausgabe am Himmelsstamm dieser Säule ist keine fremde Vorgabe, die auf den Bezugspunkt trifft, sondern das Ergebnis einer Bewegung, die von ihm ausgeht. Das gibt dem Ausdruck in diesem Chart eine klare Herkunft: Er ist Eigenes, das nach außen tritt. Greifbar wird das in Situationen, in denen eine Formulierung, ein Entwurf oder eine Unterscheidung nicht übernommen, sondern aus dem eigenen Material entwickelt wird, etwa wenn eine vorgefertigte Antwort bereitliegt und trotzdem eine eigene, schärfer gefasste entsteht. Ebenso erkennbar ist es dort, wo eine Erklärung nicht nachgesprochen, sondern neu sortiert wird, bis sie in eigenen Worten trägt. Die Monatssäule zeigt diesen Vorgang an einer Stelle, an der er offen sichtbar ist.",
+          "factRefs": ["chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation"],
+          "claimRefs": ["claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Dass dieser Ausdruck hervorgebracht und nicht empfangen ist, unterscheidet ihn von einer bloßen Reaktion. Die Bewegung beginnt beim Tagesmeister und endet an der Oberfläche der Monatssäule. Das zeigt sich als eine Form des Ausdrucks, die etwas Bestehendes nicht einfach spiegelt, sondern daraus etwas Unterschiedenes macht: eine Korrektur, durch die eine Fassung präziser wird, ein Vergleich, der eine unscharfe Linie sichtbar macht, eine kritische Anmerkung, die aus genauer Beobachtung entsteht. Die Disruptive Ausgabe ist hier eine Leistung des Charts selbst und keine Antwort auf etwas, das von außen kommt.",
+          "factRefs": ["chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation"],
+          "claimRefs": ["claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a"]
+        },
+        {
+          "kind": "FRAME",
+          "posture": "NONE",
+          "text": "Wiederkehr heißt in BaZi, dass dieselbe Beziehung an verschiedenen Positionen des Charts auftaucht. Eine wiederkehrende Beziehung wird dadurch nicht größer oder wichtiger; sie erscheint in einem weiteren Zusammenhang. Die Stundensäule ist dabei die Position, die die Reihe der Säulen abschließt: Jahr, Monat, Tag, Stunde. Was dort unter den verborgenen Stämmen liegt, gehört zur inneren Schicht dieser letzten Säule.",
+          "factRefs": ["chart.natal.pillar.hour.hiddenStem.1.tenGod", "chart.natal.pillar.month.tenGod"],
+          "claimRefs": ["claim.sha256:e32af71dda1c252bf93a10bb00eb38a5099bf62e37e95225206c37a0347e99e1"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Die Disruptive Ausgabe der Monatssäule kehrt unter den verborgenen Stämmen deines Stundenzweigs wieder. Der differenzierende Ausdruck, der in der Monatssäule offen am Himmelsstamm steht, ist damit auch in der Stundensäule angelegt, dort aber im Erdzweig, unter der Oberfläche. Auch hier handelt es sich um eine Phase, die der Tagesmeister hervorbringt: dieselbe Bewegung vom Bezugspunkt nach außen, an einer anderen Stelle. Das zeigt sich als Ausdruck, der nicht an eine Position gebunden ist. Wiederzuerkennen ist das etwa in Lagen, in denen eine klärende Unterscheidung nicht sofort ausgesprochen wird, aber bereitliegt und sich erst nach einer Weile in einer genauen Formulierung zeigt; oder dort, wo eine kritische Anmerkung nicht spontan fällt, sondern im Hintergrund reift, bis sie die passende Schärfe hat.",
+          "factRefs": ["chart.natal.pillar.hour.hiddenStem.1.tenGod", "chart.natal.pillar.hour.hiddenStem.1.tenGod.elementRelation", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation"],
+          "claimRefs": ["claim.sha256:e32af71dda1c252bf93a10bb00eb38a5099bf62e37e95225206c37a0347e99e1"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Die Wiederkehr gibt diesem Ausdruck Tiefe, ohne ihn zu vergrößern. In der Monatssäule steht die Disruptive Ausgabe an einer Stelle, die offen sichtbar ist; im Stundenzweig liegt sie in der inneren Schicht der Säule, die die Reihe abschließt. Erkennbar ist diese Verteilung etwa dort, wo eine Unterscheidung zunächst nach außen getroffen ist und an ganz anderer Stelle erneut auftaucht, nun leiser und genauer, als Nachschärfung einer Fassung, die eigentlich schon fertig war.",
+          "factRefs": ["chart.natal.pillar.hour.hiddenStem.1.tenGod", "chart.natal.pillar.month.tenGod"],
+          "claimRefs": ["claim.sha256:e32af71dda1c252bf93a10bb00eb38a5099bf62e37e95225206c37a0347e99e1"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Zusammengenommen: Der Ausdruck der Monatssäule geht vom Tagesmeister aus, und dieselbe Beziehung findet sich im Stundenzweig wieder. Die Disruptive Ausgabe ist damit offen sichtbar und zugleich im Erdzweig der Stundensäule angelegt, in der Monatssäule wie im Stundenzweig als etwas, das aus dem Bezugspunkt hervorgeht. Erkennbar wird diese Verbindung in Momenten, in denen eine geschärfte Formulierung bereits offen vorliegt und daneben eine weitere Präzisierung im Hintergrund bereitsteht, die erst nach einer Weile an die Oberfläche kommt. Der Ausdruck dieses Charts hat damit eine sichtbare Seite und eine innere Entsprechung derselben Art.",
+          "factRefs": ["chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation", "chart.natal.pillar.hour.hiddenStem.1.tenGod", "chart.natal.pillar.hour.hiddenStem.1.tenGod.elementRelation"],
+          "claimRefs": ["claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a", "claim.sha256:e32af71dda1c252bf93a10bb00eb38a5099bf62e37e95225206c37a0347e99e1"]
+        },
+        {
+          "kind": "REFLECTION",
+          "posture": "SUPPORTED",
+          "text": "Erinnerst du dich an einen Moment, in dem eine eigene, schärfere Fassung entstand, obwohl eine fertige Vorlage bereitlag – und hat sich die Unterscheidung damals sofort gezeigt oder erst nach einer Weile?",
+          "factRefs": [],
+          "claimRefs": ["claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a", "claim.sha256:e32af71dda1c252bf93a10bb00eb38a5099bf62e37e95225206c37a0347e99e1"]
+        }
+      ],
+      "semanticDelta": [
+        {"kind": "NEW_CLAIM", "claimRefs": ["claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a", "claim.sha256:e32af71dda1c252bf93a10bb00eb38a5099bf62e37e95225206c37a0347e99e1"]}
+      ],
+      "callbacks": []
+    },
+    {
+      "chapterRef": "chapter.sha256:ed867107f0ba7a7b8558a1c36fd4e17b068fa6b17b5351ab53134d895a7bdf9c",
+      "narrativeOperation": "CONTRAST",
+      "title": "Wo Druck / Struktur auf die Disruptive Ausgabe trifft",
+      "paragraphs": [
+        {
+          "kind": "FACT",
+          "posture": "NONE",
+          "text": "In deiner Jahressäule wie in deiner Monatssäule steht der Erdzweig Wu, geschrieben 午 und ausgesprochen wǔ, mit dem Tierbild Pferd. Im Erdzweig der Jahressäule und im Erdzweig der Monatssäule liegt unter den verborgenen Stämmen Ding. An jeder dieser Positionen steht Ding zum Tagesmeister in der Beziehung Druck / Struktur: Es gehört zu der Phase, die den Tagesmeister kontrolliert.",
+          "factRefs": ["chart.pillar.year.branch", "chart.pillar.year.branchHanzi", "chart.pillar.year.branchPinyin", "chart.pillar.year.tier", "chart.pillar.month.branch", "chart.pillar.month.branchHanzi", "chart.pillar.month.branchPinyin", "chart.pillar.month.tier", "chart.natal.pillar.year.hiddenStem.0.stem", "chart.natal.pillar.month.hiddenStem.0.stem", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.year.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation"],
+          "claimRefs": []
+        },
+        {
+          "kind": "FACT",
+          "posture": "NONE",
+          "text": "An der Oberfläche der Säulen stehen die Himmelsstämme. Am Himmelsstamm der Jahressäule steht Geng, geschrieben 庚 und ausgesprochen gēng, in der Wandlungsphase Metall; zum Tagesmeister steht er in der Beziehung Rivale, als Stamm derselben Phase wie der Tagesmeister. Am Himmelsstamm der Monatssäule steht die Disruptive Ausgabe, eine Phase, die der Tagesmeister hervorbringt. Die Tagessäule trägt am Himmelsstamm den Tagesmeister Xin selbst. Am Himmelsstamm der Stundensäule steht Bing, geschrieben 丙, in der Beziehung Verantwortung: Diese Phase kontrolliert den Tagesmeister.",
+          "factRefs": ["chart.pillar.year.stem", "chart.pillar.year.stemHanzi", "chart.pillar.year.stemPinyin", "chart.pillar.year.stemElement", "chart.natal.pillar.year.tenGod", "chart.natal.pillar.year.tenGod.elementRelation", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation", "chart.dayMaster.stem", "chart.pillar.hour.stem", "chart.pillar.hour.stemHanzi", "chart.natal.pillar.hour.tenGod", "chart.natal.pillar.hour.tenGod.elementRelation"],
+          "claimRefs": []
+        },
+        {
+          "kind": "FRAME",
+          "posture": "NONE",
+          "text": "Druck / Struktur gehört in BaZi zur Familie der Anforderungen: Maßstäbe, Regeln und Erwartungen, die von außen gesetzt oder verinnerlicht sind. In dieser Familie ist Druck / Struktur die weniger abgefederte Ausprägung, ein unmittelbarer Druck, eine entschiedene Anforderung, die eine Antwort verlangt, ohne dass ein Regelwerk dazwischensteht. Die Beziehung beruht darauf, dass diese Phase den Tagesmeister kontrolliert.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod"],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Im Inneren der Jahressäule und im Inneren der Monatssäule liegt dieselbe kontrollierende Stimme: Druck / Struktur, unter der Oberfläche, im Erdzweig. Dein Chart trägt an diesen Positionen eine Anforderung an den Tagesmeister, die nicht verhandelt und nicht abgestuft ist. Das zeigt sich als ein Druck, der eine entschiedene Antwort verlangt, erkennbar etwa in Momenten, in denen eine Frist feststeht und keinen Aufschub zulässt, oder in Lagen, in denen ein Maßstab gilt, bevor überhaupt darüber gesprochen wurde. Weil diese Stimme in den Zweigen liegt und nicht an den Himmelsstämmen, steht sie nicht offen vorne; sie liegt in der inneren Schicht der Säulen und ist dort in der Jahres- wie in der Monatssäule dieselbe.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod"],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "An der Oberfläche deines Charts ergibt sich eine klare Abfolge. Der Himmelsstamm der Jahressäule trägt den Rivalen, eine Stimme derselben Phase wie der Tagesmeister: Eigenständigkeit im Verhältnis zu Gleichgestellten, eine Position auf gleicher Höhe. Der Himmelsstamm der Monatssäule trägt die Disruptive Ausgabe, den Ausdruck, den der Tagesmeister hervorbringt. Die Tagessäule trägt Xin, den Tagesmeister selbst. Der Himmelsstamm der Stundensäule trägt Verantwortung, eine Stimme, die den Tagesmeister kontrolliert, und er ist der einzige sichtbare Stamm des Charts, der das tut. Sichtbar fordernd ist an der Oberfläche also allein die Stundensäule; alles andere dort steht dem Tagesmeister gleich, geht von ihm aus oder ist er selbst.",
+          "factRefs": ["chart.dayMaster.stem", "chart.natal.pillar.year.tenGod", "chart.natal.pillar.year.tenGod.elementRelation", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation", "chart.natal.pillar.hour.tenGod", "chart.natal.pillar.hour.tenGod.elementRelation"],
+          "claimRefs": ["claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Damit bekommt die kontrollierende Stimme der Zweige ihren Ort. Druck / Struktur liegt im Inneren der Jahres- und der Monatssäule; an der sichtbaren Oberfläche ist es allein die Verantwortung der Stundensäule, die den Tagesmeister kontrolliert. Die Anforderung ist in diesem Chart an der Oberfläche geregelt und benannt, in der inneren Schicht dagegen unmittelbar und unabgefedert. Erkennbar ist diese Verteilung etwa in Situationen, in denen eine ausdrückliche Regel offen auf dem Tisch liegt und zugleich ein unausgesprochener Anspruch im Raum steht, der schärfer ist als die Regel selbst und keine Verhandlung vorsieht.",
+          "factRefs": ["chart.dayMaster.stem", "chart.natal.pillar.year.tenGod", "chart.natal.pillar.year.tenGod.elementRelation", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation", "chart.natal.pillar.hour.tenGod", "chart.natal.pillar.hour.tenGod.elementRelation", "chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod"],
+          "claimRefs": ["claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Hier liegt eine Spannung, und dein Chart trägt sie offen. Die Disruptive Ausgabe steht an der Oberfläche der Monatssäule und im Inneren des Tageszweigs; Druck / Struktur liegt im Inneren der Jahressäule und im Inneren der Monatssäule. In der Monatssäule selbst stehen sie übereinander: oben der differenzierende Ausdruck, unten im Erdzweig die kontrollierende Anforderung. Das eine drängt nach außen und will unterscheiden, das andere setzt einen Maßstab und verlangt eine Antwort. Diese Richtungen ziehen gleichzeitig, und keine löst die andere auf.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.month.tenGod"],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Erkennbar wird diese Spannung in Momenten, in denen ein Einwand formuliert ist und zugleich eine Vorgabe gilt, die keinen Aufschub und keine Diskussion zulässt; oder dort, wo eine schärfere Fassung bereitliegt, während eine Frist die schnelle, ungeprüfte Lösung verlangt. Der Ausdruck will das Vorhandene prüfen, die Anforderung will, dass es jetzt erledigt wird. Erkennbar ist das auch in Lagen, in denen eine Regel erfüllt wird und im selben Zug die Unschärfe dieser Regel sichtbar ist, ohne dass Raum bleibt, sie zu benennen. Keine Seite hat in diesem Chart den Vorrang: Die Disruptive Ausgabe und Druck / Struktur stehen nebeneinander, jede an ihren benannten Positionen.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.month.tenGod"],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "REFLECTION",
+          "posture": "SUPPORTED",
+          "text": "Welche der beiden Seiten kennst du besser: den Moment, in dem eine eigene, kritische Fassung nach außen will, oder den Moment, in dem eine Vorgabe eine sofortige Antwort verlangt – und wann waren zuletzt beide zugleich da?",
+          "factRefs": [],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        }
+      ],
+      "semanticDelta": [
+        {"kind": "NEW_CLAIM", "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36"]},
+        {"kind": "NEW_CONTEXT", "claimRefs": ["claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]},
+        {"kind": "NEW_CONTRAST", "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]}
+      ],
+      "callbacks": [
+        {"claimRef": "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375", "deltaKind": "NEW_CONTRAST"}
+      ]
+    },
+    {
+      "chapterRef": "chapter.sha256:5a09bd266d9fdbb18fae01aa0eb23a8a2269926950bc758c6c3220acb6634a21",
+      "narrativeOperation": "CONTEXTUALIZE",
+      "title": "Indirekte Quelle in den Zweigen, Feuer und Metall in der Verteilung",
+      "paragraphs": [
+        {
+          "kind": "FACT",
+          "posture": "NONE",
+          "text": "Im Erdzweig Wu deiner Jahressäule und im Erdzweig Wu deiner Monatssäule liegt unter den verborgenen Stämmen auch Ji. An diesen Positionen steht Ji zum Tagesmeister in der Beziehung Indirekte Quelle: Ji gehört zu der Phase, die den Tagesmeister hervorbringt. Jahressäule und Monatssäule teilen sich dabei den Erdzweig Wu mit dem Tierbild Pferd, geschrieben 午.",
+          "factRefs": ["chart.pillar.year.branch", "chart.pillar.month.branch", "chart.pillar.year.branchHanzi", "chart.pillar.month.branchHanzi", "chart.pillar.year.tier", "chart.pillar.month.tier", "chart.natal.pillar.year.hiddenStem.1.stem", "chart.natal.pillar.month.hiddenStem.1.stem", "chart.natal.pillar.year.hiddenStem.1.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.year.hiddenStem.1.tenGod.elementRelation", "chart.natal.pillar.month.hiddenStem.1.tenGod.elementRelation"],
+          "claimRefs": []
+        },
+        {
+          "kind": "FRAME",
+          "posture": "NONE",
+          "text": "Indirekte Quelle gehört in BaZi zur Familie von Unterstützung, Lernen und Wissensaufnahme. Diese Familie beschreibt, wie etwas Stützendes ankommt und aufgenommen wird: Wissen, Rückhalt, ein Gerüst, an dem sich etwas weiterentwickeln lässt. Indirekte Quelle ist darin die selektive, seitliche Ausprägung. Sie steht nicht für eine formale, geordnete Versorgung in festen Bahnen, sondern für Unterstützung, die über Umwege kommt, ausgewählt wird oder auf ein bestimmtes Spezialgebiet zielt.",
+          "factRefs": ["chart.natal.pillar.year.hiddenStem.1.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Eine nährende Stimme liegt in deinem Chart in derselben Form im Inneren der Jahressäule und im Inneren der Monatssäule: Indirekte Quelle, verborgen in den Erdzweigen. Das zeigt sich als Unterstützung, die nicht offen an der Oberfläche steht, sondern in der inneren Schicht der Säulen mitläuft und eher ausgewählt als zugeteilt wird. Erkennbar wird das etwa in Situationen, in denen nicht die naheliegende Anleitung weiterhilft, sondern ein Hinweis aus einer ganz anderen Richtung; oder in Momenten, in denen Wissen nicht im Ganzen aufgenommen, sondern gezielt herausgegriffen wird, genau das Stück, das gerade gebraucht wird. Die Stütze kommt seitlich, nicht frontal, und sie kommt aus der Tiefe der Säulen, nicht von ihrer sichtbaren Seite.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Dass diese Stimme in der Jahressäule und in der Monatssäule identisch auftritt, gibt ihr Beständigkeit über die Positionen hinweg. Die Indirekte Quelle ist hier nicht an eine Stelle gebunden; sie gehört zum inneren Bestand dieser Säulen. Das zeigt sich als Rückhalt, der verlässlich da ist, ohne sichtbar zu sein: erkennbar etwa dort, wo eine Erklärung erst im Nachhinein greift, weil ein bereits aufgenommenes Detail plötzlich passt, oder dort, wo ein eigener Zugang zu einem Thema entsteht, der aus verstreut gesammelten Einzelheiten zusammengesetzt ist.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Die genaue Ausprägung zählt. Indirekte Quelle ist nicht die geordnete Unterstützung, die in festen Bahnen ankommt, sondern die selektive. Das zeigt sich als Aufnahme, die wählt: Aus einem Angebot wird herausgezogen, was zum eigenen Vorhaben passt, und der Rest bleibt liegen. Greifbar wird das etwa in Momenten, in denen umfangreiches Material vorliegt und nur ein Gedanke daraus hängen bleibt, der sich dann als tragfähig erweist; oder in Situationen, in denen ein Spezialwissen weiterhilft, das mit der eigentlichen Frage zunächst wenig zu tun hat. Ebenso erkennbar ist es dort, wo ein Zusammenhang nicht aus der vollständigen Darstellung, sondern aus einer Randbemerkung klar wird, die zufällig im richtigen Moment auftaucht.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b"]
+        },
+        {
+          "kind": "FACT",
+          "posture": "NONE",
+          "text": "Die Verteilung der Wandlungsphasen in deinem Chart nennt für Feuer den Wert 3 und für Metall ebenfalls den Wert 3. Danach folgen Wasser und Erde, und Holz trägt den kleinsten Wert der Verteilung.",
+          "factRefs": ["chart.wuxing.weight.Erde", "chart.wuxing.weight.Feuer", "chart.wuxing.weight.Holz", "chart.wuxing.weight.Metall", "chart.wuxing.weight.Wasser"],
+          "claimRefs": []
+        },
+        {
+          "kind": "FRAME",
+          "posture": "NONE",
+          "text": "Die Wandlungsphasen Holz, Feuer, Erde, Metall und Wasser sind in BaZi symbolische Qualitäten, keine Stoffe und keine Temperamente. Ihre Verteilung beschreibt die Zusammensetzung des Charts, also mit welchem Gewicht die einzelnen Phasen im Aufbau vertreten sind. Ein hoher Wert beschreibt Gewicht im Aufbau, keinen Charakterzug, und ein niedriger Wert beschreibt einen kleineren Anteil, nicht mehr.",
+          "factRefs": ["chart.wuxing.weight.Erde", "chart.wuxing.weight.Feuer", "chart.wuxing.weight.Holz", "chart.wuxing.weight.Metall", "chart.wuxing.weight.Wasser"],
+          "claimRefs": ["claim.sha256:9799c2d69fe1394c5982521323f57a40d09d09c385a3c2183e5f8cfb744860e9"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "In deinem Chart teilen sich Feuer und Metall den höchsten Wert der Verteilung. An der Spitze der Zusammensetzung steht also keine Phase allein; Feuer und Metall stehen dort gleichauf. Das zeigt sich als ein Aufbau mit geteiltem Schwerpunkt: Das Chart ist an seiner gewichtigsten Stelle nicht von einer Qualität geprägt, sondern von Feuer und Metall nebeneinander. Bildlich gesprochen hat die Verteilung keinen einzelnen Gipfel, sondern einen breiten Grat, auf dem Feuer und Metall gleich hoch stehen, während Wasser, Erde und Holz in abnehmender Höhe zum Tal hin folgen.",
+          "factRefs": ["chart.wuxing.weight.Erde", "chart.wuxing.weight.Feuer", "chart.wuxing.weight.Holz", "chart.wuxing.weight.Metall", "chart.wuxing.weight.Wasser"],
+          "claimRefs": ["claim.sha256:9799c2d69fe1394c5982521323f57a40d09d09c385a3c2183e5f8cfb744860e9"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Gleichauf heißt hier wörtlich gleichauf: Die Verteilung nennt für Feuer und Metall denselben Wert. Keine der beiden Phasen wird dadurch über die andere gehoben. Was die Verteilung beschreibt, ist der Aufbau des Charts: Wo die Zusammensetzung am meisten Gewicht trägt, teilen sich Feuer und Metall diesen Platz. Wasser folgt mit deutlichem Gewicht, Erde mit weniger, und Holz bildet den schmalsten Anteil. Das Bild ist das einer Zusammensetzung, deren oberste Stufe geteilt ist.",
+          "factRefs": ["chart.wuxing.weight.Erde", "chart.wuxing.weight.Feuer", "chart.wuxing.weight.Holz", "chart.wuxing.weight.Metall", "chart.wuxing.weight.Wasser"],
+          "claimRefs": ["claim.sha256:9799c2d69fe1394c5982521323f57a40d09d09c385a3c2183e5f8cfb744860e9"]
+        },
+        {
+          "kind": "REFLECTION",
+          "posture": "SUPPORTED",
+          "text": "Wann hat dir zuletzt ein Hinweis weitergeholfen, der nicht aus der naheliegenden Richtung kam, sondern seitlich, fast beiläufig – und woran hast du gemerkt, dass genau dieses Stück das passende war?",
+          "factRefs": [],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b"]
+        }
+      ],
+      "semanticDelta": [
+        {"kind": "NEW_CLAIM", "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:9799c2d69fe1394c5982521323f57a40d09d09c385a3c2183e5f8cfb744860e9"]},
+        {"kind": "NEW_CONTEXT", "claimRefs": ["claim.sha256:9799c2d69fe1394c5982521323f57a40d09d09c385a3c2183e5f8cfb744860e9"]}
+      ],
+      "callbacks": []
+    },
+    {
+      "chapterRef": "chapter.sha256:099410080a76dfdefca5d3fe0a62324fb6e47e7175aaa1d733c67503535bd847",
+      "narrativeOperation": "CONTRAST",
+      "title": "Indirekte Quelle und Druck / Struktur in denselben Zweigen",
+      "paragraphs": [
+        {
+          "kind": "FACT",
+          "posture": "NONE",
+          "text": "Der Erdzweig Wu der Jahressäule und der Erdzweig Wu der Monatssäule enthalten dieselben verborgenen Stämme in derselben Reihenfolge: Ding und Ji. Ding steht zum Tagesmeister in der Beziehung Druck / Struktur; seine Phase kontrolliert den Tagesmeister. Ji steht zum Tagesmeister in der Beziehung Indirekte Quelle; seine Phase bringt den Tagesmeister hervor. Diese Anordnung findet sich in der Jahressäule und in der Monatssäule gleichermaßen.",
+          "factRefs": ["chart.pillar.year.branch", "chart.pillar.month.branch", "chart.natal.pillar.year.hiddenStem.0.stem", "chart.natal.pillar.year.hiddenStem.1.stem", "chart.natal.pillar.month.hiddenStem.0.stem", "chart.natal.pillar.month.hiddenStem.1.stem", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.year.hiddenStem.1.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.year.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.1.tenGod.elementRelation", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.month.hiddenStem.1.tenGod.elementRelation"],
+          "claimRefs": []
+        },
+        {
+          "kind": "FRAME",
+          "posture": "NONE",
+          "text": "In BaZi steht jede Wandlungsphase zu den anderen in festen Verhältnissen: Sie nährt eine Phase und begrenzt eine andere. Für den Tagesmeister heißt das: Eine Phase, die ihn hervorbringt, erscheint als Unterstützung; eine Phase, die ihn kontrolliert, erscheint als Anforderung. Indirekte Quelle und Druck / Struktur sind die Namen, die diese Verhältnisse an den verborgenen Stämmen der Jahres- und der Monatssäule tragen.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Im Inneren der Jahressäule und der Monatssäule stehen eine nährende und eine kontrollierende Stimme dicht beieinander, und dein Chart hält beide fest, ohne dass die eine die andere aufhebt. Das ist eine Spannung, und sie ist klar benannt: Indirekte Quelle bringt dem Tagesmeister etwas zu, Druck / Struktur verlangt etwas von ihm. Die eine Stimme stützt, die andere fordert, und beide sitzen in denselben Zweigen.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Die Richtungen der beiden Stimmen sind entgegengesetzt, obwohl sie auf denselben Punkt zielen. Die Phase der Indirekten Quelle bringt den Tagesmeister hervor; sie bewegt sich auf ihn zu und gibt ihm etwas. Die Phase von Druck / Struktur kontrolliert den Tagesmeister; auch sie bewegt sich auf ihn zu, aber als Begrenzung, die etwas abverlangt. Genau darin liegt der Widerspruch: Derselbe Bezugspunkt wird im Inneren derselben Zweige zugleich genährt und begrenzt, und keine der beiden Bewegungen ist der anderen nachgeordnet.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Erkennbar wird diese Spannung in Situationen, in denen Rückhalt und Anspruch gleichzeitig eintreffen: ein Hinweis, der beim Verstehen hilft, und im selben Moment eine Vorgabe, die sofort eine Antwort verlangt. Oder dort, wo Zeit zum Aufnehmen und Sortieren gebraucht würde, während eine Anforderung keinen Aufschub zulässt. Die Indirekte Quelle zieht in Richtung Aufnahme, Auswahl und Vertiefung; Druck / Struktur zieht in Richtung Entscheidung, Erledigung und Festlegung. Diese Richtungen ziehen gleichzeitig, in denselben Zweigen von Jahr und Monat.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Beide Stimmen sind dabei die weniger geregelten Ausprägungen ihrer Familien. Die Unterstützung kommt selektiv und seitlich, nicht in geordneten Bahnen; der Druck kommt unmittelbar und unabgefedert, nicht als formale Regel. Dein Chart stellt hier also nicht eine sanfte Hilfe neben eine verhandelbare Pflicht, sondern einen auswählenden, eigenen Wegen folgenden Rückhalt neben eine direkte, entschiedene Anforderung. Das macht den Gegensatz schärfer: Was aufgenommen wird, wird gewählt; was verlangt wird, steht nicht zur Wahl.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Dass Jahressäule und Monatssäule diese Anordnung teilen, macht die Spannung zu einem wiederkehrenden Zug des Charts und nicht zu einer Ausnahme an einer einzelnen Stelle. In beiden Zweigen steht dieselbe nährende Stimme neben derselben kontrollierenden. Erkennbar ist eine solche Wiederkehr in Situationen, in denen dasselbe Abwägen zwischen Aufnehmen und Festlegen in einem ganz anderen Zusammenhang erneut auftaucht und sich vertraut anfühlt.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Weder die Indirekte Quelle noch Druck / Struktur stehen an der sichtbaren Oberfläche dieser Säulen; beide liegen in der inneren Schicht, im Erdzweig. Die Spannung zwischen Stütze und Anspruch ist in deinem Chart deshalb keine, die offen ausgestellt ist. Sie liegt unter dem, was an den Himmelsstämmen zu sehen ist, und ist dort eindeutig vorhanden. Sichtbar wird das in Momenten, in denen nach außen ein klarer Ablauf zu sehen ist, während im Hintergrund das Abwägen zwischen weiterem Aufnehmen und sofortigem Festlegen noch läuft.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Konkret wird das etwa in einer Lage, in der ein Thema gerade erst erschlossen wird, Material gesammelt, ein ungewöhnlicher Hinweis aufgegriffen, ein Zusammenhang langsam sichtbar, und genau dann eine Festlegung fällig ist, die keinen Aufschub duldet. Oder umgekehrt: Eine Anforderung steht bereits im Raum, und erst während ihrer Erledigung taucht der seitliche Hinweis auf, der alles neu ordnen würde. In keiner dieser Situationen ist die eine Stimme die Antwort auf die andere; sie sind gleichzeitig da und ziehen auseinander.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.year.hiddenStem.1.tenGod"],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "REFLECTION",
+          "posture": "SUPPORTED",
+          "text": "Erinnerst du dich an eine Lage, in der ein hilfreicher Hinweis aus unerwarteter Richtung und eine Forderung ohne Aufschub zur selben Zeit da waren – welche der beiden hat in diesem Moment mehr Raum bekommen?",
+          "factRefs": [],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "REFLECTION",
+          "posture": "SUPPORTED",
+          "text": "Wann hast du zuletzt gemerkt, dass Aufnehmen und Entscheiden nicht nacheinander kamen, sondern gleichzeitig verlangt wurden?",
+          "factRefs": [],
+          "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        }
+      ],
+      "semanticDelta": [
+        {"kind": "NEW_CONTRAST", "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]}
+      ],
+      "callbacks": [
+        {"claimRef": "claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "deltaKind": "NEW_CONTRAST"},
+        {"claimRef": "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "deltaKind": "NEW_CONTRAST"}
+      ]
+    },
+    {
+      "chapterRef": "chapter.sha256:75ce5f8da887661c99b9581552c20e38fca956ce5ee91fe691857118a386e83f",
+      "narrativeOperation": "INTEGRATE",
+      "title": "Disruptive Ausgabe und Druck / Struktur zusammengenommen",
+      "paragraphs": [
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Zusammengenommen ergibt sich für den Ausdruck in deinem Chart ein geschlossenes Bild. Die Disruptive Ausgabe steht offen an der Oberfläche der Monatssäule und liegt im Inneren des Tageszweigs, und was die Monatssäule ausdrückt, bringt der Tagesmeister selbst hervor. Differenzierender Ausdruck ist hier also weder geliehen noch angelernt; er geht vom Bezugspunkt aus und ist sowohl sichtbar als auch in der eigenen Säule angelegt. Erkennbar ist das in Situationen, in denen eine eigene, geschärfte Fassung entsteht, die eine vorhandene nicht wiederholt, sondern von ihr abrückt.",
+          "factRefs": ["chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation", "chart.natal.pillar.day.hiddenStem.0.tenGod"],
+          "claimRefs": ["claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Auf der sichtbaren Seite des Charts steht der Ausdruck damit zwischen Gleichrangigem und Forderndem. Der Rivale der Jahressäule teilt die Phase des Tagesmeisters, die Verantwortung der Stundensäule kontrolliert ihn, und dazwischen steht in der Monatssäule die Disruptive Ausgabe als die Stimme, die vom Tagesmeister ausgeht. Im Tageszweig kehrt sie unter der Oberfläche wieder. Wiederzufinden ist diese Anordnung in Lagen, in denen ein eigener, unterscheidender Beitrag neben einer gleichrangigen Position und einer benannten Verantwortung steht und dort seinen eigenen Platz hat, ohne eine von ihnen zu ersetzen.",
+          "factRefs": ["chart.dayMaster.stem", "chart.natal.pillar.year.tenGod", "chart.natal.pillar.year.tenGod.elementRelation", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation", "chart.natal.pillar.hour.tenGod", "chart.natal.pillar.hour.tenGod.elementRelation", "chart.natal.pillar.day.hiddenStem.0.tenGod"],
+          "claimRefs": ["claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36", "claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Auf der Seite der Anforderung zeigt das Chart ein ebenso klares Muster. An der sichtbaren Oberfläche kontrolliert allein die Verantwortung der Stundensäule den Tagesmeister; der Rivale der Jahressäule steht auf gleicher Höhe, die Disruptive Ausgabe der Monatssäule geht von ihm aus. Im Inneren der Jahres- und der Monatssäule dagegen liegt Druck / Struktur, unmittelbar und unabgefedert. Die Anforderung ist damit an der Oberfläche benannt und geregelt, in den Zweigen direkt und entschieden. Erkennbar wird diese Schichtung dort, wo eine festgeschriebene Regel gilt und darunter eine schärfere, ungeschriebene Erwartung liegt, die keine Frist kennt außer dem Jetzt.",
+          "factRefs": ["chart.dayMaster.stem", "chart.natal.pillar.year.tenGod", "chart.natal.pillar.year.tenGod.elementRelation", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation", "chart.natal.pillar.hour.tenGod", "chart.natal.pillar.hour.tenGod.elementRelation", "chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod"],
+          "claimRefs": ["claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Zusammengenommen trägt dein Chart eine klare Spannung zwischen Ausdruck und Anforderung. Die Disruptive Ausgabe will unterscheiden, prüfen und an Vorhandenem ansetzen; Druck / Struktur verlangt eine entschiedene Antwort und setzt einen Maßstab, der nicht verhandelt wird. In der Monatssäule stehen beide übereinander, der Ausdruck oben am Himmelsstamm, die Anforderung unten im Erdzweig, und beide reichen über diese Säule hinaus: der Ausdruck in den Tageszweig, die Anforderung in die Jahressäule. Diese Spannung löst sich im Chart nicht in Einklang auf. Sie bleibt als gleichzeitiger Zug in verschiedene Richtungen bestehen.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.month.tenGod"],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Die Richtungen der Spannung sind eindeutig. Die Disruptive Ausgabe geht vom Tagesmeister aus; was die Monatssäule ausdrückt, bringt er selbst hervor. Druck / Struktur dagegen trifft auf den Tagesmeister; seine Phase kontrolliert ihn. Das eine ist eine Bewegung aus dem Bezugspunkt heraus, das andere eine Begrenzung, die von außen an ihn herantritt. Beide sind im Chart benannt, und sie stehen nebeneinander, ohne ineinander aufzugehen.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation"],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375", "claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Erkennbar wird dieses Muster in Momenten, in denen eine Unterscheidung, die nur von dieser Stelle aus sichtbar ist, auf eine Anforderung trifft, die eine sofortige und eindeutige Festlegung verlangt; oder dort, wo eine bestehende Regel zugleich befolgt und auf ihre Unschärfen hin befragt wird, ohne dass das eine das andere beendet. In jeder dieser Lagen zieht der Ausdruck nach außen und die Anforderung in die Festlegung, und keines von beiden nimmt das andere zurück.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.month.tenGod"],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Über die Säulen hinweg ordnet sich das Bild so: In der Jahressäule steht an der Oberfläche der Rivale, im Inneren Druck / Struktur. In der Monatssäule steht an der Oberfläche die Disruptive Ausgabe, die der Tagesmeister hervorbringt, im Inneren erneut Druck / Struktur. Die Tagessäule trägt oben Xin und im Zweig die Disruptive Ausgabe. Die Stundensäule trägt oben die Verantwortung, als einzige sichtbare Stimme, die den Tagesmeister kontrolliert. Ausdruck und Anforderung sind damit nicht auf eine Ecke des Charts beschränkt; sie ziehen sich durch die Säulen, mal offen, mal verborgen.",
+          "factRefs": ["chart.dayMaster.stem", "chart.natal.pillar.year.tenGod", "chart.natal.pillar.year.tenGod.elementRelation", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.month.tenGod.elementRelation", "chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod.elementRelation", "chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.hour.tenGod", "chart.natal.pillar.hour.tenGod.elementRelation"],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36", "claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "INTERPRETATION",
+          "posture": "SUPPORTED",
+          "text": "Damit fügt sich das Bild zusammen, ohne glatt zu werden. Der Ausdruck dieses Charts ist sichtbar und im Tageszweig angelegt; die Anforderung liegt unmittelbar und unabgefedert in den Zweigen von Jahr und Monat. Die Disruptive Ausgabe und Druck / Struktur behalten dabei jeweils ihren Anspruch. Erkennbar bleibt die Spannung dort, wo eine Unterscheidung bereits getroffen ist und die Forderung nach einer schnellen Festlegung gleichzeitig im Raum steht, ohne dass die eine Seite die andere zum Schweigen bringt.",
+          "factRefs": ["chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.month.tenGod"],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "REFLECTION",
+          "posture": "SUPPORTED",
+          "text": "Wann hast du zuletzt bemerkt, dass ein eigener, kritischer Gedanke und eine Vorgabe ohne Aufschub im selben Moment da waren – und was ist in diesem Moment mit dem Gedanken geschehen?",
+          "factRefs": [],
+          "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+        },
+        {
+          "kind": "REFLECTION",
+          "posture": "SUPPORTED",
+          "text": "Welche Art von Anforderung ist dir vertrauter: die ausdrücklich benannte Regel oder der unausgesprochene Anspruch, der schärfer ist als jede Regel?",
+          "factRefs": [],
+          "claimRefs": ["claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+        }
+      ],
+      "semanticDelta": [
+        {"kind": "NEW_INTEGRATION", "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36", "claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]}
+      ],
+      "callbacks": [
+        {"claimRef": "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "deltaKind": "NEW_INTEGRATION"},
+        {"claimRef": "claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36", "deltaKind": "NEW_INTEGRATION"},
+        {"claimRef": "claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a", "deltaKind": "NEW_INTEGRATION"},
+        {"claimRef": "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375", "deltaKind": "NEW_INTEGRATION"}
+      ]
+    }
+  ],
+  "reflectionQuestions": [
+    {
+      "text": "Wann hast du zuletzt erlebt, dass ein eigener, kritischer Gedanke nach außen wollte, während eine Vorgabe zur selben Zeit eine sofortige Antwort verlangte?",
+      "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375"]
+    },
+    {
+      "text": "Erinnerst du dich an einen Moment, in dem ein hilfreicher Hinweis aus unerwarteter Richtung und eine Forderung ohne Aufschub gleichzeitig da waren?",
+      "claimRefs": ["claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+    },
+    {
+      "text": "In welcher Situation ist zuletzt aus einer fertigen Vorlage eine eigene, schärfere Fassung entstanden?",
+      "claimRefs": ["claim.sha256:b0b9ad02ab1bf0534bf03e312a8435221ab6ebdda9a1edc6ac6d40c3c5ac7b1a", "claim.sha256:e32af71dda1c252bf93a10bb00eb38a5099bf62e37e95225206c37a0347e99e1"]
+    },
+    {
+      "text": "Welche Anforderung kennst du besser: die ausdrücklich benannte Regel oder den Anspruch, der ohne Worte gilt?",
+      "claimRefs": ["claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36", "claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff"]
+    }
+  ],
+  "methodNote": {
+    "text": "BaZi ist ein traditionelles chinesisches Symbolsystem, das ein Geburtsdatum in Säulen für Jahr, Monat, Tag und Stunde übersetzt. Es dient hier der Reflexion und der Unterhaltung; es ist keine Wissenschaft, keine Diagnose, keine Vorhersage und keine Handlungsanweisung. Deine Geburtszeit ist bekannt; die Stundensäule beruht auf dieser Angabe. Datenhinweis: Die Zuordnung deines Geburtstags zur Tagessäule liegt ohne unabhängige Bestätigung vor. Das ist ein Hinweis zur Datenlage und keine Aussage über dein Chart.",
+    "warningCodes": ["DAY_ANCHOR_UNVERIFIED"]
+  },
+  "visualizationSpecs": [
+    {
+      "specId": "spec.glance.dayMaster",
+      "slotId": "glance.dayMaster",
+      "factRefs": ["chart.dayMaster.stem"],
+      "claimRefs": ["claim.sha256:dfaed59cf78e966e9a7fa3840b7f86df2d9425b9dba64d7db48dd21ee6d7ad57"]
+    },
+    {
+      "specId": "spec.pillars.tenGod",
+      "slotId": "pillars.tenGod[*]",
+      "factRefs": ["chart.natal.pillar.year.tenGod", "chart.natal.pillar.month.tenGod", "chart.natal.pillar.hour.tenGod"],
+      "claimRefs": ["claim.sha256:95aeb5e80254a6eecc12e7ea386fd8495e90bb448b2016b972ff8ac7ef47cf36"]
+    },
+    {
+      "specId": "spec.hidden.rows",
+      "slotId": "hidden.rows",
+      "factRefs": ["chart.natal.pillar.year.hiddenStem.0.tenGod", "chart.natal.pillar.year.hiddenStem.1.tenGod", "chart.natal.pillar.month.hiddenStem.0.tenGod", "chart.natal.pillar.month.hiddenStem.1.tenGod", "chart.natal.pillar.day.hiddenStem.0.tenGod", "chart.natal.pillar.hour.hiddenStem.1.tenGod"],
+      "claimRefs": ["claim.sha256:7ae35cd136bc6b2046f2146b984062b514ce22522886a7eed62568792ad388ff", "claim.sha256:6a0302237348420bddc4bd7edf6247d965599e1588060419460858b26cbaf84b", "claim.sha256:fcbe1320f16008b6ec8dd8139bd287bb9888f409e7aed467210c7df5a6131375", "claim.sha256:e32af71dda1c252bf93a10bb00eb38a5099bf62e37e95225206c37a0347e99e1"]
+    },
+    {
+      "specId": "spec.wuXing.vector",
+      "slotId": "wuXing.vector",
+      "factRefs": ["chart.wuxing.weight.Erde", "chart.wuxing.weight.Feuer", "chart.wuxing.weight.Holz", "chart.wuxing.weight.Metall", "chart.wuxing.weight.Wasser"],
+      "claimRefs": ["claim.sha256:9799c2d69fe1394c5982521323f57a40d09d09c385a3c2183e5f8cfb744860e9"]
+    }
+  ]
+}

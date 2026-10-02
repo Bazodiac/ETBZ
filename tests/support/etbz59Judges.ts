@@ -62,7 +62,7 @@ export function chartSheet(model: HoroscopeModel): string {
 }
 
 /** Each accepted claim with the values it cites, the thesis and the motif cores; S⁻ marks its withdrawal. */
-function claimSheet(label: CaseLabel, run: CaseRun): string {
+export function claimSheet(label: CaseLabel, run: CaseRun): string {
   const values = new Map(deriveInterpretationFeatureSet(run.model).facts.map((fact) => [fact.id, `${fact.value}${fact.interpretable ? '' : ' [WITHDRAWN]'}`]));
   const statementOf = (id: string): string | undefined => run.graph.claims.find((claim) => claim.claimId === id)?.statement;
   const lines = run.graph.claims.map((claim) => `- ${claim.statement}\n    cites: ${claim.factRefs.map((id) => `${id.replace('chart.', '')}=${values.get(id) ?? '?'}`).join('; ')}`);
