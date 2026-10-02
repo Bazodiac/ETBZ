@@ -1,0 +1,9 @@
+Read /private/tmp/claude-501/-Users-benjaminpoersch-ETBZ/7d62ae13-0cf1-4977-add5-b68a1c0180a2/scratchpad/etbz59/judges/B/reading-source.md
+Read /private/tmp/claude-501/-Users-benjaminpoersch-ETBZ/7d62ae13-0cf1-4977-add5-b68a1c0180a2/scratchpad/etbz59/judges/B/reading-near.md
+Read /private/tmp/claude-501/-Users-benjaminpoersch-ETBZ/7d62ae13-0cf1-4977-add5-b68a1c0180a2/scratchpad/etbz59/judges/B/reading-removal.md
+Read /private/tmp/claude-501/-Users-benjaminpoersch-ETBZ/7d62ae13-0cf1-4977-add5-b68a1c0180a2/scratchpad/etbz59/judges/B/claims-source.txt
+Read /private/tmp/claude-501/-Users-benjaminpoersch-ETBZ/7d62ae13-0cf1-4977-add5-b68a1c0180a2/scratchpad/etbz59/judges/B/claims-near.txt
+Read /private/tmp/claude-501/-Users-benjaminpoersch-ETBZ/7d62ae13-0cf1-4977-add5-b68a1c0180a2/scratchpad/etbz59/judges/B/claims-removal.txt
+Read /private/tmp/claude-501/-Users-benjaminpoersch-ETBZ/7d62ae13-0cf1-4977-add5-b68a1c0180a2/scratchpad/etbz59/judges/B/chart-source.txt
+Read /private/tmp/claude-501/-Users-benjaminpoersch-ETBZ/7d62ae13-0cf1-4977-add5-b68a1c0180a2/scratchpad/etbz59/judges/B/chart-near.txt
+Read /private/tmp/claude-501/-Users-benjaminpoersch-ETBZ/7d62ae13-0cf1-4977-add5-b68a1c0180a2/scratchpad/etbz59/judges/B/candidates.json

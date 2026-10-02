@@ -4,7 +4,9 @@
  * (src/application/interpretation/feature-set.ts and its input, model and claim consequences; PO decision D-59-1),
  * the deterministic checks (tests/support/etbz59Individuality.ts), the reviewed pins of the case drafts and the bar-C
  * byte pin of an exempted variant readback, and the acceptance boundary naming every chapter outside the word budget
- * (PO decision D-59-3) and carrying every violation of one full pass (PO decision D-59-4). Each is weakened in exactly one place, and the named test must fail an
+ * (PO decision D-59-3) and carrying every violation of one full pass (PO decision D-59-4), the provisionality
+ * direction (IND-8), the judges' packets, the run record and the recorded judgements. Each is weakened in exactly one
+ * place, and the named test must fail an
  * assertion (the ETBZ-30B semantics). Files are restored from bytes in memory.
  *
  *   npm run guards:etbz59
@@ -22,6 +24,10 @@ const IND = 'tests/support/etbz59Individuality.ts';
 const CASES = 'tests/support/etbz59Cases.ts';
 const READING = 'src/application/skill/skill-reading.ts';
 const NEAR_READBACK = 'docs/evidence/etbz-59/variants/near/runtime-readback.json';
+const JUDGES = 'tests/support/etbz59Judges.ts';
+const RECORD = 'tests/support/etbz59Record.ts';
+const JUDGEMENTS = 'docs/evidence/etbz-59/judgements.json';
+const TOOL_CALLS_A = 'docs/evidence/etbz-59/judges/A/tool-calls.txt';
 
 const T = {
   withdrawal: 'tests/unit/evaluation-withdrawal.test.ts',
@@ -160,6 +166,46 @@ const MUTANTS = [
     "    } finally {\n    for (const claimId of renderedHere) {\n      renderedBefore.add(claimId);\n      renderedAnywhere.add(claimId);\n    }\n    }\n",
     "    } catch (error) {\n    throw error;\n    }\n    for (const claimId of renderedHere) {\n      renderedBefore.add(claimId);\n      renderedAnywhere.add(claimId);\n    }\n",
     [T.reading], "carries every violation one full pass finds, refusing with the first as before"],
+  ["IND-8: a claim more certain on one axis only passes", 'text', IND,
+    "rank < 0 || provisional < 0 ? 'MORE_CERTAIN'",
+    "rank < 0 && provisional < 0 ? 'MORE_CERTAIN'",
+    [T.negative], "reports MORE_CERTAIN when the variant carries a claim of the same statement as SUPPORTED that the source held TENTATIVE"],
+  ["IND-8: a dropped provisional fact is not seen", 'text', IND,
+    "rank < 0 || provisional < 0 ? 'MORE_CERTAIN'",
+    "rank < 0 || provisional < -99 ? 'MORE_CERTAIN'",
+    [T.negative], "reports MORE_CERTAIN when the variant drops a provisional fact the source claim cited"],
+  ["IND-8: a claim the variant does not carry counts as equal", 'text', IND,
+    "if (counterpart === undefined) return { claimId: claim.claimId, direction: 'REMOVED' };",
+    "if (counterpart === undefined) return { claimId: claim.claimId, direction: 'EQUAL' };",
+    [T.negative], "finds no claim of N or S⁻ more certain than in S: the cone is removed, the rest equal"],
+  ["JUDGES: the blind packet keeps the display names", 'text', JUDGES,
+    "DISPLAY_NAMES.reduce((current, name) => current.split(name).join('[Name]'), text)",
+    "text",
+    [T.contract], "re-derives every file each judge read, byte for byte, from the accepted readings and the validated charts"],
+  ["JUDGES: the blind charts follow the readings' order", 'text', JUDGES,
+    "  files['A/chart-1.txt'] = chartSheet(distant);",
+    "  files['A/chart-1.txt'] = chartSheet(runs.near.model);",
+    [T.contract], "re-derives every file each judge read, byte for byte, from the accepted readings and the validated charts"],
+  ["RECORD: the judged codes are dropped from the section-8 items", 'text', RECORD,
+    "judgements.judgements.filter((entry) => entry.check === check)",
+    "judgements.judgements.filter((entry) => entry.check === 'never')",
+    [T.contract], "re-derives the run record byte for byte from the committed files"],
+  ["JUDGEMENTS: a quote is not what the reading says", 'text', JUDGEMENTS,
+    "\"text\": \"sie steht auf keiner Säule oben\"",
+    "\"text\": \"sie steht auf jeder Säule oben\"",
+    [T.contract], "finds every quote of every judgement verbatim at its path in the accepted reading"],
+  ["JUDGEMENTS: a code recorded under another check", 'text', JUDGEMENTS,
+    "\"codes\": [\"STOCK_PARAGRAPH_REUSE\"],",
+    "\"codes\": [\"MODEL_MEMORY_RESCUE\"],",
+    [T.contract], "uses only reason codes of the judged check, and records the BLOCKING code with its smallest repair, not applied"],
+  ["JUDGEMENTS: the BLOCKING repair is claimed as applied", 'text', JUDGEMENTS,
+    "\"applied\": false",
+    "\"applied\": true",
+    [T.contract], "uses only reason codes of the judged check, and records the BLOCKING code with its smallest repair, not applied"],
+  ["JUDGES: judge A read the key", 'text', TOOL_CALLS_A,
+    "judges/A/reading-Y.md",
+    "judges/KEY-operator-only.json",
+    [T.contract], "shows each judge reading its own packet and nothing else, with the Read tool only"],
   ["BAR C: an exempted readback changes", 'text', NEAR_READBACK,
     "\"readbackVersion\":\"etbz58-runtime-readback.v1\"",
     "\"readbackVersion\":\"etbz58-runtime-readback.v9\"",

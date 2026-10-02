@@ -15,6 +15,7 @@ import {
   compareUnderDifference,
   dependencyCone,
   namedDifference,
+  provisionalityDirection,
   removalCheck,
   containsTerm,
   rescueCandidates,
@@ -122,6 +123,34 @@ describe('ETBZ-59 6.4: the removal case', () => {
     const result = removalCheck(s, s, REMOVED_FACT_IDS);
     expect(codes(result.findings)).toEqual(['EVIDENCE_REMOVED_CLAIM_SURVIVED']);
     expect(result.dependentClaims[0]?.blockedCode).toBeNull();
+  });
+});
+
+describe('ETBZ-59 IND-8: the provisionality direction (section 8.2)', () => {
+  /** The run with every claim's epistemic class and provisional facts replaced. */
+  const withProvisionality = (run: CaseRun, epistemicClass: 'SUPPORTED_INTERPRETATION' | 'TENTATIVE_INTERPRETATION', provisional: boolean): CaseRun => ({
+    ...run,
+    graph: { ...run.graph, claims: run.graph.claims.map((claim) => ({ ...claim, epistemicClass, provisionalFactRefs: provisional ? claim.factRefs.slice(0, 1) : [] })) },
+  });
+  const directions = (entries: readonly { direction: string }[]): string[] => [...new Set(entries.map((entry) => entry.direction))].sort();
+
+  it('finds no claim of N or S⁻ more certain than in S: the cone is removed, the rest equal', () => {
+    expect(directions(provisionalityDirection(s, n))).toEqual(['EQUAL', 'REMOVED']);
+    expect(provisionalityDirection(s, r).filter((entry) => entry.direction === 'REMOVED').map((entry) => entry.claimId)).toEqual(removalCheck(s, r, REMOVED_FACT_IDS).cone.claims);
+  });
+
+  it('reports MORE_CERTAIN when the variant carries a claim of the same statement as SUPPORTED that the source held TENTATIVE', () => {
+    expect(directions(provisionalityDirection(withProvisionality(s, 'TENTATIVE_INTERPRETATION', false), s))).toEqual(['MORE_CERTAIN']);
+  });
+
+  it('reports MORE_CERTAIN when the variant drops a provisional fact the source claim cited', () => {
+    expect(directions(provisionalityDirection(withProvisionality(s, 'SUPPORTED_INTERPRETATION', true), s))).toEqual(['MORE_CERTAIN']);
+  });
+
+  it('reports MORE_TENTATIVE when the variant is more tentative on either axis, and EQUAL against itself', () => {
+    expect(directions(provisionalityDirection(s, withProvisionality(s, 'TENTATIVE_INTERPRETATION', false)))).toEqual(['MORE_TENTATIVE']);
+    expect(directions(provisionalityDirection(s, withProvisionality(s, 'SUPPORTED_INTERPRETATION', true)))).toEqual(['MORE_TENTATIVE']);
+    expect(directions(provisionalityDirection(s, s))).toEqual(['EQUAL']);
   });
 });
 

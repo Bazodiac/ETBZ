@@ -248,6 +248,32 @@ export function removalCheck(source: GraphAndPlan, reduced: GraphAndPlan, remove
   return { cone, dependentClaims, findings };
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+// IND-8 — provisionality direction (section 8.2: "including the provisionality direction")
+// ---------------------------------------------------------------------------------------------------------------
+
+export type ProvisionalityDirection = 'EQUAL' | 'MORE_TENTATIVE' | 'MORE_CERTAIN' | 'REMOVED';
+
+const EPISTEMIC_RANK: Readonly<Record<string, number>> = { SUPPORTED_INTERPRETATION: 0, TENTATIVE_INTERPRETATION: 1 };
+
+/**
+ * IND-8: a variant may make a claim more tentative or remove it, never more certain. Each source claim is compared
+ * with the variant's claim of the same statement on two axes, the epistemic class (SUPPORTED, then TENTATIVE) and the
+ * number of provisional facts it cites; a claim the variant does not carry is REMOVED. MORE_CERTAIN - either axis
+ * moved toward certainty - is the violation; the contract gives it no reason code of its own, so it is reported
+ * beside the codes.
+ */
+export function provisionalityDirection(source: GraphAndPlan, variant: GraphAndPlan): Readonly<{ claimId: string; direction: ProvisionalityDirection }>[] {
+  return source.graph.claims.map((claim) => {
+    const counterpart = variant.graph.claims.find((candidate) => candidate.statement === claim.statement);
+    if (counterpart === undefined) return { claimId: claim.claimId, direction: 'REMOVED' };
+    const rank = (EPISTEMIC_RANK[counterpart.epistemicClass] ?? 0) - (EPISTEMIC_RANK[claim.epistemicClass] ?? 0);
+    const provisional = counterpart.provisionalFactRefs.length - claim.provisionalFactRefs.length;
+    const direction: ProvisionalityDirection = rank < 0 || provisional < 0 ? 'MORE_CERTAIN' : rank > 0 || provisional > 0 ? 'MORE_TENTATIVE' : 'EQUAL';
+    return { claimId: claim.claimId, direction };
+  });
+}
+
 /** A paragraph of customer text with its address in the reading. */
 export interface Passage {
   readonly path: string;

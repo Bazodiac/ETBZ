@@ -3,7 +3,9 @@
  *
  * The variants were computed live by FuFirE through the ETBZ-58 live stage (`npm run etbz59:variants`); the suite
  * replays the recorded bytes offline and checks what the run claims: the attested runtime of ETBZ-58, readiness, the
- * call without credentials refused, and that each variant differs from Musterkundin A exactly as defined.
+ * call without credentials refused, and that each variant differs from Musterkundin A exactly as defined. The run
+ * record, the judges' packets and the judgements are re-derived from the committed files, and every quote a judgement
+ * rests on is checked verbatim against the accepted reading at its path.
  */
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -12,7 +14,13 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { canonicalJson } from '../../src/domain/canonical-json.js';
 import type { HoroscopeModel, PillarName } from '../../src/application/horoscope-model.js';
-import { loadRecordedRun } from '../support/etbz58Rehearsal.js';
+import { deriveInterpretationFeatureSet } from '../../src/application/interpretation/feature-set.js';
+import { INDIVIDUALITY_REASON_CODES } from '../../src/application/skill/index.js';
+import { loadRecordedRun, renderJson } from '../support/etbz58Rehearsal.js';
+import { caseFile, deriveCase } from '../support/etbz59Cases.js';
+import type { CaseLabel } from '../support/etbz59Cases.js';
+import { ETBZ59_JUDGES_DIR, deriveJudgePackets } from '../support/etbz59Judges.js';
+import { ETBZ59_JUDGEMENTS, ETBZ59_RECORD, deriveIndividualityRecord } from '../support/etbz59Record.js';
 import { VARIANT_BIRTH_INPUTS, VARIANT_DEFINITIONS, VARIANT_LABELS, loadVariantRun, sourceChart, variantChart, variantReadbackFile } from '../support/etbz59Variants.js';
 
 const read = (path: string): Buffer => readFileSync(resolve(process.cwd(), path));
@@ -81,4 +89,66 @@ describe('ETBZ-59: the secret-scanner exemptions (.gitleaksignore bar C)', () =>
       for (const [key, value] of pairs) expect([key, value], path).toEqual(['openapiSha256', attested]);
     }
   });
+});
+
+interface Quote { readonly case: CaseLabel; readonly path: string; readonly text: string }
+interface Judgement { readonly check?: string; readonly subject: string; readonly verdict: string; readonly codes: readonly string[]; readonly quotes: readonly Quote[]; readonly smallestRepair?: { readonly fixture: string; readonly skill: string; readonly applied: boolean } }
+interface Judgements { readonly judges: readonly { judge: string; packet: readonly string[]; toolCalls: string }[]; readonly judgements: readonly Judgement[]; readonly outsideContract: readonly Judgement[] }
+
+describe('ETBZ-59: the run record, the judges\' packets and the judgements', () => {
+  const judgements = JSON.parse(read(ETBZ59_JUDGEMENTS).toString('utf8')) as Judgements;
+  const paragraph = (quote: Quote): string => {
+    const match = /^chapters\[(\d+)\]\.paragraphs\[(\d+)\]$/u.exec(quote.path);
+    if (match === null) throw new Error(`not a paragraph path: ${quote.path}`);
+    const reading = JSON.parse(read(caseFile(quote.case, 'accepted-reading')).toString('utf8')) as { chapters: { paragraphs: { text: string }[] }[] };
+    return reading.chapters[Number(match[1])]?.paragraphs[Number(match[2])]?.text ?? '';
+  };
+
+  it('re-derives the run record byte for byte from the committed files', async () => {
+    expect(renderJson(await deriveIndividualityRecord())).toBe(read(ETBZ59_RECORD).toString('utf8'));
+  }, 60_000);
+
+  it('re-derives every file each judge read, byte for byte, from the accepted readings and the validated charts', async () => {
+    const packets = await deriveJudgePackets();
+    expect(Object.keys(packets)).toHaveLength(15);
+    for (const [path, content] of Object.entries(packets)) expect(read(`${ETBZ59_JUDGES_DIR}/${path}`).toString('utf8'), path).toBe(content);
+  }, 60_000);
+
+  it('shows each judge reading its own packet and nothing else, with the Read tool only', () => {
+    for (const judge of judgements.judges) {
+      const calls = read(`docs/evidence/etbz-59/${judge.toolCalls}`).toString('utf8').trim().split('\n');
+      expect(calls.map((call) => call.split(' ')[0]), judge.judge).toEqual(judge.packet.map(() => 'Read'));
+      expect(calls.map((call) => `judges/${call.split('/judges/')[1] ?? ''}`).sort(), judge.judge).toEqual([...judge.packet].sort());
+    }
+  });
+
+  it('finds every quote of every judgement verbatim at its path in the accepted reading', () => {
+    const quotes = [...judgements.judgements, ...judgements.outsideContract].flatMap((entry) => entry.quotes);
+    expect(quotes.length).toBeGreaterThan(30);
+    for (const quote of quotes) expect(paragraph(quote), `${quote.case} ${quote.path}`).toContain(quote.text);
+  });
+
+  it('uses only reason codes of the judged check, and records the BLOCKING code with its smallest repair, not applied', () => {
+    for (const entry of judgements.judgements) {
+      for (const code of entry.codes) expect(INDIVIDUALITY_REASON_CODES.find((known) => known.code === code)?.checks, `${entry.check ?? ''} ${code}`).toContain(entry.check);
+      expect(entry.verdict === 'PASS', entry.subject).toBe(entry.codes.length === 0);
+    }
+    const blocking = judgements.judgements.filter((entry) => entry.codes.some((code) => INDIVIDUALITY_REASON_CODES.find((known) => known.code === code)?.class === 'BLOCKING'));
+    expect(blocking.map((entry) => entry.codes)).toEqual([['STOCK_PARAGRAPH_REUSE']]);
+    expect(blocking[0]?.smallestRepair?.applied).toBe(false);
+  });
+
+  it('holds the facts the BLOCKING verdict rests on: N shows a controlling stem on its hour surface, S none, and no claim of either cites it', async () => {
+    const visible = async (label: CaseLabel): Promise<string[]> => {
+      const facts = deriveInterpretationFeatureSet((await deriveCase(label)).model).facts;
+      const value = (id: string): string => String(facts.find((fact) => fact.id === id)?.value ?? '-');
+      return (['year', 'month', 'day', 'hour'] as const).filter((pillar) => value(`chart.natal.pillar.${pillar}.tenGod.elementRelation`) === 'controls_day_master').map((pillar) => `${pillar}:${value(`chart.natal.pillar.${pillar}.tenGod`)}`);
+    };
+    expect(await visible('near')).toEqual(['hour:DirectOfficer']);
+    expect(await visible('source')).toEqual([]);
+    for (const label of ['source', 'near'] as const) {
+      const cited = (await deriveCase(label)).graph.claims.flatMap((claim) => claim.factRefs).filter((id) => /^chart\.natal\.pillar\.[a-z]+\.tenGod$/u.test(id));
+      expect([...new Set(cited)], label).toEqual(['chart.natal.pillar.month.tenGod']);
+    }
+  }, 60_000);
 });

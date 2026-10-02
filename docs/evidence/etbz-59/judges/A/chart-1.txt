@@ -1,0 +1,6 @@
+year: stem Jia 甲 (Holz), branch Yin 寅 (Tiger); visible Ten God SevenKilling; hidden Jia (SevenKilling), Bing (IndirectRes), Wu (Friend)
+month: stem Gui 癸 (Wasser), branch You 酉 (Hahn); visible Ten God DirectWealth; hidden Xin (HurtingOfficer)
+day: stem Wu 戊 (Erde), branch Chen 辰 (Drache); visible Ten God -; hidden Wu (Friend), Yi (DirectOfficer), Gui (DirectWealth)
+hour: stem Ji 己 (Erde), branch Wei 未 (Ziege); visible Ten God RobWealth; hidden Ji (RobWealth), Ding (DirectRes), Yi (DirectOfficer)
+day master: Wu
+Wu Xing weights: Holz 2.8, Feuer 1, Erde 4.3, Metall 1, Wasser 1.3

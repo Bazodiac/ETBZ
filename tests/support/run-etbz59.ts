@@ -3,6 +3,8 @@
  * `vite-node`). Offline; the variants were recorded by `npm run etbz59:variants`.
  *
  *   emit                  writes each case's Skill input package to docs/evidence/etbz-59/cases/<label>/skill-input.json
+ *   packets               writes the two judges' packets (docs/evidence/etbz-59/judges/) from the accepted readings
+ *   record                re-derives docs/evidence/etbz-59/individuality-record.json from the committed files
  *   accept <label>        runs the acceptance boundary on the case's REALISE reading (semantic-reading.json) and, when
  *                         present, its EDIT revision (skill-reading.json); writes accepted-reading.json when both pass
  *
@@ -15,6 +17,8 @@ import { renderJson, readJsonFile } from './etbz58Rehearsal.js';
 import { CASE_LABELS, ETBZ59_CONES, NEAR_CONTRADICTION_TERMS, REMOVED_FACT_IDS, RESCUE_POSITION_TERMS, RESCUE_SUBJECT_TERMS, RESCUE_TERMS_WHY, caseFile, deriveCase } from './etbz59Cases.js';
 import type { CaseLabel, CaseRun } from './etbz59Cases.js';
 import { dependencyCone, namedDifference } from './etbz59Individuality.js';
+import { ETBZ59_JUDGES_DIR, deriveJudgePackets } from './etbz59Judges.js';
+import { ETBZ59_RECORD, deriveIndividualityRecord } from './etbz59Record.js';
 import type { Cone } from './etbz59Individuality.js';
 
 const write = (path: string, data: string): void => {
@@ -71,7 +75,14 @@ if (command === 'emit') {
     plans: { source: s.plan.structuralHash, near: n.plan.structuralHash, removal: r.plan.structuralHash },
   }));
   process.stdout.write(`cones written: |delta|=${String(delta.length)}\n`);
+} else if (command === 'packets') {
+  const files = await deriveJudgePackets();
+  for (const [path, content] of Object.entries(files)) write(`${ETBZ59_JUDGES_DIR}/${path}`, content);
+  process.stdout.write(`judge packets written: ${String(Object.keys(files).length)} files under ${ETBZ59_JUDGES_DIR}\n`);
+} else if (command === 'record') {
+  write(ETBZ59_RECORD, renderJson(await deriveIndividualityRecord()));
+  process.stdout.write(`record written: ${ETBZ59_RECORD}\n`);
 } else {
-  process.stderr.write('usage: etbz59 emit | cones | accept <source|near|removal>\n');
+  process.stderr.write('usage: etbz59 emit | cones | accept <source|near|removal> | packets | record\n');
   process.exitCode = 2;
 }
