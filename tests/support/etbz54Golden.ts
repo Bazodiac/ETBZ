@@ -120,12 +120,13 @@ export function safeMessage(message: string, raw: unknown): string {
 export const NEAR_DISPLAY_NAME = 'Variante N (synthetisch)';
 export type ShiftDirection = 'LATER' | 'EARLIER';
 
-const minutesOf = (time: string): number => {
-  const match = /^(\d{2}):(\d{2})$/u.exec(time);
-  if (match === null) throw new GoldenRunError('GOLDEN_NEAR_SHIFT_UNAVAILABLE', 'the birth time is not HH:MM');
-  return Number(match[1]) * 60 + Number(match[2]);
+/** HH:MM or HH:MM:SS (the BirthInput forms); the seconds are kept as given. */
+const parseTime = (time: string): { minutes: number; seconds: string } => {
+  const match = /^(\d{2}):(\d{2})(:\d{2})?$/u.exec(time);
+  if (match === null) throw new GoldenRunError('GOLDEN_NEAR_SHIFT_UNAVAILABLE', 'the birth time is not HH:MM or HH:MM:SS');
+  return { minutes: Number(match[1]) * 60 + Number(match[2]), seconds: match[3] ?? '' };
 };
-const timeOf = (minutes: number): string => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+const timeOf = (minutes: number, seconds: string): string => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}${seconds}`;
 
 /**
  * The same civil time two hours later, or else two hours earlier: the neighbouring two-hour block (the hour branches
@@ -133,10 +134,10 @@ const timeOf = (minutes: number): string => `${String(Math.floor(minutes / 60)).
  * 23:00-23:59, where schools differ on the day pillar, so that the named difference is the hour pillar alone.
  */
 export function nearBirthTime(birthTime: string): { birthTime: string; direction: ShiftDirection } {
-  const source = minutesOf(birthTime);
+  const { minutes: source, seconds } = parseTime(birthTime);
   const allowed = (minutes: number): boolean => minutes >= 0 && minutes < 23 * 60;
-  if (allowed(source + 120)) return { birthTime: timeOf(source + 120), direction: 'LATER' };
-  if (allowed(source - 120)) return { birthTime: timeOf(source - 120), direction: 'EARLIER' };
+  if (allowed(source + 120)) return { birthTime: timeOf(source + 120, seconds), direction: 'LATER' };
+  if (allowed(source - 120)) return { birthTime: timeOf(source - 120, seconds), direction: 'EARLIER' };
   throw new GoldenRunError('GOLDEN_NEAR_SHIFT_UNAVAILABLE', 'no neighbouring block on the same date outside 23:00-23:59');
 }
 
