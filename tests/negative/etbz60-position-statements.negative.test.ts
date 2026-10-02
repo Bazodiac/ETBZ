@@ -88,6 +88,8 @@ describe('ETBZ-60: what a position statement is', () => {
 
   it('sets aside only the defining clause, not its sentence, and reads decomposed Unicode (PR #25 review, MINOR-6)', () => {
     expect(findPositionStatement('Die Stämme, die nicht sichtbar sind, liegen in den Zweigen, und die fordernde Stimme steht auf keiner Säule oben.')).toBe('keiner Säule');
+    // The exempt form opens the sentence; the rest of that sentence is still read.
+    expect(findPositionStatement('Himmelsstämme, die nicht sichtbar sind, liegen in den Zweigen, und die fordernde Stimme steht auf keiner Säule oben.')).toBe('keiner Säule');
     expect(findPositionStatement('Sie steht auf keiner Säule oben.'.normalize('NFD'))).toBe('keiner Säule');
     expect(findPositionStatement('Die Anforderung tritt nicht an der Oberfläche einer Säule auf.'.normalize('NFD'))).toBe('nicht an der Oberfläche einer Säule');
   });
