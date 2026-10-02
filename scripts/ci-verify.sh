@@ -158,6 +158,7 @@ run_etbz58_rehearsal_guard() { node "${REPO_ROOT}/scripts/verify-etbz58-rehearsa
 # call, the oracle's agreement, the record's value guard, private archive files)
 # are proven by mutation on the synthetic case.
 run_etbz53_freeze_guard() { node "${REPO_ROOT}/scripts/verify-etbz53-freeze.mjs"; }
+run_etbz59_individuality_guard() { node "${REPO_ROOT}/scripts/verify-etbz59-individuality.mjs"; }
 
 # --- 7. secret gate -----------------------------------------------------------
 run_secret_gate() { bash "${REPO_ROOT}/scripts/secret-scan.sh"; }
@@ -212,6 +213,7 @@ if [ "${RUN_MUTATIONS}" -eq 1 ]; then
 fi
 if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: ETBZ-53 Golden freeze (input gates + oracle agreement + record value guard + private archive mutation proofs)" run_etbz53_freeze_guard
+  etbz_step "guards :: ETBZ-59 Anti-Boilerplate rehearsal (evaluation withdrawal + swap / comparison / removal checks + reviewed pins mutation proofs)" run_etbz59_individuality_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan

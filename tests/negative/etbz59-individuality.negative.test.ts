@@ -8,7 +8,7 @@ import { PLAN_CONTRACT_BINDINGS_V1_1 } from '../../src/application/interpretatio
 import type { InterpretiveClaimGraph } from '../../src/application/interpretation/interpretive-claim-graph.js';
 import type { MetaNarrativePlanContext } from '../../src/application/interpretation/meta-narrative-plan.js';
 import { contextFor, dayMasterClaim, dominantClaim, recurrenceClaim, relationClaim } from '../support/claimGraphFixture.js';
-import { REMOVED_FACT_IDS, TALLY_STATEMENT, casePlanDraft, deriveCase, hourExpressionClaim, hourPressureClaim, tieClaim } from '../support/etbz59Cases.js';
+import { REMOVED_FACT_IDS, TALLY_STATEMENT, assertCasePinsHold, casePlanDraft, deriveCase, hourExpressionClaim, hourPressureClaim, tieClaim } from '../support/etbz59Cases.js';
 import { PLAN_KNOWN, pressureClaim, resourceClaim, validPlanDraft } from '../support/metaNarrativePlanFixture.js';
 import type { CaseRun } from '../support/etbz59Cases.js';
 import {
@@ -197,5 +197,18 @@ describe('ETBZ-59: the case plans follow the ETBZ-30B baseline (review round 2, 
     expected.chapterPlan[1]?.claimRefs.push('hour');
     expected.chapterPlan.splice(4, 1);
     expect(shape(casePlanDraft('near', planContextOf(n)), n.graph)).toEqual(expected);
+  });
+});
+
+describe('ETBZ-59: the reviewed pins of the case drafts', () => {
+  it('refuses a chart on which a cited fact has another value than the drafts were reviewed against', () => {
+    let code: string | undefined;
+    try {
+      assertCasePinsHold('near', s.model);
+    } catch (error) {
+      code = (error as { code?: string }).code;
+    }
+    expect(code).toBe('REHEARSAL_DRAFT_FACTS_DRIFTED');
+    expect(() => assertCasePinsHold('near', n.model)).not.toThrow();
   });
 });
