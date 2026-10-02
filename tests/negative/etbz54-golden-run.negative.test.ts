@@ -109,13 +109,13 @@ async function fixtureDrafts(): Promise<{ charts: GoldenCharts; drafts: GoldenDr
     const claims = round2Claims(label, model);
     const context = contextFor(model);
     const graph = buildInterpretiveClaimGraph(draftOf(claims, context), context);
-    return asCaseDraft(claims, round2PlanDraft(label, { ...context, graph, contractBindings: PLAN_CONTRACT_BINDINGS_V1_1 }) as MetaNarrativePlanDraft, model);
+    return asCaseDraft(claims, round2PlanDraft(label, { ...context, graph, contractBindings: PLAN_CONTRACT_BINDINGS_V1_1 }), model);
   };
   const removalModel = charts.removal.model;
   const removalClaims = caseClaims('removal', removalModel);
   const removalContext = contextFor(removalModel);
   const removalGraph = buildInterpretiveClaimGraph(draftOf(removalClaims, removalContext), removalContext);
-  const removal = asCaseDraft(removalClaims, casePlanDraft('removal', { ...planContextFor(removalContext, removalGraph), contractBindings: PLAN_CONTRACT_BINDINGS_V1_1 }) as MetaNarrativePlanDraft, removalModel);
+  const removal = asCaseDraft(removalClaims, casePlanDraft('removal', { ...planContextFor(removalContext, removalGraph), contractBindings: PLAN_CONTRACT_BINDINGS_V1_1 }), removalModel);
   const drafts = parseGoldenDrafts({
     draftVersion: 'etbz54-golden-drafts.v1',
     cases: { source: draft('source'), near: draft('near'), removal },
