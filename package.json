@@ -32,6 +32,7 @@
     "guards:etbz56": "node scripts/verify-etbz56-presentation.mjs",
     "guards:etbz57": "node scripts/verify-etbz57-voice.mjs",
     "guards:etbz58": "node scripts/verify-etbz58-rehearsal.mjs",
+    "guards:etbz53": "node scripts/verify-etbz53-freeze.mjs",
     "etbz49:contract": "node scripts/etbz49-generate-visual-contract.mjs",
     "etbz49:assemble": "node scripts/etbz49-assemble-evidence.mjs",
     "etbz51:bundle": "node scripts/etbz51-print-bundle.mjs",
