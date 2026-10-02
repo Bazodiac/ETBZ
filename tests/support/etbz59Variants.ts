@@ -18,7 +18,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
-import type { BazodiacInterpretationInput } from '../../src/application/interpretation/interpretation-input.js';
+import type { BazodiacInterpretationInput, ProducerSnapshots } from '../../src/application/interpretation/interpretation-input.js';
 import {
   EXCHANGE_LABELS,
   loadRecordedRun,
@@ -76,6 +76,7 @@ export function loadVariantRun(label: VariantLabel, root: string = process.cwd()
 export interface ReplayedChart {
   readonly model: HoroscopeModel;
   readonly input: BazodiacInterpretationInput;
+  readonly source: ProducerSnapshots;
 }
 
 /** S: Musterkundin A, replayed from the ETBZ-58 live record (same runtime, same recorded bytes). */

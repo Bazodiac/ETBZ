@@ -30,7 +30,7 @@ import { createCalculateHoroscopeUseCase } from '../../src/application/horoscope
 import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
 import { deriveInterpretationFeatureSet } from '../../src/application/interpretation/feature-set.js';
 import { buildBazodiacInterpretationInput } from '../../src/application/interpretation/interpretation-input.js';
-import type { BazodiacInterpretationInput } from '../../src/application/interpretation/interpretation-input.js';
+import type { BazodiacInterpretationInput, ProducerSnapshots } from '../../src/application/interpretation/interpretation-input.js';
 import type { InterpretiveClaimGraph } from '../../src/application/interpretation/interpretive-claim-graph.js';
 import { PLAN_CONTRACT_BINDINGS_V1_1, buildMetaNarrativePlan } from '../../src/application/interpretation/meta-narrative-plan.js';
 import type { MetaNarrativePlan } from '../../src/application/interpretation/meta-narrative-plan.js';
@@ -366,7 +366,7 @@ export async function replayInterpretationInput(
   readback: RuntimeReadback,
   responses: Readonly<Record<ExchangeLabel, Uint8Array>>,
   birthInput: unknown = KNOWN_BIRTH,
-): Promise<{ model: HoroscopeModel; input: BazodiacInterpretationInput }> {
+): Promise<{ model: HoroscopeModel; input: BazodiacInterpretationInput; source: ProducerSnapshots }> {
   const { runtimeImage, openapiSha256 } = readback.runtime;
   const violations: RehearsalError[] = [];
   const used = new Map<string, number>();
@@ -391,7 +391,7 @@ export async function replayInterpretationInput(
   if (!input.productionEligibility.eligible) {
     throw new RehearsalError('REHEARSAL_NOT_PRODUCTION_ELIGIBLE', `interpretation input blockers: ${input.productionEligibility.blockers.join(', ')}`);
   }
-  return { model, input };
+  return { model, input, source };
 }
 
 export interface RehearsalAssembly {
