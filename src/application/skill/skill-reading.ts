@@ -426,8 +426,10 @@ const POSITION_STATEMENTS: readonly RegExp[] = [
   // "nur im Monatszweig" (not "nicht nur im ...")
   new RegExp(`(?<!\\bnicht\\s)\\b(?:nur|ausschließlich|einzig)\\s+(?:\\p{L}+\\s+){0,3}(?:im|in\\s+der|in\\s+den|auf\\s+der|an\\s+der)\\s+\\p{L}*${POSITION_NOUNS}(?![\\p{L}])`, 'iu'),
 ];
-// The defining clause itself, up to its end; only the clause is set aside, never the rest of its sentence (PR #25 review, MINOR-6).
-const DEFINING_CLAUSE = /\b(?:Himmelsstämme|Stämme)\s*,\s*die\s+nicht\b[^,.;:]*/giu;
+// The defining clause itself, up to its end; only the clause is set aside, never the rest of its sentence (PR #25 review,
+// MINOR-6). It defines stems as a class only where it opens its sentence ("…: Himmelsstämme, die nicht …"); after a
+// determiner ("die fordernden Stämme, die nicht …") it states something of this chart (MINOR-11).
+const DEFINING_CLAUSE = /^\s*(?:Himmelsstämme|Stämme)\s*,\s*die\s+nicht\b[^,.;:]*/iu;
 const PILLAR_NAMES = ['year', 'month', 'day', 'hour'] as const;
 
 /** The first phrase that states something of the chart's positions as a whole, or null (ETBZ-60). */

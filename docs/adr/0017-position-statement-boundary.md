@@ -48,7 +48,8 @@ it recognises are:
 Three kinds of sentence are not position statements:
 
 - a defining relative clause about stems as a class ("Himmelsstämme, die nicht auf der Oberfläche einer Säule
-  stehen …"; ETBZ-57's Editorial-Gate reading carries one);
+  stehen …"; ETBZ-57's Editorial-Gate reading carries one). It counts as such only where it opens its sentence; after
+  a determiner ("die fordernden Stämme, die nicht …") it is a statement about this chart;
 - "nicht nur im …" and "nicht nur an einer …";
 - sentences in which "nirgends" or "überall" says nothing about a position ("eine Erwartung, die nirgends formuliert
   ist").
@@ -169,12 +170,17 @@ invocation.
 
 ## Accepted limitations
 
-1. The coverage counts pillars, not layers. A paragraph that cites a hidden-stem fact of every pillar could still
-   state something of every pillar's surface. Every case measured cites far fewer pillars.
+1. The check verifies coverage, not truth, and counts pillars, not layers. Once a paragraph cites a fact of every
+   pillar, any position statement in it passes, true or false, about the surface or the branches. Since D-60-1 the
+   surface claim gives exactly the paragraphs that render the surface/interior contrast that coverage. Measured:
+   "Die fordernde Stimme liegt nur im Monatszweig.", appended to round-2 R(S) [2.5], is accepted, although S's year
+   and hour branches also hide the Seven Killing (PR #25 review, MINOR-12). There, truth rests on the claim graph and
+   on the independent 6.7 and overreach judgement.
 2. The forms are German phrase patterns. A paraphrase outside them ("an keiner Stelle sichtbar", "Was nach außen
-   erscheint, ist ...") is not refused; round 1 measured this. So are variants inside the listed forms: "auf keiner
+   erscheint, ist ...") is not refused; round 1 measured this. So are variants inside the listed forms ("auf keiner
    der vier sichtbaren Säulen", "nicht in einer der Säulen", "lediglich im Monatszweig", "allein die Stundensäule",
-   "in allen vier Zweigen", "auf jeder Säule" and "nicht an die Oberfläche". These forms were deliberately not extended
+   "nicht an die Oberfläche") and universal statements, a form the table does not list ("in allen vier Zweigen", "auf
+   jeder Säule"). These forms were deliberately not extended
    further (review convergence). The drafting rule of D-60-1 grounds the surface the
    paraphrase speaks of, and the independent 6.7 judgement remains the backstop.
 3. Titles, reflection questions and the method note are not checked; the defect class surfaced in paragraphs.

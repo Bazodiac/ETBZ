@@ -92,6 +92,12 @@ describe('ETBZ-60: what a position statement is', () => {
     expect(findPositionStatement('Die Anforderung tritt nicht an der Oberfläche einer Säule auf.'.normalize('NFD'))).toBe('nicht an der Oberfläche einer Säule');
   });
 
+  it('exempts a defining clause only where it opens its sentence, not after a determiner (PR #25 review, MINOR-11)', () => {
+    expect(findPositionStatement('Die fordernden Stämme, die nicht offen auf einer Säule stehen, wirken von innen.')).toBe('nicht offen auf einer Säule');
+    expect(findPositionStatement('In deinem Chart sind es die kontrollierenden Stämme, die nicht an der Oberfläche einer Säule erscheinen.')).toBe('nicht an der Oberfläche einer Säule');
+    expect(findPositionStatement('Jeder Erdzweig trägt verborgene Stämme in sich: Himmelsstämme, die nicht auf der Oberfläche einer Säule stehen, sondern im Zweig enthalten sind.')).toBeNull();
+  });
+
   it('leaves framework sentences alone: a defining clause about stems, "every pillar has", and "not only in"', () => {
     // The ETBZ-57 reading the Product Owner accepted at the Editorial Gate, chapters[2].paragraphs[3].
     expect(findPositionStatement('Himmelsstämme, die nicht auf der Oberfläche einer Säule stehen, sondern im Zweig enthalten sind.')).toBeNull();

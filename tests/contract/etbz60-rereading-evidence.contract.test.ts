@@ -61,7 +61,9 @@ describe('ETBZ-60: the re-readings', () => {
   it('round 2: the pre-run cones are the derivation of the reviewed drafts, byte for byte, and hold the surface claim', async () => {
     const cones = await deriveRound2Cones();
     expect(renderJson(cones)).toBe(read(ROUND2_CONES));
-    expect((cones['nearNeighbourCone'] as { claims: string[] }).claims).toHaveLength(3);
+    const cone = cones['nearNeighbourCone'] as { claims: string[]; claimStatements: string[] };
+    expect(cone.claims).toHaveLength(3);
+    expect(cone.claimStatements.filter((statement) => statement.startsWith('On the surface of the four pillars'))).toHaveLength(1);
   });
 
   it('round 2: the swap is refused on N and on D, and no dependent claim survives the named difference (6.1, 6.3)', async () => {
