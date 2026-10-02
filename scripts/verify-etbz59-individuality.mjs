@@ -4,7 +4,7 @@
  * (src/application/interpretation/feature-set.ts and its input, model and claim consequences; PO decision D-59-1),
  * the deterministic checks (tests/support/etbz59Individuality.ts), the reviewed pins of the case drafts and the bar-C
  * byte pin of an exempted variant readback, and the acceptance boundary naming every chapter outside the word budget
- * (PO decision D-59-3). Each is weakened in exactly one place, and the named test must fail an
+ * (PO decision D-59-3) and carrying every violation of one full pass (PO decision D-59-4). Each is weakened in exactly one place, and the named test must fail an
  * assertion (the ETBZ-30B semantics). Files are restored from bytes in memory.
  *
  *   npm run guards:etbz59
@@ -144,6 +144,22 @@ const MUTANTS = [
     "        .filter((entry) => entry.count < CHAPTER_WORD_BUDGET.min || entry.count > CHAPTER_WORD_BUDGET.max);",
     "        .filter((entry) => entry.at === where);",
     [T.reading], "names every chapter outside the budget in one refusal"],
+  ["D-59-4: the collector re-throws the first violation", 'text', READING,
+    "    } catch (error) {\n      recordViolation(error);\n    }\n  };",
+    "    } catch (error) {\n      throw error;\n    }\n  };",
+    [T.reading], "carries every violation one full pass finds, refusing with the first as before"],
+  ["D-59-4: the refusal is the last violation, not the first", 'text', READING,
+    "  const [first] = diagnostics;",
+    "  const first = diagnostics[diagnostics.length - 1];",
+    [T.reading], "carries every violation one full pass finds, refusing with the first as before"],
+  ["D-59-4: a paragraph's claims are not credited before its checks", 'text', READING,
+    "      if (paragraph.kind === 'INTERPRETATION') for (const id of paragraph.claimRefs) if (chapterClaims.has(id)) renderedHere.add(id);",
+    "      if (paragraph.kind === 'NEVER') for (const id of paragraph.claimRefs) if (chapterClaims.has(id)) renderedHere.add(id);",
+    [T.reading], "does not report a claim as unrendered because every paragraph rendering it carries another violation"],
+  ["D-59-4: a chapter's bookkeeping is skipped after a violation", 'text', READING,
+    "    } finally {\n    for (const claimId of renderedHere) {\n      renderedBefore.add(claimId);\n      renderedAnywhere.add(claimId);\n    }\n    }\n",
+    "    } catch (error) {\n    throw error;\n    }\n    for (const claimId of renderedHere) {\n      renderedBefore.add(claimId);\n      renderedAnywhere.add(claimId);\n    }\n",
+    [T.reading], "carries every violation one full pass finds, refusing with the first as before"],
   ["BAR C: an exempted readback changes", 'text', NEAR_READBACK,
     "\"readbackVersion\":\"etbz58-runtime-readback.v1\"",
     "\"readbackVersion\":\"etbz58-runtime-readback.v9\"",

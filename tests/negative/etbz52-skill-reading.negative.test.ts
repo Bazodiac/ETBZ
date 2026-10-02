@@ -327,6 +327,46 @@ describe('N4: text', () => {
     expect(refusal?.code).toBe('READING_CHAPTER_LENGTH_OUT_OF_CONTRACT');
     expect(refusal?.message).toMatch(/chapters\[0\] has \d+ words; chapters\[2\] has \d+ words; the long-form budget is 600-900/u);
   });
+
+  it('carries every violation one full pass finds, refusing with the first as before (ETBZ-59, PO decision D-59-4)', () => {
+    let refusal: SkillRunError | undefined;
+    try {
+      accept(readingWith((r) => {
+        const long = paragraph(r, 0, 2);
+        long.text = `${long.text} ${long.text} ${long.text} ${long.text}`;
+        paragraph(r, 2, 2).text += ' (sha256:abc)';
+        r.methodNote.text += ' Code DAY_ANCHOR_UNVERIFIED.';
+      }));
+    } catch (error) {
+      refusal = error as SkillRunError;
+    }
+    expect(refusal?.code).toBe('READING_CHAPTER_LENGTH_OUT_OF_CONTRACT');
+    expect(refusal?.diagnostics[0]).toBe(refusal);
+    expect(refusal?.diagnostics.map((entry) => entry.code)).toEqual(['READING_CHAPTER_LENGTH_OUT_OF_CONTRACT', 'READING_EVIDENCE_CHROME', 'READING_EVIDENCE_CHROME']);
+    expect(refusal?.diagnostics[1]?.message).toContain('chapters[2].paragraphs[2]');
+  });
+
+  it('does not report a claim as unrendered because every paragraph rendering it carries another violation', () => {
+    let refusal: SkillRunError | undefined;
+    try {
+      // The recurrence claim is rendered in chapters[2] by its paragraphs 2, 3 and 4 only.
+      accept(readingWith((r) => { for (const index of [2, 3, 4]) paragraph(r, 2, index).text += ' (sha256:abc)'; }));
+    } catch (error) {
+      refusal = error as SkillRunError;
+    }
+    expect(refusal?.diagnostics.map((entry) => entry.code)).toEqual(['READING_EVIDENCE_CHROME', 'READING_EVIDENCE_CHROME', 'READING_EVIDENCE_CHROME']);
+  });
+
+  it('carries only itself when the reading has one violation, and nothing when another boundary refuses', () => {
+    let refusal: SkillRunError | undefined;
+    try {
+      accept(readingWith((r) => { paragraph(r, 0, 2).text += ' (sha256:abc)'; }));
+    } catch (error) {
+      refusal = error as SkillRunError;
+    }
+    expect(refusal?.diagnostics.map((entry) => entry.code)).toEqual(['READING_EVIDENCE_CHROME']);
+    expect(new SkillRunError('READING_SCHEMA_INVALID', 'x').diagnostics).toEqual([]);
+  });
 });
 
 describe('N5: semantic delta and callbacks', () => {

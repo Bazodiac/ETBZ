@@ -663,12 +663,34 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
     throw new SkillRunError('READING_CHAPTER_PLAN_MISMATCH', `the reading has ${String(reading.chapters.length)} chapters, the plan ${String(planChapters.length)}`);
   }
   const chartCovered = coveredValuesOf(inputPackage.facts);
+  // ETBZ-59 (PO decision D-59-4, Jira ETBZ-59 comment 17038): from here on a violation is recorded and the pass goes
+  // on, so that a refusal carries every violation one full pass finds - the first in the title, in each paragraph,
+  // chapter, reflection question and visual spec, and each closing check - for the one repair a run allows (the Skill
+  // wrapper's step 5). The reading is refused with the FIRST of them, the very error it was refused with before, so
+  // what is accepted and which code a refusal carries are unchanged. A later entry may follow from an earlier one.
+  const diagnostics: SkillRunError[] = [];
+  const recordViolation = (error: unknown): void => {
+    if (error instanceof SkillRunError) diagnostics.push(error);
+    else if (diagnostics.length === 0) throw error;
+  };
+  const collect = <A extends unknown[]>(step: (...args: A) => void) => (...args: A): void => {
+    try {
+      step(...args);
+    } catch (error) {
+      recordViolation(error);
+    }
+  };
+  // (These three lines keep their indentation: two mutation guards match them byte for byte.)
+  try {
   checkSurface(reading.title, 'title');
   if (voice) checkVoiceSurface(reading.title, 'title', [], contrastPairs);
   checkSymbols(reading.title, 'title', chartCovered);
+  } catch (error) {
+    recordViolation(error);
+  }
   const renderedBefore = new Set<string>();
   const renderedAnywhere = new Set<string>();
-  reading.chapters.forEach((chapter, index) => {
+  reading.chapters.forEach(collect((chapter: (typeof reading.chapters)[number], index: number) => {
     const where = `chapters[${String(index)}]`;
     const planned_ = planChapters[index];
     if (planned_ === undefined || chapter.chapterRef !== planned_.chapterId || chapter.narrativeOperation !== planned_.narrativeOperation) {
@@ -684,9 +706,13 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
     const chapterFacts: ChartFact[] = [];
     let words = 0;
 
-    chapter.paragraphs.forEach((paragraph, paragraphIndex) => {
+    chapter.paragraphs.forEach(collect((paragraph: (typeof chapter.paragraphs)[number], paragraphIndex: number) => {
       const at = `${where}.paragraphs[${String(paragraphIndex)}]`;
       words += countWords(paragraph.text);
+      // ETBZ-59 (D-59-4): bookkeeping before the checks, so that a violation in this paragraph does not make the
+      // chapter and narrative checks below report its claims as unrendered. The same claims the line further down adds
+      // after the checks: for an accepted reading the set is identical, and a refusal's first violation is unchanged.
+      if (paragraph.kind === 'INTERPRETATION') for (const id of paragraph.claimRefs) if (chapterClaims.has(id)) renderedHere.add(id);
       checkSurface(paragraph.text, at);
 
       // Kind and grounding.
@@ -764,8 +790,12 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       const coveredFacts = [...facts, ...claims.flatMap((claim) => claim.factRefs.map((id) => factById.get(id)).filter((fact): fact is ChartFact => fact !== undefined))];
       chapterFacts.push(...coveredFacts);
       checkSymbols(paragraph.text, at, coveredValuesOf(coveredFacts));
-    });
+    }));
 
+    // ETBZ-59 (D-59-4): the chapter checks run in try/finally, so that the bookkeeping at their end runs after a
+    // violation too and later chapters are not reported for this one (lines kept at their indentation: mutation
+    // guards match several of them byte for byte).
+    try {
     // The chapter title names only what the chapter's paragraphs cite.
     checkSymbols(chapter.title, `${where}.title`, coveredValuesOf(chapterFacts));
     for (const claimId of planned_.claimRefs) {
@@ -830,19 +860,21 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       }
     }
 
+    } finally {
     for (const claimId of renderedHere) {
       renderedBefore.add(claimId);
       renderedAnywhere.add(claimId);
     }
-  });
+    }
+  }));
 
   // 4. The thesis is written; reflection is grounded; the method note carries the warnings verbatim.
   for (const claimId of inputPackage.plan.reportThesis.claimRefs) {
     if (!renderedAnywhere.has(claimId)) {
-      throw new SkillRunError('READING_THESIS_UNRENDERED', `thesis claim ${claimId} is rendered by no chapter`, { claimRef: claimId });
+      recordViolation(new SkillRunError('READING_THESIS_UNRENDERED', `thesis claim ${claimId} is rendered by no chapter`, { claimRef: claimId }));
     }
   }
-  reading.reflectionQuestions.forEach((question, index) => {
+  reading.reflectionQuestions.forEach(collect((question: (typeof reading.reflectionQuestions)[number], index: number) => {
     const at = `reflectionQuestions[${String(index)}]`;
     checkSurface(question.text, at);
     const claims = question.claimRefs.map((id) => resolveClaim(id, at));
@@ -854,29 +886,33 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
     }
     const questionFacts = claims.flatMap((claim) => claim.factRefs.map((id) => factById.get(id)).filter((fact): fact is ChartFact => fact !== undefined));
     checkSymbols(question.text, at, coveredValuesOf(questionFacts));
-  });
-  checkSurface(reading.methodNote.text, 'methodNote');
+  }));
+  collect(() => checkSurface(reading.methodNote.text, 'methodNote'))();
   const methodNoteProhibited = voice ? findVoiceProhibitedWording(reading.methodNote.text) : null;
   if (methodNoteProhibited !== null) {
-    throw new SkillRunError('READING_PROHIBITED_WORDING', `methodNote uses wording the Lexicon prohibits (${methodNoteProhibited.classId})`, { where: 'methodNote', ...methodNoteProhibited });
+    recordViolation(new SkillRunError('READING_PROHIBITED_WORDING', `methodNote uses wording the Lexicon prohibits (${methodNoteProhibited.classId})`, { where: 'methodNote', ...methodNoteProhibited }));
   }
   const methodNoteDomain = voice ? findLifeDomainWord(reading.methodNote.text) : null;
   if (methodNoteDomain !== null) {
-    throw new SkillRunError('READING_LIFE_DOMAIN_INVENTED', `methodNote names a life domain or a person ("${methodNoteDomain}")`, { where: 'methodNote', phrase: methodNoteDomain });
+    recordViolation(new SkillRunError('READING_LIFE_DOMAIN_INVENTED', `methodNote names a life domain or a person ("${methodNoteDomain}")`, { where: 'methodNote', phrase: methodNoteDomain }));
   }
   const methodNoteCount = voice ? findCountWord(reading.methodNote.text) : null;
   if (methodNoteCount !== null) {
-    throw new SkillRunError('READING_UNCITED_NUMERAL', `methodNote states a count ("${methodNoteCount}"); a count is derived, never a chart fact`, { where: 'methodNote', phrase: methodNoteCount });
+    recordViolation(new SkillRunError('READING_UNCITED_NUMERAL', `methodNote states a count ("${methodNoteCount}"); a count is derived, never a chart fact`, { where: 'methodNote', phrase: methodNoteCount }));
   }
+  try {
   checkSymbols(reading.methodNote.text, 'methodNote', chartCovered);
+  } catch (error) {
+    recordViolation(error);
+  }
   if (!sameList(reading.methodNote.warningCodes, inputPackage.warnings)) {
-    throw new SkillRunError('READING_WARNINGS_NOT_VERBATIM', 'the method note does not carry the source warnings verbatim, in source order');
+    recordViolation(new SkillRunError('READING_WARNINGS_NOT_VERBATIM', 'the method note does not carry the source warnings verbatim, in source order'));
   }
 
   // 5. Visualization specs reference facts and planned claims only, on declared slots.
   const slots = new Set(inputPackage.allowedSlotIds);
   const specIds = new Set<string>();
-  reading.visualizationSpecs.forEach((spec, index) => {
+  reading.visualizationSpecs.forEach(collect((spec: (typeof reading.visualizationSpecs)[number], index: number) => {
     const at = `visualizationSpecs[${String(index)}]`;
     if (specIds.has(spec.specId)) {
       throw new SkillRunError('READING_VISUAL_SPEC_DUPLICATE', `${at} repeats spec id ${spec.specId}`, { where: at, specId: spec.specId });
@@ -895,8 +931,13 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
         throw new SkillRunError('READING_VISUAL_REF_INVALID', `${at} binds claim ${id}, which is unknown or unplanned`, { where: at, claimRef: id });
       }
     }
-  });
+  }));
 
+  const [first] = diagnostics;
+  if (first !== undefined) {
+    first.diagnostics.push(...diagnostics);
+    throw first;
+  }
   return { ...reading, structuralHash: structuralHash(reading) };
 }
 
