@@ -25,7 +25,7 @@ A plain digest of something determined by the chart can be searched back to the 
 - **InterpretationInput structural hash.** It covers the input and the facts without any timestamp.
 - **Byte lengths** reveal how many hidden stems the chart carries.
 
-So the record carries none of these. Every digest in it is an HMAC-SHA256 under a 32-byte key that exists only in the archive. Without the key it cannot be searched; with it, `npm run etbz53:freeze -- verify` re-derives every digest. The key itself is named in the record only by a keyed fingerprint.
+So the record carries none of these, unlike the plain SHA-256 digests and per-category counts that comments 17026 and 17029 announced (corrected in comment 17030). Every digest in it is an HMAC-SHA256 under a 32-byte key that exists only in the archive. Without the key it cannot be searched; with it, `npm run etbz53:freeze -- verify` re-derives every digest. The key itself is named in the record only by a keyed fingerprint.
 
 ## What the record states
 
@@ -92,5 +92,5 @@ Re-checked after the library derivation replaced the oracle's own element, polar
 ## What it does not show
 
 - **The live answers, to CI.** The archive is local by decision; the re-derivation is the `verify` run on the machine that holds it. If the key is lost, the committed digests can no longer be re-derived. If it leaks, they become searchable.
-- **Who drafts the claim graph and plan for this case.** This is open for GOLDEN_RUN_READY, before ETBZ-54 (comment 17024). The rehearsal's fixture drafts are not reused for the Golden case unless they are independently valid for it.
-- **That the display name is the one the customer PDF should print.** It is currently the pseudonym; ETBZ-54 would print "Erstellt für GOLDEN-KT-01". This is a Product Owner choice.
+- **A claim graph or plan for this case.** The freeze stops at the InterpretationInput (comment 17028). In ETBZ-54 the delivery runner drafts both from the frozen chart facts alone, as the drafter ADR 0008 names, and an independent review checks them against the Method Profile and the long-form contract before the Skill reading starts. The rehearsal's fixture drafts are not reused. This is Product Owner decision D-53-4 (comment 17030), which answers the question left open in Jira ETBZ-58 comment 17024.
+- **A real name.** The display name stays the pseudonym `GOLDEN-KT-01` (Product Owner decision D-53-5, comment 17030), so ETBZ-54's PDF prints "Erstellt für GOLDEN-KT-01".
