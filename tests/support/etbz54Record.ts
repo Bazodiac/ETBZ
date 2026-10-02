@@ -48,12 +48,21 @@ import type { GoldenConfig } from './etbz54Golden.js';
 import { loadGoldenRun } from './etbz54Run.js';
 import type { GoldenRun } from './etbz54Run.js';
 
-export const RENDER_DIR = 'render';
+/** The re-render after ETBZ-61 (D-54-2); the first, blocked render stays at `render/` (FIRST_RENDER_DIR). */
+export const RENDER_DIR = 'rerender';
+export const FIRST_RENDER_DIR = 'render';
 export const VISUAL_VERDICT_FILE = 'visual-verdict.json';
 export const JUDGEMENTS_FILE = 'judgements.json';
 export const DRAFT_REVIEW_FILE = 'draft-review.json';
 export const PROJECTION_FILE = 'presentation-projection.json';
 export const NOT_RUN = 'NOT_RUN' as const;
+/**
+ * The first attempt's presentation stage, kept unchanged after PDF QA blocked it (Jira ETBZ-54 comment 17082): its
+ * projection and its visual verdict live here; its render stays where it was written (FIRST_RENDER_DIR). The Product
+ * Owner judged that run NOT_SELLABLE and authorised the re-render of the same accepted reading after ETBZ-61 (D-54-2,
+ * comment 17123).
+ */
+export const FIRST_ATTEMPT_DIR = 'attempt-2026-10-02';
 
 /** Declared, not measured: who wrote the readings and judged them (as in ETBZ-52/57/58/59/60). */
 export const ETBZ54_GENERATION = {
@@ -149,6 +158,26 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
   const reviewPath = workPath(config, DRAFT_REVIEW_FILE);
   const review: DraftReview | null = existsSync(reviewPath) ? (json(reviewPath) as DraftReview) : null;
 
+  const renderOf = (dir: string): Record<string, unknown> | typeof NOT_RUN => {
+    const path = join(dir, 'qa-report.json');
+    if (!existsSync(path)) return NOT_RUN;
+    // A blocked render writes no PDF and no manifest (fail-closed); its QA report is recorded by check, page and code -
+    // never the text a finding quotes, which may be a chart value.
+    const report = json(path) as { state: string; status: string; checks: readonly { id: string; result: string; detail?: unknown }[] };
+    return {
+      qaReport: file(path),
+      state: report.state,
+      status: report.status,
+      checks: report.checks.map(({ id, result }) => ({ id, result })),
+      blockingFindings: report.checks.filter((check) => check.result !== 'PASS').flatMap((check) => (Array.isArray(check.detail) ? (check.detail as { page?: string; pageId?: string; code?: string }[]) : []).map((finding) => ({ check: check.id, page: finding.page ?? null, pageId: finding.pageId ?? null, code: finding.code ?? null }))),
+    };
+  };
+  const verdictOf = (path: string): Record<string, unknown> | typeof NOT_RUN => {
+    if (!existsSync(path)) return NOT_RUN;
+    const v = json(path) as { verdict: string; defects: readonly { page: string; code: string }[]; render: { repositoryHead: string; executedAt: string; renderer: string } };
+    return { verdict: v.verdict, defects: v.defects.map(({ page, code }) => ({ page, code })), render: { repositoryHead: v.render.repositoryHead, executedAt: v.render.executedAt, renderer: v.render.renderer }, file: file(path) };
+  };
+  const firstDir = workPath(config, FIRST_ATTEMPT_DIR);
   const renderDir = workPath(config, RENDER_DIR);
   const manifestPath = join(renderDir, 'artifact-manifest.json');
   const manifest = existsSync(manifestPath) ? (json(manifestPath) as {
@@ -156,11 +185,7 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
     qa: { state: string; status: string; checks: readonly { id: string; result: string }[] };
   }) : null;
   const qaPath = join(renderDir, 'qa-report.json');
-  // A blocked render writes no PDF and no manifest (fail-closed); its QA report is recorded by check, page and code -
-  // never the text a finding quotes, which may be a chart value.
-  const qa = existsSync(qaPath) ? (json(qaPath) as { state: string; status: string; checks: readonly { id: string; result: string; detail?: unknown }[] }) : null;
-  const verdictPath = workPath(config, VISUAL_VERDICT_FILE);
-  const verdict = existsSync(verdictPath) ? (json(verdictPath) as { verdict: string; defects: readonly { page: string; code: string }[]; render: { repositoryHead: string; executedAt: string; renderer: string } }) : null;
+  const qa = existsSync(qaPath) ? (json(qaPath) as { state: string }) : null;
   const projectionPath = workPath(config, PROJECTION_FILE);
 
   const record = {
@@ -226,7 +251,7 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
     },
     judgements: judgements === null ? NOT_RUN : {
       file: file(judgementsPath),
-      judges: Object.fromEntries(Object.entries(judgements.judges).map(([name, judge]) => [name, { brief: k(judge.brief), report: k(judge.report), verdict: judge.verdict }])),
+      judges: Object.fromEntries(Object.entries(judgements.judges).map(([name, judge]) => [name, { brief: file(workPath(config, judge.brief)), report: file(workPath(config, judge.report)), verdict: judge.verdict }])),
       entries: judgements.judgements.map(({ check, subject, codes, cites }) => ({ check, subject, codes: [...codes], cites: [...cites] })),
       outsideContract: judgements.outsideContract.map(({ check, subject, codes, cites }) => ({ check, subject, codes: [...codes], cites: [...cites] })),
       judgeFiles: Object.fromEntries(filesUnder(workPath(config, 'judges')).map((name) => [name, file(workPath(config, 'judges', name))])),
@@ -239,14 +264,15 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
       '8.5': { checks: ['6.7'], judged: judged('6.7') },
       '8.6': { raised: [...new Set(raised)].sort().map((code) => ({ code, class: classOf(code), count: raised.filter((entry) => entry === code).length })), outsideContract: judgements?.outsideContract.flatMap((entry) => entry.codes) ?? NOT_RUN },
     },
+    firstAttempt: existsSync(firstDir) ? {
+      note: 'PDF QA blocked the first render (Jira ETBZ-54 comment 17082); the Product Owner judged the run NOT_SELLABLE, reason code LAYOUT_FAILURE, and authorised the repair ETBZ-61 and the re-render of the same accepted reading (D-54-2, comment 17123)',
+      projection: file(join(firstDir, PROJECTION_FILE)),
+      render: renderOf(workPath(config, FIRST_RENDER_DIR)),
+      visualVerdict: verdictOf(join(firstDir, VISUAL_VERDICT_FILE)),
+      humanVerdict: 'NOT_SELLABLE (D-54-2)',
+    } : NOT_RUN,
     presentation: existsSync(projectionPath) ? { projection: file(projectionPath), sourceReading: 'the accepted EDIT revision of R(S)' } : NOT_RUN,
-    render: qa === null ? NOT_RUN : {
-      qaReport: file(qaPath),
-      state: qa.state,
-      status: qa.status,
-      checks: qa.checks.map(({ id, result }) => ({ id, result })),
-      blockingFindings: qa.checks.filter((check) => check.result !== 'PASS').flatMap((check) => (Array.isArray(check.detail) ? (check.detail as { page?: string; pageId?: string; code?: string }[]) : []).map((finding) => ({ check: check.id, page: finding.page ?? null, pageId: finding.pageId ?? null, code: finding.code ?? null }))),
-    },
+    render: renderOf(renderDir),
     artifact: manifest === null ? NOT_RUN : {
       state: manifest.state,
       mimeType: manifest.mimeType,
@@ -255,15 +281,15 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
       template: { ref: manifest.template.ref, structuralHash: manifest.template.structuralHash },
       files: Object.fromEntries(filesUnder(renderDir).map((name) => [name, file(join(renderDir, name))])),
     },
-    visualVerdict: verdict === null ? NOT_RUN : { verdict: verdict.verdict, defects: verdict.defects.map(({ page, code }) => ({ page, code })), render: { repositoryHead: verdict.render.repositoryHead, executedAt: verdict.render.executedAt, renderer: verdict.render.renderer }, file: file(verdictPath) },
+    visualVerdict: verdictOf(workPath(config, VISUAL_VERDICT_FILE)),
     generation: ETBZ54_GENERATION,
     stop: qa !== null && qa.state !== 'QA_PASSED' ? {
       stage: 'PDF QA (renderer PAGE_QA)',
       state: qa.state,
       rule: 'D-54-1 (Jira ETBZ-54 comment 17073): on a BLOCKING, grounding, contract, safety or PDF-QA failure STOP, no reroll; Jira ETBZ-54 "Stop / rollback"',
-      notRun: ['final PDF and its readback', 'ArtifactManifest', 'contact sheet', 'independent judges: 6.1 blind attribution, 6.4 prose side, 6.5 anchor ablation, 6.7 reuse scan, overreach review'],
+      notRun: ['final PDF and its readback', 'ArtifactManifest', 'contact sheet'],
     } : null,
-    humanVerdict: 'PENDING: the Product Owner decides SELLABLE | NOT_SELLABLE; the Delivery Runner never assigns SELLABLE (D-54-1)',
+    humanVerdict: 'PENDING for the re-render: the Product Owner decides SELLABLE | NOT_SELLABLE; the Delivery Runner never assigns SELLABLE (D-54-1, D-54-2)',
   };
   const readings = GOLDEN_LABELS.filter((label) => existsSync(caseFile(config, label, 'accepted-reading'))).map((label) => parseQuietly(readFileSync(caseFile(config, label, 'accepted-reading'), 'utf8'), 'a reading'));
   assertGoldenRecordPrivate(record, raw, [charts.source.model, charts.near.model], run, readings, root);
