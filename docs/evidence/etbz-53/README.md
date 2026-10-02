@@ -38,6 +38,26 @@ So the record carries none of these. Every digest in it is an HMAC-SHA256 under 
 | `digests` | Keyed digests of the three response bodies, the readback, the InterpretationInput file and its structural hash, plus the key's fingerprint. |
 | `liveStageRepositoryHead` | The ETBZ commit the live stage ran on (`51dca9d`). |
 
+## Oracle independence and coverage (Jira ETBZ-53 comment 17028)
+
+Independence: `lunar-python` is not a FuFirE dependency. FuFirE `8ad7dce6` declares `pyswisseph`, FastAPI and related runtime packages in `pyproject.toml`, and its source never imports `lunar_python` (the only textual hit is the phrase "from lunar day" in a docstring). The oracle runs from its own uv project with the version pinned in `uv.lock`.
+
+Coverage: where each compared category comes from. The oracle prints this with every run.
+
+| Category | Derived by |
+| --- | --- |
+| Four pillars, Hanzi | lunar-python (`EightChar`, day boundary at midnight) |
+| Stem elements, Day Master element | lunar-python `LunarUtil.WU_XING_GAN`, translated to the German labels |
+| Polarity | lunar-python stem order (`LunarUtil.GAN` parity) |
+| Animals | lunar-python `LunarUtil.SHENGXIAO` by branch, translated |
+| Hidden stems (stem, order, element, Ten God) | lunar-python `EightChar` hidden stems and their Ten Gods; the Qi role by position |
+| Ten Gods of the pillars; element relations | lunar-python `EightChar` Ten Gods; each element relation by the classical definition of its Ten God |
+| Month Command | lunar-python month branch and its first hidden stem |
+| Wu Xing weights and dominant phase | **shared convention, not independent:** FuFirE's weighting (stem 1; hidden principal 1, central 0.5, residual 0.3) applied to lunar-python's stems and hidden stems. The equality shows that FuFirE applied its convention to the same stems; it does not validate the convention. |
+| Pinyin | **romanisation table, not lunar-python** (the library has none): the standard Hanyu Pinyin of the 22 characters, written in the oracle script. |
+
+Re-checked after the library derivation replaced the oracle's own element, polarity and animal tables: positive control 101 of 101, negative control 93 of 101 (the 8 swapped facts, exit 1), Golden case all facts equal, record re-derived byte for byte.
+
 ## How it was produced and checked
 
 1. **Oracle controls**, run before the freeze on the synthetic rehearsal case (values printed because the case is synthetic):
