@@ -12,11 +12,10 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { acceptEditorialRevision, acceptSkillReading } from '../../src/application/skill/index.js';
 import { renderJson, readJsonFile } from './etbz58Rehearsal.js';
-import { CASE_LABELS, deriveCase } from './etbz59Cases.js';
-import type { CaseLabel } from './etbz59Cases.js';
-import { ETBZ59_DIR } from './etbz59Variants.js';
-
-export const caseFile = (label: CaseLabel, name: 'skill-input' | 'semantic-reading' | 'skill-reading' | 'accepted-reading'): string => `${ETBZ59_DIR}/cases/${label}/${name}.json`;
+import { CASE_LABELS, ETBZ59_CONES, NEAR_CONTRADICTION_TERMS, REMOVED_FACT_IDS, RESCUE_TERMS, RESCUE_TERMS_WHY, caseFile, deriveCase } from './etbz59Cases.js';
+import type { CaseLabel, CaseRun } from './etbz59Cases.js';
+import { dependencyCone, namedDifference } from './etbz59Individuality.js';
+import type { Cone } from './etbz59Individuality.js';
 
 const write = (path: string, data: string): void => {
   const out = resolve(process.cwd(), path);
@@ -49,7 +48,27 @@ if (command === 'emit') {
     process.stdout.write(`${label}: REFUSED ${codeOf(error)}${typeof path === 'string' ? ` at ${path}` : ''}: ${error instanceof Error ? error.message : ''}\n`);
     process.exitCode = 1;
   }
+} else if (command === 'cones') {
+  // Contract 6.3 step 1 and section 8.2: the cones are listed BEFORE the readings exist (committed first).
+  const [s, n, r] = [await deriveCase('source'), await deriveCase('near'), await deriveCase('removal')];
+  const delta = namedDifference(s.model, n.model);
+  const describe = (cone: Cone, run: CaseRun): unknown => ({
+    ...cone,
+    claimStatements: cone.claims.map((id) => run.graph.claims.find((claim) => claim.claimId === id)?.statement ?? null),
+  });
+  write(ETBZ59_CONES, renderJson({
+    recordVersion: 'etbz59-pre-run-cones.v1',
+    note: 'written before any reading of the three cases exists; the readings are judged against these cones',
+    nearNeighbourDifference: { variant: 'near', factIds: delta },
+    nearNeighbourAndMutationCone: describe(dependencyCone(s, delta), s),
+    removal: { factIds: [...REMOVED_FACT_IDS], cone: describe(dependencyCone(s, REMOVED_FACT_IDS), s) },
+    rescueTerms: { terms: [...RESCUE_TERMS], why: RESCUE_TERMS_WHY },
+    nearContradictionTerms: { terms: [...NEAR_CONTRADICTION_TERMS], why: 'N ties Feuer and Metall at the top; FuFirE still names Feuer dominant (a tie-break the tie claim does not cite), so prose naming one leading element contradicts the tie claim (draft review round 2, G3)' },
+    graphs: { source: s.graph.structuralHash, near: n.graph.structuralHash, removal: r.graph.structuralHash },
+    plans: { source: s.plan.structuralHash, near: n.plan.structuralHash, removal: r.plan.structuralHash },
+  }));
+  process.stdout.write(`cones written: |delta|=${String(delta.length)}\n`);
 } else {
-  process.stderr.write('usage: etbz59 emit | accept <source|near|removal>\n');
+  process.stderr.write('usage: etbz59 emit | cones | accept <source|near|removal>\n');
   process.exitCode = 2;
 }

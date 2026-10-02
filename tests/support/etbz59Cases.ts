@@ -38,7 +38,7 @@ import { DOMINANT, H, MONTH_TEN_GOD, MONTH_TEN_GOD_RELATION, contextFor, dayMast
 import { RehearsalError, loadRecordedRun } from './etbz58Rehearsal.js';
 import { M, MONTH_HIDDEN_0_RELATION, MONTH_HIDDEN_0_TEN_GOD, PLAN_H, T, idOf, planClaims, planContextFor, pressureClaim, resourceClaim } from './metaNarrativePlanFixture.js';
 import type { MutablePlanDraft } from './metaNarrativePlanFixture.js';
-import { sourceChart, variantChart } from './etbz59Variants.js';
+import { ETBZ59_DIR, sourceChart, variantChart } from './etbz59Variants.js';
 import type { ReplayedChart } from './etbz59Variants.js';
 
 export const CASE_LABELS = ['source', 'near', 'removal'] as const;
@@ -93,8 +93,15 @@ export function hourExpressionClaim(): InterpretiveClaim {
  * dependency cone. True on S: one maximum (Feuer 2.5).
  */
 export function tallyClaim(): InterpretiveClaim {
-  return dominantClaim({ factRefs: [DOMINANT, ...WEIGHT_IDS] });
+  return dominantClaim({ statement: TALLY_STATEMENT, factRefs: [DOMINANT, ...WEIGHT_IDS] });
 }
+
+/**
+ * Review round 2 (G1): the ETBZ-30A wording "named more often than the others" counts mentions, which on S tie
+ * (Feuer, Erde and Holz three times each in FuFirE's ledger); the cited facts are weights, and by weight Feuer is the
+ * one maximum (2.5).
+ */
+export const TALLY_STATEMENT = 'One element carries more weight than any other in the tally the source reports.';
 
 /**
  * N: the tally ties (Feuer 3, Metall 3). FuFirE names one of the tied maxima dominant, which ETBZ allows; the Method
@@ -167,7 +174,9 @@ export function casePlanDraft(label: CaseLabel, planContext: MetaNarrativePlanCo
         closesThreadRefs: [],
       },
       { narrativeOperation: 'CONTEXTUALIZE', claimRefs: [c.tally, c.resource], motifTransitions: [{ motifRef: M.resource, toState: 'SEEDED' }], opensThreadRefs: [T.resource], closesThreadRefs: [] },
-      { narrativeOperation: 'QUALIFY', claimRefs: [c.dayMaster, c.tally], motifTransitions: [], opensThreadRefs: [], closesThreadRefs: [] },
+      // Review round 2 (G2): on N the tally and the day master share no stated relation, so a QUALIFY chapter over
+      // them could only repeat itself or invent a link; N's plan has no such chapter.
+      ...(label === 'near' ? [] : [{ narrativeOperation: 'QUALIFY' as const, claimRefs: [c.dayMaster, c.tally], motifTransitions: [], opensThreadRefs: [], closesThreadRefs: [] }]),
       {
         narrativeOperation: 'CONTRAST',
         claimRefs: [c.pressure, c.resource, ...(label === 'source' ? hour : [])],
@@ -307,3 +316,19 @@ export async function deriveCase(label: CaseLabel, root: string = process.cwd())
   });
   return { label, model, input, graph, plan, bundle, inputPackage };
 }
+
+export const caseFile = (label: CaseLabel, name: 'skill-input' | 'semantic-reading' | 'skill-reading' | 'accepted-reading'): string => `${ETBZ59_DIR}/cases/${label}/${name}.json`;
+
+export const ETBZ59_CONES = `${ETBZ59_DIR}/pre-run-cones.json`;
+
+/**
+ * Terms whose presence in the removal reading makes a passage a model-memory-rescue CANDIDATE (contract 6.4): the
+ * withdrawn relation's values and labels, and the hour position, through which the residual facts of the same
+ * hidden stem (Ding, fire, central Qi - still interpretable) offer a re-derivation path. Candidates only; the
+ * independent judgement decides `MODEL_MEMORY_RESCUE`.
+ */
+export const RESCUE_TERMS = ['SevenKilling', 'Seven Killing', 'Druck / Struktur', 'Qi Sha', '七杀', 'controls_day_master', 'Stunde', 'Stundenzweig', 'Stundensäule', 'Wei', '未', 'wèi', 'Ziege', 'Ding', '丁'] as const;
+export const RESCUE_TERMS_WHY = 'withdrawn: chart.natal.pillar.hour.hiddenStem.1.tenGod (SevenKilling, label "Druck / Struktur") and its element relation (controls_day_master); residual and interpretable: the same hidden stem Ding (fire, central Qi) in the hour branch Wei - the re-derivation path the draft review named (F7)';
+
+/** Terms that, in N's reading, would name one leading element although N's tally ties (review round 2, G3). */
+export const NEAR_CONTRADICTION_TERMS = ['Feuer dominiert', 'dominierende', 'dominante', 'vorherrschend', 'führende Wandlungsphase', 'Feuer führt', 'überwiegt'] as const;

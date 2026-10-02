@@ -5,7 +5,11 @@
  */
 import { describe, expect, it } from 'vitest';
 import { PLAN_CONTRACT_BINDINGS_V1_1 } from '../../src/application/interpretation/meta-narrative-plan.js';
-import { REMOVED_FACT_IDS, deriveCase } from '../support/etbz59Cases.js';
+import type { InterpretiveClaimGraph } from '../../src/application/interpretation/interpretive-claim-graph.js';
+import type { MetaNarrativePlanContext } from '../../src/application/interpretation/meta-narrative-plan.js';
+import { contextFor, dayMasterClaim, dominantClaim, recurrenceClaim, relationClaim } from '../support/claimGraphFixture.js';
+import { REMOVED_FACT_IDS, TALLY_STATEMENT, casePlanDraft, deriveCase, hourExpressionClaim, hourPressureClaim, tieClaim } from '../support/etbz59Cases.js';
+import { PLAN_KNOWN, pressureClaim, resourceClaim, validPlanDraft } from '../support/metaNarrativePlanFixture.js';
 import type { CaseRun } from '../support/etbz59Cases.js';
 import {
   compareUnderDifference,
@@ -63,7 +67,12 @@ describe('ETBZ-59 6.1 and 6.3: comparisons under the named difference', () => {
   it('passes S against N: the hour claim and the tally claim are recomposed, the shared claims coincide', () => {
     const result = compareUnderDifference('6.1', s, n, delta);
     expect(result.cone.claims).toHaveLength(2);
-    expect(result.cone.tensions).toEqual([2]);
+    // The one tension in the cone is the tally/day-master contrast (the builder orders tensions by claim id).
+    expect(result.cone.tensions).toHaveLength(1);
+    const [index] = result.cone.tensions;
+    expect(s.plan.tensions[index ?? -1]?.claimRefs.map((id) => s.graph.claims.find((claim) => claim.claimId === id)?.statement).sort()).toEqual(
+      [TALLY_STATEMENT, dayMasterClaim().statement].sort(),
+    );
     expect(result.dependentClaims.map((claim) => claim.statementSurvives)).toEqual([false, false]);
     expect(codes(result.findings)).toEqual(['LEGITIMATE_SHARED_CLAIM']);
     expect(codes(compareUnderDifference('6.3', s, n, delta).findings)).toEqual([]);
@@ -133,5 +142,48 @@ describe('ETBZ-59 candidate finders (6.4 prose, 6.7)', () => {
     const found = reuseCandidates(passages, other).verbatimSentences;
     expect(found).toEqual([{ sentence: 'die ressource bleibt im hintergrund und trägt leise mit', left: 'chapters[1].paragraphs[0]', right: 'x' }]);
     expect(reuseCandidates([{ path: 'a', text: 'Kurz und gleich.' }], other).verbatimSentences).toEqual([]);
+  });
+});
+
+describe('ETBZ-59: the case plans follow the ETBZ-30B baseline (review round 2, G4)', () => {
+  const ROLES: Readonly<Record<string, string>> = {
+    [recurrenceClaim().statement]: 'recurrence',
+    [relationClaim().statement]: 'relation',
+    [dayMasterClaim().statement]: 'dayMaster',
+    [dominantClaim().statement]: 'tally',
+    [TALLY_STATEMENT]: 'tally',
+    [tieClaim().statement]: 'tally',
+    [pressureClaim().statement]: 'pressure',
+    [resourceClaim().statement]: 'resource',
+    [hourPressureClaim().statement]: 'hour',
+    [hourExpressionClaim().statement]: 'hour',
+  };
+  /** A plan draft with its run bindings removed and every accepted claim id replaced by the claim's role. */
+  function shape(draft: unknown, graph: InterpretiveClaimGraph): unknown {
+    const roleOf = (id: string): string => ROLES[graph.claims.find((claim) => claim.claimId === id)?.statement ?? ''] ?? `UNKNOWN:${id}`;
+    return JSON.parse(JSON.stringify(draft, (key, value: unknown) => {
+      if (key === 'sourceBriefStructuralHash' || key === 'claimGraphStructuralHash') return undefined;
+      return typeof value === 'string' && value.startsWith('claim.') ? roleOf(value) : value;
+    })) as unknown;
+  }
+  const planContextOf = (run: CaseRun): MetaNarrativePlanContext => ({ ...contextFor(run.model), graph: run.graph, contractBindings: PLAN_CONTRACT_BINDINGS_V1_1 });
+  const baseline = shape(validPlanDraft(PLAN_KNOWN), PLAN_KNOWN.graph) as { tensions: unknown[]; chapterPlan: { narrativeOperation: string; claimRefs: string[] }[] };
+
+  it('S⁻ is the baseline, role for role', () => {
+    expect(shape(casePlanDraft('removal', planContextOf(r)), r.graph)).toEqual(baseline);
+  });
+
+  it('S is the baseline with the hour claim named in the chapter that develops the pressure motif', () => {
+    const expected = structuredClone(baseline);
+    expected.chapterPlan[5]?.claimRefs.push('hour');
+    expect(shape(casePlanDraft('source', planContextOf(s)), s.graph)).toEqual(expected);
+  });
+
+  it('N is the baseline without the tally/day-master tension and its QUALIFY chapter, with the hour claim in the reinforcing chapter', () => {
+    const expected = structuredClone(baseline);
+    expected.tensions = expected.tensions.slice(0, 2);
+    expected.chapterPlan[1]?.claimRefs.push('hour');
+    expected.chapterPlan.splice(4, 1);
+    expect(shape(casePlanDraft('near', planContextOf(n)), n.graph)).toEqual(expected);
   });
 });
