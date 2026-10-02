@@ -43,7 +43,7 @@ bash scripts/verify-guards.sh                # foundation guard mutation proofs 
 bash scripts/secret-scan.sh                  # gitleaks tree + history + scanner mutation proof
 bash scripts/build-dry-run.sh                # container build / provenance / smoke / reproducibility
 npm run guards:etbz34 | guards:etbz30a | guards:etbz30b   # slice source-mutation proofs (NOT part of ci-verify)
-npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53   # slice mutation proofs that ARE steps of ci-verify
+npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59   # slice mutation proofs that ARE steps of ci-verify
 npm run build && npm run etbz51:bundle                   # print the portable Skill Contract Bundle (canonical JSON)
 npm run build && npm run etbz52:package                  # regenerate skill/bazodiac-interpretation-skill-v1/{contract-bundle,reading-schema,MANIFEST}.json
 npm run build && npm run etbz57:package                  # the same for skill/bazodiac-interpretation-skill-v1.1/ (bundle 1.1.0)
@@ -54,6 +54,8 @@ npm run etbz56:projection                                # regenerate docs/evide
 npm run etbz58:live                                      # ETBZ-58 live stage against a real FuFirE runtime (operator only; env in docs/evidence/etbz-58/README.md)
 npm run etbz58:assemble -- check-realise|check-edit|assemble|seal   # ETBZ-58 offline stages from the committed live stage
 npm run etbz53:freeze -- freeze|record|verify                    # ETBZ-53 Golden freeze (operator only; the case data stays in /Users/Shared/ETBZ-golden, docs/evidence/etbz-53/README.md)
+npm run etbz59:variants                                  # ETBZ-59 synthetic variants N and D through the ETBZ-58 live stage (operator only)
+npm run etbz59 -- emit|cones|accept <label>|packets|record   # ETBZ-59 offline stages (docs/evidence/etbz-59/README.md)
 ```
 
 `scripts/ci-verify.sh` is the single definition of "verified". `.github/workflows/ci.yml` runs that same
@@ -252,6 +254,17 @@ data; no birth data, chart value, length or count), checked by
 project in that folder, not a product dependency) must agree with every fact before the record exists. Never put a
 Golden value into a commit, a test, Jira or Confluence; `npm run etbz53:freeze -- verify` re-derives the record from
 the archive.
+
+ETBZ-59 (ADR 0016) ran the section-8 minimum of the Anti-Boilerplate contract (77266967 v3) once on Musterkundin A,
+before the Golden case. N (16:30, the hour pillar) and D (1974-09-24) were computed live by FuFirE. The removal case
+S⁻ uses `withdrawFactsForEvaluation`: a withdrawn fact stays as evidence, is excluded from interpretation
+(`WITHDRAWN_FOR_EVALUATION`), and makes the input never production-eligible (`EVALUATION_WITHDRAWAL_PRESENT`); the
+day master and the month command cannot be withdrawn. The deterministic checks (`tests/support/etbz59Individuality.ts`:
+swap, comparison under a named difference, removal, IND-8 direction, candidate finders) are the tool ETBZ-54 reuses
+unchanged. A refusal of `acceptSkillReading` carries every violation of one full pass on `SkillRunError.diagnostics`
+(D-59-4); the refusal code is still the first violation. The judges' packets, the run record and the judgements are
+re-derived by `tests/contract/etbz59-individuality-evidence.contract.test.ts`. The rehearsal raised one BLOCKING
+`STOCK_PARAGRAPH_REUSE`, recorded with its smallest repair, which is not applied (docs/evidence/etbz-59/README.md).
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:

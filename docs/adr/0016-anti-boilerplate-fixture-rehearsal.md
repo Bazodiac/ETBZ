@@ -70,7 +70,9 @@ values. The comparison under a named difference (6.1, 6.3) works on statements (
 statement, contract 6.1 step 2) and on the plan's thesis, motif cores and tensions; the removal check (6.4) requires
 each dependent claim to be refused on the reduced chart and absent from its reading. Candidate finders for the prose
 side of 6.4 (a withdrawn subject together with its position, whole words) and of 6.7 (verbatim interpretive sentences)
-locate passages; they decide nothing. Findings use the closed vocabulary of section 7, never a score.
+locate passages; they decide nothing. The provisionality direction (IND-8, section 8.2) compares each source claim
+with the variant's claim of the same statement on its epistemic class and its provisional facts. Findings use the
+closed vocabulary of section 7, never a score.
 
 ### 5. The cones before the readings
 
@@ -96,10 +98,49 @@ One fresh Claude Code subagent instance per case (`claude-opus-5-5` as reported)
 only the Skill files and its own package, writing outside the worktree; REALISE, at most one repair, then EDIT, each
 accepted by the boundary. Run 1 of each case ended (two refusals each; archived under `run-1/`). Run 2 added a length
 target to the invocation (600-900 words, aim 700-750), which the Golden run uses too. Each run-2 reading needed one
-repair of one leaf (a hedge, a meta word, a clinical word), then passed REALISE and EDIT.
+repair of one leaf (an understated SUPPORTED paragraph, a meta word, a clinical word), then passed REALISE and EDIT.
+
+### 8. The judgements
+
+Two fresh instances, independent of the drafter, of the Skill instances and of each other (Jira ETBZ-59 AC4). Each
+read only its packet with the Read tool (recorded in `judges/<A|B>/tool-calls.txt`, checked by the contract suite).
+Judge A attributed two unlabelled readings to three mixed charts (6.1 step 4). Judge B judged ablation (6.5), reuse
+(6.7) and the prose side of the removal (6.4), and N's tie. The packets are a function of the committed evidence
+(`tests/support/etbz59Judges.ts`, `npm run etbz59 -- packets`); the suite re-derives all 15 files byte for byte.
+`judgements.json` records each verdict and its reason code, and quotes the passages it rests on with their paths. The
+suite finds every quote verbatim in the accepted reading at that path. An LLM judge is never the sole oracle for a
+reason code (contract section 10): the runner measured the chart facts and claim citations behind the BLOCKING
+verdict, and the suite re-derives them.
+
+### 9. The outcome (`docs/evidence/etbz-59/individuality-record.json`, re-derived byte for byte)
+
+| Section 8 item | Outcome |
+| --- | --- |
+| 8.1 near neighbour (6.1) | the hour claim and the tally claim are recomposed, no dependent claim survives; `LEGITIMATE_SHARED_CLAIM` for the rest; blind attribution PASS for both readings against both foils |
+| 8.2 mutation and removal (6.3, 6.4) | the cones were committed before the readings; no in-cone claim survives the mutation and the thesis is outside its cone; the withdrawn claim is blocked (`CLAIM_EXCLUDED_FACT_CITED`) and absent; no rescue in R(S⁻); provisionality direction (IND-8): only EQUAL and REMOVED |
+| 8.3 ablation (6.5) | the thesis passages of R(S) and R(N) pass; one illustrative passage of each leaves `BARNUM_RESIDUE` (ADVISORY) |
+| 8.4 swap (6.2) | refused on N (`CLAIM_METHOD_WITHOUT_EVIDENCE`) and on D (`CLAIM_UNKNOWN_FACT`) |
+| 8.5 reuse (6.7) | no verbatim sentence; four `FIXED_METAPHOR_REUSE` (ADVISORY); one `STOCK_PARAGRAPH_REUSE` (BLOCKING) |
+| 8.6 codes | all recorded with passages; the BLOCKING code carries its smallest repair, not applied |
+
+The BLOCKING code: R(S) and R(N) both state that the controlling Ten-God family shows on no pillar's surface. No
+claim of either reading cites a visible Ten God other than the month's. The statement holds for S. It is false for N,
+whose hour stem DirectOfficer controls the day master, a fact in N's package. The paragraph was produced from the
+shared primitive family and did not respond to the named difference. Judge B notes that the verdict rests on this one
+proposition. Outside the contract's codes, judge B also records the sentence as an ungrounded generalisation for N
+(OVERREACH belongs to the Lens and Lexicon gates). Smallest repair: on fixtures, confine the statement to the cited
+positions. For the Golden run, which has no reroll, add one hard law to the Skill: no statement about positions the
+paragraph's cited facts do not name. That needs a new Skill identity, which is a Product Owner decision outside this
+slice.
 
 ## Consequences
 
+- The rehearsal raised one BLOCKING code (`STOCK_PARAGRAPH_REUSE`). In a Golden run that code ends the run with no
+  reroll (contract section 11). Whether the Skill gets the hard law named as the smallest repair before ETBZ-54 is a
+  Product Owner decision; the ADVISORY codes (`BARNUM_RESIDUE` x2, `FIXED_METAPHOR_REUSE` x4) go to the Product Owner
+  with it.
+- The illustrative scenes ("Erkennbar ... etwa in Momenten, in denen ...") carry no anchor in most interpretive
+  paragraphs (judge B); they are where the residue of 6.5 lives.
 - ETBZ-54 reuses, unchanged: the withdrawal, the deterministic checks, the cones-first order, the boundary's
   diagnostics, the per-case instances, and the length target in the invocation.
 - The Golden drafts must cite at least one fact of the hour pillar (D-59-2), or the swap against N re-validates
@@ -110,8 +151,11 @@ repair of one leaf (a hedge, a meta word, a clinical word), then passed REALISE 
 ## Accepted limitations
 
 1. The qualitative steps (blind attribution, ablation, reuse judgement, the paraphrase side of rescue) are judged by
-   an independent instance, not mechanised; their verdicts are recorded with the passages they cite.
+   independent LLM instances, not mechanised; their verdicts are recorded with the passages they cite, and are never
+   the sole oracle for a code (contract section 10).
 2. Which model wrote a reading is declared, not measured (as in ETBZ-52/57/58).
 3. The diagnostics list the first violation per paragraph, chapter, reflection question and visual spec, not every
    violation inside one paragraph.
 4. 6.6 (charts sharing exactly one primitive) is not part of the section-8 minimum and was not run.
+5. The rescue finder's pre-registered terms missed a paraphrased subject in its positive control (R(S) [5.2]); the run
+   record adds a position-only triage, and the 6.4 verdict rests on judge B's reading of the whole of R(S⁻).
