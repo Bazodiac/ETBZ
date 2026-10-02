@@ -394,9 +394,9 @@ Assemble credential-shaped test strings at runtime from fragments, never as one 
 - TypeScript is ESM + `NodeNext`: relative imports carry a `.js` extension, `verbatimModuleSyntax`
   requires `import type`, and `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess` are on (hence
   conditional spreads for optional overrides and checked array reads).
-- Decisions live in `docs/adr/0001`–`0015`. ADRs 0006 and 0007 record their merge commit in the status
-  line through a separate `docs/…` closeout PR after the merge; ADRs 0008 (merged with PR #10), 0009
-  (merged with PR #11), 0010 (merged with PR #15) and 0011 (merged with PR #16) have not received that closeout yet and still read "Proposed". `docs/evidence/` records executed gates; transient output goes to the
+- Decisions live in `docs/adr/0001`–`0017`. An ADR records its merge commit in the status line through a
+  separate `docs/…` closeout PR after the merge; the GOLDEN_RUN_READY reconciliation of 2026-10-02 did so for 0008-0012
+  and 0014-0017 (0013 recorded its own release). `docs/evidence/` records executed gates; transient output goes to the
   git-ignored `.etbz-verify/`. Durable evidence is a green CI run for a specific SHA.
 - Delivery: branch → pull request → CI → **Product Owner authorisation** → merge. Green CI never
   authorises a merge; the PR body states whether merge is requested and carries the evidence. Branches

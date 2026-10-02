@@ -1,9 +1,6 @@
 # ADR 0008 — MetaNarrativePlan (ETBZ-30B)
 
-- **Status:** Proposed — not merged. Merge requires explicit Product Owner
-  authorisation (Jira ETBZ-30, "DRS — ETBZ-30B MetaNarrativePlan", R4M). The
-  versioned lexicon binding that R4M also requires is now present: see
-  "Released product contracts" below.
+- **Status:** Accepted — merged to `main` as `cd26b106` (PR #10, 2026-09-22). Merged with the Product Owner's authorisation (Jira ETBZ-30, "DRS — ETBZ-30B MetaNarrativePlan", R4M); the versioned lexicon binding R4M also required is present (see "Released product contracts" below).
 - **Date:** 2026-09-19, revised 2026-09-21 (released contracts bound)
 - **Slice:** ETBZ-30B — the second of two increments of ETBZ-30. Builds on the
   accepted ETBZ-30A `InterpretiveClaimGraph` (ADR 0007).

@@ -1,7 +1,6 @@
 # ADR 0017 — Position statements are grounded: in the boundary and in the claim graph (ETBZ-60)
 
-- **Status:** Proposed — PR open. Merge is governed by the Product Owner's delivery program of 2026-09-30 (Jira
-  ETBZ-2 comment 16866: routine in-slice merges after the gates), subject to the merge gate on the exact head.
+- **Status:** Accepted — merged to `main` as `190756f6` (PR #25, 2026-10-02). Merged under the Product Owner's delivery program of 2026-09-30 (Jira ETBZ-2 comment 16866: routine in-slice merges after the gates) after the merge gate on the exact head.
 - **Date:** 2026-10-02
 - **Slice:** ETBZ-60 [PRE-GOLDEN] — the repair of the BLOCKING `STOCK_PARAGRAPH_REUSE` the ETBZ-59 fixture rehearsal
   raised, before `GOLDEN_RUN_READY`.

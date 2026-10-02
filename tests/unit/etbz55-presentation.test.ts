@@ -1,5 +1,5 @@
 /**
- * ETBZ-55 — the PresentationProjection of the D4 golden input.
+ * ETBZ-55 — the PresentationProjection of the D4 development fixture.
  *
  * The chart is the synthetic known-time fixture (Musterkundin A); the content
  * is the versioned German text payload of the ETBZ-52 fixture run. These tests

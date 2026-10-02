@@ -1,8 +1,6 @@
 # ADR 0012 — PresentationProjection v1 and the local PDF renderer (ETBZ-55)
 
-- **Status:** Proposed — PR open. Merge is governed by the Product Owner's standing
-  authorisation D1 of 2026-09-28 (Jira ETBZ-2 comment 16690), subject to the merge
-  gate on the exact head.
+- **Status:** Accepted — merged to `main` as `8abe8d70` (PR #17, 2026-10-01). Merged under the Product Owner's standing authorisation D1 of 2026-09-28 (Jira ETBZ-2 comment 16690) after the merge gate on the exact head.
 - **Date:** 2026-09-28
 - **Slice:** ETBZ-55 [RUN-06] — fixture-first `PresentationProjection → Visual System v1 →
   PdfRenderer → PDF QA → ArtifactManifest` into a real `application/pdf`. Parent delivery

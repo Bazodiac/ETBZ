@@ -1,8 +1,6 @@
 # ADR 0011 — Bazodiac Interpretation Skill v1: package, input package and reading boundary (ETBZ-52)
 
-- **Status:** Proposed — PR open. Merge is governed by the Product Owner's standing
-  authorisation D1 of 2026-09-28 (Jira ETBZ-2 comment 16690), subject to the merge
-  gate on the exact head.
+- **Status:** Accepted — merged to `main` as `c801f383` (PR #16, 2026-09-28). Merged under the Product Owner's standing authorisation D1 of 2026-09-28 (Jira ETBZ-2 comment 16690) after the merge gate on the exact head.
 - **Date:** 2026-09-28
 - **Slice:** ETBZ-52 [RUN-05] — an executable Bazodiac Interpretation Skill v1 package
   with a portable execution contract and ChatGPT/Claude wrappers, the input package a
