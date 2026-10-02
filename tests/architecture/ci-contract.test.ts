@@ -129,6 +129,10 @@ describe('AC8: the verification contract still contains every mandatory gate', (
       'ETBZ-58 rehearsal orchestrator guard',
       /etbz_step\s+"guards :: ETBZ-58[^"]*"\s+run_etbz58_rehearsal_guard/,
     ],
+    [
+      'ETBZ-53 Golden freeze guard',
+      /etbz_step\s+"guards :: ETBZ-53[^"]*"\s+run_etbz53_freeze_guard/,
+    ],
     ['secret scan', /secret-scan\.sh/],
     ['dependency risk scan', /npm audit/],
     ['container build dry run', /build-dry-run\.sh/],

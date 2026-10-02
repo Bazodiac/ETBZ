@@ -20,7 +20,7 @@ README on `main` still describes ETBZ-9; the code and `docs/adr/` are authoritat
 npm ci                      # deterministic install (lockfile drift fails here)
 npm run typecheck           # tsc --noEmit, strict
 npm run lint                # eslint, zero warnings: recommended rule sets + four type-aware defect rules, no formatting rules
-npm test                    # all five suites (1830 tests with ETBZ-58; the architecture leaf tests import dependency-direction.test.ts, so its 19 tests are also registered inside each of them)
+npm test                    # all five suites (1851 tests with ETBZ-53; the architecture leaf tests import dependency-direction.test.ts, so its 19 tests are also registered inside each of them)
 npm run build               # tsc -p tsconfig.build.json -> dist/
 ETBZ_ENV=local LOG_LEVEL=info npm start     # http://localhost:8120 — serves /health and /ready only
 ```
@@ -43,7 +43,7 @@ bash scripts/verify-guards.sh                # foundation guard mutation proofs 
 bash scripts/secret-scan.sh                  # gitleaks tree + history + scanner mutation proof
 bash scripts/build-dry-run.sh                # container build / provenance / smoke / reproducibility
 npm run guards:etbz34 | guards:etbz30a | guards:etbz30b   # slice source-mutation proofs (NOT part of ci-verify)
-npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58   # slice mutation proofs that ARE steps of ci-verify
+npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53   # slice mutation proofs that ARE steps of ci-verify
 npm run build && npm run etbz51:bundle                   # print the portable Skill Contract Bundle (canonical JSON)
 npm run build && npm run etbz52:package                  # regenerate skill/bazodiac-interpretation-skill-v1/{contract-bundle,reading-schema,MANIFEST}.json
 npm run build && npm run etbz57:package                  # the same for skill/bazodiac-interpretation-skill-v1.1/ (bundle 1.1.0)
@@ -53,6 +53,7 @@ npm run etbz55:metrics                                   # regenerate src/applic
 npm run etbz56:projection                                # regenerate docs/evidence/etbz-56/presentation-projection.json (the accepted 1.1.0 Skill reading)
 npm run etbz58:live                                      # ETBZ-58 live stage against a real FuFirE runtime (operator only; env in docs/evidence/etbz-58/README.md)
 npm run etbz58:assemble -- check-realise|check-edit|assemble|seal   # ETBZ-58 offline stages from the committed live stage
+npm run etbz53:freeze -- freeze|record|verify                    # ETBZ-53 Golden freeze (operator only; the case data stays in /Users/Shared/ETBZ-golden, docs/evidence/etbz-53/README.md)
 ```
 
 `scripts/ci-verify.sh` is the single definition of "verified". `.github/workflows/ci.yml` runs that same
@@ -240,6 +241,17 @@ value. Evidence `docs/evidence/etbz-58/` (readback, responses, package, the refu
 accepted readings, projection, PDF, manifest, verdict, run record), checked by
 `tests/contract/etbz58-rehearsal-evidence.contract.test.ts`. The live hour branch answers its hidden stems Ji, Ding,
 Yi; the hand-written fixture chart (ETBZ-52/55/56/57) has Yi and Ding swapped - its evidence keeps the fixture order.
+
+ETBZ-53 froze the Golden case `GOLDEN-KT-01` with the same live stage (`tests/support/etbz53GoldenFreeze.ts`). The
+case data - the Product Owner's input file, the response bodies, the InterpretationInput, the oracle facts - stays in
+`/Users/Shared/ETBZ-golden/` outside every repository (files mode 600); the repository holds only
+`docs/evidence/etbz-53/freeze-record.json` (identities, the validation and the oracle outcome, and HMAC-SHA256 digests
+under a key that exists only in the archive - a plain digest of a chart-determined body is searchable back to the birth
+data; no birth data, chart value, length or count), checked by
+`tests/contract/etbz53-freeze-record.contract.test.ts`. An independent oracle (`lunar-python==1.4.8`, its own uv
+project in that folder, not a product dependency) must agree with every fact before the record exists. Never put a
+Golden value into a commit, a test, Jira or Confluence; `npm run etbz53:freeze -- verify` re-derives the record from
+the archive.
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:

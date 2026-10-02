@@ -153,6 +153,12 @@ run_etbz56_presentation_guard() { node "${REPO_ROOT}/scripts/verify-etbz56-prese
 # drafts cite) are proven by mutation; the live call itself is not repeated in CI.
 run_etbz58_rehearsal_guard() { node "${REPO_ROOT}/scripts/verify-etbz58-rehearsal.mjs"; }
 
+# ETBZ-53 freezes the Golden case; its case data stays in a local archive. The
+# freeze's own checks (BirthInput field set, validity and known time before any
+# call, the oracle's agreement, the record's value guard, private archive files)
+# are proven by mutation on the synthetic case.
+run_etbz53_freeze_guard() { node "${REPO_ROOT}/scripts/verify-etbz53-freeze.mjs"; }
+
 # --- 7. secret gate -----------------------------------------------------------
 run_secret_gate() { bash "${REPO_ROOT}/scripts/secret-scan.sh"; }
 
@@ -203,6 +209,9 @@ if [ "${RUN_MUTATIONS}" -eq 1 ]; then
 fi
 if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: ETBZ-58 Pre-Golden rehearsal orchestrator (live gates + replay integrity + eligibility + draft-fact pin mutation proofs)" run_etbz58_rehearsal_guard
+fi
+if [ "${RUN_MUTATIONS}" -eq 1 ]; then
+  etbz_step "guards :: ETBZ-53 Golden freeze (input gates + oracle agreement + record value guard + private archive mutation proofs)" run_etbz53_freeze_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan

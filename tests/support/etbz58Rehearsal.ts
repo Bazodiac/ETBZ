@@ -164,6 +164,11 @@ export interface LiveStageConfig {
   readonly executedAt: string;
   readonly repositoryHead: string;
   readonly timeoutMs?: number;
+  /**
+   * The case: the raw BirthInput candidate and the reference recorded for it. Defaults to the rehearsal case
+   * (`KNOWN_BIRTH`). ETBZ-53 passes the Golden case, whose input and readback stay outside the repository.
+   */
+  readonly case?: Readonly<{ birthInput: unknown; ref: string }>;
 }
 
 export interface LiveStageResult {
@@ -229,9 +234,12 @@ export async function runLiveStage(config: LiveStageConfig, fetchImpl: FetchLike
     return new Response(bytes, { status: response.status, statusText: response.statusText, headers: response.headers });
   };
   const gateway = createFufireClient({ config: { baseUrl, apiKey: config.apiKey, timeoutMs, runtimeImage, openapiSha256 }, transport: { fetch: recording } });
-  const result = await createCalculateHoroscopeUseCase({ gateway, runtime: { runtimeImage, openapiSha256 } }).execute(KNOWN_BIRTH);
+  const birthInput = config.case?.birthInput ?? KNOWN_BIRTH;
+  const result = await createCalculateHoroscopeUseCase({ gateway, runtime: { runtimeImage, openapiSha256 } }).execute(birthInput);
   if (!result.ok) {
-    throw new RehearsalError('REHEARSAL_PRODUCER_FAILED', `${result.error.code}: ${'message' in result.error ? result.error.message : JSON.stringify(result.error.issues)}`);
+    // Codes and paths only: an issue or a producer message must not carry the case's values out of the run.
+    const detail = 'message' in result.error ? result.error.errorCode : JSON.stringify(result.error.issues.map((issue) => (issue as { code?: unknown }).code));
+    throw new RehearsalError('REHEARSAL_PRODUCER_FAILED', `${result.error.code}: ${detail}`);
   }
 
   const unauthorisedProbe = await probe(fetchImpl, `${baseUrl}${FUFIRE_BAZI_PATH}`, {
@@ -255,7 +263,7 @@ export async function runLiveStage(config: LiveStageConfig, fetchImpl: FetchLike
     runtime: { baseUrlHost: new URL(baseUrl).host, runtimeImage, openapiSha256 },
     attestation: verdict,
     probes: { health, ready, unauthorised: { ...unauthorisedProbe, refused } },
-    birthInput: { ref: ETBZ58_BIRTH_INPUT_REF, canonicalSha256: sha256Of(canonicalJson(KNOWN_BIRTH)) },
+    birthInput: { ref: config.case?.ref ?? ETBZ58_BIRTH_INPUT_REF, canonicalSha256: sha256Of(canonicalJson(birthInput)) },
     exchanges,
   };
   return { readback, responses: responses as Record<ExchangeLabel, Uint8Array> };
@@ -331,29 +339,7 @@ export interface RehearsalInput {
  * PASS for the OpenAPI document this chart is pinned to, and the birth time is known.
  */
 export async function deriveRehearsalInput(readback: RuntimeReadback, responses: Readonly<Record<ExchangeLabel, Uint8Array>>): Promise<RehearsalInput> {
-  const { runtimeImage, openapiSha256 } = readback.runtime;
-  const violations: RehearsalError[] = [];
-  const used = new Map<string, number>();
-  const gateway = createFufireClient({
-    config: { baseUrl: 'https://replay.invalid', apiKey: 'replay-no-network', timeoutMs: 30_000, runtimeImage, openapiSha256 },
-    transport: replayTransport(readback, responses, violations, used),
-  });
-  const result = await createCalculateHoroscopeUseCase({ gateway, runtime: { runtimeImage, openapiSha256 } }).execute(KNOWN_BIRTH);
-  const [violation] = violations;
-  if (violation !== undefined) throw violation;
-  // The replay is the recorded run: every recorded call answered exactly once, no more, no fewer.
-  const counts = readback.exchanges.map((_, index) => used.get(String(index)) ?? 0);
-  if (result.ok && counts.some((count) => count !== 1)) {
-    throw new RehearsalError('REHEARSAL_REPLAY_CALL_COUNT', `each recorded call must be answered exactly once; answered ${JSON.stringify(counts)}`);
-  }
-  if (!result.ok) {
-    throw new RehearsalError('REHEARSAL_PRODUCER_FAILED', `replay: ${result.error.code}: ${'message' in result.error ? result.error.message : JSON.stringify(result.error.issues)}`);
-  }
-  const { model, source } = result;
-  const input = buildBazodiacInterpretationInput(model, source, { mapper: fufireResponseMapper, attestation: readback.attestation });
-  if (!input.productionEligibility.eligible) {
-    throw new RehearsalError('REHEARSAL_NOT_PRODUCTION_ELIGIBLE', `interpretation input blockers: ${input.productionEligibility.blockers.join(', ')}`);
-  }
+  const { model, input } = await replayInterpretationInput(readback, responses);
   // PO decision D-58-1: the reviewed drafts of this chart, on the live model only where their cited facts hold.
   assertDraftFactsHold(model);
   const context = contextFor(model);
@@ -370,6 +356,42 @@ export async function deriveRehearsalInput(readback: RuntimeReadback, responses:
     allowedSlotIds: listSlotIds(),
   });
   return { model, input, graph, plan, bundle, inputPackage };
+}
+
+/**
+ * Offline: the recorded calls through the same client and use case, up to a production-eligible
+ * InterpretationInput. The case input is the rehearsal's unless given (ETBZ-53 passes the Golden case).
+ */
+export async function replayInterpretationInput(
+  readback: RuntimeReadback,
+  responses: Readonly<Record<ExchangeLabel, Uint8Array>>,
+  birthInput: unknown = KNOWN_BIRTH,
+): Promise<{ model: HoroscopeModel; input: BazodiacInterpretationInput }> {
+  const { runtimeImage, openapiSha256 } = readback.runtime;
+  const violations: RehearsalError[] = [];
+  const used = new Map<string, number>();
+  const gateway = createFufireClient({
+    config: { baseUrl: 'https://replay.invalid', apiKey: 'replay-no-network', timeoutMs: 30_000, runtimeImage, openapiSha256 },
+    transport: replayTransport(readback, responses, violations, used),
+  });
+  const result = await createCalculateHoroscopeUseCase({ gateway, runtime: { runtimeImage, openapiSha256 } }).execute(birthInput);
+  const [violation] = violations;
+  if (violation !== undefined) throw violation;
+  // The replay is the recorded run: every recorded call answered exactly once, no more, no fewer.
+  const counts = readback.exchanges.map((_, index) => used.get(String(index)) ?? 0);
+  if (result.ok && counts.some((count) => count !== 1)) {
+    throw new RehearsalError('REHEARSAL_REPLAY_CALL_COUNT', `each recorded call must be answered exactly once; answered ${JSON.stringify(counts)}`);
+  }
+  if (!result.ok) {
+    const detail = 'message' in result.error ? result.error.errorCode : JSON.stringify(result.error.issues.map((issue) => (issue as { code?: unknown }).code));
+    throw new RehearsalError('REHEARSAL_PRODUCER_FAILED', `replay: ${result.error.code}: ${detail}`);
+  }
+  const { model, source } = result;
+  const input = buildBazodiacInterpretationInput(model, source, { mapper: fufireResponseMapper, attestation: readback.attestation });
+  if (!input.productionEligibility.eligible) {
+    throw new RehearsalError('REHEARSAL_NOT_PRODUCTION_ELIGIBLE', `interpretation input blockers: ${input.productionEligibility.blockers.join(', ')}`);
+  }
+  return { model, input };
 }
 
 export interface RehearsalAssembly {
