@@ -311,6 +311,22 @@ describe('N4: text', () => {
       p.text = `${p.text} ${p.text} ${p.text}`;
     })), 'READING_CHAPTER_LENGTH_OUT_OF_CONTRACT');
   });
+
+  it('names every chapter outside the budget in one refusal (ETBZ-59, PO decision D-59-3: the one repair must see them all)', () => {
+    let refusal: SkillRunError | undefined;
+    try {
+      accept(readingWith((r) => {
+        for (const index of [0, 2]) {
+          const p = paragraph(r, index, 2);
+          p.text = `${p.text} ${p.text} ${p.text} ${p.text}`;
+        }
+      }));
+    } catch (error) {
+      refusal = error as SkillRunError;
+    }
+    expect(refusal?.code).toBe('READING_CHAPTER_LENGTH_OUT_OF_CONTRACT');
+    expect(refusal?.message).toMatch(/chapters\[0\] has \d+ words; chapters\[2\] has \d+ words; the long-form budget is 600-900/u);
+  });
 });
 
 describe('N5: semantic delta and callbacks', () => {

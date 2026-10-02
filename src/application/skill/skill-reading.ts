@@ -774,7 +774,19 @@ export function acceptSkillReading(draft: unknown, context: SkillReadingContext)
       }
     }
     if (words < CHAPTER_WORD_BUDGET.min || words > CHAPTER_WORD_BUDGET.max) {
-      throw new SkillRunError('READING_CHAPTER_LENGTH_OUT_OF_CONTRACT', `${where} has ${String(words)} words; the long-form budget is ${String(CHAPTER_WORD_BUDGET.min)}-${String(CHAPTER_WORD_BUDGET.max)}`, { where, words });
+      // ETBZ-59 (PO decision D-59-3, Jira ETBZ-59 comment 17037): the refusal names EVERY chapter outside the budget,
+      // not only this one - the one repair a run allows (the Skill wrapper's step 5) has to see them all; a refusal
+      // naming only the first ended a fixture run that was otherwise repairable. The check keeps its place, so which
+      // code a reading gets is unchanged; chapters before this one are within the budget, or this check would have
+      // refused at them.
+      const outOfBudget = reading.chapters
+        .map((other, otherIndex) => ({ at: `chapters[${String(otherIndex)}]`, count: other.paragraphs.reduce((sum, p) => sum + countWords(p.text), 0) }))
+        .filter((entry) => entry.count < CHAPTER_WORD_BUDGET.min || entry.count > CHAPTER_WORD_BUDGET.max);
+      throw new SkillRunError(
+        'READING_CHAPTER_LENGTH_OUT_OF_CONTRACT',
+        `${outOfBudget.map((entry) => `${entry.at} has ${String(entry.count)} words`).join('; ')}; the long-form budget is ${String(CHAPTER_WORD_BUDGET.min)}-${String(CHAPTER_WORD_BUDGET.max)}`,
+        { where, words },
+      );
     }
 
     // Semantic delta: at least one, over claims this chapter renders.

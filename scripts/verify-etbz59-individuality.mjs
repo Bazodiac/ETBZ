@@ -3,7 +3,8 @@
  * ETBZ-59 — source-mutation proofs for the Anti-Boilerplate fixture rehearsal: the evaluation withdrawal
  * (src/application/interpretation/feature-set.ts and its input, model and claim consequences; PO decision D-59-1),
  * the deterministic checks (tests/support/etbz59Individuality.ts), the reviewed pins of the case drafts and the bar-C
- * byte pin of an exempted variant readback. Each is weakened in exactly one place, and the named test must fail an
+ * byte pin of an exempted variant readback, and the acceptance boundary naming every chapter outside the word budget
+ * (PO decision D-59-3). Each is weakened in exactly one place, and the named test must fail an
  * assertion (the ETBZ-30B semantics). Files are restored from bytes in memory.
  *
  *   npm run guards:etbz59
@@ -19,12 +20,14 @@ const MODEL = 'src/application/horoscope-model.ts';
 const CLAIM = 'src/application/interpretation/interpretive-claim.ts';
 const IND = 'tests/support/etbz59Individuality.ts';
 const CASES = 'tests/support/etbz59Cases.ts';
+const READING = 'src/application/skill/skill-reading.ts';
 const NEAR_READBACK = 'docs/evidence/etbz-59/variants/near/runtime-readback.json';
 
 const T = {
   withdrawal: 'tests/unit/evaluation-withdrawal.test.ts',
   negative: 'tests/negative/etbz59-individuality.negative.test.ts',
   contract: 'tests/contract/etbz59-individuality-evidence.contract.test.ts',
+  reading: 'tests/negative/etbz52-skill-reading.negative.test.ts',
 };
 
 /** [name, kind, file, find, replace, tests, killer] — kind 'text' (find occurs exactly once). */
@@ -137,6 +140,10 @@ const MUTANTS = [
     "  if (drifted.length > 0) {\n    throw new RehearsalError('REHEARSAL_DRAFT_FACTS_DRIFTED',",
     "  if (drifted.length > 999) {\n    throw new RehearsalError('REHEARSAL_DRAFT_FACTS_DRIFTED',",
     [T.negative], "refuses a chart on which a cited fact has another value than the drafts were reviewed against"],
+  ["D-59-3: a length refusal names only the first chapter", 'text', READING,
+    "        .filter((entry) => entry.count < CHAPTER_WORD_BUDGET.min || entry.count > CHAPTER_WORD_BUDGET.max);",
+    "        .filter((entry) => entry.at === where);",
+    [T.reading], "names every chapter outside the budget in one refusal"],
   ["BAR C: an exempted readback changes", 'text', NEAR_READBACK,
     "\"readbackVersion\":\"etbz58-runtime-readback.v1\"",
     "\"readbackVersion\":\"etbz58-runtime-readback.v9\"",
@@ -185,7 +192,7 @@ const trackedState = () =>
   execFileSync('git', ['status', '--porcelain', '--', 'src', 'tests', 'scripts', 'skill', 'docs'], { encoding: 'utf8' }).trim();
 const stateBefore = trackedState();
 
-const ALL_SUITES = [T.withdrawal, T.negative, T.contract];
+const ALL_SUITES = [T.withdrawal, T.negative, T.contract, T.reading];
 const baseline = run(ALL_SUITES);
 if (baseline.outcome !== 'GREEN') {
   process.stdout.write(`BASELINE_NOT_GREEN (${baseline.outcome}): the unmutated suites fail, so a red mutant would prove nothing\n`);
