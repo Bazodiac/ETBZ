@@ -48,8 +48,9 @@ it recognises are:
 Three kinds of sentence are not position statements:
 
 - a defining relative clause about stems as a class ("Himmelsstämme, die nicht auf der Oberfläche einer Säule
-  stehen …"; ETBZ-57's Editorial-Gate reading carries one). It counts as such only where it opens its sentence; after
-  a determiner ("die fordernden Stämme, die nicht …") it is a statement about this chart;
+  stehen …"; ETBZ-57's Editorial-Gate reading carries one). It is exempt only where it opens its sentence. After a
+  determiner it is not exempt, because "die fordernden Stämme, die nicht …" states something about this chart. That
+  also catches framework definitions in that form (limitation 5);
 - "nicht nur im …" and "nicht nur an einer …";
 - sentences in which "nirgends" or "überall" says nothing about a position ("eine Erwartung, die nirgends formuliert
   ist").
@@ -189,5 +190,7 @@ invocation.
 5. The check is strict, and that has a cost. It also refuses sentences that are not about the whole chart. Measured
    examples are "Keine Säule spricht für sich allein" (framework, in an archived ETBZ-59 attempt), "an keiner der
    beiden Positionen" (two positions), the idiom "keine klare Position", the one-pillar "ohne an der Oberfläche zu
-   stehen" (round-2 R(N)) and the negative test's own "Keine Säule steht dabei ohne Bezug zum Tagesmeister". Each such
+   stehen" (round-2 R(N)) and the negative test's own "Keine Säule steht dabei ohne Bezug zum Tagesmeister". A
+   framework definition after a determiner ("die verborgenen Stämme, die nicht an der Oberfläche einer Säule stehen")
+   and one opened by a quotation mark are refused too (PR #25 review, MINOR-13). Each such
    refusal adds one entry to the one repair a run allows. In every measured run the repair fixed all entries at once.
