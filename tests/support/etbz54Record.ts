@@ -155,8 +155,12 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
     state: string; mimeType: string; renderer: { ref: string; sourceSha256: string }; template: { ref: string; structuralHash: string };
     qa: { state: string; status: string; checks: readonly { id: string; result: string }[] };
   }) : null;
+  const qaPath = join(renderDir, 'qa-report.json');
+  // A blocked render writes no PDF and no manifest (fail-closed); its QA report is recorded by check, page and code -
+  // never the text a finding quotes, which may be a chart value.
+  const qa = existsSync(qaPath) ? (json(qaPath) as { state: string; status: string; checks: readonly { id: string; result: string; detail?: unknown }[] }) : null;
   const verdictPath = workPath(config, VISUAL_VERDICT_FILE);
-  const verdict = existsSync(verdictPath) ? (json(verdictPath) as { verdict: string; defects: readonly { page: string; code: string }[] }) : null;
+  const verdict = existsSync(verdictPath) ? (json(verdictPath) as { verdict: string; defects: readonly { page: string; code: string }[]; render: { repositoryHead: string; executedAt: string; renderer: string } }) : null;
   const projectionPath = workPath(config, PROJECTION_FILE);
 
   const record = {
@@ -236,6 +240,13 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
       '8.6': { raised: [...new Set(raised)].sort().map((code) => ({ code, class: classOf(code), count: raised.filter((entry) => entry === code).length })), outsideContract: judgements?.outsideContract.flatMap((entry) => entry.codes) ?? NOT_RUN },
     },
     presentation: existsSync(projectionPath) ? { projection: file(projectionPath), sourceReading: 'the accepted EDIT revision of R(S)' } : NOT_RUN,
+    render: qa === null ? NOT_RUN : {
+      qaReport: file(qaPath),
+      state: qa.state,
+      status: qa.status,
+      checks: qa.checks.map(({ id, result }) => ({ id, result })),
+      blockingFindings: qa.checks.filter((check) => check.result !== 'PASS').flatMap((check) => (Array.isArray(check.detail) ? (check.detail as { page?: string; pageId?: string; code?: string }[]) : []).map((finding) => ({ check: check.id, page: finding.page ?? null, pageId: finding.pageId ?? null, code: finding.code ?? null }))),
+    },
     artifact: manifest === null ? NOT_RUN : {
       state: manifest.state,
       mimeType: manifest.mimeType,
@@ -244,8 +255,14 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
       template: { ref: manifest.template.ref, structuralHash: manifest.template.structuralHash },
       files: Object.fromEntries(filesUnder(renderDir).map((name) => [name, file(join(renderDir, name))])),
     },
-    visualVerdict: verdict === null ? NOT_RUN : { verdict: verdict.verdict, defects: verdict.defects.map(({ page, code }) => ({ page, code })), file: file(verdictPath) },
+    visualVerdict: verdict === null ? NOT_RUN : { verdict: verdict.verdict, defects: verdict.defects.map(({ page, code }) => ({ page, code })), render: { repositoryHead: verdict.render.repositoryHead, executedAt: verdict.render.executedAt, renderer: verdict.render.renderer }, file: file(verdictPath) },
     generation: ETBZ54_GENERATION,
+    stop: qa !== null && qa.state !== 'QA_PASSED' ? {
+      stage: 'PDF QA (renderer PAGE_QA)',
+      state: qa.state,
+      rule: 'D-54-1 (Jira ETBZ-54 comment 17073): on a BLOCKING, grounding, contract, safety or PDF-QA failure STOP, no reroll; Jira ETBZ-54 "Stop / rollback"',
+      notRun: ['final PDF and its readback', 'ArtifactManifest', 'contact sheet', 'independent judges: 6.1 blind attribution, 6.4 prose side, 6.5 anchor ablation, 6.7 reuse scan, overreach review'],
+    } : null,
     humanVerdict: 'PENDING: the Product Owner decides SELLABLE | NOT_SELLABLE; the Delivery Runner never assigns SELLABLE (D-54-1)',
   };
   const readings = GOLDEN_LABELS.filter((label) => existsSync(caseFile(config, label, 'accepted-reading'))).map((label) => parseQuietly(readFileSync(caseFile(config, label, 'accepted-reading'), 'utf8'), 'a reading'));
@@ -253,7 +270,8 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
   return record;
 }
 
-const PUBLIC_DIGEST_FILES = [ETBZ53_RECORD, ETBZ58_READBACK] as const;
+/** Committed, value-free files whose plain SHA-256 the record may name. */
+const PUBLIC_DIGEST_FILES = [ETBZ53_RECORD, ETBZ58_READBACK, ETBZ54_PREREGISTRATION] as const;
 /** The renderer and template identities the committed ETBZ-58 manifest publishes: the Golden render must use the same. */
 const PUBLIC_MANIFEST = 'docs/evidence/etbz-58/artifact-manifest.json';
 
