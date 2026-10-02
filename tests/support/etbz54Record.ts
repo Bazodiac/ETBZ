@@ -35,7 +35,9 @@ import {
   GoldenRunError,
   NEAR_DISPLAY_NAME,
   REMOVAL_REFERENCE,
+  assertPrettyCopy,
   attemptsDir,
+  prettyPackageFile,
   caseFile,
   distantChart,
   loadNearRun,
@@ -61,6 +63,7 @@ export const ETBZ54_GENERATION = {
   provider: 'the Claude runtime available to the Delivery Runner; no second provider, no paid call (D-54-1)',
   executedAt: '2026-10-02',
   noHumanEdit: 'no person edited a reading; a repair is made by the instance itself from the refusal (wrapper step 5), at most once per case',
+  inputDelivery: 'first dispatch: each instance stopped at wrapper step 2 and wrote nothing - its Read tool cut the one-line package off at about 41k characters; resumed with the pretty-printed copy of the identical value (skill-input.pretty.json, re-canonicalises byte for byte). No reading existed and none was refused, so this is not a reroll',
 } as const;
 
 const sha = (bytes: Uint8Array | string): string => `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
@@ -123,7 +126,7 @@ export async function deriveGoldenRecord(config: GoldenConfig, root: string = pr
     return [label, {
       claimGraph: k(caseRun.graph.structuralHash),
       plan: k(caseRun.plan.structuralHash),
-      inputPackage: { structuralHash: k(caseRun.inputPackage.structuralHash), file: file(caseFile(config, label, 'skill-input')) },
+      inputPackage: { structuralHash: k(caseRun.inputPackage.structuralHash), file: file(caseFile(config, label, 'skill-input')), prettyCopySameValue: ((): boolean => { assertPrettyCopy(readFileSync(caseFile(config, label, 'skill-input'), 'utf8'), readFileSync(prettyPackageFile(config, label), 'utf8')); return true; })() },
       productionEligible: caseRun.input.productionEligibility.eligible,
       attempts: attempts.map((name) => ({
         attempt: name.replace(/\.json$/u, ''),

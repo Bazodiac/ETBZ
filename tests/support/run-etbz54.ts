@@ -5,7 +5,9 @@
  *
  *   facts <source|near|removal>   writes the case's fact sheet for drafting and review (review/facts-<label>.json,
  *                                 review/chart-<label>.txt); `near` needs the variant, `removal` the drafts
- *   emit                          writes each case's Skill input package (cases/<label>/skill-input.json)
+ *   emit                          writes each case's Skill input package (cases/<label>/skill-input.json) and its
+ *                                 pretty-printed copy (skill-input.pretty.json: the identical value, one key per line - a
+ *                                 one-line package of ~50k characters is cut off by the runtime's Read tool)
  *   cones                         writes the pre-run cones, BEFORE any reading exists; prints their keyed digest
  *   preregister                   writes docs/evidence/etbz-54/pre-registration.json: keyed digests of the drafts, their
  *                                 review, the packages and the cones - committed before any reading exists
@@ -38,6 +40,8 @@ import {
   archiveHas,
   assertTreePrivate,
   attemptsDir,
+  prettyJson,
+  prettyPackageFile,
   caseFile,
   goldenChart,
   loadGoldenDrafts,
@@ -81,6 +85,7 @@ async function main(): Promise<void> {
       const { runs } = await loadGoldenRun(config);
       for (const label of GOLDEN_LABELS) {
         writePrivateFile(caseFile(config, label, 'skill-input'), renderJson(runs[label].inputPackage));
+        writePrivateFile(prettyPackageFile(config, label), prettyJson(runs[label].inputPackage));
         out(`${label}: package ${keyed(key, runs[label].inputPackage.structuralHash)} · bundle ${runs[label].bundle.bundleRef} ${runs[label].bundle.structuralHash}`);
       }
     } else if (command === 'cones') {

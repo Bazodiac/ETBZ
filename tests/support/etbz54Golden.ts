@@ -365,6 +365,16 @@ export async function deriveGoldenCases(config: GoldenConfig): Promise<Record<Ca
 export type ReadingFile = 'skill-input' | 'semantic-reading' | 'skill-reading' | 'accepted-reading';
 export const caseFile = (config: GoldenConfig, label: CaseLabel, file: ReadingFile): string => workPath(config, 'cases', label, `${file}.json`);
 export const caseDir = (config: GoldenConfig, label: CaseLabel): string => workPath(config, 'cases', label);
+/**
+ * The package as the runtime reads it: the identical JSON value pretty-printed, one key per line. The canonical file
+ * is one line of ~50k characters, which the runtime's Read tool cuts off; the copy re-canonicalises to it byte for
+ * byte (`assertPrettyCopy`), so every structuralHash in it is the package's own.
+ */
+export const prettyPackageFile = (config: GoldenConfig, label: CaseLabel): string => workPath(config, 'cases', label, 'skill-input.pretty.json');
+export const prettyJson = (value: unknown): string => `${JSON.stringify(value, null, 1)}\n`;
+export function assertPrettyCopy(canonical: string, pretty: string): void {
+  if (renderJson(JSON.parse(pretty) as unknown) !== canonical) throw new GoldenRunError('GOLDEN_ARCHIVE_DRIFT', 'the pretty-printed package is not the canonical package');
+}
 /** Every REALISE and EDIT attempt of a case, kept unchanged (realise-1.json, realise-2.json, edit-1.json). */
 export const attemptsDir = (config: GoldenConfig, label: CaseLabel): string => workPath(config, 'cases', label, 'attempts');
 export const CONES_FILE = 'pre-run-cones.json';
