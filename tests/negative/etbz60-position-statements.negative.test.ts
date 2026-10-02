@@ -86,6 +86,7 @@ describe('ETBZ-60: what a position statement is', () => {
     expect(findPositionStatement('Jede Säule hat oben einen Himmelsstamm und darunter einen Erdzweig.')).toBeNull();
     expect(findPositionStatement('Dieselbe Rolle liegt also nicht nur im Inneren der Monatssäule, sondern auch im Inneren der Stundensäule.')).toBeNull();
     expect(findPositionStatement('Sie liegt nicht nur im Monatszweig, sondern auch im Stundenzweig.')).toBeNull();
+    expect(findPositionStatement('Das Thema hängt nicht nur an einer Position.')).toBeNull();
     expect(findPositionStatement('Eine Erwartung, die nirgends formuliert ist und trotzdem den Rahmen setzt.')).toBeNull();
     expect(findPositionStatement('Ein Anspruch, der überall dieselbe Sprache spricht.')).toBeNull();
   });

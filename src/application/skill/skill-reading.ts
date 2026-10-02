@@ -419,8 +419,8 @@ const POSITION_NOUNS = '(?:Säule|Säulen|Pfeiler|Zweig|Zweige|Zweigen|Zweiges|E
 const POSITION_STATEMENTS: readonly RegExp[] = [
   // "auf keiner Säule", "in keinem Zweig"
   new RegExp(`\\b(?:kein|keine|keiner|keinem|keinen)\\s+(?:\\p{L}+\\s+){0,2}${POSITION_NOUNS}(?![\\p{L}])`, 'iu'),
-  // "nicht offen oben auf einer Säule", "nicht an der Oberfläche einer Säule"
-  new RegExp(`\\bnicht\\s+(?:\\p{L}+\\s+){0,4}(?:auf|an|in|über)\\s+(?:der\\s+Oberfläche\\s+)?(?:einer|einem|eines)\\s+${POSITION_NOUNS}(?![\\p{L}])`, 'iu'),
+  // "nicht offen oben auf einer Säule", "nicht an der Oberfläche einer Säule" (not "nicht nur an einer ...")
+  new RegExp(`\\bnicht\\s+(?!nur\\b)(?:\\p{L}+\\s+){0,4}(?:auf|an|in|über)\\s+(?:der\\s+Oberfläche\\s+)?(?:einer|einem|eines)\\s+${POSITION_NOUNS}(?![\\p{L}])`, 'iu'),
   // "ohne an die Oberfläche zu treten", "nie an der Oberfläche"
   /\b(?:ohne|nie|niemals|nirgends|nirgendwo)\s+(?:\p{L}+\s+){0,3}(?:an|auf)\s+(?:die|der)\s+Oberfläche(?![\p{L}])/iu,
   // "nur im Monatszweig" (not "nicht nur im ...")
