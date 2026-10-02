@@ -1,7 +1,6 @@
 # ADR 0015 — The Pre-Golden rehearsal: one live known-time case to the PDF (ETBZ-58)
 
-- **Status:** Proposed — PR open. Merge is governed by the Product Owner's delivery program of 2026-09-30 (Jira
-  ETBZ-2 comment 16866: routine in-slice merges after the gates), subject to the merge gate on the exact head.
+- **Status:** Accepted — merged to `main` as `949fb7b3` (PR #22, 2026-10-02). Merged under the Product Owner's delivery program of 2026-09-30 (Jira ETBZ-2 comment 16866: routine in-slice merges after the gates) after the merge gate on the exact head.
 - **Date:** 2026-10-02
 - **Slice:** ETBZ-58 [PRE-GOLDEN] — one non-Golden known-time case from a fresh live FuFirE call to the final PDF,
   manifest and visual proof, without manual content editing between the stages. Adds no interpretation, no

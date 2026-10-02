@@ -1,7 +1,7 @@
 /**
  * ETBZ-55 — shared fixture for the presentation suites.
  *
- * The chart is the D4 golden input (PO decision, Jira ETBZ-2 comment 16690): the
+ * The chart is the D4 development fixture (Jira ETBZ-2 comment 16690; superseded as Golden input, Rebaseline 62128133 §18): the
  * synthetic known-time chart of `tests/support/narrativeFixture.ts`
  * (Musterkundin A, 1990-06-15 14:30 Europe/Berlin), as a validated
  * `HoroscopeModel`. The content is the versioned text payload of the ETBZ-52

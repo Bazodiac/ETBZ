@@ -1,8 +1,6 @@
 # ADR 0014 — An accepted Skill reading on the one projection and renderer (ETBZ-56)
 
-- **Status:** Proposed — PR open. Merge is governed by the Product Owner's delivery program
-  of 2026-09-30 (Jira ETBZ-2 comment 16866: routine in-slice merges after the gates), subject
-  to the merge gate on the exact head.
+- **Status:** Accepted — merged to `main` as `f6a4e99a` (PR #20, 2026-10-01). Merged under the Product Owner's delivery program of 2026-09-30 (Jira ETBZ-2 comment 16866: routine in-slice merges after the gates) after the merge gate on the exact head. The pinyin follow-up merged as PR #21 (`383aba8a`).
 - **Date:** 2026-10-01
 - **Slice:** ETBZ-56 [RUN-07] — the real accepted Skill output through the same
   PresentationProjection and the same ETBZ-55 renderer into a QA-checked PDF with a complete

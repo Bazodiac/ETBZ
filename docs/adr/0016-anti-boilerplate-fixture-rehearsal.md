@@ -1,7 +1,6 @@
 # ADR 0016 — The Anti-Boilerplate fixture rehearsal and the evaluation withdrawal (ETBZ-59)
 
-- **Status:** Proposed — PR open. Merge is governed by the Product Owner's delivery program of 2026-09-30 (Jira
-  ETBZ-2 comment 16866: routine in-slice merges after the gates), subject to the merge gate on the exact head.
+- **Status:** Accepted — merged to `main` as `e5ccc94c` (PR #24, 2026-10-02). Merged under the Product Owner's delivery program of 2026-09-30 (Jira ETBZ-2 comment 16866: routine in-slice merges after the gates) after the merge gate on the exact head.
 - **Date:** 2026-10-02
 - **Slice:** ETBZ-59 [PRE-GOLDEN] — the minimum of section 8 of `cross-reading-individuality-contract@1.1.0`
   (Confluence 77266967 v3) executed once on the synthetic case Musterkundin A, before `GOLDEN_RUN_READY`.

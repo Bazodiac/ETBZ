@@ -1,8 +1,6 @@
 # ADR 0010 — Skill Contract Bundle v1 (ETBZ-51)
 
-- **Status:** Proposed — PR open. Merge is governed by the Product Owner's standing
-  authorisation D1 of 2026-09-28 (Jira ETBZ-2 comment 16690), subject to the merge
-  gate on the exact head.
+- **Status:** Accepted — merged to `main` as `15648b2a` (PR #15, 2026-09-28). Merged under the Product Owner's standing authorisation D1 of 2026-09-28 (Jira ETBZ-2 comment 16690) after the merge gate on the exact head.
 - **Date:** 2026-09-28
 - **Slice:** ETBZ-51 [RUN-04] — bind the Method Profile, the Interpretation Lens, the
   Terminology & Wording Lexicon, the Long-Form Contract and the Cross-Reading

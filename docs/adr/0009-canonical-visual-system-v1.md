@@ -1,13 +1,6 @@
 # ADR 0009 — Bazodiac Visual System v1 (ETBZ-49)
 
-- **Status:** Proposed — PR #11 open. Merge is governed by the Product Owner's
-  standing authorisation D1 of 2026-09-28 (Jira ETBZ-2 comment 16690), subject
-  to the merge gate on the exact head. The one human decision this ADR carried,
-  `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED`, was **closed by the Product Owner on
-  2026-09-22** (Jira ETBZ-49 comment 16514): the glyph/style variant shown in
-  `docs/evidence/etbz-49/final-contact-sheet.png` is approved — answer 1 of the
-  decision sheet, the ink-pass asset set as shipped. Nothing in this repository
-  closed it; Jira did.
+- **Status:** Accepted — merged to `main` as `aee0a988` (PR #11, 2026-09-28). Merged under the Product Owner's standing authorisation D1 of 2026-09-28 (Jira ETBZ-2 comment 16690). The one human decision this ADR carried, `HUMAN_PO_GLYPH_STYLE_APPROVAL_REQUIRED`, was **closed by the Product Owner on 2026-09-22** (Jira ETBZ-49 comment 16514): the glyph/style variant shown in `docs/evidence/etbz-49/final-contact-sheet.png` is approved - answer 1 of the decision sheet, the ink-pass asset set as shipped. Nothing in this repository closed it; Jira did.
 - **Date:** 2026-09-22
 - **Slice:** ETBZ-49 — recover the converged visual system as repository truth.
   Does not implement a renderer.

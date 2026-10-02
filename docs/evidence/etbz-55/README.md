@@ -1,6 +1,6 @@
 # ETBZ-55 — fixture-first PresentationProjection and PDF
 
-The first real `application/pdf` of the Bazodiac product: the D4 golden input (the
+The first real `application/pdf` of the Bazodiac product: the D4 development fixture (superseded as Golden input, Rebaseline 62128133 §18) (the
 synthetic known-time chart, "Musterkundin A", no real birth data; PO decision of
 2026-09-28, Jira ETBZ-2 comment 16690) and the versioned German text payload of the
 ETBZ-52 controlled fixture run, projected by `buildPresentationProjection` onto the one
