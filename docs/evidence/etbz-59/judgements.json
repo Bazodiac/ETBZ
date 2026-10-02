@@ -1,0 +1,240 @@
+{
+ "judgementsVersion": "etbz59-judgements.v1",
+ "contract": {
+  "contractRef": "cross-reading-individuality-contract@1.1.0",
+  "confluencePageId": "77266967",
+  "confluencePageVersion": "3"
+ },
+ "policy": "Each verdict is the qualitative judgement of one independent instance (Jira ETBZ-59 AC4), never the sole oracle for a reason code (contract section 10): the Delivery Runner corroborated every BLOCKING verdict by measuring the chart facts and claim citations it rests on, the ADVISORY codes are candidates until the Product Owner judges their quoted passages, and the contract suite checks every quote below verbatim against the accepted reading at its path. ADVISORY codes go to the Product Owner; a BLOCKING code is recorded with the smallest repair the runner can propose, and the repair itself is a separate decision (Jira ETBZ-59, out of scope).",
+ "judges": [
+  {
+   "judge": "A",
+   "checks": ["6.1"],
+   "instance": "fresh Claude Code general-purpose subagent, claude-opus-5-5 (declared), dispatched 2026-10-02 by the Delivery Runner; neither the drafter of the claim graphs nor a Skill instance",
+   "blind": "reading X and Y without names or case labels, charts 1-3 in a fixed mixed order; KEY-operator-only.json was not in the packet",
+   "brief": "judges/A/brief.md",
+   "report": "judges/A/report.md",
+   "toolCalls": "judges/A/tool-calls.txt",
+   "packet": ["judges/A/chart-1.txt", "judges/A/chart-2.txt", "judges/A/chart-3.txt", "judges/A/reading-X.md", "judges/A/reading-Y.md"]
+  },
+  {
+   "judge": "B",
+   "checks": ["6.4", "6.5", "6.7"],
+   "instance": "fresh Claude Code general-purpose subagent, claude-opus-5-5 (declared), dispatched 2026-10-02 by the Delivery Runner; neither the drafter of the claim graphs nor a Skill instance nor judge A",
+   "blind": "labelled readings; the brief named N [2.4] for a verdict after judge A had flagged it",
+   "brief": "judges/B/brief.md",
+   "report": "judges/B/report.md",
+   "toolCalls": "judges/B/tool-calls.txt",
+   "packet": ["judges/B/reading-source.md", "judges/B/reading-near.md", "judges/B/reading-removal.md", "judges/B/claims-source.txt", "judges/B/claims-near.txt", "judges/B/claims-removal.txt", "judges/B/chart-source.txt", "judges/B/chart-near.txt", "judges/B/candidates.json"]
+  }
+ ],
+ "judgements": [
+  {
+   "check": "6.1",
+   "judge": "A",
+   "subject": "reading X = R(N)",
+   "verdict": "PASS",
+   "attributedTo": "chart 3 = N (key)",
+   "codes": [],
+   "why": "the hour pillar's symbols and the tally values contradict S; the day master and the stems contradict D",
+   "quotes": [
+    { "case": "near", "path": "chapters[0].paragraphs[0]", "text": "von der Jahressäule bis zur Stundensäule die Stämme Geng, Ren, Xin und Bing" },
+    { "case": "near", "path": "chapters[1].paragraphs[0]", "text": "Im Stundenzweig Shen, geschrieben 申, liegt unter den verborgenen Stämmen ebenfalls Ren" },
+    { "case": "near", "path": "chapters[3].paragraphs[4]", "text": "Feuer 3, Metall 3, Wasser 2.5, Erde 1.3 und Holz 0.5 als kleinstes Gewicht." },
+    { "case": "near", "path": "chapters[3].paragraphs[6]", "text": "Feuer und Metall teilen sich in deinem Chart das höchste Gewicht." }
+   ]
+  },
+  {
+   "check": "6.1",
+   "judge": "A",
+   "subject": "reading Y = R(S)",
+   "verdict": "PASS",
+   "attributedTo": "chart 2 = S (key)",
+   "codes": [],
+   "why": "the hour pillar's symbols, the controlling voice recurring in the hour branch and the tally values contradict N; the day master and the year pillar contradict D",
+   "quotes": [
+    { "case": "source", "path": "chapters[5].paragraphs[0]", "text": "In deiner Stundensäule steht oben der Himmelsstamm Yi, 乙" },
+    { "case": "source", "path": "chapters[5].paragraphs[1]", "text": "Die kontrollierende Stimme des Monatszweigs kehrt unter den verborgenen Stämmen des Stundenzweigs wieder." },
+    { "case": "source", "path": "chapters[3].paragraphs[4]", "text": "Feuer 2.5, Erde 2, Metall 2, Wasser 2, Holz 1.8." },
+    { "case": "source", "path": "chapters[3].paragraphs[6]", "text": "Feuer trägt in deinem Chart mehr Gewicht als jede andere Phase." }
+   ]
+  },
+  {
+   "check": "6.5",
+   "judge": "B",
+   "subject": "R(S) thesis passage",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "the residue is visibly incomplete: every main clause loses its subject or location",
+   "quotes": [
+    { "case": "source", "path": "chapters[2].paragraphs[4]", "text": "Am deutlichsten wird die Spannung in der Monatssäule selbst: Oben steht der Ausdruck, unten im Zweig die Anforderung." }
+   ]
+  },
+  {
+   "check": "6.5",
+   "judge": "B",
+   "subject": "R(S) thesis passage",
+   "verdict": "FINDING",
+   "codes": ["BARNUM_RESIDUE"],
+   "why": "the illustrative sentence carried no anchor before ablation and survives as a complete, high-base-rate scene",
+   "quotes": [
+    { "case": "source", "path": "chapters[2].paragraphs[5]", "text": "Erkennbar wird das etwa in Momenten, in denen ein Gedanke gerade dabei ist, sich von einer üblichen Version zu lösen, während eine Lage bereits eine schnelle, klare Antwort fordert" }
+   ]
+  },
+  {
+   "check": "6.5",
+   "judge": "B",
+   "subject": "R(N) thesis passage",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "the residue is visibly incomplete; its weakest part is the two infinitive lists",
+   "quotes": [
+    { "case": "near", "path": "chapters[2].paragraphs[3]", "text": "In der Monatssäule liegen sie sogar übereinander" }
+   ]
+  },
+  {
+   "check": "6.5",
+   "judge": "B",
+   "subject": "R(N) thesis passage",
+   "verdict": "FINDING",
+   "codes": ["BARNUM_RESIDUE"],
+   "why": "four complete scenes survive the ablation, each persuasive for almost anybody",
+   "quotes": [
+    { "case": "near", "path": "chapters[2].paragraphs[5]", "text": "Etwa dort, wo eine Vorgabe eine schnelle, eindeutige Antwort verlangt, während sich gleichzeitig ein Einwand formt, der genau diese Vorgabe prüft." }
+   ]
+  },
+  {
+   "check": "6.7",
+   "judge": "B",
+   "subject": "R(S) and R(N): the chart-wide visibility statement",
+   "verdict": "FINDING",
+   "codes": ["STOCK_PARAGRAPH_REUSE"],
+   "why": "the same semantic content recurs in both readings, including the chart-wide statement that the controlling family shows on no pillar's surface. No claim of either reading cites it; it holds for S; for N it is false on the family reading N's own [2.1] defines and ungrounded on any reading, so the paragraph did not respond to the named difference. Judge B: the verdict rests on that one proposition; without it the rest is shared claims plus a fixed image.",
+   "quotes": [
+    { "case": "source", "path": "chapters[2].paragraphs[6]", "text": "an der Oberfläche der Monatssäule tritt der Ausdruck offen hervor, während die Anforderung darunter verborgen bleibt" },
+    { "case": "source", "path": "chapters[2].paragraphs[2]", "text": "Sie steht nicht offen oben auf einer Säule, sondern liegt im Inneren der Zweige" },
+    { "case": "source", "path": "chapters[5].paragraphs[1]", "text": "sie steht auf keiner Säule oben" },
+    { "case": "source", "path": "chapters[5].paragraphs[2]", "text": "ohne an die Oberfläche zu treten" },
+    { "case": "near", "path": "chapters[2].paragraphs[4]", "text": "Die Anforderung tritt in diesem Chart nicht an der Oberfläche einer Säule auf; sie liegt in den Zweigen." },
+    { "case": "near", "path": "chapters[2].paragraphs[1]", "text": "Eine Phase, die den Tagesmeister kontrolliert, gehört in der BaZi-Tradition zur Familie von Struktur und Anforderung" }
+   ],
+   "runnerCorroboration": {
+    "near": "N's package carries chart.natal.pillar.hour.tenGod = DirectOfficer (source label \"Verantwortung\") with elementRelation controls_day_master: a visible stem that controls the day master, the family N's own [2.1] defines",
+    "source": "S's hour stem is IndirectWealth with elementRelation controlled_by_day_master; no visible stem of S controls the day master, so the statement holds for S",
+    "claims": "both readings' claims cite exactly one visible Ten God, chart.natal.pillar.month.tenGod = HurtingOfficer; no claim of either reading speaks of all pillars' surfaces",
+    "measuredBy": "tests/contract/etbz59-individuality-evidence.contract.test.ts re-derives each of these facts from the committed skill-input packages"
+   },
+   "smallestRepair": {
+    "fixture": "confine the visibility statement to the positions the paragraph's cited facts name (in N [2.4], e.g. that the controlling voice lies hidden in the year and month branches) and drop the chart-wide negation; likewise S [2.2], [2.6], [5.1], [5.2]. A Golden run has no such repair (section 11: no reroll).",
+    "skill": "one hard law in SKILL.md section 1: a paragraph states nothing about chart positions its cited facts do not name - no absence from, presence in all of, or restriction to positions (keine, jede, nur, überall, nirgends over pillars, branches, stems or their surface) - with a boundary triage that names such quantifiers for the one repair. A Skill change needs a new released Skill identity and bundle binding: a Product Owner decision outside ETBZ-59.",
+    "applied": false
+   }
+  },
+  {
+   "check": "6.7",
+   "judge": "B",
+   "subject": "a distinction settled inside before it is spoken, bound to HurtingOfficer",
+   "verdict": "FINDING",
+   "codes": ["FIXED_METAPHOR_REUSE"],
+   "quotes": [
+    { "case": "source", "path": "chapters[0].paragraphs[5]", "text": "in Momenten, in denen dieser Unterschied zunächst nur innerlich feststeht, bevor er nach außen tritt" },
+    { "case": "near", "path": "chapters[0].paragraphs[4]", "text": "eine Unterscheidung, die zuerst innen feststeht und erst später ausgesprochen wird" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "judge": "B",
+   "subject": "the expression as a line through the chart",
+   "verdict": "FINDING",
+   "codes": ["FIXED_METAPHOR_REUSE"],
+   "quotes": [
+    { "case": "source", "path": "chapters[0].paragraphs[5]", "text": "macht den Ausdruck zu einer Linie, die durch verschiedene Ebenen des Charts läuft" },
+    { "case": "near", "path": "chapters[5].paragraphs[1]", "text": "Zusammengenommen bildet der Ausdruck in deinem Chart eine Linie, die vom Tagesmeister ausgeht" },
+    { "case": "near", "path": "chapters[1].paragraphs[5]", "text": "sondern eine Linie, die sich durch mehrere Säulen zieht" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "judge": "B",
+   "subject": "picking one item out of an abundance, bound to IndirectRes",
+   "verdict": "FINDING",
+   "codes": ["FIXED_METAPHOR_REUSE"],
+   "quotes": [
+    { "case": "source", "path": "chapters[3].paragraphs[3]", "text": "in denen aus einer Fülle von Material ein bestimmter Hinweis herausgegriffen wird" },
+    { "case": "near", "path": "chapters[3].paragraphs[2]", "text": "in denen aus einer Fülle von Angeboten genau das herausgegriffen wird, was zu einer offenen Frage passt" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "judge": "B",
+   "subject": "a settled matter reopened, bound to a month voice recurring in the hour branch (different Ten Gods: the image follows the position)",
+   "verdict": "FINDING",
+   "codes": ["FIXED_METAPHOR_REUSE"],
+   "quotes": [
+    { "case": "source", "path": "chapters[5].paragraphs[3]", "text": "in denen eine Sache längst abgeschlossen wirkt und dennoch eine weitere Festlegung verlangt wird" },
+    { "case": "near", "path": "chapters[1].paragraphs[4]", "text": "die eine bereits abgelegte Sache erneut öffnet" }
+   ]
+  },
+  {
+   "check": "6.7",
+   "judge": "B",
+   "subject": "everything else that recurs across R(S) and R(N)",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "method notes and Ten-God family definitions are fixed framing; the day-master vantage point, the month pillar produced by the day master, the month pillar holding both sides, and resource and pressure in the same branches are legitimate shared claims; no interpretive sentence recurs verbatim (the deterministic finder: none; judge B: none, the closest being S [0.2] / N [0.2] and S [2.7] / N [2.6])",
+   "quotes": []
+  },
+  {
+   "check": "6.4",
+   "judge": "B",
+   "subject": "R(S⁻), the whole reading",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "R(S⁻) never names the hour pillar, the hour branch, Wei, 未, Yi or the goat; every passage on the controlling voice places it in the year and month branches; fire appears only as a tally weight. The finder's candidate uses 'Stunde' in its everyday sense (a false positive).",
+   "quotes": [
+    { "case": "removal", "path": "chapters[5].paragraphs[5]", "text": "nicht in einer ruhigen Stunde auftaucht" }
+   ]
+  }
+ ],
+ "outsideContract": [
+  {
+   "subject": "N's tie",
+   "judge": "B",
+   "verdict": "PASS",
+   "codes": [],
+   "why": "no passage of R(N) names one leading element; the deterministic finder found none either",
+   "quotes": [
+    { "case": "near", "path": "chapters[3].paragraphs[6]", "text": "Keine Phase steht allein an der Spitze der Zusammensetzung" }
+   ]
+  },
+  {
+   "subject": "N [2.4]",
+   "judge": "B",
+   "verdict": "FINDING",
+   "codes": ["N_UNGROUNDED_GENERALISATION"],
+   "why": "false for N on the family reading, ungrounded on any reading; OVERREACH is owned by the Lens and the Lexicon gates (contract section 5) and is reported beside this contract's codes",
+   "quotes": [
+    { "case": "near", "path": "chapters[2].paragraphs[4]", "text": "Offen steht der Einwand, was ihm entgegensteht, liegt tiefer." }
+   ]
+  },
+  {
+   "subject": "R(S) [5.5] against R(S) [5.2]",
+   "judge": "B",
+   "verdict": "OBSERVATION",
+   "codes": [],
+   "why": "as written, [5.5] confines the requirement and the support to the year and month branches while [5.2] places the requirement in the hour branch too; on the chart [5.5] holds only because the hour branch also carries Ji (IndirectRes), which no claim of R(S) cites. A within-reading question (Long-Form contradiction discipline, IND-6), not a code of this contract.",
+   "quotes": [
+    { "case": "source", "path": "chapters[5].paragraphs[5]", "text": "Weder hat die Anforderung eigene Zweige noch die Unterstützung" },
+    { "case": "source", "path": "chapters[5].paragraphs[2]", "text": "Die unmittelbare Anforderung gehört in deinem Chart zur inneren Ebene von Jahreszweig, Monatszweig und Stundenzweig" }
+   ]
+  },
+  {
+   "subject": "the pre-registered rescue finder",
+   "judge": "B",
+   "verdict": "OBSERVATION",
+   "codes": [],
+   "why": "its positive control on R(S) misses [5.2], which names the hour branch but paraphrases the subject ('unmittelbare Anforderung' is not a pre-registered term). The term lists stay as registered before the readings; the run record adds a position-only triage (every paragraph naming the withdrawn position). The 6.4 verdict rests on judge B's reading of the whole of R(S⁻), not on the finder.",
+   "quotes": []
+  }
+ ]
+}

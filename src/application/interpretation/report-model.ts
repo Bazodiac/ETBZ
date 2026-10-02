@@ -252,7 +252,11 @@ function validateSection(
     if (!fact.interpretable) {
       throw new ReportError(
         'REPORT_EXCLUDED_FACT_CITED',
-        `section for theme "${theme.id}" cites fact "${fact.id}", which is excluded from interpretation (${fact.exclusionReason ?? 'excluded'}); an assumed time of day is not the customer's birth`,
+        `section for theme "${theme.id}" cites fact "${fact.id}", which is excluded from interpretation (${fact.exclusionReason ?? 'excluded'}); ${
+          fact.exclusionReason === 'WITHDRAWN_FOR_EVALUATION'
+            ? 'it is withdrawn for evaluation, and a withdrawn fact grounds nothing'
+            : "an assumed time of day is not the customer's birth"
+        }`,
       );
     }
     if (!themeFactIds.has(fact.id)) {

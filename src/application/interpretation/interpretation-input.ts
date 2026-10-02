@@ -33,7 +33,7 @@ import type {
   WuxingSnapshot,
 } from '../ports/fufire-gateway.js';
 import { deriveInterpretationFeatureSet } from './feature-set.js';
-import type { ChartFact, InterpretationFeatureSet } from './feature-set.js';
+import type { ChartFact, FactExclusionReason, InterpretationFeatureSet } from './feature-set.js';
 import {
   BAZI_METHOD_REGISTRY_V1,
   METHOD_PROFILE_ID,
@@ -79,7 +79,12 @@ export type ProductionBlocker =
    * ETBZ-34 AC 5–7: no PASS verdict of the runtime attestation (OpenAPI bytes +
    * immutable source revision) was supplied for this chart's runtime.
    */
-  | 'RUNTIME_ATTESTATION_NOT_PASSED';
+  | 'RUNTIME_ATTESTATION_NOT_PASSED'
+  /**
+   * ETBZ-59 (PO decision D-59-1): the chart is an evaluation variant with facts withdrawn for the
+   * Anti-Boilerplate removal case. Such an input is evidence for a check, never a customer reading.
+   */
+  | 'EVALUATION_WITHDRAWAL_PRESENT';
 
 /**
  * The three producer snapshots the HoroscopeModel was built from, each still
@@ -188,9 +193,9 @@ export interface BazodiacInterpretationInput {
   readonly warnings: readonly string[];
   readonly provisionality: Readonly<{
     provisionalFactIds: readonly string[];
-    /** PD-10: present as evidence, excluded from interpretation. */
+    /** PD-10 (unknown time) or an ETBZ-59 evaluation withdrawal: present as evidence, excluded from interpretation. */
     excludedFactIds: readonly string[];
-    exclusionReason: 'ASSUMED_TIME_DERIVED' | null;
+    exclusionReason: FactExclusionReason | null;
   }>;
   readonly validation: Readonly<{
     /** Enforced inside buildHoroscopeModel: natal pillars/day master == BaZi. */
@@ -452,6 +457,9 @@ export function buildBazodiacInterpretationInput(
   if (!birthTimeKnown) {
     blockers.push('UNKNOWN_TIME_PRODUCER_CONTRACT_NOT_DELIVERED');
   }
+  if (model.evaluationWithdrawal !== undefined) {
+    blockers.push('EVALUATION_WITHDRAWAL_PRESENT');
+  }
   const attestation = options.attestation;
   // The verdict is RE-DERIVED from its own expectation and observation: a
   // `status: 'PASS'` somebody typed is not an attestation.
@@ -536,7 +544,13 @@ export function buildBazodiacInterpretationInput(
     provisionality: {
       provisionalFactIds: featureSet.provisionalFactIds,
       excludedFactIds: featureSet.excludedFactIds,
-      exclusionReason: featureSet.excludedFactIds.length > 0 ? ('ASSUMED_TIME_DERIVED' as const) : null,
+      // The two reasons never mix: a withdrawal is refused on an unknown-time chart (ETBZ-59).
+      exclusionReason:
+        featureSet.excludedFactIds.length === 0
+          ? null
+          : model.evaluationWithdrawal !== undefined
+            ? ('WITHDRAWN_FOR_EVALUATION' as const)
+            : ('ASSUMED_TIME_DERIVED' as const),
     },
     validation: {
       sameChartBaziNatal: true as const,

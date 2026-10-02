@@ -28,7 +28,7 @@
 import { structuralHash } from '../../domain/structural-hash.js';
 import type { PillarName } from '../horoscope-model.js';
 import { InterpretationError } from './errors.js';
-import { PILLAR_NAMES } from './feature-set.js';
+import { NARRATIVE_ANCHOR_FACT_IDS, PILLAR_NAMES } from './feature-set.js';
 import type { ChartFact, InterpretationFeatureSet } from './feature-set.js';
 
 export type ThemeKind =
@@ -158,7 +158,7 @@ function pillarThemes(facts: readonly ChartFact[]): ThemeDraft[] {
 }
 
 function dayMasterTheme(facts: readonly ChartFact[]): ThemeDraft {
-  const stem = requireFact(facts, 'chart.dayMaster.stem');
+  const stem = requireFact(facts, NARRATIVE_ANCHOR_FACT_IDS[0]);
   return {
     id: 'theme.dayMaster',
     kind: 'day_master',
@@ -179,7 +179,7 @@ function dayMasterTheme(facts: readonly ChartFact[]): ThemeDraft {
 }
 
 function monthCommandTheme(facts: readonly ChartFact[]): ThemeDraft {
-  const branch = requireFact(facts, 'chart.natal.monthCommand.branch');
+  const branch = requireFact(facts, NARRATIVE_ANCHOR_FACT_IDS[1]);
   return {
     id: 'theme.monthCommand',
     kind: 'month_command',

@@ -1,0 +1,12 @@
+{
+ "reuseVerbatimSentences": [],
+ "nearSingleLeaderCandidates": [],
+ "removalRescueCandidates": [
+  "chapters[5].paragraphs[5]"
+ ],
+ "sourceRescueCandidatesPositiveControl": [
+  "chapters[5].paragraphs[0]",
+  "chapters[5].paragraphs[1]",
+  "chapters[5].paragraphs[3]"
+ ]
+}

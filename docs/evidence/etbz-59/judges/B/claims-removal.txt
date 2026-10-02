@@ -1,0 +1,18 @@
+removal claims:
+- A resourcing voice sits, the same, inside the year branch and inside the month branch.
+    cites: natal.pillar.month.hiddenStem.1.tenGod=IndirectRes; natal.pillar.month.hiddenStem.1.tenGod.elementRelation=produces_day_master; natal.pillar.year.hiddenStem.1.tenGod=IndirectRes
+- One element carries more weight than any other in the tally the source reports.
+    cites: wuxing.dominant=Feuer; wuxing.weight.Erde=2; wuxing.weight.Feuer=2.5; wuxing.weight.Holz=1.8; wuxing.weight.Metall=2; wuxing.weight.Wasser=2
+- A controlling voice sits, the same, inside the year branch and inside the month branch.
+    cites: natal.pillar.month.hiddenStem.0.tenGod=SevenKilling; natal.pillar.month.hiddenStem.0.tenGod.elementRelation=controls_day_master; natal.pillar.year.hiddenStem.0.tenGod=SevenKilling
+- What the month pillar expresses is something the day master gives rise to.
+    cites: natal.pillar.month.tenGod=HurtingOfficer; natal.pillar.month.tenGod.elementRelation=produced_by_day_master
+- The day master names the vantage point the rest of the chart is read from.
+    cites: dayMaster.stem=Xin
+- Expression shows on the surface of the month pillar and again inside the day branch.
+    cites: natal.pillar.day.hiddenStem.0.tenGod=HurtingOfficer; natal.pillar.month.tenGod=HurtingOfficer
+thesis: A controlling voice sits, the same, inside the year branch and inside the month branch. | Expression shows on the surface of the month pillar and again inside the day branch.
+  motif: A resourcing voice sits, the same, inside the year branch and inside the month branch.
+  motif: A controlling voice sits, the same, inside the year branch and inside the month branch.
+  motif: What the month pillar expresses is something the day master gives rise to. + Expression shows on the surface of the month pillar and again inside the day branch.
+withdrawn facts: chart.natal.pillar.hour.hiddenStem.1.tenGod, chart.natal.pillar.hour.hiddenStem.1.tenGod.elementRelation

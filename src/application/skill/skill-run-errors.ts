@@ -103,12 +103,21 @@ export type SkillRunErrorCode = (typeof SKILL_RUN_ERROR_CODES)[number];
 export class SkillRunError extends Error {
   readonly code: SkillRunErrorCode;
   readonly detail: Readonly<Record<string, unknown>>;
+  /**
+   * ETBZ-59 (PO decision D-59-4): on a refusal of `acceptSkillReading`, every violation one full pass found - this
+   * error first, then the rest in pass order; a later entry may follow from an earlier one. Empty on every other
+   * refusal. The operator hands the whole list to the one repair a run allows (the Skill wrapper's step 5). Not
+   * enumerable: its first entry is this error itself, and an enumerable self-reference would make
+   * `JSON.stringify` of a refusal throw.
+   */
+  declare readonly diagnostics: SkillRunError[];
 
   constructor(code: SkillRunErrorCode, message: string, detail: Readonly<Record<string, unknown>> = {}) {
     super(`${code}: ${message}`);
     this.name = 'SkillRunError';
     this.code = code;
     this.detail = detail;
+    Object.defineProperty(this, 'diagnostics', { value: [], enumerable: false, writable: false });
   }
 }
 

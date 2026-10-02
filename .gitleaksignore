@@ -90,3 +90,14 @@ assets/visual-system-v1/render-receipt.json:generic-api-key:373
 # the only credential-shaped pairs in it are `openapiSha256` = that digest.
 docs/evidence/etbz-58/run/runtime-readback.json:generic-api-key:1
 docs/evidence/etbz-58/rehearsal-record.json:generic-api-key:1
+# ETBZ-59 - the runtime readbacks of the two synthetic variants of the
+# Anti-Boilerplate fixture rehearsal (near-neighbour N and distant foil D). Same
+# shape and same cause as the ETBZ-58 readback above: one-line canonical JSON,
+# the key `openapiSha256` next to the public SHA-256 of the FuFirE OpenAPI
+# document the attestation pinned. Pinned by
+# `tests/contract/etbz59-individuality-evidence.contract.test.ts` ("the
+# secret-scanner exemptions (.gitleaksignore bar C)"): each file's SHA-256 as a
+# literal, and the only credential-shaped pairs in it are `openapiSha256` = that
+# digest.
+docs/evidence/etbz-59/variants/near/runtime-readback.json:generic-api-key:1
+docs/evidence/etbz-59/variants/distant/runtime-readback.json:generic-api-key:1

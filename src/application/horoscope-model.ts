@@ -93,7 +93,19 @@ export interface HoroscopeModel {
     runtimeImage: string;
     openapiSha256: string;
   }>;
+  /**
+   * ETBZ-59 (PO decision D-59-1) — present only on an evaluation variant: the facts withdrawn from interpretation
+   * for the Anti-Boilerplate removal case (contract 77266967, section 6.4). Never set by `buildHoroscopeModel`;
+   * only `withdrawFactsForEvaluation` sets it. Part of the canonical text, so a variant is a different chart identity.
+   */
+  readonly evaluationWithdrawal?: EvaluationWithdrawal;
   readonly canonicalJson: string;
+}
+
+/** ETBZ-59 — the facts withdrawn for evaluation (sorted fact ids) and the decision that allowed it. */
+export interface EvaluationWithdrawal {
+  readonly factIds: readonly string[];
+  readonly reference: string;
 }
 
 /** ETBZ-29 — the natal block of the consumer-owned model. */
@@ -606,7 +618,26 @@ export function buildHoroscopeModel(
   //     two calls with the comment "computed_at differs per call".
   // Every other natal fact and EVERY source warning is inside the anchor, so a
   // changed natal fact or a changed/removed/reordered warning changes the hash.
-  const canonical = canonicalJson({
+  return { ...model, canonicalJson: canonicalTextOf(model) };
+}
+
+/**
+ * ETBZ-59 — the same model with an evaluation withdrawal recorded and its canonical text re-derived. The caller
+ * (`withdrawFactsForEvaluation`) validates the fact ids against the chart; this function only records them.
+ */
+export function withEvaluationWithdrawal(model: HoroscopeModel, withdrawal: EvaluationWithdrawal): HoroscopeModel {
+  // `canonicalTextOf` reads the named fact fields only, so the stale `canonicalJson` carried over here is ignored
+  // and then replaced.
+  const next: HoroscopeModel = { ...model, evaluationWithdrawal: { factIds: [...withdrawal.factIds], reference: withdrawal.reference } };
+  return { ...next, canonicalJson: canonicalTextOf(next) };
+}
+
+/**
+ * The canonical fact text. A model without an evaluation withdrawal yields exactly the text it always did: the key
+ * is added only when the withdrawal is present.
+ */
+function canonicalTextOf(model: Omit<HoroscopeModel, 'canonicalJson'>): string {
+  return canonicalJson({
     displayName: model.displayName,
     birth: model.birth,
     pillars: model.pillars,
@@ -634,7 +665,6 @@ export function buildHoroscopeModel(
       },
     },
     sourceWarnings: model.sourceWarnings,
+    ...(model.evaluationWithdrawal === undefined ? {} : { evaluationWithdrawal: model.evaluationWithdrawal }),
   });
-
-  return { ...model, canonicalJson: canonical };
 }
