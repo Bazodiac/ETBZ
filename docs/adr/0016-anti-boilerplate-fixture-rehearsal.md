@@ -157,11 +157,11 @@ slice.
    independent LLM instances, not mechanised; their verdicts are recorded with the passages they cite. The BLOCKING
    verdict is corroborated by measured facts; the ADVISORY codes are candidates until the Product Owner judges the
    quoted passages (contract section 10).
-6. The judges' briefs, reports and tool calls were extracted by the runner from the judges' transcripts, which are
-   not in the repository; the suite checks the files, not the transcripts.
 2. Which model wrote a reading is declared, not measured (as in ETBZ-52/57/58).
 3. The diagnostics list the first violation per paragraph, chapter, reflection question and visual spec, not every
    violation inside one paragraph.
 4. 6.6 (charts sharing exactly one primitive) is not part of the section-8 minimum and was not run.
 5. The rescue finder's pre-registered terms missed a paraphrased subject in its positive control (R(S) [5.2]); the run
    record adds a position-only triage, and the 6.4 verdict rests on judge B's reading of the whole of R(S⁻).
+6. The judges' briefs, reports and tool calls were extracted by the runner from the judges' transcripts, which are
+   not in the repository; the suite checks the files, not the transcripts.
