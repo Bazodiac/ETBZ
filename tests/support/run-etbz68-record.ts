@@ -60,8 +60,17 @@ const controls = {
   outside: { nodeDns: probe('node', NODE_DNS, false), pythonDns: probe(PYTHON, PY_DNS, false), pythonIp: probe(PYTHON, PY_IP, false) },
   inside: { nodeDns: probe('node', NODE_DNS, true), pythonDns: probe(PYTHON, PY_DNS, true), pythonIp: probe(PYTHON, PY_IP, true) },
 };
+// Both directions are required: outside, each probe must succeed (or the inside failures could just mean an
+// offline machine); inside, each must fail with the probe's own denial exit (3) and a denial message - not with
+// a missing binary (127/71) or a spawn error (null).
+const DENIED = /^error (?:ENOTFOUND|EAI_AGAIN|URLError|PermissionError 1)$/u;
+for (const [name, result] of Object.entries(controls.outside)) {
+  if (result.exit !== 0) throw new Error(`network control ${name} failed outside the sandbox profile (machine offline?): ${String(result.exit)} ${result.output}`);
+}
 for (const [name, result] of Object.entries(controls.inside)) {
-  if (result.exit === 0) throw new Error(`network control ${name} succeeded inside the sandbox profile: ${result.output}`);
+  if (result.exit !== 3 || !DENIED.test(result.output)) {
+    throw new Error(`network control ${name} was not denied by the sandbox profile: ${String(result.exit)} ${result.output}`);
+  }
 }
 
 const record = {
@@ -127,6 +136,21 @@ writeFileSync(resolve(EVIDENCE, 'run-record.json'), `${JSON.stringify(record, nu
 // --- the checklist -------------------------------------------------------------
 
 const map = read<readonly PageBehaviour[]>(DESIGN_REVIEW_BEHAVIOUR_MAP);
+const checklistPath = resolve(EVIDENCE, 'visual-review-checklist.md');
+const existing = (() => {
+  try {
+    return readFileSync(checklistPath, 'utf8');
+  } catch {
+    return null;
+  }
+})();
+if (existing !== null && !/^Verdict: _pending_$/mu.test(existing)) {
+  throw new Error('the checklist already carries a PO verdict; refusing to overwrite it');
+}
+// Pages whose printed strings carry a number with a decimal point (released projection: values as delivered).
+const projectionPages = read<{ pages: { pageNumber: number; strings: unknown }[] }>(resolve(EVIDENCE, 'presentation-projection.json')).pages;
+const decimalPages = new Set(projectionPages.filter((page) => /\d\.\d/u.test(JSON.stringify(page.strings))).map((page) => page.pageNumber));
+const decimalNote = 'Inherited: Wu Xing values print with a decimal point (1.8, 2.5)';
 const FIXED: Readonly<Record<string, string>> = {
   cover: 'Cover: wordmark, Day Master glyph, title, prepared-for name',
   identity: 'Identity / document note ("Über dieses Dokument"). Inherited: the page number in "Siehe Methodenhinweis, Seite 30" wraps onto its own line',
@@ -140,7 +164,7 @@ const FIXED: Readonly<Record<string, string>> = {
   tenGods: 'Ten Gods: relation table to the Day Master',
   hiddenStems: 'Hidden Stems per branch with Qi roles (fixture order at the hour branch, ETBZ-58 comment 17024)',
   reflection: 'Reflection ("Fragen zur Reflexion"): pillar strip and four reflection questions',
-  summary: 'Summary ("Dein Chart in Kürze"). Inherited: Wu Xing values print with a decimal point (1.8, 2.5)',
+  summary: 'Summary ("Dein Chart in Kürze")',
   closing: 'Closing: title, prepared-for name, wordmark',
   methodNote: 'Method / data note ("Methodenhinweis"). Inherited: the data-note box only says a note exists; the note itself is the method-note sentence',
 };
@@ -176,7 +200,8 @@ const rows = map.map((page) => {
     }
     what = `Chapter ${String(page.chapter)}, page ${String(page.chapterPage)}: ${labels.join('; ')} (fill ${String(page.fill)})`;
   } else {
-    what = FIXED[page.kind];
+    const fixed = FIXED[page.kind];
+    what = fixed === undefined ? undefined : decimalPages.has(page.pageNumber) ? `${fixed}. ${decimalNote}` : fixed;
   }
   if (what === undefined) throw new Error(`no description for ${page.kind}`);
   return `| ${String(page.pageNumber)} | \`pages/${String(page.pageNumber).padStart(2, '0')}-${page.pageId}.png\` | ${what} | |`;
@@ -219,5 +244,5 @@ The authoritative verdict is the PO's comment on Jira ETBZ-68. It may be mirrore
 
 Verdict: _pending_
 `;
-writeFileSync(resolve(EVIDENCE, 'visual-review-checklist.md'), checklist, 'utf8');
+writeFileSync(checklistPath, checklist, 'utf8');
 process.stdout.write(`${JSON.stringify(record.determinism)}\n${JSON.stringify(controls)}\n`);
