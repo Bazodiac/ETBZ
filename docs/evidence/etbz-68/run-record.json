@@ -1,0 +1,88 @@
+{
+  "recordVersion": "etbz68-design-review-run-record.v1",
+  "slice": "ETBZ-68",
+  "nature": "SYNTHETIC_DESIGN_REVIEW_FIXTURE",
+  "notACustomerArtifact": true,
+  "statement": "Synthetic design-review document for the Product Owner visual acceptance. Not a customer artifact, not a reading, not Golden. Chart: the synthetic known-time development chart (Musterkundin A, no real birth data). Body text: neutral placeholder corpus.",
+  "base": "cb7605e58bee57cfff68c2a3b0a6a889ca1634c6",
+  "repositoryHead": "3e7a966160bc5a909bd4b80caac097a9a1a3b409",
+  "executedAt": "2026-10-03",
+  "fixture": {
+    "corpusFile": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
+    "corpusFileSha256": "sha256:47e7616509c52a64c50c098a5f940f19024141675bf3e8b31497c84b54db2ae9",
+    "composedContentFile": "docs/evidence/etbz-68/fixture/design-review-content.json",
+    "contentStructuralHash": "sha256:ea87c2a7c4eb07a92bb29f2fc24e9053add8a8b68c1d8495bdf86e7ba6054381",
+    "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
+    "chartEqualsEtbz55Chart": true,
+    "projectionStructuralHash": "sha256:2f57f724f9be703f0cb2af216099e39550b9adb79815f2a1bfa6b2099f68ef8e"
+  },
+  "identities": {
+    "template": "bazodiac-final-template@1.0.0",
+    "templateStructuralHash": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6",
+    "renderer": "bazodiac-pdf-renderer@1.0.0",
+    "rendererSourceSha256": "sha256:f971a44b5eaa2721a2cb46156786a5485f521d7bfcd8f8d545ab19c04c4de820",
+    "rendererEqualsEtbz55": true,
+    "projectionVersion": "bazodiac-presentation-projection.v1",
+    "engine": {
+      "browser": "chromium",
+      "flags": [
+        "--deterministic-mode",
+        "--disable-gpu",
+        "--force-color-profile=srgb",
+        "--font-render-hinting=none"
+      ],
+      "fonttools": "4.61.1",
+      "pikepdf": "10.14.0",
+      "pillow": "11.3.0",
+      "playwright": "1.52.0",
+      "python": "3.13.3",
+      "version": "136.0.7103.25"
+    }
+  },
+  "output": {
+    "pdfFile": "docs/evidence/etbz-68/synthetic-design-review.pdf",
+    "pdfSha256": "sha256:d80fbbf1ec7c326f46633e514d6b0f2eef860e4d1087b6ef776081f16e30a61f",
+    "byteLength": 1972336,
+    "pageCount": 30,
+    "contactSheetSha256": "sha256:1ebb6ce3f73026e6069c94eccaa89b8f807a5a49a3db5e7dbe6b12e494b92df9",
+    "pageImages": 30
+  },
+  "determinism": {
+    "method": "two separate render_pdf.py processes, same projection, same --executed-at and --repository-head, each also checking its own last two in-process runs (DETERMINISM check)",
+    "runs": [
+      ".etbz-verify/etbz68-render-a",
+      ".etbz-verify/etbz68-render-b"
+    ],
+    "pdfIdentical": true,
+    "contactSheetIdentical": true,
+    "qaReportIdentical": true,
+    "manifestIdentical": true,
+    "pageImagesIdentical": 30,
+    "pageImagesCompared": 30
+  },
+  "networkDenied": {
+    "profile": "(version 1)(allow default)(deny network*)",
+    "tool": "macOS sandbox-exec",
+    "positiveControl": "node fetch(\"https://example.com\") without the profile: status 200; with the profile: ENOTFOUND, exit 3",
+    "emitterUnderProfile": "npx vite-node tests/support/emit-etbz68-projection.ts <scratch>: exit 0, all three files byte-identical to the committed ones",
+    "renderUnderProfile": "both render processes ran under the profile: exit 0, PASSED"
+  },
+  "notRendered": [
+    {
+      "component": "ChapterDivider",
+      "reason": "no such component in the template contract, src/ or tools/ (ADR 0012 limitation 1; ETBZ-43 AC 2/5/10 open, comment 17069)"
+    },
+    {
+      "component": "ChartMotifSummary",
+      "reason": "no such component and no motif input in the projection (ADR 0012 limitation 1; ETBZ-43)"
+    },
+    {
+      "component": "KeyInsightPanel",
+      "reason": "drawn by pages.py, but the released content schema is paragraphs only (projection.ts contentSchema); PO decision 2026-10-03: scope A, no production change"
+    },
+    {
+      "component": "pull quote",
+      "reason": "drawn by pages.py, but the released content schema is paragraphs only; PO decision 2026-10-03: scope A, no production change"
+    }
+  ]
+}

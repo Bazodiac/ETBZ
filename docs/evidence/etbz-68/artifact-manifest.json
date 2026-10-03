@@ -1,0 +1,261 @@
+{
+ "artifactId": "bazodiac-reading-d80fbbf1ec7c326f",
+ "byteLength": 1972336,
+ "contactSheetSha256": "sha256:1ebb6ce3f73026e6069c94eccaa89b8f807a5a49a3db5e7dbe6b12e494b92df9",
+ "fonts": [
+  {
+   "family": "Inter",
+   "file": "assets/visual-system-v1/fonts/Inter-Regular.ttf",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/fonts/OFL.txt",
+   "role": "text",
+   "sha256": "sha256:40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82"
+  },
+  {
+   "family": "Inter",
+   "file": "assets/visual-system-v1/fonts/Inter-Medium.ttf",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/fonts/OFL.txt",
+   "role": "text",
+   "sha256": "sha256:97ad806f526e41546d46365bb3a393145f75b7b1568913db74549ad8b8dba872"
+  },
+  {
+   "family": "Inter",
+   "file": "assets/visual-system-v1/fonts/Inter-SemiBold.ttf",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/fonts/OFL.txt",
+   "role": "text",
+   "sha256": "sha256:78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3"
+  },
+  {
+   "family": "Inter Display",
+   "file": "assets/visual-system-v1/fonts/InterDisplay-Light.ttf",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/fonts/OFL.txt",
+   "role": "text",
+   "sha256": "sha256:1d6072bc7807fa7bf08a6d273368f04ac68e77438258f32975057a61c8772811"
+  },
+  {
+   "family": "Inter Display",
+   "file": "assets/visual-system-v1/fonts/InterDisplay-Regular.ttf",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/fonts/OFL.txt",
+   "role": "text",
+   "sha256": "sha256:99614bda7ff423aaf470990692dd93613a5971ab4446e4a6d5a83b3d74865074"
+  },
+  {
+   "family": "Noto Sans CJK SC",
+   "file": "NotoSansCJK-Regular.ttc",
+   "installedAt": "host font directory",
+   "licence": "SIL Open Font License 1.1",
+   "licenceFile": "assets/visual-system-v1/glyphs/OFL.txt",
+   "role": "informational-cjk",
+   "sha256": "sha256:b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+   "upstream": "https://github.com/notofonts/noto-cjk/raw/main/Sans/OTC/NotoSansCJK-Regular.ttc"
+  }
+ ],
+ "generation": {
+  "declared": true,
+  "executedAt": "2026-10-03",
+  "host": "Darwin arm64",
+  "repositoryHead": "3e7a966160bc5a909bd4b80caac097a9a1a3b409"
+ },
+ "input": {
+  "branchAnimals": {
+   "locale": "de",
+   "ref": "bazodiac-branch-animal-labels@1.0.0",
+   "structuralHash": "sha256:b885bae1cce42bf219c4baa6a71c4750e177c162629704a26075c327e5a95cb3"
+  },
+  "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
+  "contentStructuralHash": "sha256:ea87c2a7c4eb07a92bb29f2fc24e9053add8a8b68c1d8495bdf86e7ba6054381",
+  "lexicon": {
+   "confluencePageId": "67600385",
+   "confluencePageVersion": "1",
+   "contractRef": "terminology-wording-lexicon@1.0.0"
+  }
+ },
+ "manifestVersion": "bazodiac-artifact-manifest.v1",
+ "mimeType": "application/pdf",
+ "pageCount": 30,
+ "presentation": {
+  "fileSha256": "sha256:f92ce814d5cef9e4240502237eda262318e7720da6fbc7ca05f3913cc23eb970",
+  "projectionVersion": "bazodiac-presentation-projection.v1",
+  "structuralHash": "sha256:2f57f724f9be703f0cb2af216099e39550b9adb79815f2a1bfa6b2099f68ef8e"
+ },
+ "qa": {
+  "checks": [
+   {
+    "detail": "bazodiac-presentation-projection.v1",
+    "id": "PROJECTION_VERSION",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "projection": "sha256:2f57f724f9be703f0cb2af216099e39550b9adb79815f2a1bfa6b2099f68ef8e",
+     "template": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
+    },
+    "id": "PROJECTION_IDENTITY",
+    "result": "PASS"
+   },
+   {
+    "detail": [
+     "assets/visual-system-v1/fonts/Inter-Regular.ttf",
+     "assets/visual-system-v1/fonts/Inter-Medium.ttf",
+     "assets/visual-system-v1/fonts/Inter-SemiBold.ttf",
+     "assets/visual-system-v1/fonts/InterDisplay-Light.ttf",
+     "assets/visual-system-v1/fonts/InterDisplay-Regular.ttf",
+     "NotoSansCJK-Regular.ttc"
+    ],
+    "id": "FONT_PINS",
+    "result": "PASS"
+   },
+   {
+    "detail": [
+     "assets/visual-system-v1/tokens.css",
+     "assets/visual-system-v1/glyphs/sprite.svg",
+     "assets/visual-system-v1/brand/wordmark.svg",
+     "assets/visual-system-v1/glyphs/manifest.json"
+    ],
+    "id": "TEMPLATE_ASSET_PINS",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "cjkCharacters": 31,
+     "displayGlyphs": 27,
+     "unitsPerEm": 1000
+    },
+    "id": "GLYPHS_AND_CJK",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "glyphPaths": 112,
+     "pages": 30,
+     "printedPaths": 1554
+    },
+    "id": "PAGE_STRINGS",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "displayGlyphs": 117,
+     "pages": 30,
+     "textNodes": 1723
+    },
+    "id": "PAGE_QA",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "embeddedFonts": [
+      "AAAAAA+Inter-Medium",
+      "AAAAAA+InterDisplay-Light",
+      "BAAAAA+Inter-Medium",
+      "BAAAAA+Inter-Regular",
+      "BAAAAA+InterDisplay-Light",
+      "CAAAAA+Inter-Regular",
+      "DAAAAA+Inter-Regular",
+      "Type3"
+     ],
+     "mime": "application/pdf",
+     "pages": 30
+    },
+    "id": "PDF_READBACK",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "clippedUnits": 0,
+     "pages": 30,
+     "printedStrings": 1723,
+     "textUnits": 35074
+    },
+    "id": "PDF_TEXT_LAYER",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "canonicalOutlines": 148,
+     "convexShapes": 579,
+     "displayGlyphs": 117,
+     "pages": 30,
+     "placementDeviationPx": 0.937,
+     "wordmarkDots": 31,
+     "wordmarks": 31
+    },
+    "id": "PDF_VECTOR_LAYER",
+    "result": "PASS"
+   },
+   {
+    "detail": {
+     "comparedRuns": [
+      2,
+      3
+     ],
+     "pages": 30,
+     "pdfSha256": "sha256:d80fbbf1ec7c326f46633e514d6b0f2eef860e4d1087b6ef776081f16e30a61f"
+    },
+    "id": "DETERMINISM",
+    "result": "PASS"
+   }
+  ],
+  "state": "QA_PASSED",
+  "status": "PASSED"
+ },
+ "renderer": {
+  "engine": {
+   "browser": "chromium",
+   "flags": [
+    "--deterministic-mode",
+    "--disable-gpu",
+    "--force-color-profile=srgb",
+    "--font-render-hinting=none"
+   ],
+   "fonttools": "4.61.1",
+   "pikepdf": "10.14.0",
+   "pillow": "11.3.0",
+   "playwright": "1.52.0",
+   "python": "3.13.3",
+   "version": "136.0.7103.25"
+  },
+  "ref": "bazodiac-pdf-renderer@1.0.0",
+  "sourceSha256": "sha256:f971a44b5eaa2721a2cb46156786a5485f521d7bfcd8f8d545ab19c04c4de820"
+ },
+ "sha256": "sha256:d80fbbf1ec7c326f46633e514d6b0f2eef860e4d1087b6ef776081f16e30a61f",
+ "state": "ARTIFACT_READY",
+ "template": {
+  "assets": [
+   {
+    "path": "assets/visual-system-v1/tokens.css",
+    "sha256": "sha256:66c737ec031a4a679a4545e44170eef3de054a6ec0690f3e7e0fde0d0b63fe50"
+   },
+   {
+    "path": "assets/visual-system-v1/glyphs/sprite.svg",
+    "sha256": "sha256:6a1851ac6da6d0b15a6ce6f58f938c70a0d1dacd9ed16ce722cf6f74417a4cba"
+   },
+   {
+    "path": "assets/visual-system-v1/brand/wordmark.svg",
+    "sha256": "sha256:c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1"
+   },
+   {
+    "path": "assets/visual-system-v1/glyphs/manifest.json",
+    "sha256": "sha256:a0c63cc99c1a9fb898255a807022a2e7d34eedb743e47d2736dfef86ab145c4c"
+   }
+  ],
+  "decisionSource": {
+   "pageId": "66650114",
+   "system": "confluence",
+   "version": "2"
+  },
+  "designSystem": {
+   "name": "Bazodiac Final",
+   "tokenVersion": 1,
+   "version": "1.0.0"
+  },
+  "glyphManifestSha256": "sha256:54f0ed0d5d3eebf65817c13cb54ea814049c2e79c05d9d040889c69bd08005d9",
+  "ref": "bazodiac-final-template@1.0.0",
+  "structuralHash": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6",
+  "wordmarkSha256": "sha256:c542552e8bd54033107b42132d907a48f9c5383736683edd65746b47ae7466e1"
+ }
+}
