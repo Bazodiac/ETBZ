@@ -43,7 +43,7 @@ bash scripts/verify-guards.sh                # foundation guard mutation proofs 
 bash scripts/secret-scan.sh                  # gitleaks tree + history + scanner mutation proof
 bash scripts/build-dry-run.sh                # container build / provenance / smoke / reproducibility
 npm run guards:etbz34 | guards:etbz30a | guards:etbz30b   # slice source-mutation proofs (NOT part of ci-verify)
-npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59 | guards:etbz60   # slice mutation proofs that ARE steps of ci-verify
+npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59 | guards:etbz60 | guards:etbz68   # slice mutation proofs that ARE steps of ci-verify
 npm run build && npm run etbz51:bundle                   # print the portable Skill Contract Bundle (canonical JSON)
 npm run build && npm run etbz52:package                  # regenerate skill/bazodiac-interpretation-skill-v1/{contract-bundle,reading-schema,MANIFEST}.json
 npm run build && npm run etbz57:package                  # the same for skill/bazodiac-interpretation-skill-v1.1/ (bundle 1.1.0)

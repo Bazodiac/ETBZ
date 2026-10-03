@@ -39,14 +39,23 @@ Jira ETBZ-68 (sub-task of ETBZ-43); slice start: comment 17207.
 browser:
 - the content, projection and behaviour map, byte for byte;
 - the 30-page sequence, the chapter split 3 + 6 × 2, and every required behaviour;
-- that the printed corpus names no symbol: no CJK, no glyph pinyin, no animal, phase or pillar term;
-- that no two chapters share two consecutive sentences;
+- that the printed corpus names no symbol from a fixed vocabulary: no CJK, no display-glyph pinyin with or
+  without tones, no animal, phase or pillar term as a whole word;
+- that no two chapters share two consecutive sentences, and no paragraph recurs;
 - the PDF digest, length, page count and A4 media boxes, read from the bytes;
 - every page image against the QA report;
 - template and renderer identities, both equal to the ETBZ-55 evidence;
 - the run record against the manifest, and the network-denial controls;
 - the verdict vocabulary;
 - the canary record against the current test.
+
+The symbol check and the loader's anaphora check are lexical guards against known patterns: an inflected or
+compound form, or a back-reference outside the word list, would pass them. That the prose is neutral and
+self-contained rests on three independent read-only reviews of the corpus, not on these checks.
+
+`scripts/etbz68-contract-canaries.mjs` proves that the contract test can fail. Each canary names the test
+that must fail. `ci-verify` re-runs it as `npm run guards:etbz68` (`--check`), and
+`tests/architecture/ci-contract.test.ts` pins that step.
 
 The 30 is asserted only there. The released visual contract already numbers its page family for a
 30-page document (`pageFamily.ts`: pages 1–14 and 27–30, long form 12–26), but no production module
@@ -153,7 +162,8 @@ not change them. A `CHANGES_REQUIRED` that names them is a production decision.
 
 ## Human gate
 
-The Product Owner inspects the PDF, the contact sheet and the 30 page renders. The PO records one verdict,
+The Product Owner inspects the PDF, the contact sheet and the 30 page renders. The PO records one verdict
+(`CHANGES_REQUIRED` may be followed by the pages and changes),
 `VISUAL_DESIGN_ACCEPTED_FOR_CONTENT_REVIEW` or `CHANGES_REQUIRED`, on Jira ETBZ-68, which is
 authoritative. It can be mirrored in `visual-review-checklist.md`. The delivery does not declare the
 design accepted.

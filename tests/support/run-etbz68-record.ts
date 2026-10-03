@@ -43,6 +43,23 @@ interface Manifest {
   generation: { executedAt: string; repositoryHead: string };
 }
 
+// The PO's state is checked before anything is written: a checklist that carries a verdict or any PO
+// note is the PO's, and a refused run must leave every evidence file as it was.
+const checklistPath = resolve(EVIDENCE, 'visual-review-checklist.md');
+const existing = (() => {
+  try {
+    return readFileSync(checklistPath, 'utf8');
+  } catch {
+    return null;
+  }
+})();
+if (existing !== null) {
+  const notes = existing.split('\n').filter((line) => /^\| \d+ \|/u.test(line) && !/\| \|$/u.test(line.trimEnd()));
+  if (!/^Verdict: _pending_$/mu.test(existing) || notes.length > 0) {
+    throw new Error('the checklist carries a PO verdict or PO notes; refusing to overwrite any evidence');
+  }
+}
+
 const manifest = read<Manifest>(resolve(renderA, 'artifact-manifest.json'));
 const etbz55 = read<Manifest>(resolve('docs/evidence/etbz-55/artifact-manifest.json'));
 const pages = readdirSync(resolve(renderA, 'pages')).sort();
@@ -64,8 +81,9 @@ const controls = {
 // offline machine); inside, each must fail with the probe's own denial exit (3) and a denial message - not with
 // a missing binary (127/71) or a spawn error (null).
 const DENIED = /^error (?:ENOTFOUND|EAI_AGAIN|URLError|PermissionError 1)$/u;
+const SUCCEEDED = /^(?:status 200|connected)$/u;
 for (const [name, result] of Object.entries(controls.outside)) {
-  if (result.exit !== 0) throw new Error(`network control ${name} failed outside the sandbox profile (machine offline?): ${String(result.exit)} ${result.output}`);
+  if (result.exit !== 0 || !SUCCEEDED.test(result.output)) throw new Error(`network control ${name} failed outside the sandbox profile (machine offline?): ${String(result.exit)} ${result.output}`);
 }
 for (const [name, result] of Object.entries(controls.inside)) {
   if (result.exit !== 3 || !DENIED.test(result.output)) {
@@ -136,21 +154,13 @@ writeFileSync(resolve(EVIDENCE, 'run-record.json'), `${JSON.stringify(record, nu
 // --- the checklist -------------------------------------------------------------
 
 const map = read<readonly PageBehaviour[]>(DESIGN_REVIEW_BEHAVIOUR_MAP);
-const checklistPath = resolve(EVIDENCE, 'visual-review-checklist.md');
-const existing = (() => {
-  try {
-    return readFileSync(checklistPath, 'utf8');
-  } catch {
-    return null;
-  }
-})();
-if (existing !== null && !/^Verdict: _pending_$/mu.test(existing)) {
-  throw new Error('the checklist already carries a PO verdict; refusing to overwrite it');
-}
 // Pages whose printed strings carry a number with a decimal point (released projection: values as delivered).
 const projectionPages = read<{ pages: { pageNumber: number; strings: unknown }[] }>(resolve(EVIDENCE, 'presentation-projection.json')).pages;
 const decimalPages = new Set(projectionPages.filter((page) => /\d\.\d/u.test(JSON.stringify(page.strings))).map((page) => page.pageNumber));
 const decimalNote = 'Inherited: Wu Xing values print with a decimal point (1.8, 2.5)';
+// The template, not the projection, joins these strings with "·", so the wrap is observed on the render, not derived.
+const SEPARATOR_NOTE = 'Inherited: a "·" separator can end a wrapped line (observed on this render)';
+const separatorKinds = new Set(['glance', 'summary']);
 const FIXED: Readonly<Record<string, string>> = {
   cover: 'Cover: wordmark, Day Master glyph, title, prepared-for name',
   identity: 'Identity / document note ("Über dieses Dokument"). Inherited: the page number in "Siehe Methodenhinweis, Seite 30" wraps onto its own line',
@@ -195,13 +205,15 @@ const rows = map.map((page) => {
   let what: string | undefined;
   if (page.kind === 'longForm') {
     const labels = ORDER.filter((behaviour) => page.behaviours.includes(behaviour)).map((behaviour) => LABEL[behaviour]);
+    if (page.behaviours.includes('continuation-with-sidebar')) labels.push('inherited: a "·" separator ends a wrapped line in the sidebar (observed on this render)');
     if (chaptersWithBoth.has(page.chapter) && (page.behaviours.includes('continuation-with-sidebar') || page.behaviours.includes('short-final-with-reference-panel'))) {
       labels.push('inherited: this chapter shows the same reference block twice, as sidebar and as panel');
     }
     what = `Chapter ${String(page.chapter)}, page ${String(page.chapterPage)}: ${labels.join('; ')} (fill ${String(page.fill)})`;
   } else {
     const fixed = FIXED[page.kind];
-    what = fixed === undefined ? undefined : decimalPages.has(page.pageNumber) ? `${fixed}. ${decimalNote}` : fixed;
+    const notes = [...(decimalPages.has(page.pageNumber) ? [decimalNote] : []), ...(separatorKinds.has(page.kind) ? [SEPARATOR_NOTE] : [])];
+    what = fixed === undefined ? undefined : [fixed, ...notes].join('. ');
   }
   if (what === undefined) throw new Error(`no description for ${page.kind}`);
   return `| ${String(page.pageNumber)} | \`pages/${String(page.pageNumber).padStart(2, '0')}-${page.pageId}.png\` | ${what} | |`;
@@ -237,7 +249,7 @@ header, not a ChapterDivider.
 ## Verdict (Human Product Owner)
 
 The authoritative verdict is the PO's comment on Jira ETBZ-68. It may be mirrored here by replacing
-\`_pending_\` with exactly one of the two values.
+\`_pending_\` with exactly one of the two values; \`CHANGES_REQUIRED\` may be followed by the pages and changes.
 
 - \`VISUAL_DESIGN_ACCEPTED_FOR_CONTENT_REVIEW\`
 - \`CHANGES_REQUIRED\` (list the pages and changes)

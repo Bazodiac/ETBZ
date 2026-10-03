@@ -74,6 +74,11 @@ const CANARIES = [
   ['moved-whole detector loosened to one baseline', FIXTURE, text('>= 1;\n}', '>= 0;\n}'), { killer: 'regenerates the content, the projection and the behaviour map' }],
   ['carry-over rule narrowed to chapter page 1 blocks', FIXTURE, text(" ||\n        (pageContent.chapterPage === 2 && i === 0 && !fragment.continuedFromPreviousPage)", ''), { killer: 'regenerates the content, the projection and the behaviour map' }],
   ['checklist verdict outside the vocabulary', `${E}/visual-review-checklist.md`, text('Verdict: _pending_', 'Verdict: LOOKS_GOOD'), { killer: 'leaves the verdict to the Product Owner' }],
+  ['inside network control never ran', `${E}/run-record.json`, (bytes) => {
+    const record = JSON.parse(bytes.toString('utf8'));
+    record.networkDenied.controls.inside.pythonIp = { exit: null, output: '' };
+    return Buffer.from(`${JSON.stringify(record, null, 2)}\n`, 'utf8');
+  }, { killer: 'records the network denial' }],
   ['outside network control failed', `${E}/run-record.json`, text('"output": "connected"', '"output": "error ENOTFOUND"'), { killer: 'records the network denial' }],
 ];
 

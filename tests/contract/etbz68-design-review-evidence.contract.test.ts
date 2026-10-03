@@ -87,7 +87,7 @@ const REQUIRED_BEHAVIOURS = [
 ];
 
 /** The verdict line of the checklist: pending, or exactly one of the PO's two values. */
-const VERDICT_LINE = /^Verdict: (?:_pending_|`VISUAL_DESIGN_ACCEPTED_FOR_CONTENT_REVIEW`|`CHANGES_REQUIRED`)$/mu;
+const VERDICT_LINE = /^Verdict: (?:_pending_|`VISUAL_DESIGN_ACCEPTED_FOR_CONTENT_REVIEW`|`CHANGES_REQUIRED`(?: .+)?)$/mu;
 
 const sha256OfFile = (path: string): string => sha256Of(readFileSync(resolve(ROOT, path)));
 /** The canary run sets the record aside while it runs (scripts/etbz68-contract-canaries.mjs); everywhere else it is required. */
