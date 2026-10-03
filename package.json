@@ -46,6 +46,8 @@
     "etbz55:projection": "vite-node tests/support/emit-etbz55-projection.ts",
     "etbz56:projection": "vite-node tests/support/emit-etbz56-projection.ts",
     "etbz68:projection": "vite-node tests/support/emit-etbz68-projection.ts",
+    "etbz68:record": "vite-node tests/support/run-etbz68-record.ts",
+    "etbz68:canaries": "node scripts/etbz68-contract-canaries.mjs",
     "etbz57:evidence": "vite-node tests/support/emit-etbz57-evidence.ts",
     "etbz58:live": "vite-node tests/support/run-etbz58-live.ts",
     "etbz58:assemble": "vite-node tests/support/run-etbz58-assemble.ts",

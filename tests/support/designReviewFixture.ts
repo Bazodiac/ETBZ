@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';
 import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
-import { BASELINE_CP, buildPresentationProjection } from '../../src/application/presentation/index.js';
+import { BASELINE_CP, CONTENT_W, buildPresentationProjection } from '../../src/application/presentation/index.js';
 import type { PresentationProjection } from '../../src/application/presentation/index.js';
 import { GEOMETRY_CENTIPOINTS, PAGINATION_RULES } from '../../src/application/visual/index.js';
 import { knownTimeChart } from './narrativeFixture.js';
@@ -32,7 +32,7 @@ export const DESIGN_REVIEW_BEHAVIOUR_MAP = 'docs/evidence/etbz-68/page-behaviour
 
 const corpusSchema = z.strictObject({
   corpusId: z.literal('etbz68-neutral-placeholder-corpus'),
-  version: z.literal('1.0.0'),
+  version: z.literal('1.1.0'),
   language: z.literal('de'),
   purpose: z.string().min(1),
   title: z.string().min(1),
@@ -42,8 +42,15 @@ const corpusSchema = z.strictObject({
   methodNote: z.string().min(1),
   composition: z.strictObject({
     rule: z.string().min(1),
-    stride: z.number().int().min(1),
-    chapters: z.array(z.strictObject({ offset: z.number().int().min(0), paragraphs: z.array(z.number().int().min(1)).min(1) })).min(1),
+    chapters: z
+      .array(
+        z.strictObject({
+          offset: z.number().int().min(0),
+          stride: z.number().int().min(1),
+          paragraphs: z.array(z.number().int().min(1)).min(1),
+        }),
+      )
+      .min(1),
   }),
 });
 
@@ -62,16 +69,20 @@ function gcd(a: number, b: number): number {
 
 export function loadPlaceholderCorpus(): PlaceholderCorpus {
   const corpus = corpusSchema.parse(JSON.parse(readFileSync(resolve(process.cwd(), DESIGN_REVIEW_CORPUS), 'utf8')));
-  if (new Set(corpus.sentences).size !== corpus.sentences.length) throw new Error('the corpus repeats a sentence');
-  if (gcd(corpus.composition.stride, corpus.sentences.length) !== 1) {
-    throw new Error('the stride must be coprime with the sentence count, or a chapter cycles through a subset');
-  }
+  const n = corpus.sentences.length;
+  if (new Set(corpus.sentences).size !== n) throw new Error('the corpus repeats a sentence');
   if (corpus.composition.chapters.length !== corpus.chapterTitles.length) throw new Error('one composition entry per chapter title');
+  const strides = corpus.composition.chapters.map((plan) => plan.stride % n);
+  if (new Set(strides).size !== strides.length) throw new Error('two chapters share a stride, so they would share runs of sentences');
+  for (const plan of corpus.composition.chapters) {
+    if (gcd(plan.stride, n) !== 1) throw new Error('a stride must be coprime with the sentence count, or the chapter cycles through a subset');
+    if (plan.paragraphs.reduce((sum, count) => sum + count, 0) > n) throw new Error('a chapter would repeat one of its own sentences');
+  }
   return corpus;
 }
 
 /**
- * Chapter i takes `sentences[(offset_i + j * stride) mod n]` for j = 0, 1, 2, …
+ * Chapter i takes `sentences[(offset_i + j * stride_i) mod n]` for j = 0, 1, 2, …
  * in order; a paragraph consumes as many consecutive picks as its count says.
  * Pure: the same corpus always yields the same content.
  */
@@ -82,7 +93,7 @@ export function composeDesignReviewContent(corpus: PlaceholderCorpus): DesignRev
     const paragraphs = plan.paragraphs.map((count) => {
       const sentences: string[] = [];
       for (let k = 0; k < count; k += 1) {
-        const sentence = corpus.sentences[(plan.offset + pick * corpus.composition.stride) % n];
+        const sentence = corpus.sentences[(plan.offset + pick * plan.stride) % n];
         if (sentence === undefined) throw new Error('unreachable: index is reduced modulo the sentence count');
         sentences.push(sentence);
         pick += 1;
@@ -110,11 +121,16 @@ export function designReviewFixture(): DesignReviewFixture {
 
 // --- the page behaviour map ---------------------------------------------------
 
-const CONTENT_BOTTOM_CP = GEOMETRY_CENTIPOINTS.marginTop + GEOMETRY_CENTIPOINTS.contentH;
+const CONTENT_TOP_CP = GEOMETRY_CENTIPOINTS.marginTop;
+const CONTENT_BOTTOM_CP = CONTENT_TOP_CP + GEOMETRY_CENTIPOINTS.contentH;
+/** The opener column width, as the paginator computes it (long-form.ts `makePage`). */
+const OPENER_COLUMN_CP = Math.floor((CONTENT_W - GEOMETRY_CENTIPOINTS.gutter) / 2);
 const MIN_SPLIT_LINES = Math.max(PAGINATION_RULES.orphanMinLines, PAGINATION_RULES.widowMinLines);
-/** A one-sentence paragraph at most this long is "short"; a paragraph at least this long is "long". */
+/** A paragraph of at most this many words is "short"; one of at least this many is "long". */
 const SHORT_PARAGRAPH_WORDS = 15;
 const LONG_PARAGRAPH_WORDS = 90;
+/** A carried-over opener wrap is only told apart from a naturally short paragraph from this many lines on. */
+const CARRY_OVER_MIN_LINES = 4;
 
 interface FragmentView {
   readonly blockId: string;
@@ -124,7 +140,7 @@ interface FragmentView {
   readonly xCp: number;
   readonly topCp: number;
   readonly heightCp: number;
-  readonly lines: readonly unknown[];
+  readonly lines: readonly Readonly<{ widthCp: number }>[];
 }
 
 interface LongFormContentView {
@@ -144,7 +160,7 @@ export interface PageBehaviour {
   readonly chapter: number | null;
   readonly chapterPage: number | null;
   readonly behaviours: readonly string[];
-  readonly fillRatio: number | null;
+  readonly fill: number | null;
 }
 
 function isLongForm(content: unknown): content is LongFormContentView {
@@ -156,18 +172,34 @@ function wordCount(text: string): number {
 }
 
 /**
+ * The paginator's own test (long-form.ts): a new paragraph in a non-empty column
+ * is set one baseline below the previous one, and it is moved whole when at least
+ * one line would fit there but fewer than the two-line minimum may be placed. So
+ * a fresh paragraph opening the next column was moved whole exactly when the
+ * column it left still had room for one line after that spacing.
+ */
+function hadRoomForALine(lastInColumn: FragmentView): boolean {
+  const y0 = lastInColumn.topCp + lastInColumn.heightCp + BASELINE_CP;
+  return Math.floor((CONTENT_BOTTOM_CP - y0) / BASELINE_CP) >= 1;
+}
+
+/**
  * Which editorial behaviours each page of the projection exercises, read from
  * the projection the renderer draws (never from intent). Long-form behaviours:
  * - `opener` / `continuation`: the page template;
  * - `two-column` / `one-column`: the number of distinct column x positions;
  * - `column-split`: a paragraph continues from the left into the right column;
  * - `continues-across-page` / `continued-from-previous-page`: a paragraph crosses the page edge;
- * - `orphan-widow-boundary`: a split fragment carries exactly the minimum lines;
- * - `paragraph-moved-whole`: a continuation page opens with a fresh paragraph although the
- *   previous page still had room for at least one more line;
- * - `short-paragraph` / `long-paragraph`: a paragraph on the page is at most 15 / at least 90 words;
- * - `dense-with-sidebar` / `sparse-with-reference-panel`: the continuation side module the
- *   projection chose (a short final page below 60 % fill gets the reference panel).
+ * - `split-at-2-line-minimum`: a split fragment carries exactly the orphan/widow minimum of lines
+ *   (the split landed on the minimum; whether the rule had to act is not claimed);
+ * - `paragraph-moved-whole`: a fresh paragraph opens a column (the right opener column or the next
+ *   page) although the column it left had room for at least one line - the paginator's condition;
+ * - `opener-width-carry-over`: a continuation-page fragment keeps lines wrapped at the narrower
+ *   opener width, because the paginator wraps a paragraph once (ADR 0012 limitation 4);
+ * - `short-paragraph` / `long-paragraph`: a paragraph on the page has at most 15 / at least 90 words;
+ * - `continuation-with-sidebar` / `short-final-with-reference-panel`: the side module the projection
+ *   chose; the final page of a chapter gets the panel when its fill is below 0.6.
+ * `fill` is the projection's own measure: (lowest fragment bottom - content top) / content height.
  */
 export function pageBehaviourMap(projection: PresentationProjection, content: DesignReviewContent): readonly PageBehaviour[] {
   const pages = projection.pages as readonly Readonly<{ pageNumber: number; pageId: string; content: unknown }>[];
@@ -175,35 +207,53 @@ export function pageBehaviourMap(projection: PresentationProjection, content: De
     const pageContent = page.content;
     if (!isLongForm(pageContent)) {
       const kind = typeof pageContent === 'object' && pageContent !== null ? String((pageContent as { kind?: unknown }).kind) : 'unknown';
-      return { pageNumber: page.pageNumber, pageId: page.pageId, kind, chapter: null, chapterPage: null, behaviours: [], fillRatio: null };
+      return { pageNumber: page.pageNumber, pageId: page.pageId, kind, chapter: null, chapterPage: null, behaviours: [], fill: null };
     }
     const behaviours = new Set<string>();
     const fragments = pageContent.fragments;
     behaviours.add(pageContent.template);
-    const columns = new Set(fragments.map((fragment) => fragment.xCp));
-    behaviours.add(columns.size >= 2 ? 'two-column' : 'one-column');
+    const columns = [...new Set(fragments.map((fragment) => fragment.xCp))].sort((left, right) => left - right);
+    behaviours.add(columns.length >= 2 ? 'two-column' : 'one-column');
     for (let i = 0; i < fragments.length; i += 1) {
       const fragment = fragments[i];
       if (fragment === undefined) continue;
       const next = fragments[i + 1];
       if (fragment.continuesOnNextPage && next !== undefined && next.blockId === fragment.blockId && next.continuedFromPreviousPage) {
         behaviours.add('column-split');
-        if (fragment.lines.length === MIN_SPLIT_LINES || next.lines.length === MIN_SPLIT_LINES) behaviours.add('orphan-widow-boundary');
+        if (fragment.lines.length === MIN_SPLIT_LINES || next.lines.length === MIN_SPLIT_LINES) behaviours.add('split-at-2-line-minimum');
       }
       if (fragment.continuesOnNextPage && (next === undefined || next.blockId !== fragment.blockId)) {
         behaviours.add('continues-across-page');
-        if (fragment.lines.length === MIN_SPLIT_LINES) behaviours.add('orphan-widow-boundary');
+        if (fragment.lines.length === MIN_SPLIT_LINES) behaviours.add('split-at-2-line-minimum');
       }
       if (i === 0 && fragment.continuedFromPreviousPage) {
         behaviours.add('continued-from-previous-page');
-        if (fragment.lines.length === MIN_SPLIT_LINES) behaviours.add('orphan-widow-boundary');
+        if (fragment.lines.length === MIN_SPLIT_LINES) behaviours.add('split-at-2-line-minimum');
+      }
+      if (
+        pageContent.template === 'continuation' &&
+        fragment.lines.length >= CARRY_OVER_MIN_LINES &&
+        fragment.lines.every((line) => line.widthCp <= OPENER_COLUMN_CP)
+      ) {
+        behaviours.add('opener-width-carry-over');
       }
     }
+    // Moved whole into the right opener column.
+    if (columns.length >= 2) {
+      const rightX = columns[columns.length - 1];
+      const firstRight = fragments.findIndex((fragment) => fragment.xCp === rightX);
+      const lastLeft = fragments[firstRight - 1];
+      const right = fragments[firstRight];
+      if (right !== undefined && lastLeft !== undefined && !right.continuedFromPreviousPage && hadRoomForALine(lastLeft)) {
+        behaviours.add('paragraph-moved-whole');
+      }
+    }
+    // Moved whole onto this page.
     const first = fragments[0];
     const previous = pages[index - 1]?.content;
     if (pageContent.chapterPage > 1 && first !== undefined && !first.continuedFromPreviousPage && isLongForm(previous)) {
       const last = previous.fragments[previous.fragments.length - 1];
-      if (last !== undefined && CONTENT_BOTTOM_CP - (last.topCp + last.heightCp) >= BASELINE_CP) behaviours.add('paragraph-moved-whole');
+      if (last !== undefined && hadRoomForALine(last)) behaviours.add('paragraph-moved-whole');
     }
     const chapter = content.chapters[pageContent.chapterNumber - 1];
     for (const blockId of new Set(fragments.map((fragment) => fragment.blockId))) {
@@ -213,11 +263,10 @@ export function pageBehaviourMap(projection: PresentationProjection, content: De
       if (words <= SHORT_PARAGRAPH_WORDS) behaviours.add('short-paragraph');
       if (words >= LONG_PARAGRAPH_WORDS) behaviours.add('long-paragraph');
     }
-    if (pageContent.sidebar !== null && pageContent.sidebar !== undefined) behaviours.add('dense-with-sidebar');
-    if (pageContent.referencePanel !== null && pageContent.referencePanel !== undefined) behaviours.add('sparse-with-reference-panel');
-    const top = Math.min(...fragments.map((fragment) => fragment.topCp));
-    const bottom = Math.max(...fragments.map((fragment) => fragment.topCp + fragment.heightCp));
-    const fillRatio = Math.round(((bottom - top) / (CONTENT_BOTTOM_CP - top)) * 1000) / 1000;
+    if (pageContent.sidebar !== null && pageContent.sidebar !== undefined) behaviours.add('continuation-with-sidebar');
+    if (pageContent.referencePanel !== null && pageContent.referencePanel !== undefined) behaviours.add('short-final-with-reference-panel');
+    const usedBottom = Math.max(...fragments.map((fragment) => fragment.topCp + fragment.heightCp));
+    const fill = Math.round(((usedBottom - CONTENT_TOP_CP) / GEOMETRY_CENTIPOINTS.contentH) * 1000) / 1000;
     return {
       pageNumber: page.pageNumber,
       pageId: page.pageId,
@@ -225,7 +274,7 @@ export function pageBehaviourMap(projection: PresentationProjection, content: De
       chapter: pageContent.chapterNumber,
       chapterPage: pageContent.chapterPage,
       behaviours: [...behaviours].sort(),
-      fillRatio,
+      fill,
     };
   });
 }

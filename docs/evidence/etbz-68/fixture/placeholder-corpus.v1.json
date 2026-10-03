@@ -1,8 +1,8 @@
 {
   "corpusId": "etbz68-neutral-placeholder-corpus",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "language": "de",
-  "purpose": "Synthetic design-review text for ETBZ-68. Neutral German prose about paper, type and book-making. It makes no customer, psychological, astrological or biographical claim and is not a reading.",
+  "purpose": "Synthetic design-review text for ETBZ-68. Neutral German prose about paper, type, book-making and related images from craft and architecture. It makes no customer, psychological, astrological or biographical claim and is not a reading. The method note's data-note sentence is the accepted ETBZ-57 wording for the fixture chart's DAY_ANCHOR_UNVERIFIED source warning.",
   "title": "Dein BaZi-Reading: Struktur, Rhythmus und der Raum zwischen den Zeilen",
   "chapterTitles": [
     "Papier, Raster und der erste Blick auf eine Seite",
@@ -21,12 +21,12 @@
     "Weißraum ist kein Rest.",
     "In alten Werkstätten wurden Bogen gegen das Licht gehalten, um die Dichte der Fasern zu prüfen; erst danach entschied man, welche Seite bedruckt wird.",
     "Ein Raster ordnet, ohne sich selbst zu zeigen.",
-    "Die Grundlinie, auf der alle Zeilen stehen, sorgt dafür, dass Text auf der Vorderseite und Text auf der Rückseite deckungsgleich liegen.",
+    "Ein Grundlinienraster, auf dem alle Zeilen stehen, sorgt dafür, dass Text auf der Vorderseite und Text auf der Rückseite deckungsgleich liegen.",
     "Wer ein Buch aufschlägt, sieht zuerst eine Fläche und erst dann einzelne Wörter.",
     "Gute Typografie fällt kaum auf.",
     "Der Grauwert einer Kolumne entsteht aus Strichstärke, Laufweite und Zeilenabstand – ändert sich eine dieser Größen, wirkt die ganze Fläche heller oder dunkler.",
     "Eine Antiqua mit feinen Serifen führt das Auge anders als eine nüchterne Grotesk.",
-    "Bei kleinen Schriftgraden werden Buchstaben etwas weiter gesetzt, damit die Innenräume nicht zulaufen.",
+    "Bei kleinen Schriftgraden werden Buchstaben etwas weiter gesetzt, damit sie leichter zu lesen bleiben.",
     "Zahlen, die in einer Tabelle untereinander stehen, brauchen gleiche Breiten.",
     "Die Zeilenlänge entscheidet mit darüber, ob ein Absatz ruhig oder gehetzt wirkt; zwischen fünfundfünfzig und fünfundsiebzig Zeichen gilt vielen Setzern als angenehmes Maß.",
     "Ein Initial kann einen Anfang markieren.",
@@ -37,7 +37,7 @@
     "Der Abstand zwischen zwei Spalten muss groß genug sein, damit sich die Zeilen nicht berühren, und klein genug, damit die Seite zusammenhält.",
     "Manchmal endet eine Spalte mitten im Satz.",
     "Eine Zeile, die allein am Seitenanfang steht, wirkt verloren; deshalb achten Setzer darauf, dass von jedem Absatz mindestens zwei Zeilen beieinander bleiben.",
-    "Wenn ein Absatz nicht mehr auf die Seite passt, wird er ganz auf die nächste Seite gestellt, statt ihn zu kürzen.",
+    "Passt ein Absatz nicht mehr ganz auf die Seite, wird er geteilt oder ganz auf die nächste Seite gestellt, aber nie gekürzt.",
     "Kürzen ist keine Lösung für ein Satzproblem.",
     "Der Seitenumbruch folgt Regeln, die man nachvollziehen kann: gleiche Eingaben führen zu gleichen Seiten.",
     "In einer Bibliothek stehen Bände nebeneinander, deren Rücken verschieden hoch sind, und doch ergibt sich eine ruhige Linie, wenn man von weitem auf das Regal blickt.",
@@ -72,7 +72,7 @@
     "Marginalien begleiten den Text auf Augenhöhe.",
     "Ein Buch, das gut gesetzt ist, lässt sich auch nach Jahren noch angenehm lesen.",
     "Die Proportionen eines Formats prägen alles, was darauf entsteht.",
-    "Das Format DIN A4 ist schmaler und höher als viele Buchformate, und seine Ränder müssen daher sorgfältig gewählt werden.",
+    "Das Format DIN A4 ist größer und im Verhältnis breiter als viele Buchformate, und seine Ränder müssen daher sorgfältig gewählt werden.",
     "Ein Gestaltungsraster mit klaren Feldern erlaubt Abwechslung, ohne beliebig zu werden.",
     "Bilder, Tabellen und Text teilen sich dieselben Achsen.",
     "Wo eine Grafik steht, richtet sich der Text nach ihr aus.",
@@ -109,23 +109,118 @@
     "Ein letzter Blick auf das Ganze zeigt, ob die Teile zueinander passen."
   ],
   "reflectionQuestions": [
-    "Welche Seite dieses Dokuments hat beim ersten Durchblättern am längsten den Blick gehalten?",
-    "Wo fällt der Wechsel zwischen zwei Spalten und einer Spalte auf, und wo bleibt er unbemerkt?",
-    "Wirken die dichten und die lichten Seiten wie Teile desselben Buches, oder springt eine von ihnen heraus, weil Abstände, Grauwert oder Ränder anders erscheinen als auf den übrigen Seiten?",
-    "Welche Überschrift ließe sich ohne den Text darunter noch verstehen?"
+    "Welche Seite eines Buches bleibt nach dem Zuklappen am deutlichsten in Erinnerung?",
+    "Wo hilft ein großzügiger Rand beim Lesen, und wo wirkt er wie verschenkter Platz?",
+    "Wenn ein langer Text in zwei Spalten statt in einer steht: Liest er sich dann ruhiger, schneller oder einfach anders, und woran lässt sich dieser Unterschied beim Blättern festmachen, ohne die Zeilen zu zählen?",
+    "Welche Überschrift ist ohne den Text darunter noch verständlich?"
   ],
-  "methodNote": "Dieses Dokument folgt dem Aufbau eines BaZi-Readings. Ein solches Reading ist eine Deutung innerhalb eines traditionellen symbolischen Rahmens, der zur Reflexion und zur Unterhaltung dient. Es ist keine wissenschaftliche, medizinische oder psychologische Aussage, keine Vorhersage und keine Handlungsanweisung. Die Kapitel in der Mitte des Dokuments beschreiben Papier, Schrift und Satz; sie enthalten keine Aussage über eine Person. Fragen, die am Ende stehen, sind Einladungen zum Nachdenken und haben keine richtige oder falsche Antwort. Wer eine Stelle wiederfinden möchte, nutzt das Inhaltsverzeichnis am Anfang.",
+  "methodNote": "Dieses Dokument folgt dem Aufbau eines BaZi-Readings. Ein solches Reading ist eine Deutung innerhalb eines traditionellen symbolischen Rahmens, der zur Reflexion und zur Unterhaltung dient. Es ist keine wissenschaftliche, medizinische oder psychologische Aussage, keine Vorhersage und keine Handlungsanweisung. Datenhinweis: Der Rechendienst kennzeichnet seinen Anker für die Zählung der Tage als nicht unabhängig geprüft. Dieser Hinweis betrifft die Datenlage und wird unverändert weitergegeben. Fragen, die am Ende stehen, sind Einladungen zum Nachdenken und haben keine richtige oder falsche Antwort. Wer eine Stelle wiederfinden möchte, nutzt das Inhaltsverzeichnis am Anfang.",
   "composition": {
-    "rule": "Chapter i takes sentences[(offset_i + j * stride) mod sentences.length] for j = 0, 1, 2, ... in order; each paragraph consumes as many consecutive picks as its count says.",
-    "stride": 7,
+    "rule": "Chapter i takes sentences[(offset_i + j * stride_i) mod sentences.length] for j = 0, 1, 2, ... in order; each paragraph consumes as many consecutive picks as its count says. Distinct strides keep any two chapters from sharing two consecutive sentences in the same order.",
     "chapters": [
-      { "offset": 0, "paragraphs": [4, 9, 1, 6, 11, 3, 8, 5, 2, 1, 6, 3, 4] },
-      { "offset": 13, "paragraphs": [7, 6, 1, 7, 10, 9, 2, 11] },
-      { "offset": 26, "paragraphs": [6, 10, 1, 8, 11, 7, 2, 11] },
-      { "offset": 39, "paragraphs": [7, 9, 1, 10, 12, 11, 2, 4] },
-      { "offset": 52, "paragraphs": [5, 9, 1, 8, 6, 11, 2, 12] },
-      { "offset": 65, "paragraphs": [6, 12, 1, 6, 2, 10, 2, 10] },
-      { "offset": 78, "paragraphs": [3, 3, 1, 12, 10, 9, 2, 12] }
+      {
+        "offset": 0,
+        "stride": 7,
+        "paragraphs": [
+          4,
+          9,
+          1,
+          6,
+          11,
+          3,
+          8,
+          5,
+          2,
+          1,
+          6,
+          3,
+          4
+        ]
+      },
+      {
+        "offset": 13,
+        "stride": 11,
+        "paragraphs": [
+          8,
+          12,
+          1,
+          8,
+          10,
+          12,
+          2,
+          4
+        ]
+      },
+      {
+        "offset": 26,
+        "stride": 13,
+        "paragraphs": [
+          5,
+          11,
+          1,
+          6,
+          9,
+          2,
+          2,
+          11
+        ]
+      },
+      {
+        "offset": 39,
+        "stride": 17,
+        "paragraphs": [
+          6,
+          1,
+          1,
+          11,
+          12,
+          8,
+          2,
+          9
+        ]
+      },
+      {
+        "offset": 52,
+        "stride": 19,
+        "paragraphs": [
+          5,
+          12,
+          1,
+          11,
+          8,
+          1,
+          2,
+          5
+        ]
+      },
+      {
+        "offset": 65,
+        "stride": 23,
+        "paragraphs": [
+          7,
+          11,
+          1,
+          8,
+          11,
+          10,
+          2,
+          11
+        ]
+      },
+      {
+        "offset": 78,
+        "stride": 25,
+        "paragraphs": [
+          9,
+          12,
+          1,
+          3,
+          7,
+          12,
+          2,
+          6
+        ]
+      }
     ]
   }
 }
