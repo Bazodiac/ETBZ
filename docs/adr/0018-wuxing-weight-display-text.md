@@ -1,6 +1,8 @@
 # ADR 0018 — A Wu Xing weight is printed without floating-point noise (ETBZ-61)
 
-- **Status:** Proposed — not merged.
+- **Status:** Accepted — merged to `main` as `036a3dbb` (PR #27, 2026-10-03). Merged under the Product Owner's
+  decision D-54-3 (Jira ETBZ-54 comment 17163) after review round 3 PASS and exact-head CI; post-merge CI run 37083011798
+  green.
 - **Date:** 2026-10-03
 - **Slice:** ETBZ-61 [GOLDEN-REPAIR]. It repairs the PDF-QA block that stopped the ETBZ-54 Golden run.
 - **Base:** `main@f920639e40988e02f196e88ad117523545a59e3b`.
