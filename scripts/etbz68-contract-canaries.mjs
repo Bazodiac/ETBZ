@@ -40,7 +40,11 @@ const CANARIES = [
   ['pdf byte flipped', `${E}/synthetic-design-review.pdf`, (bytes) => { const copy = Buffer.from(bytes); copy[copy.length - 200] ^= 1; return copy; }],
   ['page image altered', `${E}/pages/16-chapter-02-p2.png`, (bytes) => Buffer.concat([bytes, Buffer.from([0])])],
   ['corpus sentence edited', `${E}/fixture/placeholder-corpus.v1.json`, text('Weißraum ist kein Rest.', 'Weißraum ist kein Rest!')],
-  ['chapter 1 cut to two pages', `${E}/fixture/placeholder-corpus.v1.json`, text('"offset": 0,', '"offset": 0, "paragraphs-cut": true,')],
+  ['chapter 1 cut to two pages', `${E}/fixture/placeholder-corpus.v1.json`, (bytes) => {
+    const corpus = JSON.parse(bytes.toString('utf8'));
+    corpus.composition.chapters[0].paragraphs = corpus.composition.chapters[0].paragraphs.slice(0, 11);
+    return Buffer.from(`${JSON.stringify(corpus, null, 2)}\n`, 'utf8');
+  }],
   ['symbolic word in the corpus', `${E}/fixture/placeholder-corpus.v1.json`, text('Handwerk braucht Zeit.', 'Handwerk braucht Zeit wie ein Pferd.')],
   ['two chapters share a stride', `${E}/fixture/placeholder-corpus.v1.json`, text('"stride": 11,', '"stride": 7,'), 'two chapters share a stride'],
   ['moved-whole detector loosened to one baseline', FIXTURE, text('>= 1;\n}', '>= 0;\n}')],
