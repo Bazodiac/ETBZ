@@ -52,6 +52,8 @@
     "etbz59:variants": "vite-node tests/support/run-etbz59-variants.ts",
     "etbz59": "vite-node tests/support/run-etbz59.ts",
     "etbz60": "vite-node tests/support/run-etbz60.ts",
+    "etbz54": "vite-node tests/support/run-etbz54.ts",
+    "etbz54:variant": "vite-node tests/support/run-etbz54-variant.ts",
     "secret-scan": "bash scripts/secret-scan.sh",
     "deps:scan": "npm audit --audit-level=high --omit=dev",
     "build-dry-run": "bash scripts/build-dry-run.sh",
