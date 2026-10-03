@@ -1,6 +1,6 @@
 {
   "recordVersion": "etbz68-contract-canaries.v2",
-  "contractTestSha256": "sha256:a5775d7313c8c6269ae896d706549af5b113638f834ae9525dabeba5974106a1",
+  "contractTestSha256": "sha256:7ca30f7c595df89c15a0224f8e132efc8d19793b73d0c1aa72d13d25efaa1f66",
   "fixtureModuleSha256": "sha256:0c39624654984d7f459908a1f86a76273c268ef77ecae714ea02a5e2fa31d7c4",
   "baseline": "GREEN",
   "canaries": [
@@ -134,6 +134,15 @@
       "killed": true,
       "failedTests": [
         "lists pages 1-30 against their committed renders and leaves the verdict to the Product Owner"
+      ]
+    },
+    {
+      "canary": "inside network control never ran",
+      "file": "docs/evidence/etbz-68/run-record.json",
+      "killer": "records the network denial",
+      "killed": true,
+      "failedTests": [
+        "records the network denial in both directions: every control succeeds outside the profile and is denied inside it"
       ]
     },
     {
