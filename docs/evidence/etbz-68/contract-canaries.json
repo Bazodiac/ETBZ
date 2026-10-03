@@ -1,42 +1,52 @@
 {
-  "recordVersion": "etbz68-contract-canaries.v1",
-  "contractTestSha256": "sha256:01d50d5ccae60b8c4fe79001dd81c83b0ec2302c19b9570bdee984b913e22971",
-  "fixtureModuleSha256": "sha256:4fc709447690cd12a040be9a97bc172b8fb49b1e153da8a0133d61905548e986",
+  "recordVersion": "etbz68-contract-canaries.v2",
+  "contractTestSha256": "sha256:a5775d7313c8c6269ae896d706549af5b113638f834ae9525dabeba5974106a1",
+  "fixtureModuleSha256": "sha256:0c39624654984d7f459908a1f86a76273c268ef77ecae714ea02a5e2fa31d7c4",
   "baseline": "GREEN",
   "canaries": [
     {
       "canary": "pdf byte flipped",
       "file": "docs/evidence/etbz-68/synthetic-design-review.pdf",
+      "killer": "binds the PDF",
       "killed": true,
       "failedTests": [
         "binds the PDF: digest, length, 30 A4 pages - read back from the committed bytes"
-      ],
-      "loadError": null
+      ]
+    },
+    {
+      "canary": "manifest page count edited",
+      "file": "docs/evidence/etbz-68/artifact-manifest.json",
+      "killer": "binds the PDF",
+      "killed": true,
+      "failedTests": [
+        "binds the PDF: digest, length, 30 A4 pages - read back from the committed bytes"
+      ]
     },
     {
       "canary": "page image altered",
       "file": "docs/evidence/etbz-68/pages/16-chapter-02-p2.png",
+      "killer": "every committed page image is the one the QA report hashed",
       "killed": true,
       "failedTests": [
         "reports every page clean, and every committed page image is the one the QA report hashed"
-      ],
-      "loadError": null
+      ]
     },
     {
       "canary": "corpus sentence edited",
       "file": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
+      "killer": "regenerates the content, the projection and the behaviour map",
       "killed": true,
       "failedTests": [
         "regenerates the content, the projection and the behaviour map byte for byte",
         "binds the input and the presentation to what this repository computes",
         "reports every page clean, and every committed page image is the one the QA report hashed",
         "labels the document synthetic and agrees with the manifest"
-      ],
-      "loadError": null
+      ]
     },
     {
       "canary": "chapter 1 cut to two pages",
       "file": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
+      "killer": "lays the fixture out on exactly the 30 pages",
       "killed": true,
       "failedTests": [
         "regenerates the content, the projection and the behaviour map byte for byte",
@@ -46,12 +56,12 @@
         "binds the input and the presentation to what this repository computes",
         "reports every page clean, and every committed page image is the one the QA report hashed",
         "labels the document synthetic and agrees with the manifest"
-      ],
-      "loadError": null
+      ]
     },
     {
       "canary": "symbolic word in the corpus",
       "file": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
+      "killer": "hand-authors no symbolic value",
       "killed": true,
       "failedTests": [
         "regenerates the content, the projection and the behaviour map byte for byte",
@@ -59,41 +69,81 @@
         "binds the input and the presentation to what this repository computes",
         "reports every page clean, and every committed page image is the one the QA report hashed",
         "labels the document synthetic and agrees with the manifest"
-      ],
-      "loadError": null
+      ]
+    },
+    {
+      "canary": "toneless pinyin in the corpus",
+      "file": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
+      "killer": "hand-authors no symbolic value",
+      "killed": true,
+      "failedTests": [
+        "regenerates the content, the projection and the behaviour map byte for byte",
+        "hand-authors no symbolic value: the chart is the ETBZ-55 fixture chart, and the printed corpus names no symbol",
+        "binds the input and the presentation to what this repository computes",
+        "reports every page clean, and every committed page image is the one the QA report hashed",
+        "labels the document synthetic and agrees with the manifest"
+      ]
+    },
+    {
+      "canary": "a paragraph recurs in two chapters",
+      "file": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
+      "killer": "keeps the chapters from repeating each other",
+      "killed": true,
+      "failedTests": [
+        "regenerates the content, the projection and the behaviour map byte for byte",
+        "keeps the chapters from repeating each other: no two share two consecutive sentences, no paragraph recurs",
+        "binds the input and the presentation to what this repository computes",
+        "reports every page clean, and every committed page image is the one the QA report hashed",
+        "labels the document synthetic and agrees with the manifest"
+      ]
     },
     {
       "canary": "two chapters share a stride",
       "file": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
-      "killed": true,
-      "expectedRefusal": "two chapters share a stride"
+      "expectedRefusal": "two chapters share a stride",
+      "killed": true
+    },
+    {
+      "canary": "a sentence points back",
+      "file": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
+      "expectedRefusal": "starts with an anaphoric connective",
+      "killed": true
     },
     {
       "canary": "moved-whole detector loosened to one baseline",
       "file": "tests/support/designReviewFixture.ts",
+      "killer": "regenerates the content, the projection and the behaviour map",
       "killed": true,
       "failedTests": [
         "regenerates the content, the projection and the behaviour map byte for byte"
-      ],
-      "loadError": null
+      ]
+    },
+    {
+      "canary": "carry-over rule narrowed to chapter page 1 blocks",
+      "file": "tests/support/designReviewFixture.ts",
+      "killer": "regenerates the content, the projection and the behaviour map",
+      "killed": true,
+      "failedTests": [
+        "regenerates the content, the projection and the behaviour map byte for byte"
+      ]
     },
     {
       "canary": "checklist verdict outside the vocabulary",
       "file": "docs/evidence/etbz-68/visual-review-checklist.md",
+      "killer": "leaves the verdict to the Product Owner",
       "killed": true,
       "failedTests": [
         "lists pages 1-30 against their committed renders and leaves the verdict to the Product Owner"
-      ],
-      "loadError": null
+      ]
     },
     {
-      "canary": "manifest page count edited",
-      "file": "docs/evidence/etbz-68/artifact-manifest.json",
+      "canary": "outside network control failed",
+      "file": "docs/evidence/etbz-68/run-record.json",
+      "killer": "records the network denial",
       "killed": true,
       "failedTests": [
-        "binds the PDF: digest, length, 30 A4 pages - read back from the committed bytes"
-      ],
-      "loadError": null
+        "records the network denial in both directions: every control succeeds outside the profile and is denied inside it"
+      ]
     }
   ]
 }
