@@ -1,0 +1,231 @@
+/**
+ * ETBZ-68 — the synthetic design-review fixture.
+ *
+ * A 30-page visual acceptance document for the Product Owner, not a customer
+ * artifact and not a reading. The chart is the synthetic known-time chart of
+ * `tests/support/narrativeFixture.ts` (Musterkundin A), unchanged: every
+ * symbolic value on the chart pages comes from that fixture through the real
+ * `buildHoroscopeModel`, none is written here. The body text is a small,
+ * versioned, neutral German placeholder corpus about paper, type and
+ * book-making (`docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json`),
+ * composed deterministically into chapters by `composeDesignReviewContent`.
+ *
+ * The released `buildPresentationProjection` runs unchanged, with every
+ * customer-text gate. The page count is whatever the unchanged paginator makes
+ * of the composed content; the corpus's composition plan is tuned so that it
+ * comes to 30, and the 30 is asserted only by this slice's contract test.
+ * Nothing under `src/` reads it.
+ */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { z } from 'zod';
+import type { HoroscopeModel } from '../../src/application/horoscope-model.js';
+import { BASELINE_CP, buildPresentationProjection } from '../../src/application/presentation/index.js';
+import type { PresentationProjection } from '../../src/application/presentation/index.js';
+import { GEOMETRY_CENTIPOINTS, PAGINATION_RULES } from '../../src/application/visual/index.js';
+import { knownTimeChart } from './narrativeFixture.js';
+
+export const DESIGN_REVIEW_CORPUS = 'docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json';
+export const DESIGN_REVIEW_CONTENT = 'docs/evidence/etbz-68/fixture/design-review-content.json';
+export const DESIGN_REVIEW_PROJECTION_EVIDENCE = 'docs/evidence/etbz-68/presentation-projection.json';
+export const DESIGN_REVIEW_BEHAVIOUR_MAP = 'docs/evidence/etbz-68/page-behaviour-map.json';
+
+const corpusSchema = z.strictObject({
+  corpusId: z.literal('etbz68-neutral-placeholder-corpus'),
+  version: z.literal('1.0.0'),
+  language: z.literal('de'),
+  purpose: z.string().min(1),
+  title: z.string().min(1),
+  chapterTitles: z.array(z.string().min(1)).min(1).max(12),
+  sentences: z.array(z.string().min(1)).min(1),
+  reflectionQuestions: z.array(z.string().min(1)).min(1).max(12),
+  methodNote: z.string().min(1),
+  composition: z.strictObject({
+    rule: z.string().min(1),
+    stride: z.number().int().min(1),
+    chapters: z.array(z.strictObject({ offset: z.number().int().min(0), paragraphs: z.array(z.number().int().min(1)).min(1) })).min(1),
+  }),
+});
+
+export type PlaceholderCorpus = z.infer<typeof corpusSchema>;
+
+export interface DesignReviewContent {
+  readonly title: string;
+  readonly chapters: readonly Readonly<{ title: string; paragraphs: readonly string[] }>[];
+  readonly reflectionQuestions: readonly string[];
+  readonly methodNote: string;
+}
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
+}
+
+export function loadPlaceholderCorpus(): PlaceholderCorpus {
+  const corpus = corpusSchema.parse(JSON.parse(readFileSync(resolve(process.cwd(), DESIGN_REVIEW_CORPUS), 'utf8')));
+  if (new Set(corpus.sentences).size !== corpus.sentences.length) throw new Error('the corpus repeats a sentence');
+  if (gcd(corpus.composition.stride, corpus.sentences.length) !== 1) {
+    throw new Error('the stride must be coprime with the sentence count, or a chapter cycles through a subset');
+  }
+  if (corpus.composition.chapters.length !== corpus.chapterTitles.length) throw new Error('one composition entry per chapter title');
+  return corpus;
+}
+
+/**
+ * Chapter i takes `sentences[(offset_i + j * stride) mod n]` for j = 0, 1, 2, …
+ * in order; a paragraph consumes as many consecutive picks as its count says.
+ * Pure: the same corpus always yields the same content.
+ */
+export function composeDesignReviewContent(corpus: PlaceholderCorpus): DesignReviewContent {
+  const n = corpus.sentences.length;
+  const chapters = corpus.composition.chapters.map((plan, chapterIndex) => {
+    let pick = 0;
+    const paragraphs = plan.paragraphs.map((count) => {
+      const sentences: string[] = [];
+      for (let k = 0; k < count; k += 1) {
+        const sentence = corpus.sentences[(plan.offset + pick * corpus.composition.stride) % n];
+        if (sentence === undefined) throw new Error('unreachable: index is reduced modulo the sentence count');
+        sentences.push(sentence);
+        pick += 1;
+      }
+      return sentences.join(' ');
+    });
+    const title = corpus.chapterTitles[chapterIndex];
+    if (title === undefined) throw new Error('unreachable: one composition entry per chapter title');
+    return { title, paragraphs };
+  });
+  return { title: corpus.title, chapters, reflectionQuestions: corpus.reflectionQuestions, methodNote: corpus.methodNote };
+}
+
+export interface DesignReviewFixture {
+  readonly model: HoroscopeModel;
+  readonly content: DesignReviewContent;
+  readonly projection: PresentationProjection;
+}
+
+export function designReviewFixture(): DesignReviewFixture {
+  const model = knownTimeChart().model;
+  const content = composeDesignReviewContent(loadPlaceholderCorpus());
+  return { model, content, projection: buildPresentationProjection({ model, content }) };
+}
+
+// --- the page behaviour map ---------------------------------------------------
+
+const CONTENT_BOTTOM_CP = GEOMETRY_CENTIPOINTS.marginTop + GEOMETRY_CENTIPOINTS.contentH;
+const MIN_SPLIT_LINES = Math.max(PAGINATION_RULES.orphanMinLines, PAGINATION_RULES.widowMinLines);
+/** A one-sentence paragraph at most this long is "short"; a paragraph at least this long is "long". */
+const SHORT_PARAGRAPH_WORDS = 15;
+const LONG_PARAGRAPH_WORDS = 90;
+
+interface FragmentView {
+  readonly blockId: string;
+  readonly kind: string;
+  readonly continuedFromPreviousPage: boolean;
+  readonly continuesOnNextPage: boolean;
+  readonly xCp: number;
+  readonly topCp: number;
+  readonly heightCp: number;
+  readonly lines: readonly unknown[];
+}
+
+interface LongFormContentView {
+  readonly kind: 'longForm';
+  readonly chapterNumber: number;
+  readonly chapterPage: number;
+  readonly template: 'opener' | 'continuation';
+  readonly fragments: readonly FragmentView[];
+  readonly sidebar: unknown;
+  readonly referencePanel: unknown;
+}
+
+export interface PageBehaviour {
+  readonly pageNumber: number;
+  readonly pageId: string;
+  readonly kind: string;
+  readonly chapter: number | null;
+  readonly chapterPage: number | null;
+  readonly behaviours: readonly string[];
+  readonly fillRatio: number | null;
+}
+
+function isLongForm(content: unknown): content is LongFormContentView {
+  return typeof content === 'object' && content !== null && (content as { kind?: unknown }).kind === 'longForm';
+}
+
+function wordCount(text: string): number {
+  return text.split(/\s+/u).filter((word) => word.length > 0).length;
+}
+
+/**
+ * Which editorial behaviours each page of the projection exercises, read from
+ * the projection the renderer draws (never from intent). Long-form behaviours:
+ * - `opener` / `continuation`: the page template;
+ * - `two-column` / `one-column`: the number of distinct column x positions;
+ * - `column-split`: a paragraph continues from the left into the right column;
+ * - `continues-across-page` / `continued-from-previous-page`: a paragraph crosses the page edge;
+ * - `orphan-widow-boundary`: a split fragment carries exactly the minimum lines;
+ * - `paragraph-moved-whole`: a continuation page opens with a fresh paragraph although the
+ *   previous page still had room for at least one more line;
+ * - `short-paragraph` / `long-paragraph`: a paragraph on the page is at most 15 / at least 90 words;
+ * - `dense-with-sidebar` / `sparse-with-reference-panel`: the continuation side module the
+ *   projection chose (a short final page below 60 % fill gets the reference panel).
+ */
+export function pageBehaviourMap(projection: PresentationProjection, content: DesignReviewContent): readonly PageBehaviour[] {
+  const pages = projection.pages as readonly Readonly<{ pageNumber: number; pageId: string; content: unknown }>[];
+  return pages.map((page, index) => {
+    const pageContent = page.content;
+    if (!isLongForm(pageContent)) {
+      const kind = typeof pageContent === 'object' && pageContent !== null ? String((pageContent as { kind?: unknown }).kind) : 'unknown';
+      return { pageNumber: page.pageNumber, pageId: page.pageId, kind, chapter: null, chapterPage: null, behaviours: [], fillRatio: null };
+    }
+    const behaviours = new Set<string>();
+    const fragments = pageContent.fragments;
+    behaviours.add(pageContent.template);
+    const columns = new Set(fragments.map((fragment) => fragment.xCp));
+    behaviours.add(columns.size >= 2 ? 'two-column' : 'one-column');
+    for (let i = 0; i < fragments.length; i += 1) {
+      const fragment = fragments[i];
+      if (fragment === undefined) continue;
+      const next = fragments[i + 1];
+      if (fragment.continuesOnNextPage && next !== undefined && next.blockId === fragment.blockId && next.continuedFromPreviousPage) {
+        behaviours.add('column-split');
+        if (fragment.lines.length === MIN_SPLIT_LINES || next.lines.length === MIN_SPLIT_LINES) behaviours.add('orphan-widow-boundary');
+      }
+      if (fragment.continuesOnNextPage && (next === undefined || next.blockId !== fragment.blockId)) {
+        behaviours.add('continues-across-page');
+        if (fragment.lines.length === MIN_SPLIT_LINES) behaviours.add('orphan-widow-boundary');
+      }
+      if (i === 0 && fragment.continuedFromPreviousPage) {
+        behaviours.add('continued-from-previous-page');
+        if (fragment.lines.length === MIN_SPLIT_LINES) behaviours.add('orphan-widow-boundary');
+      }
+    }
+    const first = fragments[0];
+    const previous = pages[index - 1]?.content;
+    if (pageContent.chapterPage > 1 && first !== undefined && !first.continuedFromPreviousPage && isLongForm(previous)) {
+      const last = previous.fragments[previous.fragments.length - 1];
+      if (last !== undefined && CONTENT_BOTTOM_CP - (last.topCp + last.heightCp) >= BASELINE_CP) behaviours.add('paragraph-moved-whole');
+    }
+    const chapter = content.chapters[pageContent.chapterNumber - 1];
+    for (const blockId of new Set(fragments.map((fragment) => fragment.blockId))) {
+      const paragraph = chapter?.paragraphs[Number(blockId.slice(1)) - 1];
+      if (paragraph === undefined) continue;
+      const words = wordCount(paragraph);
+      if (words <= SHORT_PARAGRAPH_WORDS) behaviours.add('short-paragraph');
+      if (words >= LONG_PARAGRAPH_WORDS) behaviours.add('long-paragraph');
+    }
+    if (pageContent.sidebar !== null && pageContent.sidebar !== undefined) behaviours.add('dense-with-sidebar');
+    if (pageContent.referencePanel !== null && pageContent.referencePanel !== undefined) behaviours.add('sparse-with-reference-panel');
+    const top = Math.min(...fragments.map((fragment) => fragment.topCp));
+    const bottom = Math.max(...fragments.map((fragment) => fragment.topCp + fragment.heightCp));
+    const fillRatio = Math.round(((bottom - top) / (CONTENT_BOTTOM_CP - top)) * 1000) / 1000;
+    return {
+      pageNumber: page.pageNumber,
+      pageId: page.pageId,
+      kind: 'longForm',
+      chapter: pageContent.chapterNumber,
+      chapterPage: pageContent.chapterPage,
+      behaviours: [...behaviours].sort(),
+      fillRatio,
+    };
+  });
+}
