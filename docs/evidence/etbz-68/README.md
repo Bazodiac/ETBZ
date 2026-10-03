@@ -7,9 +7,12 @@ visual acceptance of the canonical Bazodiac PDF design. It is not a reading, not
   ("Musterkundin A", no real birth data), unchanged. It is the same chart model as the ETBZ-55 evidence
   (equal `chartModelStructuralHash`).
 - **Body text:** a small, versioned, neutral German placeholder corpus, `fixture/placeholder-corpus.v1.json`
-  (version 1.1.0). It has 93 unique sentences about paper, type,
+  (version 1.2.0). It has 93 unique sentences about paper, type,
   book-making and related images from craft and architecture, composed deterministically into seven chapters,
-  each with its own stride. The corpus makes no customer, psychological, astrological or biographical claim.
+  each with its own stride. Sentences recur across chapters by design, but no two chapters share two
+  consecutive sentences, and no paragraph recurs. The loader refuses a sentence that opens by pointing back
+  ("Danach …", "Deshalb …"), because the composer reorders sentences. The corpus makes no customer,
+  psychological, astrological or biographical claim.
 - **Method note:** its data-note sentence is the accepted ETBZ-57 wording for the fixture chart's
   `DAY_ANCHOR_UNVERIFIED` source warning, so page 2's "Siehe Methodenhinweis, Seite 30" resolves.
 - **No calls:** no FuFirE, LLM or provider call. No code under `src/` or `tools/` changed.
@@ -55,15 +58,15 @@ counts pages against it. The page count is `pages.length`.
 | --- | --- |
 | opener, two columns | 12, 15, 17, 19, 21, 23, 25 |
 | continuation, one column | 13, 14, 16, 18, 20, 22, 24, 26 |
-| paragraph split across the opener columns | 12, 15, 21 |
+| paragraph split across the opener columns | 12, 15, 17, 21 |
 | paragraph continues onto the next page | 12, 13, 17, 19, 25 |
 | a split lands on the 2-line orphan/widow minimum | 14, 15, 17 |
-| paragraph moved whole although one line still fitted (the paginator's own condition) | 16, 17, 19, 22, 23, 25 |
+| paragraph moved whole although one line still fitted (the paginator's own condition) | 23 |
 | short paragraph (≤ 15 words) | 12, 13, 17, 19, 21, 22 |
 | long paragraph (≥ 90 words) | 12, 13, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26 |
 | continuation page with sidebar | 13, 16, 24, 26 |
 | short final page (fill < 0.6) with reference panel | 14, 18, 20, 22 |
-| inherited: opener-width wrap carried onto a continuation page | 13, 16, 20, 24, 26 |
+| inherited: opener-width wrap carried onto a continuation page | 13, 16, 18, 20, 22, 24, 26 |
 
 ## Identities
 
@@ -72,16 +75,16 @@ Structural hashes are canonical-JSON hashes of the value. File digests are SHA-2
 | | |
 | --- | --- |
 | Base | `main` = `cb7605e58bee57cfff68c2a3b0a6a889ca1634c6` |
-| Render head | `9027d19a633a1cf7c8fe7c3d2a9936337fe02001` (declared generation record, an ancestor of the tested commit) |
+| Render head | `f62e6638cf0184f6f6866615348bbbc6a6ad9a22` (declared generation record, an ancestor of the tested commit) |
 | Template | `bazodiac-final-template@1.0.0`, structural `sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6` |
 | Renderer | `bazodiac-pdf-renderer@1.0.0`, sources `sha256:f971a44b5eaa2721a2cb46156786a5485f521d7bfcd8f8d545ab19c04c4de820` |
 | Engine | Chromium 136.0.7103.25, Playwright 1.52.0, Python 3.13.3 |
-| Projection | `bazodiac-presentation-projection.v1`, structural `sha256:24435b090b7030dbf3ae56a4b6ac557951b733c347f902ab29bd18c8cf53be34` |
-| Corpus file | file `sha256:039c2626c318631b1018356467b6f113e7d5b914bca69b953c197846d1fcbbdd` |
-| Content | structural `sha256:6118e111e91acdc124f25a77acd0d3e232121dd513deedf743298f1a3bc4bf95` |
+| Projection | `bazodiac-presentation-projection.v1`, structural `sha256:8ca028ebb2027d9feffd0c56ccde496cc875ea866f9f89cc76ac7db223e49dff` |
+| Corpus file | file `sha256:e79ee72f1e464a733031613421fdb8a378a858be18f73de89a5c97ae8700f25f` |
+| Content | structural `sha256:7b80fdd43b519537c11b008f8b0ac5506f6fcb18f3007b8a05e2723bdd4f32e8` |
 | Chart model | structural `sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91` (= ETBZ-55) |
-| PDF | file `sha256:7b4a5bb831b4cb3b20fa015d624ab08816682fb165057bd24ba5196ba0777035`, 1974187 bytes, 30 pages |
-| Contact sheet | file `sha256:c81e96ebb0f11aa768d24f200e2ec4fca8315ef52c6dba4e4501bb4f90cc5e9c` |
+| PDF | file `sha256:e84536b21192c7ffaa480d5d87d76ea2f159a42a8653270a7ccb7a6a527766f2`, 1974708 bytes, 30 pages |
+| Contact sheet | file `sha256:bdd0021786d0c22472297fe123eb2d807c024c6aa83dea8d857145da46fd805f` |
 
 ## How it was produced (2026-10-03)
 
@@ -92,7 +95,7 @@ P='(version 1)(allow default)(deny network*)'
 for run in a b; do
   sandbox-exec -p "$P" "$PY" tools/pdf-renderer/render_pdf.py \
     --projection docs/evidence/etbz-68/presentation-projection.json \
-    --out .etbz-verify/etbz68-render-$run --executed-at 2026-10-03 --repository-head 9027d19a633a1cf7c8fe7c3d2a9936337fe02001
+    --out .etbz-verify/etbz68-render-$run --executed-at 2026-10-03 --repository-head f62e6638cf0184f6f6866615348bbbc6a6ad9a22
 done                                              # both exit 0, PASSED, 11/11 checks
 A=.etbz-verify/etbz68-render-a E=docs/evidence/etbz-68
 cp $A/bazodiac-reading.pdf $E/synthetic-design-review.pdf
@@ -129,11 +132,14 @@ not change them. A `CHANGES_REQUIRED` that names them is a production decision.
 
 - **Opener-width wrap on continuation pages.** A paragraph that starts on an opener, or moves whole from it,
   keeps its narrow opener wrap inside the wider continuation column (ADR 0012 limitation 4). This shows on
-  pages 13, 16, 20, 24, 26.
+  pages 13, 16, 18, 20, 22, 24, 26.
 - **Reference block twice in a three-page chapter.** A continuation page that is not the short final page gets
   the reference sidebar, and the short final page gets the same block as a panel. Chapter 1 therefore shows
   it on pages 13 and 14.
-- **Summary values use a decimal point.** The Wu Xing values on page 28 print as delivered (`1.8`, `2.5`).
+- **Wu Xing values use a decimal point.** They print as delivered (`1.8`, `2.5`) on pages 4, 8, 28.
+- **A separator can end a wrapped line.** A "·" separator ends a line before the wrap: on page 4
+  ("YIN METALL ·" / "TAGESMEISTER"), page 28 (the Wu Xing row) and every reference sidebar
+  ("Tagesmeister · xīn ·" / "Yin Metall", pages 13, 16, 24, 26).
 - **Data-note box.** The box on page 30 only says that a note exists; the note itself is the method-note
   sentence.
 - **Page 2 line break.** In "Siehe Methodenhinweis, Seite 30", the page number wraps onto its own line.

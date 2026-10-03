@@ -90,10 +90,12 @@ const REQUIRED_BEHAVIOURS = [
 const VERDICT_LINE = /^Verdict: (?:_pending_|`VISUAL_DESIGN_ACCEPTED_FOR_CONTENT_REVIEW`|`CHANGES_REQUIRED`)$/mu;
 
 const sha256OfFile = (path: string): string => sha256Of(readFileSync(resolve(ROOT, path)));
+/** The canary run sets the record aside while it runs (scripts/etbz68-contract-canaries.mjs); everywhere else it is required. */
+const CANARY_RUN = process.env['ETBZ68_CANARY_RUN'] === '1';
 
 describe('ETBZ-68: the evidence folder', () => {
-  it('holds exactly the declared files (the canary record is written last, by the canary run)', () => {
-    const optional = readdirSync(EVIDENCE).includes('contract-canaries.json') ? ['contract-canaries.json'] : [];
+  it('holds exactly the declared files (the canary record is absent only during a canary run)', () => {
+    const optional = CANARY_RUN ? [] : ['contract-canaries.json'];
     expect(readdirSync(EVIDENCE).sort()).toEqual([
       'README.md',
       'artifact-manifest.json',
@@ -138,10 +140,14 @@ describe('ETBZ-68: the evidence folder', () => {
       'Erdzweig', 'Erdzweige', 'Wandlungsphase', 'Wandlungsphasen', 'Qi',
     ];
     expect(vocabulary.length).toBeGreaterThan(40);
-    const words = new Set(printed.split(/[^\p{L}]+/u).filter((word) => word.length > 0));
-    expect(vocabulary.filter((term) => words.has(term))).toEqual([]);
+    // Matched case-insensitively as whole words; pinyin also without tone marks ("xin" for "xīn").
+    const toneless = glyphs.map((glyph) => glyph.pinyin.normalize('NFD').replace(/\p{M}/gu, ''));
+    const words = new Set(printed.toLowerCase().split(/[^\p{L}]+/u).filter((word) => word.length > 0));
+    expect([...vocabulary, ...toneless].filter((term) => words.has(term.toLowerCase()))).toEqual([]);
   });
 
+  // The loader already refuses two equal strides, which is what would let two chapters share a directed pair; the pair
+  // loop restates that guarantee on the composed picks. The paragraph check can go red on its own (one-sentence paragraphs).
   it('keeps the chapters from repeating each other: no two share two consecutive sentences, no paragraph recurs', () => {
     const corpus = loadPlaceholderCorpus();
     const n = corpus.sentences.length;
@@ -299,28 +305,43 @@ describe('ETBZ-68: the run record and the review checklist', () => {
     expect(checklist.match(/^Verdict: /gmu)).toHaveLength(1);
   });
 
-  it('records the network denial: every control inside the sandbox profile failed', () => {
-    const network = json<{ networkDenied: { profile: string; controls: { inside: Record<string, { exit: number | null }> } } }>('docs/evidence/etbz-68/run-record.json').networkDenied;
+  it('records the network denial in both directions: every control succeeds outside the profile and is denied inside it', () => {
+    interface Control { exit: number | null; output: string }
+    const network = json<{ networkDenied: { profile: string; controls: { outside: Record<string, Control>; inside: Record<string, Control> } } }>(
+      'docs/evidence/etbz-68/run-record.json',
+    ).networkDenied;
     expect(network.profile).toBe('(version 1)(allow default)(deny network*)');
+    expect(Object.keys(network.controls.outside).sort()).toEqual(['nodeDns', 'pythonDns', 'pythonIp']);
     expect(Object.keys(network.controls.inside).sort()).toEqual(['nodeDns', 'pythonDns', 'pythonIp']);
-    for (const [name, control] of Object.entries(network.controls.inside)) expect(control.exit, name).not.toBe(0);
+    for (const [name, control] of Object.entries(network.controls.outside)) {
+      expect(control.exit, name).toBe(0);
+      expect(control.output, name).toMatch(/^(?:status 200|connected)$/u);
+    }
+    for (const [name, control] of Object.entries(network.controls.inside)) {
+      expect(control.exit, name).toBe(3);
+      expect(control.output, name).toMatch(/^error (?:ENOTFOUND|EAI_AGAIN|URLError|PermissionError 1)$/u);
+    }
   });
 });
 
 describe('ETBZ-68: the contract test has been seen red', () => {
-  it('when the canary record is present, it was proven against this test and this fixture, and every canary was killed', () => {
-    const path = resolve(EVIDENCE, 'contract-canaries.json');
-    if (!readdirSync(EVIDENCE).includes('contract-canaries.json')) return;
-    const record = JSON.parse(readFileSync(path, 'utf8')) as {
+  it.skipIf(CANARY_RUN)('was proven against this test and this fixture, and every canary was killed by its named test or refusal', () => {
+    const record = JSON.parse(readFileSync(resolve(EVIDENCE, 'contract-canaries.json'), 'utf8')) as {
+      recordVersion: string;
       contractTestSha256: string;
       fixtureModuleSha256: string;
       baseline: string;
-      canaries: { canary: string; killed: boolean }[];
+      canaries: { canary: string; killed: boolean; killer?: string; expectedRefusal?: string; failedTests?: string[] }[];
     };
+    expect(record.recordVersion).toBe('etbz68-contract-canaries.v2');
     expect(record.contractTestSha256).toBe(sha256OfFile('tests/contract/etbz68-design-review-evidence.contract.test.ts'));
     expect(record.fixtureModuleSha256).toBe(sha256OfFile('tests/support/designReviewFixture.ts'));
     expect(record.baseline).toBe('GREEN');
-    expect(record.canaries.length).toBeGreaterThanOrEqual(9);
-    for (const canary of record.canaries) expect(canary.killed, canary.canary).toBe(true);
+    expect(record.canaries.length).toBeGreaterThanOrEqual(14);
+    for (const canary of record.canaries) {
+      expect(canary.killed, canary.canary).toBe(true);
+      if (canary.killer !== undefined) expect(canary.failedTests?.some((test) => test.includes(canary.killer ?? '')), canary.canary).toBe(true);
+      else expect(canary.expectedRefusal, canary.canary).toMatch(/\S/u);
+    }
   });
 });

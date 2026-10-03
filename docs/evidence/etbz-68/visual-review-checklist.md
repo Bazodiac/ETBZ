@@ -14,29 +14,29 @@ projection the renderer drew, not from intent. "fill" is the projection's own me
 | 1 | `pages/01-cover.png` | Cover: wordmark, Day Master glyph, title, prepared-for name | |
 | 2 | `pages/02-identity.png` | Identity / document note ("Über dieses Dokument"). Inherited: the page number in "Siehe Methodenhinweis, Seite 30" wraps onto its own line | |
 | 3 | `pages/03-contents.png` | Contents: front matter, chart pages, the seven chapters with their start pages, closing pages | |
-| 4 | `pages/04-glance.png` | Chart at a Glance: Day Master, four pillars, Wu Xing values as delivered | |
+| 4 | `pages/04-glance.png` | Chart at a Glance: Day Master, four pillars, Wu Xing values as delivered. Inherited: Wu Xing values print with a decimal point (1.8, 2.5) | |
 | 5 | `pages/05-four-pillars.png` | Four Pillars: stems and branches with pinyin and animal label, hidden stems, fact-bound phase colours | |
 | 6 | `pages/06-foundation.png` | Foundation ("Die acht Zeichen"): the eight characters with pinyin, animal and phase | |
 | 7 | `pages/07-day-master.png` | Day Master: glyph, day pillar, hidden stems of the day branch. Inherited: two slots without approved content stay empty (ADR 0012 limitation 2) | |
-| 8 | `pages/08-wu-xing-distribution.png` | Wu Xing Distribution: all five phases with values as delivered | |
+| 8 | `pages/08-wu-xing-distribution.png` | Wu Xing Distribution: all five phases with values as delivered. Inherited: Wu Xing values print with a decimal point (1.8, 2.5) | |
 | 9 | `pages/09-five-phases.png` | Five Phases Education (general, separate from the chart distribution) | |
 | 10 | `pages/10-ten-gods.png` | Ten Gods: relation table to the Day Master | |
 | 11 | `pages/11-hidden-stems.png` | Hidden Stems per branch with Qi roles (fixture order at the hour branch, ETBZ-58 comment 17024) | |
 | 12 | `pages/12-chapter-01-p1.png` | Chapter 1, page 1: opener; two columns; paragraph split across the columns; paragraph continues on the next page; short paragraph; long paragraph (fill 1) | |
-| 13 | `pages/13-chapter-01-p2.png` | Chapter 1, page 2: continuation; one column; paragraph continues on the next page; paragraph continued from the previous page; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); short paragraph; long paragraph; sidebar (page not short-final); inherited: this chapter shows the same reference block twice, as sidebar and as panel (fill 0.98) | |
+| 13 | `pages/13-chapter-01-p2.png` | Chapter 1, page 2: continuation; one column; paragraph continues on the next page; paragraph continued from the previous page; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); short paragraph; long paragraph; sidebar (page not short-final); inherited: this chapter shows the same reference block twice, as sidebar and as panel (fill 1) | |
 | 14 | `pages/14-chapter-01-p3.png` | Chapter 1, page 3: continuation; one column; paragraph continued from the previous page; a split lands on the 2-line orphan/widow minimum; short final page (fill < 0.6) with reference panel; inherited: this chapter shows the same reference block twice, as sidebar and as panel (fill 0.235) | |
 | 15 | `pages/15-chapter-02-p1.png` | Chapter 2, page 1: opener; two columns; paragraph split across the columns; a split lands on the 2-line orphan/widow minimum; long paragraph (fill 1) | |
-| 16 | `pages/16-chapter-02-p2.png` | Chapter 2, page 2: continuation; one column; paragraph moved whole although one line still fitted; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); long paragraph; sidebar (page not short-final) (fill 0.804) | |
-| 17 | `pages/17-chapter-03-p1.png` | Chapter 3, page 1: opener; two columns; paragraph continues on the next page; a split lands on the 2-line orphan/widow minimum; paragraph moved whole although one line still fitted; short paragraph; long paragraph (fill 1) | |
-| 18 | `pages/18-chapter-03-p2.png` | Chapter 3, page 2: continuation; one column; paragraph continued from the previous page; long paragraph; short final page (fill < 0.6) with reference panel (fill 0.549) | |
-| 19 | `pages/19-chapter-04-p1.png` | Chapter 4, page 1: opener; two columns; paragraph continues on the next page; paragraph moved whole although one line still fitted; short paragraph; long paragraph (fill 1) | |
-| 20 | `pages/20-chapter-04-p2.png` | Chapter 4, page 2: continuation; one column; paragraph continued from the previous page; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); long paragraph; short final page (fill < 0.6) with reference panel (fill 0.47) | |
+| 16 | `pages/16-chapter-02-p2.png` | Chapter 2, page 2: continuation; one column; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); long paragraph; sidebar (page not short-final) (fill 0.823) | |
+| 17 | `pages/17-chapter-03-p1.png` | Chapter 3, page 1: opener; two columns; paragraph split across the columns; paragraph continues on the next page; a split lands on the 2-line orphan/widow minimum; short paragraph; long paragraph (fill 1) | |
+| 18 | `pages/18-chapter-03-p2.png` | Chapter 3, page 2: continuation; one column; paragraph continued from the previous page; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); long paragraph; short final page (fill < 0.6) with reference panel (fill 0.549) | |
+| 19 | `pages/19-chapter-04-p1.png` | Chapter 4, page 1: opener; two columns; paragraph continues on the next page; short paragraph; long paragraph (fill 1) | |
+| 20 | `pages/20-chapter-04-p2.png` | Chapter 4, page 2: continuation; one column; paragraph continued from the previous page; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); long paragraph; short final page (fill < 0.6) with reference panel (fill 0.451) | |
 | 21 | `pages/21-chapter-05-p1.png` | Chapter 5, page 1: opener; two columns; paragraph split across the columns; short paragraph; long paragraph (fill 1) | |
-| 22 | `pages/22-chapter-05-p2.png` | Chapter 5, page 2: continuation; one column; paragraph moved whole although one line still fitted; short paragraph; short final page (fill < 0.6) with reference panel (fill 0.412) | |
+| 22 | `pages/22-chapter-05-p2.png` | Chapter 5, page 2: continuation; one column; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); short paragraph; short final page (fill < 0.6) with reference panel (fill 0.431) | |
 | 23 | `pages/23-chapter-06-p1.png` | Chapter 6, page 1: opener; two columns; paragraph moved whole although one line still fitted; long paragraph (fill 0.98) | |
-| 24 | `pages/24-chapter-06-p2.png` | Chapter 6, page 2: continuation; one column; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); long paragraph; sidebar (page not short-final) (fill 0.882) | |
-| 25 | `pages/25-chapter-07-p1.png` | Chapter 7, page 1: opener; two columns; paragraph continues on the next page; paragraph moved whole although one line still fitted; long paragraph (fill 1) | |
-| 26 | `pages/26-chapter-07-p2.png` | Chapter 7, page 2: continuation; one column; paragraph continued from the previous page; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); long paragraph; sidebar (page not short-final) (fill 0.627) | |
+| 24 | `pages/24-chapter-06-p2.png` | Chapter 6, page 2: continuation; one column; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); long paragraph; sidebar (page not short-final) (fill 0.902) | |
+| 25 | `pages/25-chapter-07-p1.png` | Chapter 7, page 1: opener; two columns; paragraph continues on the next page; long paragraph (fill 1) | |
+| 26 | `pages/26-chapter-07-p2.png` | Chapter 7, page 2: continuation; one column; paragraph continued from the previous page; inherited: a paragraph keeps the narrower opener wrap (ADR 0012 limitation 4); long paragraph; sidebar (page not short-final) (fill 0.608) | |
 | 27 | `pages/27-reflection.png` | Reflection ("Fragen zur Reflexion"): pillar strip and four reflection questions | |
 | 28 | `pages/28-summary.png` | Summary ("Dein Chart in Kürze"). Inherited: Wu Xing values print with a decimal point (1.8, 2.5) | |
 | 29 | `pages/29-closing.png` | Closing: title, prepared-for name, wordmark | |

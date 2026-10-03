@@ -5,16 +5,16 @@
   "notACustomerArtifact": true,
   "statement": "Synthetic design-review document for the Product Owner visual acceptance. Not a customer artifact, not a reading, not Golden. Chart: the synthetic known-time development chart (Musterkundin A, no real birth data). Body text: neutral placeholder corpus.",
   "base": "cb7605e58bee57cfff68c2a3b0a6a889ca1634c6",
-  "repositoryHead": "9027d19a633a1cf7c8fe7c3d2a9936337fe02001",
+  "repositoryHead": "f62e6638cf0184f6f6866615348bbbc6a6ad9a22",
   "executedAt": "2026-10-03",
   "fixture": {
     "corpusFile": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
-    "corpusFileSha256": "sha256:039c2626c318631b1018356467b6f113e7d5b914bca69b953c197846d1fcbbdd",
+    "corpusFileSha256": "sha256:e79ee72f1e464a733031613421fdb8a378a858be18f73de89a5c97ae8700f25f",
     "composedContentFile": "docs/evidence/etbz-68/fixture/design-review-content.json",
-    "contentStructuralHash": "sha256:6118e111e91acdc124f25a77acd0d3e232121dd513deedf743298f1a3bc4bf95",
+    "contentStructuralHash": "sha256:7b80fdd43b519537c11b008f8b0ac5506f6fcb18f3007b8a05e2723bdd4f32e8",
     "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
     "chartEqualsEtbz55Chart": true,
-    "projectionStructuralHash": "sha256:24435b090b7030dbf3ae56a4b6ac557951b733c347f902ab29bd18c8cf53be34"
+    "projectionStructuralHash": "sha256:8ca028ebb2027d9feffd0c56ccde496cc875ea866f9f89cc76ac7db223e49dff"
   },
   "identities": {
     "template": "bazodiac-final-template@1.0.0",
@@ -41,10 +41,10 @@
   },
   "output": {
     "pdfFile": "docs/evidence/etbz-68/synthetic-design-review.pdf",
-    "pdfSha256": "sha256:7b4a5bb831b4cb3b20fa015d624ab08816682fb165057bd24ba5196ba0777035",
-    "byteLength": 1974187,
+    "pdfSha256": "sha256:e84536b21192c7ffaa480d5d87d76ea2f159a42a8653270a7ccb7a6a527766f2",
+    "byteLength": 1974708,
     "pageCount": 30,
-    "contactSheetSha256": "sha256:c81e96ebb0f11aa768d24f200e2ec4fca8315ef52c6dba4e4501bb4f90cc5e9c",
+    "contactSheetSha256": "sha256:bdd0021786d0c22472297fe123eb2d807c024c6aa83dea8d857145da46fd805f",
     "pageImages": 30
   },
   "determinism": {
