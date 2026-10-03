@@ -7,7 +7,7 @@
   },
   {
    "detail": {
-    "projection": "sha256:2f57f724f9be703f0cb2af216099e39550b9adb79815f2a1bfa6b2099f68ef8e",
+    "projection": "sha256:24435b090b7030dbf3ae56a4b6ac557951b733c347f902ab29bd18c8cf53be34",
     "template": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6"
    },
    "id": "PROJECTION_IDENTITY",
@@ -48,7 +48,7 @@
    "detail": {
     "glyphPaths": 112,
     "pages": 30,
-    "printedPaths": 1554
+    "printedPaths": 1552
    },
    "id": "PAGE_STRINGS",
    "result": "PASS"
@@ -57,7 +57,7 @@
    "detail": {
     "displayGlyphs": 117,
     "pages": 30,
-    "textNodes": 1723
+    "textNodes": 1721
    },
    "id": "PAGE_QA",
    "result": "PASS"
@@ -84,8 +84,8 @@
    "detail": {
     "clippedUnits": 0,
     "pages": 30,
-    "printedStrings": 1723,
-    "textUnits": 35074
+    "printedStrings": 1721,
+    "textUnits": 35098
    },
    "id": "PDF_TEXT_LAYER",
    "result": "PASS"
@@ -110,7 +110,7 @@
      3
     ],
     "pages": 30,
-    "pdfSha256": "sha256:d80fbbf1ec7c326f46633e514d6b0f2eef860e4d1087b6ef776081f16e30a61f"
+    "pdfSha256": "sha256:7b4a5bb831b4cb3b20fa015d624ab08816682fb165057bd24ba5196ba0777035"
    },
    "id": "DETERMINISM",
    "result": "PASS"
@@ -121,7 +121,7 @@
    "ceiling": 0.6,
    "floor": 0.005,
    "highest": 0.2627,
-   "items": 34926,
+   "items": 34950,
    "lowest": 0.0151
   },
   "glyph": {
@@ -149,7 +149,7 @@
    "ceiling": 0.5,
    "floor": 0.03,
    "highest": 0.1901,
-   "items": 1575,
+   "items": 1573,
    "lowest": 0.0808
   }
  },
@@ -314,7 +314,7 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:9bcde681c9fbbc67c11c850c0c410c7d942e0a6ed50d983a341d209df78e1463",
+   "pngSha256": "sha256:f4aab38c858114e275b7824de30ee27e87d971784280a440fb49e0648414719e",
    "textNodes": 88
   },
   {
@@ -353,8 +353,8 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:43e4c7b49ad909e147145a62296575cdb3bdd695e5f5db73bab4d3dd02d70d91",
-   "textNodes": 92
+   "pngSha256": "sha256:ce0c9eb8cd9fa3d16b6770c0d75b70ef3b2afdd3c9aeb620f6ef585cc01feea2",
+   "textNodes": 91
   },
   {
    "displayGlyphs": 1,
@@ -366,8 +366,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:247d0c9c950ec0b71b433a3d2ad5c55be73471784225260211ead2e0ac3478b5",
-   "textNodes": 49
+   "pngSha256": "sha256:5a4ca7d5788f09aa5da319612936f8c7d7f43e988b347175acdfb856197715a9",
+   "textNodes": 63
   },
   {
    "displayGlyphs": 0,
@@ -379,8 +379,8 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:8119c624894e71b066df70907051146c078430e589e9ce2851c00cdb96e5d0bd",
-   "textNodes": 88
+   "pngSha256": "sha256:62025fe1c4b7efac261d8808ab781aa52caa6539b3df3ef5760e50983274ae94",
+   "textNodes": 87
   },
   {
    "displayGlyphs": 1,
@@ -392,8 +392,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:bd16a91c6dc858199f16bde188c064444b2bc4f48471c20e6667c27d914a1272",
-   "textNodes": 61
+   "pngSha256": "sha256:9234bb8397470a30b8677ba8e424b33b40408ddc7c6154d9ea574724be999411",
+   "textNodes": 51
   },
   {
    "displayGlyphs": 0,
@@ -405,8 +405,8 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:cad94ac79fde753a8fcaeb554ac74a0ca60586daa00ada8141fcbfc35eb60ee4",
-   "textNodes": 92
+   "pngSha256": "sha256:22e2233cb50071149f666c059f704325aff2c7b08b21014d59faf66d1ce47117",
+   "textNodes": 90
   },
   {
    "displayGlyphs": 1,
@@ -418,8 +418,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:7d98daa10b52eb0f0e80cf22a8cd4e725bbe1c8004633fba1c85da29629fb6e0",
-   "textNodes": 59
+   "pngSha256": "sha256:f555d65dbf27670d4f1f1a20aae87443715a6243d4b0facfd570d2653230172f",
+   "textNodes": 47
   },
   {
    "displayGlyphs": 0,
@@ -431,7 +431,7 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:f80bd6b7c7ef782242b553f29d8a7063b4e004f6984e2ca88c4bd9e120be6644",
+   "pngSha256": "sha256:bb29e938b41511dc7db330a7eabd52a3833c6bcbdc1516c0e258c1f1e0868733",
    "textNodes": 91
   },
   {
@@ -444,8 +444,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:1935852f355eb057eda1ea3ddb614dcc54597624905c25daf02d3425dc3c006e",
-   "textNodes": 52
+   "pngSha256": "sha256:13c9687f53ebb9067b54aa49f036ab7ff9bbd5ae487b5f49d7b33baaa45ae0b7",
+   "textNodes": 43
   },
   {
    "displayGlyphs": 0,
@@ -457,7 +457,7 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:5dd17cde285cd3f7156b53eaa142b9023b1c173d5d220454f4228fa15a6967c7",
+   "pngSha256": "sha256:62dd0e55efb03eedcef1000af06d51748d39f5fd3bb469a462f0995c8d1bbdd2",
    "textNodes": 88
   },
   {
@@ -470,8 +470,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:ac944f7dcfd6b242c797f7cf96b978c3640d8ec0617ce6d8bac49cd5699fdf11",
-   "textNodes": 51
+   "pngSha256": "sha256:95422720385be36ed123a122a89b6b8d67f9b04643dc580a60da0bad09964083",
+   "textNodes": 67
   },
   {
    "displayGlyphs": 0,
@@ -483,8 +483,8 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:4f886308b64911446d4eadefc062b48f776d6a121512d2ef7b9e4a8c800f9a2e",
-   "textNodes": 90
+   "pngSha256": "sha256:7d8a3be5a5b94b4d0bb194672b54f61a7e1f487cece94c745acbf0cc288c2858",
+   "textNodes": 91
   },
   {
    "displayGlyphs": 1,
@@ -496,8 +496,8 @@
     "Inter|Inter-Regular",
     "Noto Sans CJK SC|NotoSansCJKsc-Regular"
    ],
-   "pngSha256": "sha256:0d2667cef6087a56b6e85703e35c93df1edaf782dd25d757d8897be9ad65c0b8",
-   "textNodes": 52
+   "pngSha256": "sha256:90ac5bf2c4ba6fd608e449d83f84f1dd7d56fc40471c206b9b3015304160470d",
+   "textNodes": 54
   },
   {
    "displayGlyphs": 8,
@@ -509,7 +509,7 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:e42829aee98033cb0757220d655191ed696a9627677dd492ffea9020c37d493a",
+   "pngSha256": "sha256:12b8fd1dff93d1b4034aab2cfdd01458070e2f71db838260f3528b8b1c972d59",
    "textNodes": 32
   },
   {
@@ -549,11 +549,11 @@
     "Inter Medium|Inter-Medium",
     "Inter|Inter-Regular"
    ],
-   "pngSha256": "sha256:26812c7c030466ecdb612dab5f8c33ef38f1cd99d40cb19c17b27859de4ad117",
+   "pngSha256": "sha256:cb547299b17128b97520c7fc4fe8f933b33c0b763efe22846e7de557dc9b37e6",
    "textNodes": 13
   }
  ],
- "projectionStructuralHash": "sha256:2f57f724f9be703f0cb2af216099e39550b9adb79815f2a1bfa6b2099f68ef8e",
+ "projectionStructuralHash": "sha256:24435b090b7030dbf3ae56a4b6ac557951b733c347f902ab29bd18c8cf53be34",
  "reportVersion": "bazodiac-pdf-qa-report.v1",
  "state": "QA_PASSED",
  "status": "PASSED"

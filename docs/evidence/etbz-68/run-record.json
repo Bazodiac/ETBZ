@@ -1,20 +1,20 @@
 {
-  "recordVersion": "etbz68-design-review-run-record.v1",
+  "recordVersion": "etbz68-design-review-run-record.v2",
   "slice": "ETBZ-68",
   "nature": "SYNTHETIC_DESIGN_REVIEW_FIXTURE",
   "notACustomerArtifact": true,
   "statement": "Synthetic design-review document for the Product Owner visual acceptance. Not a customer artifact, not a reading, not Golden. Chart: the synthetic known-time development chart (Musterkundin A, no real birth data). Body text: neutral placeholder corpus.",
   "base": "cb7605e58bee57cfff68c2a3b0a6a889ca1634c6",
-  "repositoryHead": "3e7a966160bc5a909bd4b80caac097a9a1a3b409",
+  "repositoryHead": "9027d19a633a1cf7c8fe7c3d2a9936337fe02001",
   "executedAt": "2026-10-03",
   "fixture": {
     "corpusFile": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
-    "corpusFileSha256": "sha256:47e7616509c52a64c50c098a5f940f19024141675bf3e8b31497c84b54db2ae9",
+    "corpusFileSha256": "sha256:039c2626c318631b1018356467b6f113e7d5b914bca69b953c197846d1fcbbdd",
     "composedContentFile": "docs/evidence/etbz-68/fixture/design-review-content.json",
-    "contentStructuralHash": "sha256:ea87c2a7c4eb07a92bb29f2fc24e9053add8a8b68c1d8495bdf86e7ba6054381",
+    "contentStructuralHash": "sha256:6118e111e91acdc124f25a77acd0d3e232121dd513deedf743298f1a3bc4bf95",
     "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
     "chartEqualsEtbz55Chart": true,
-    "projectionStructuralHash": "sha256:2f57f724f9be703f0cb2af216099e39550b9adb79815f2a1bfa6b2099f68ef8e"
+    "projectionStructuralHash": "sha256:24435b090b7030dbf3ae56a4b6ac557951b733c347f902ab29bd18c8cf53be34"
   },
   "identities": {
     "template": "bazodiac-final-template@1.0.0",
@@ -41,18 +41,14 @@
   },
   "output": {
     "pdfFile": "docs/evidence/etbz-68/synthetic-design-review.pdf",
-    "pdfSha256": "sha256:d80fbbf1ec7c326f46633e514d6b0f2eef860e4d1087b6ef776081f16e30a61f",
-    "byteLength": 1972336,
+    "pdfSha256": "sha256:7b4a5bb831b4cb3b20fa015d624ab08816682fb165057bd24ba5196ba0777035",
+    "byteLength": 1974187,
     "pageCount": 30,
-    "contactSheetSha256": "sha256:1ebb6ce3f73026e6069c94eccaa89b8f807a5a49a3db5e7dbe6b12e494b92df9",
+    "contactSheetSha256": "sha256:c81e96ebb0f11aa768d24f200e2ec4fca8315ef52c6dba4e4501bb4f90cc5e9c",
     "pageImages": 30
   },
   "determinism": {
-    "method": "two separate render_pdf.py processes, same projection, same --executed-at and --repository-head, each also checking its own last two in-process runs (DETERMINISM check)",
-    "runs": [
-      ".etbz-verify/etbz68-render-a",
-      ".etbz-verify/etbz68-render-b"
-    ],
+    "method": "two separate render_pdf.py processes, same projection, same --executed-at and --repository-head; each also passed its own in-process DETERMINISM check",
     "pdfIdentical": true,
     "contactSheetIdentical": true,
     "qaReportIdentical": true,
@@ -61,11 +57,39 @@
     "pageImagesCompared": 30
   },
   "networkDenied": {
-    "profile": "(version 1)(allow default)(deny network*)",
     "tool": "macOS sandbox-exec",
-    "positiveControl": "node fetch(\"https://example.com\") without the profile: status 200; with the profile: ENOTFOUND, exit 3",
-    "emitterUnderProfile": "npx vite-node tests/support/emit-etbz68-projection.ts <scratch>: exit 0, all three files byte-identical to the committed ones",
-    "renderUnderProfile": "both render processes ran under the profile: exit 0, PASSED"
+    "profile": "(version 1)(allow default)(deny network*)",
+    "scope": "both render processes (python3 with its Playwright and Chromium children) and the emitter ran under the profile; sandbox-exec applies it to the whole process tree",
+    "controls": {
+      "outside": {
+        "nodeDns": {
+          "exit": 0,
+          "output": "status 200"
+        },
+        "pythonDns": {
+          "exit": 0,
+          "output": "status 200"
+        },
+        "pythonIp": {
+          "exit": 0,
+          "output": "connected"
+        }
+      },
+      "inside": {
+        "nodeDns": {
+          "exit": 3,
+          "output": "error ENOTFOUND"
+        },
+        "pythonDns": {
+          "exit": 3,
+          "output": "error URLError"
+        },
+        "pythonIp": {
+          "exit": 3,
+          "output": "error PermissionError 1"
+        }
+      }
+    }
   },
   "notRendered": [
     {

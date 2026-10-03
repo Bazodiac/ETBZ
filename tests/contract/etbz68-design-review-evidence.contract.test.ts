@@ -22,7 +22,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { canonicalJson } from '../../src/domain/canonical-json.js';
-import { RELEASED_TEMPLATE_HASHES } from '../../src/application/presentation/index.js';
+import { BRANCH_ANIMAL_LABELS, RELEASED_TEMPLATE_HASHES } from '../../src/application/presentation/index.js';
 import {
   DESIGN_REVIEW_BEHAVIOUR_MAP,
   DESIGN_REVIEW_CONTENT,
@@ -82,16 +82,23 @@ const PAGE_SEQUENCE = [
 /** Every long-form behaviour the brief requires pages 12-26 to exercise. */
 const REQUIRED_BEHAVIOURS = [
   'opener', 'continuation', 'two-column', 'one-column', 'column-split', 'continues-across-page',
-  'continued-from-previous-page', 'orphan-widow-boundary', 'paragraph-moved-whole', 'short-paragraph',
-  'long-paragraph', 'dense-with-sidebar', 'sparse-with-reference-panel',
+  'continued-from-previous-page', 'split-at-2-line-minimum', 'paragraph-moved-whole', 'short-paragraph',
+  'long-paragraph', 'continuation-with-sidebar', 'short-final-with-reference-panel',
 ];
 
+/** The verdict line of the checklist: pending, or exactly one of the PO's two values. */
+const VERDICT_LINE = /^Verdict: (?:_pending_|`VISUAL_DESIGN_ACCEPTED_FOR_CONTENT_REVIEW`|`CHANGES_REQUIRED`)$/mu;
+
+const sha256OfFile = (path: string): string => sha256Of(readFileSync(resolve(ROOT, path)));
+
 describe('ETBZ-68: the evidence folder', () => {
-  it('holds exactly the declared files', () => {
+  it('holds exactly the declared files (the canary record is written last, by the canary run)', () => {
+    const optional = readdirSync(EVIDENCE).includes('contract-canaries.json') ? ['contract-canaries.json'] : [];
     expect(readdirSync(EVIDENCE).sort()).toEqual([
       'README.md',
       'artifact-manifest.json',
       'contact-sheet.png',
+      ...optional,
       'fixture',
       'page-behaviour-map.json',
       'pages',
@@ -116,10 +123,40 @@ describe('ETBZ-68: the evidence folder', () => {
     expect(canonicalJson(composeDesignReviewContent(corpus))).toBe(canonicalJson(composeDesignReviewContent(loadPlaceholderCorpus())));
   });
 
-  it('hand-authors no symbolic value: the corpus carries no CJK character, the chart is the ETBZ-55 fixture chart', () => {
-    const corpusText = readFileSync(resolve(ROOT, 'docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json'), 'utf8');
-    expect(corpusText.match(/[\u3400-\u9fff]/gu)).toBeNull();
+  it('hand-authors no symbolic value: the chart is the ETBZ-55 fixture chart, and the printed corpus names no symbol', () => {
     expect(manifest.input.chartModelStructuralHash).toBe(etbz55.input.chartModelStructuralHash);
+    const corpus = loadPlaceholderCorpus();
+    const printed = [corpus.title, ...corpus.chapterTitles, ...corpus.sentences, ...corpus.reflectionQuestions, corpus.methodNote].join('\n');
+    expect(printed.match(/[\u3400-\u9fff]/gu)).toBeNull();
+    // The symbol vocabulary the chart pages draw from: every pinyin of the 27 display glyphs, the released animal
+    // labels, and the German names of the phases, polarities and pillar terms.
+    const glyphs = json<{ glyphs: { pinyin: string }[] }>('assets/visual-system-v1/glyphs/manifest.json').glyphs;
+    const vocabulary = [
+      ...glyphs.map((glyph) => glyph.pinyin),
+      ...BRANCH_ANIMAL_LABELS.locales.de.map((entry) => entry.label),
+      'Holz', 'Feuer', 'Erde', 'Metall', 'Wasser', 'Yin', 'Yang', 'Tagesmeister', 'Säule', 'Säulen', 'Himmelsstamm', 'Himmelsstämme',
+      'Erdzweig', 'Erdzweige', 'Wandlungsphase', 'Wandlungsphasen', 'Qi',
+    ];
+    expect(vocabulary.length).toBeGreaterThan(40);
+    const words = new Set(printed.split(/[^\p{L}]+/u).filter((word) => word.length > 0));
+    expect(vocabulary.filter((term) => words.has(term))).toEqual([]);
+  });
+
+  it('keeps the chapters from repeating each other: no two share two consecutive sentences, no paragraph recurs', () => {
+    const corpus = loadPlaceholderCorpus();
+    const n = corpus.sentences.length;
+    const pairs = new Map<string, number>();
+    corpus.composition.chapters.forEach((plan, chapter) => {
+      const picks = plan.paragraphs.reduce((sum, count) => sum + count, 0);
+      for (let j = 0; j + 1 < picks; j += 1) {
+        const pair = `${String((plan.offset + j * plan.stride) % n)}>${String((plan.offset + (j + 1) * plan.stride) % n)}`;
+        const seen = pairs.get(pair);
+        expect(seen === undefined || seen === chapter, `chapters ${String(seen)} and ${String(chapter)} share ${pair}`).toBe(true);
+        pairs.set(pair, chapter);
+      }
+    });
+    const paragraphs = content.chapters.flatMap((chapter) => chapter.paragraphs);
+    expect(new Set(paragraphs).size).toBe(paragraphs.length);
   });
 });
 
@@ -258,6 +295,32 @@ describe('ETBZ-68: the run record and the review checklist', () => {
     });
     expect(checklist).toContain('`VISUAL_DESIGN_ACCEPTED_FOR_CONTENT_REVIEW`');
     expect(checklist).toContain('`CHANGES_REQUIRED`');
-    expect(checklist).toContain('Verdict: _pending_');
+    expect(VERDICT_LINE.test(checklist)).toBe(true);
+    expect(checklist.match(/^Verdict: /gmu)).toHaveLength(1);
+  });
+
+  it('records the network denial: every control inside the sandbox profile failed', () => {
+    const network = json<{ networkDenied: { profile: string; controls: { inside: Record<string, { exit: number | null }> } } }>('docs/evidence/etbz-68/run-record.json').networkDenied;
+    expect(network.profile).toBe('(version 1)(allow default)(deny network*)');
+    expect(Object.keys(network.controls.inside).sort()).toEqual(['nodeDns', 'pythonDns', 'pythonIp']);
+    for (const [name, control] of Object.entries(network.controls.inside)) expect(control.exit, name).not.toBe(0);
+  });
+});
+
+describe('ETBZ-68: the contract test has been seen red', () => {
+  it('when the canary record is present, it was proven against this test and this fixture, and every canary was killed', () => {
+    const path = resolve(EVIDENCE, 'contract-canaries.json');
+    if (!readdirSync(EVIDENCE).includes('contract-canaries.json')) return;
+    const record = JSON.parse(readFileSync(path, 'utf8')) as {
+      contractTestSha256: string;
+      fixtureModuleSha256: string;
+      baseline: string;
+      canaries: { canary: string; killed: boolean }[];
+    };
+    expect(record.contractTestSha256).toBe(sha256OfFile('tests/contract/etbz68-design-review-evidence.contract.test.ts'));
+    expect(record.fixtureModuleSha256).toBe(sha256OfFile('tests/support/designReviewFixture.ts'));
+    expect(record.baseline).toBe('GREEN');
+    expect(record.canaries.length).toBeGreaterThanOrEqual(9);
+    for (const canary of record.canaries) expect(canary.killed, canary.canary).toBe(true);
   });
 });
