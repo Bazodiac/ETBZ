@@ -1,0 +1,112 @@
+{
+  "recordVersion": "etbz68-design-review-run-record.v2",
+  "slice": "ETBZ-68",
+  "nature": "SYNTHETIC_DESIGN_REVIEW_FIXTURE",
+  "notACustomerArtifact": true,
+  "statement": "Synthetic design-review document for the Product Owner visual acceptance. Not a customer artifact, not a reading, not Golden. Chart: the synthetic known-time development chart (Musterkundin A, no real birth data). Body text: neutral placeholder corpus.",
+  "base": "cb7605e58bee57cfff68c2a3b0a6a889ca1634c6",
+  "repositoryHead": "f62e6638cf0184f6f6866615348bbbc6a6ad9a22",
+  "executedAt": "2026-10-03",
+  "fixture": {
+    "corpusFile": "docs/evidence/etbz-68/fixture/placeholder-corpus.v1.json",
+    "corpusFileSha256": "sha256:e79ee72f1e464a733031613421fdb8a378a858be18f73de89a5c97ae8700f25f",
+    "composedContentFile": "docs/evidence/etbz-68/fixture/design-review-content.json",
+    "contentStructuralHash": "sha256:7b80fdd43b519537c11b008f8b0ac5506f6fcb18f3007b8a05e2723bdd4f32e8",
+    "chartModelStructuralHash": "sha256:31e4b229b555f04f03020ff469a0694790385a2fb3fa0b8413a4e7419c725c91",
+    "chartEqualsEtbz55Chart": true,
+    "projectionStructuralHash": "sha256:8ca028ebb2027d9feffd0c56ccde496cc875ea866f9f89cc76ac7db223e49dff"
+  },
+  "identities": {
+    "template": "bazodiac-final-template@1.0.0",
+    "templateStructuralHash": "sha256:d595ab7cccdf9f99fe23d03fa7789366a2d3951f130aa6eabee626489c2562d6",
+    "renderer": "bazodiac-pdf-renderer@1.0.0",
+    "rendererSourceSha256": "sha256:f971a44b5eaa2721a2cb46156786a5485f521d7bfcd8f8d545ab19c04c4de820",
+    "rendererEqualsEtbz55": true,
+    "projectionVersion": "bazodiac-presentation-projection.v1",
+    "engine": {
+      "browser": "chromium",
+      "flags": [
+        "--deterministic-mode",
+        "--disable-gpu",
+        "--force-color-profile=srgb",
+        "--font-render-hinting=none"
+      ],
+      "fonttools": "4.61.1",
+      "pikepdf": "10.14.0",
+      "pillow": "11.3.0",
+      "playwright": "1.52.0",
+      "python": "3.13.3",
+      "version": "136.0.7103.25"
+    }
+  },
+  "output": {
+    "pdfFile": "docs/evidence/etbz-68/synthetic-design-review.pdf",
+    "pdfSha256": "sha256:e84536b21192c7ffaa480d5d87d76ea2f159a42a8653270a7ccb7a6a527766f2",
+    "byteLength": 1974708,
+    "pageCount": 30,
+    "contactSheetSha256": "sha256:bdd0021786d0c22472297fe123eb2d807c024c6aa83dea8d857145da46fd805f",
+    "pageImages": 30
+  },
+  "determinism": {
+    "method": "two separate render_pdf.py processes, same projection, same --executed-at and --repository-head; each also passed its own in-process DETERMINISM check",
+    "pdfIdentical": true,
+    "contactSheetIdentical": true,
+    "qaReportIdentical": true,
+    "manifestIdentical": true,
+    "pageImagesIdentical": 30,
+    "pageImagesCompared": 30
+  },
+  "networkDenied": {
+    "tool": "macOS sandbox-exec",
+    "profile": "(version 1)(allow default)(deny network*)",
+    "scope": "both render processes (python3 with its Playwright and Chromium children) and the emitter ran under the profile; sandbox-exec applies it to the whole process tree",
+    "controls": {
+      "outside": {
+        "nodeDns": {
+          "exit": 0,
+          "output": "status 200"
+        },
+        "pythonDns": {
+          "exit": 0,
+          "output": "status 200"
+        },
+        "pythonIp": {
+          "exit": 0,
+          "output": "connected"
+        }
+      },
+      "inside": {
+        "nodeDns": {
+          "exit": 3,
+          "output": "error ENOTFOUND"
+        },
+        "pythonDns": {
+          "exit": 3,
+          "output": "error URLError"
+        },
+        "pythonIp": {
+          "exit": 3,
+          "output": "error PermissionError 1"
+        }
+      }
+    }
+  },
+  "notRendered": [
+    {
+      "component": "ChapterDivider",
+      "reason": "no such component in the template contract, src/ or tools/ (ADR 0012 limitation 1; ETBZ-43 AC 2/5/10 open, comment 17069)"
+    },
+    {
+      "component": "ChartMotifSummary",
+      "reason": "no such component and no motif input in the projection (ADR 0012 limitation 1; ETBZ-43)"
+    },
+    {
+      "component": "KeyInsightPanel",
+      "reason": "drawn by pages.py, but the released content schema is paragraphs only (projection.ts contentSchema); PO decision 2026-10-03: scope A, no production change"
+    },
+    {
+      "component": "pull quote",
+      "reason": "drawn by pages.py, but the released content schema is paragraphs only; PO decision 2026-10-03: scope A, no production change"
+    }
+  ]
+}
