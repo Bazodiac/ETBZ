@@ -54,8 +54,11 @@ compound form, or a back-reference outside the word list, would pass them. That 
 self-contained rests on three independent read-only reviews of the corpus, not on these checks.
 
 `scripts/etbz68-contract-canaries.mjs` proves that the contract test can fail. Each canary names the test
-that must fail. `ci-verify` re-runs it as `npm run guards:etbz68` (`--check`), and
-`tests/architecture/ci-contract.test.ts` pins that step.
+that must fail. `npm run guards:etbz68` (`--check`) re-runs it and requires the committed record to be
+reproduced byte for byte. It is a local guard, not a `ci-verify` step. The CI job already runs at about
+29.5 of its 30 minutes on main, so a 30-second step cancelled one run (`timeout-minutes: 30`). CI re-derives
+the evidence through the contract test, which requires the canary record to match the current test and
+fixture module.
 
 The 30 is asserted only there. The released visual contract already numbers its page family for a
 30-page document (`pageFamily.ts`: pages 1–14 and 27–30, long form 12–26), but no production module
