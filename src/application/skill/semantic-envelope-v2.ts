@@ -10,14 +10,16 @@
 // (C3, ETBZ-94) and methods in Method Profile v2 (C2, ETBZ-78); ADR 0019 lists
 // every 1.x block with the C1/C5 section that addresses its topic.
 //
-// Every value is C1's text as the page renders it: German, characters
+// Every rule text is C1's text as the page renders it: German, characters
 // unchanged (C1 closes its „…" quotations with a straight quote, and that is
 // kept), markdown emphasis and code marks removed. Every block names its
 // section by C1's own heading. `(Kopf)` is the header above the first heading:
 // its rules and its status are carried here; its decision line (Canon v2, PO,
 // 2026-10-04) is `CANON_V2_DECISION` and the source's `releasedOn`, and its
 // "Ersetzt …" paragraph is the supersession record (`contract-sources-v2.ts`).
-// `(Schluss)` is the closing paragraph below the last list.
+// `(Schluss)` is the closing paragraph below the last list. Identifiers -
+// `lineId`, `partId`, `ownedBy`, the binding and the section labels - are this
+// module's labels, not page text.
 //
 // It carries no method reference, no fact and no number: the counts C1 states
 // ("1–2", "8–12", "≤ 15 %") are text here, and enforcing them is the work of

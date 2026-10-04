@@ -28,8 +28,10 @@ import {
   RELEASED_CONTRACT_SOURCES,
   SEMANTIC_ENVELOPE,
   SEMANTIC_ENVELOPE_V1_1,
+  SEMANTIC_ENVELOPE_V2,
   WORDING_BOUNDARIES,
   WORDING_BOUNDARIES_V1_1,
+  WORDING_BOUNDARIES_V2,
   assertCanonV2ContractSet,
   assertRunEvidenceBound,
   buildSkillContractBundle,
@@ -57,7 +59,7 @@ function attempt<T>(action: () => T): { value: T | undefined; error: string | un
   }
 }
 
-describe('ETBZ-77 AC1/AC4: the 2.0 context binds the Lens v2 and the Lexicon v2', () => {
+describe('ETBZ-77 AC2 and DoD mutant (v2 ref -> 1.1 ref): the 2.0 context binds the Lens v2 and the Lexicon v2', () => {
   it('binds the Lens v2 and the Lexicon v2 at their 2.0.0 identities in the 2.0 context, never a 1.x one', () => {
     const set = attempt(() => assertCanonV2ContractSet());
     expect(set.error).toBeUndefined();
@@ -77,7 +79,7 @@ describe('ETBZ-77 AC1/AC4: the 2.0 context binds the Lens v2 and the Lexicon v2'
   });
 });
 
-describe('ETBZ-77: version beside version - nothing of 1.x moved', () => {
+describe('ETBZ-77 AC1: version beside version - nothing of 1.x moved', () => {
   it(`leaves every 1.x contract value module and both 1.x Skill packages byte-identical to main ${ETBZ77_BASE_COMMIT.slice(0, 8)}`, () => {
     expect(Object.keys(V1_BASELINE_SHA256)).toHaveLength(19);
     expect(currentV1Sha256()).toEqual(V1_BASELINE_SHA256);
@@ -112,15 +114,12 @@ describe('ETBZ-77: version beside version - nothing of 1.x moved', () => {
 describe('ETBZ-77 AC3: ADR 0019 records the drop inventory and the frozen identities', () => {
   const adr = readFileSync(resolve(REPO_ROOT, 'docs/adr/0019-canon-v2-contracts.md'), 'utf8');
 
-  it('lists every top-level block of the 1.x envelopes and wording boundaries in a table row of its drop inventory, each once, each with a related-section cell, and nothing else', () => {
+  it('lists every top-level block of the 1.x envelopes and wording boundaries in its drop inventory, each once, and nothing else', () => {
     const start = adr.indexOf('Where the 1.x blocks went');
     const end = adr.indexOf('### 3.', start);
     expect(start).toBeGreaterThan(0);
     expect(end).toBeGreaterThan(start);
-    const rows = adr.slice(start, end).split('\n').filter((line) => line.startsWith('| `'));
-    const cells = rows.map((row) => row.split('|').map((cell) => cell.trim()).filter((cell, index, all) => index > 0 && index < all.length - 1));
-    expect(cells.every((row) => row.length === 2 && (row[1] ?? '').length > 0)).toBe(true);
-    const listed = cells.flatMap((row) => [...(row[0] ?? '').matchAll(/`(Lens|Lexicon)\.([A-Za-z0-9]+)`/gu)].map((match) => `${match[1] ?? ''}.${match[2] ?? ''}`));
+    const listed = [...adr.slice(start, end).matchAll(/`(Lens|Lexicon)\.([A-Za-z0-9]+)`/gu)].map((match) => `${match[1] ?? ''}.${match[2] ?? ''}`);
     const blocks = (prefix: string, ...values: object[]): string[] =>
       [...new Set(values.flatMap((value) => Object.keys(value)).filter((name) => !name.endsWith('Source')))].map((name) => `${prefix}.${name}`);
     const expected = [...blocks('Lens', SEMANTIC_ENVELOPE, SEMANTIC_ENVELOPE_V1_1), ...blocks('Lexicon', WORDING_BOUNDARIES, WORDING_BOUNDARIES_V1_1)].sort();
@@ -128,12 +127,25 @@ describe('ETBZ-77 AC3: ADR 0019 records the drop inventory and the frozen identi
     expect([...listed].sort()).toEqual(expected);
   });
 
+  it('carries no 1.x value into 2.0.0: no 1.x string longer than 20 characters occurs inside any v2 value', () => {
+    const leaves = (value: unknown, found: string[] = []): string[] => {
+      if (typeof value === 'string') found.push(value);
+      else if (Array.isArray(value)) for (const entry of value) leaves(entry, found);
+      else if (value !== null && typeof value === 'object') for (const entry of Object.values(value)) leaves(entry, found);
+      return found;
+    };
+    const v1 = [...new Set(leaves([SEMANTIC_ENVELOPE, SEMANTIC_ENVELOPE_V1_1, WORDING_BOUNDARIES, WORDING_BOUNDARIES_V1_1]))].filter((text) => text.length > 20);
+    const v2 = leaves([SEMANTIC_ENVELOPE_V2, WORDING_BOUNDARIES_V2]);
+    expect(v1.length).toBeGreaterThan(300);
+    expect(v1.filter((text) => v2.some((value) => value.includes(text)))).toEqual([]);
+  });
+
   it('quotes the frozen v2 contract hashes the code releases', () => {
     for (const hash of Object.values(RELEASED_CANON_V2_CONTRACT_HASHES)) expect(adr).toContain(hash);
   });
 });
 
-describe('ETBZ-77 AC5: the evidence record re-derives byte for byte', () => {
+describe('ETBZ-77 Evidenz: the evidence record re-derives byte for byte', () => {
   it(`${ETBZ77_EVIDENCE_PATH} equals the record derived from the code`, () => {
     expect(readFileSync(resolve(REPO_ROOT, ETBZ77_EVIDENCE_PATH), 'utf8')).toBe(renderJson(deriveEtbz77Evidence()));
   });

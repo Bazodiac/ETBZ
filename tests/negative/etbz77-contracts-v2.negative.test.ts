@@ -76,6 +76,10 @@ describe('ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name', () => {
     ['an unreleased 2.0.1 Lens', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@2.0.1' }, lexicon), 'CONTRACT_DRIFT'],
     ['an unreleased 3.0.0 Lexicon', () => pair(lens, { ...lexicon, contractRef: 'terminology-wording-lexicon@3.0.0' }), 'CONTRACT_DRIFT'],
     ['an unknown contract name', () => pair({ ...lens, contractRef: 'interpretation-lens@2.0.0' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['the Lens lineage with a malformed version', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@not-a-version' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['the Lens lineage with no version', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['the Lens identity with a trailing space', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@2.0.0 ' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['the 1.1 Lexicon in the Lens slot', () => pair(PLAN_CONTRACT_BINDINGS_V1_1.terminologyLexicon, lexicon), 'BUNDLE_BINDING_MISMATCH'],
     ['a page address instead of an identity', () => pair({ ...lens, contractRef: 'confluence:85229569@1' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
     ['Lens and Lexicon swapped', () => pair(lexicon, lens), 'BUNDLE_BINDING_MISMATCH'],
     ['the Lexicon in both slots', () => pair(lexicon, lexicon), 'BUNDLE_BINDING_MISMATCH'],
@@ -117,6 +121,7 @@ describe('ETBZ-77: resolving inside the 2.0 context', () => {
     'cross-reading-individuality-contract@1.1.0',
     'bazi-method-profile@1.0.0',
     'confluence:85164034@1',
+    'grounded-reflective-synthesis-lens@not-a-version',
     '',
   ])('does not resolve "%s"', (ref) => {
     expect(contractCodeOf(() => resolveCanonV2Contract(ref))).toBe('UNKNOWN_CONTRACT_IDENTITY');
@@ -229,6 +234,19 @@ describe('ETBZ-77: a v2 contract is released only at its frozen hash', () => {
   it('refuses an identity that was never released on the 2.0 line', () => {
     const core = coreWith('INTERPRETATION_LENS', (copy) => { at(copy, 'source')['identity'] = 'grounded-reflective-synthesis-lens@2.0.1'; });
     expect(contractCodeOf(() => assertReleasedCanonV2Contract({ ...core, structuralHash: structuralHash(core) }))).toBe('BUNDLE_NOT_RELEASED');
+  });
+
+  it.each(['source', 'supersedes', 'content', 'canon'])('refuses a released contract whose %s is null', (field) => {
+    const copy = JSON.parse(JSON.stringify(released)) as Json;
+    copy[field] = null;
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract(copy as unknown as CanonV2Contract))).toBe('BUNDLE_SCHEMA_INVALID');
+  });
+
+  it('refuses, coded, a nesting deeper than the engine can walk - in the validator and at the freeze', () => {
+    const nested: unknown = JSON.parse(`${'['.repeat(20_000)}"x"${']'.repeat(20_000)}`);
+    const core = coreWith('INTERPRETATION_LENS', (copy) => { ((at(copy, 'content', 'redLines')['lines'] as Json[])[0] as Json)['text'] = nested; });
+    expect(contractCodeOf(() => validateCanonV2ContractCore(core))).toBe('BUNDLE_SCHEMA_INVALID');
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract({ ...core, structuralHash: released.structuralHash }))).toBe('BUNDLE_SCHEMA_INVALID');
   });
 
   it('refuses data riding beside the released core and its hash', () => {

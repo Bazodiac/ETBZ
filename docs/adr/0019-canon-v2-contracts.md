@@ -79,30 +79,19 @@ v2 replaces the 1.x contracts in content, so no 1.x block is part of 2.0.0.
 - **The calibration paragraphs** are about the synthetic fixture chart 庚午 · 壬午 · 辛亥 · 乙未. They contain no
   Golden value and no birth data.
 
-Where the 1.x blocks went. All 39 top-level blocks of the 1.0/1.1 Lens envelopes (23) and Lexicon wording
-boundaries (16) are superseded: none of them is part of 2.0.0, and all of them stay in 1.0.0/1.1.0 for the runs bound
-there. The right column only points a reader to the C1/C5 section that addresses the same topic. It claims no
-equivalence and no coverage; "none" means no C1/C5 section addresses the topic. Canon v2 puts meaning in C3/C4
-(Epic D) and judging in C8 (Epic F); whether a block has a successor there is decided in those slices.
-`tests/contract/etbz77-contracts-v2.contract.test.ts` holds the list of blocks to the code.
+Where the 1.x blocks went. The 1.0/1.1 Lens envelopes have 23 top-level blocks and the Lexicon wording boundaries 16.
+All 39 are superseded and none is part of 2.0.0: no 1.x value longer than 20 characters occurs inside any v2 value
+(checked by the contract suite). All 39 stay in 1.0.0/1.1.0 for the runs bound there (byte baseline and bundle hashes,
+section 5). This record does not map them onto C1 or C5: the Canon v2 pages are the authority for what replaces them,
+and meaning (C3/C4, Epic D) and judging (C8, Epic F) are decided in their own slices.
+`tests/contract/etbz77-contracts-v2.contract.test.ts` holds this list to the code.
 
-| 1.x block | Related C1/C5 section (orientation only) |
+| Contract | Superseded 1.x blocks |
 | --- | --- |
-| `Lens.epistemicLevels`, `Lens.epistemicHardLaw`, `Lens.epistemicHardLawReading` | C1 Zone B |
-| `Lens.uncertaintyCarriedNotAdded`, `Lexicon.uncertaintyCarriedNotAdded`, `Lexicon.uncertaintyLanguage` | C1 Zone B (the row "Vorläufig"); C5 WORTREGELN |
-| `Lens.languagePosture`, `Lexicon.globalLanguageRules` | C5 ZIELSTIMME and WORTREGELN; C1 Zone B; C1 "Ausdrücklich abgeschafft" |
-| `Lens.tensionRule`, `Lens.depthOperators` | C1 Spannung |
-| `Lens.reflectionJobs`, `Lexicon.reflectionBoundary` | C5 REFLEXIONSFRAGE and ZIELSTIMME; C1 Zone A |
-| `Lens.antiMystificationForbidden`, `Lexicon.prohibitedWordingClasses` | C1 Zone A; C5 ZIELSTIMME and WORTREGELN |
-| `Lens.barnumRiskPatterns`, `Lens.nearNeighbourFeatures` | C5 SPEZIFITÄTSTEST |
-| `Lens.tenGodFamilies`, `Lens.tenGodVariants`, `Lens.variantHardRule`, `Lexicon.tenGodFamilyWording`, `Lexicon.tenGodRelationWording`, `Lexicon.tenGodsHardRule` | C5 ROLLENNAMEN (role names only) |
-| `Lexicon.antiPhraseBankRule` | C5 DEUTUNGSKETTE |
-| `Lexicon.unknownTimeRules`, `Lexicon.unknownTimePatterns`, `Lexicon.unknownTimePlacement` | C1 Zone B (the row "Vorläufig") |
-| `Lexicon.chartTerminology` | C1 Zone C (the pillars as classical rooms) |
-| `Lens.metaphorRule`, `Lexicon.metaphorConditions` | C1 Zone C (images) |
-| `Lens.voiceInvariants` | Rebaseline section 17, superseded at sentence level (section 3 below) |
-| `Lens.surfaceInteriorNeverInfer`, `Lens.claimTypes`, `Lens.alternativeBinding`, `Lexicon.sourceWarningWording`, `Lexicon.customerWordingIsAnAnchor` | none |
-| `Lens.evaluationDimensions`, `Lens.llmJudgeNeverSoleOracleFor`, `Lens.voiceEvaluationDimensions`, `Lens.voiceReviewLabels` | none (judging is C8, Epic F) |
+| Lens (23) | `Lens.epistemicLevels`, `Lens.epistemicHardLaw`, `Lens.tenGodFamilies`, `Lens.tenGodVariants`, `Lens.variantHardRule`, `Lens.depthOperators`, `Lens.surfaceInteriorNeverInfer`, `Lens.claimTypes`, `Lens.languagePosture`, `Lens.metaphorRule`, `Lens.reflectionJobs`, `Lens.antiMystificationForbidden`, `Lens.evaluationDimensions`, `Lens.barnumRiskPatterns`, `Lens.nearNeighbourFeatures`, `Lens.llmJudgeNeverSoleOracleFor`, `Lens.voiceInvariants`, `Lens.uncertaintyCarriedNotAdded`, `Lens.epistemicHardLawReading`, `Lens.alternativeBinding`, `Lens.tensionRule`, `Lens.voiceEvaluationDimensions`, `Lens.voiceReviewLabels` |
+| Lexicon (16) | `Lexicon.globalLanguageRules`, `Lexicon.chartTerminology`, `Lexicon.tenGodFamilyWording`, `Lexicon.tenGodRelationWording`, `Lexicon.tenGodsHardRule`, `Lexicon.uncertaintyLanguage`, `Lexicon.unknownTimeRules`, `Lexicon.unknownTimePatterns`, `Lexicon.sourceWarningWording`, `Lexicon.metaphorConditions`, `Lexicon.reflectionBoundary`, `Lexicon.prohibitedWordingClasses`, `Lexicon.antiPhraseBankRule`, `Lexicon.customerWordingIsAnAnchor`, `Lexicon.uncertaintyCarriedNotAdded`, `Lexicon.unknownTimePlacement` |
+
+The Lens 1.1 voice invariants quote Rebaseline section 17; what of that section stays in force is section 3 below.
 
 ### 3. What is superseded, and what stays in force
 
@@ -129,14 +118,16 @@ equivalence and no coverage; "none" means no C1/C5 section addresses the topic. 
 `PLAN_CONTRACT_BINDINGS_V2_0` is the Lexicon/Lens pair a Canon v2 run binds: the pair bundle 2.0.0 (ETBZ-81) will
 name as its plan bindings. `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The
 input is untrusted: the root and each slot must be plain objects, the shape is parsed strictly, and the input is
-never returned (the repository's pair is):
+never returned (the repository's pair is; it and every v2 value the module hands out are frozen). Every refusal is a
+`SkillContractError`: anything the boundaries cannot read as plain data - a throwing getter, a nesting deeper than the
+engine can walk - is `BUNDLE_SCHEMA_INVALID`, naming the cause; the same holds for the validator and the freeze.
 
 | Input | Code |
 | --- | --- |
 | a 1.0.0 or 1.1.0 Lens or Lexicon (or any other version of the lineage, e.g. 2.0.1) in its slot | `CONTRACT_DRIFT`, naming the released 2.0.0 identity and that a 1.x identity resolves only under its own bundle |
-| a v2 identity in the other slot (swapped, or the Lexicon twice) | `BUNDLE_BINDING_MISMATCH` |
+| an identity of the other lineage in a slot (1.x or 2.0.0: swapped, the Lexicon twice, the 1.1 Lexicon in the Lens slot) | `BUNDLE_BINDING_MISMATCH` |
 | the right identity on another page or page version | `CONTRACT_SOURCE_MISMATCH` |
-| an unknown name or a page address | `UNKNOWN_CONTRACT_IDENTITY` |
+| an unknown name, a page address, or a lineage name with a malformed version (`…@`, `…@not-a-version`, a trailing space) | `UNKNOWN_CONTRACT_IDENTITY` |
 | a missing or undefined slot | `REQUIRED_CONTRACT_MISSING` |
 | any other shape (extra key, number, null, list, string, a non-plain object at the root or in a slot, a getter that throws) | `BUNDLE_SCHEMA_INVALID` |
 
@@ -178,6 +169,9 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
   - Six inject a defect the freeze, the baseline or a binding test must catch: three "v2 ref → 1.1 ref" mutants
     (the Lens slot, the Lexicon slot, the Lens source), an in-place 1.1 edit no bundle hash sees, a dropped red
     line, and a voice binding to another C5 version.
+- **Throw-site sweep.** Beyond the nine CI mutants, every `throw` of `canon-v2-contracts.ts` was disabled in turn,
+  once, and the three ETBZ-77 suites run; the record beside the evidence lists, for each site, the test that fails by
+  assertion or why the site cannot be reached by input. It is a one-time proof, not a CI step (CI budget).
 - **Evidence.** `docs/evidence/etbz-77/contracts-v2/contracts-v2.json` records identities, page bindings, hashes,
   the 2.0 context's answer to each binding case, the historical 1.x resolution and the baseline. The contract
   suite re-derives it byte for byte. The mutation protocol and the gate run are recorded beside it.

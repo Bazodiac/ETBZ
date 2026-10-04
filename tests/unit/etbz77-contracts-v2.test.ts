@@ -18,6 +18,7 @@ import {
   RELEASED_CANON_V2_CONTRACT_HASHES,
   SEMANTIC_ENVELOPE_V2,
   STYLE_GUIDE_V3_BLOCK_NAMES,
+  assertCanonV2ContractBindings,
   WORDING_BOUNDARIES_V2,
   assertCanonV2ContractSet,
   buildCanonV2Contract,
@@ -116,7 +117,18 @@ describe('ETBZ-77: the Lens v2 and the Lexicon v2 load as released identities', 
   });
 });
 
-describe('ETBZ-77: the Lens v2 carries C1', () => {
+describe('ETBZ-77: the 2.0 line is handed out frozen', () => {
+  it('freezes the pair, the sources, the decision and the content it hands out by reference', () => {
+    for (const value of [PLAN_CONTRACT_BINDINGS_V2_0, PLAN_CONTRACT_BINDINGS_V2_0.interpretationLens, CANON_V2_DECISION, CANON_V2_DECISION.precedence, SEMANTIC_ENVELOPE_V2.redLines.lines[0], WORDING_BOUNDARIES_V2.styleGuide.blocks[0]]) {
+      expect(Object.isFrozen(value)).toBe(true);
+    }
+    const pair = assertCanonV2ContractBindings(structuredClone(PLAN_CONTRACT_BINDINGS_V2_0));
+    expect(attempt(() => { (pair.interpretationLens as { contractRef: string }).contractRef = 'grounded-reflective-synthesis-lens@1.1.0'; }).error).toBeDefined();
+    expect(PLAN_CONTRACT_BINDINGS_V2_0.interpretationLens.contractRef).toBe('grounded-reflective-synthesis-lens@2.0.0');
+  });
+});
+
+describe('ETBZ-77 AC1: the Lens v2 carries C1', () => {
   it('cites every C1 section, in page order', () => {
     expect([...new Set(citedSections(SEMANTIC_ENVELOPE_V2))]).toEqual([...C1_SECTIONS]);
   });
@@ -166,7 +178,7 @@ describe('ETBZ-77: the Lens v2 carries C1', () => {
   });
 });
 
-describe('ETBZ-77: the Lexicon v2 carries C5 whole', () => {
+describe('ETBZ-77 AC1: the Lexicon v2 carries C5 whole', () => {
   it('cites every C5 part', () => {
     expect([...new Set(citedSections(WORDING_BOUNDARIES_V2))]).toEqual([...C5_SECTIONS]);
   });

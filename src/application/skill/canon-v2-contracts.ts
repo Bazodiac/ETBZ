@@ -112,6 +112,20 @@ interface CanonV2Spec {
   readonly slot: keyof PlanContractBindings;
 }
 
+/**
+ * The 2.0 line is handed out by reference (the sources, the pair, the content),
+ * so it is frozen at load: a caller that writes into a returned value cannot
+ * change what the next caller is told. Freezing changes no content and no hash.
+ */
+function deepFreeze(value: unknown): void {
+  if (value === null || typeof value !== 'object' || Object.isFrozen(value)) return;
+  Object.freeze(value);
+  for (const entry of Object.values(value)) deepFreeze(entry);
+}
+for (const value of [CANON_V2_DECISION, CANON_V2_CONTRACT_SOURCES, CANON_V2_SUPERSESSIONS, SEMANTIC_ENVELOPE_V2, WORDING_BOUNDARIES_V2, PLAN_CONTRACT_BINDINGS_V2_0]) {
+  deepFreeze(value);
+}
+
 const SPECS: Readonly<Record<CanonV2ContractKey, CanonV2Spec>> = {
   INTERPRETATION_LENS: { content: SEMANTIC_ENVELOPE_V2, sections: C1_SECTIONS, slot: 'interpretationLens' },
   TERMINOLOGY_LEXICON: { content: WORDING_BOUNDARIES_V2, sections: C5_SECTIONS, slot: 'terminologyLexicon' },
@@ -262,6 +276,22 @@ function fieldAt(value: unknown, path: readonly string[]): unknown {
   return current;
 }
 
+/**
+ * Runs a boundary and turns anything but a coded refusal into one: input that
+ * cannot be read as plain data (a nesting deeper than the engine's stack, a
+ * throwing getter) is BUNDLE_SCHEMA_INVALID, naming the cause, never a crash.
+ * It refuses; it never accepts what the boundary did not.
+ */
+function coded(what: string, action: () => void): void {
+  try {
+    action();
+  } catch (error) {
+    if (error instanceof SkillContractError) throw error;
+    const cause = error instanceof Error ? error.name : typeof error;
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `<root>: ${what} cannot be read as plain data (${cause})`, { path: '<root>', cause });
+  }
+}
+
 const SOURCE_SHAPE = z.strictObject({
   key: z.string(),
   title: z.string(),
@@ -285,14 +315,13 @@ const CORE_SHAPE = z.strictObject({
   content: z.record(z.string(), z.unknown()),
 });
 
-/** Refuses a core that is not the declared JSON shape (path and code only, never the value). */
+/**
+ * Refuses a core that is not the declared JSON shape (path and code only, never
+ * the value). Its callers run inside `coded`, which turns an unreadable input
+ * into a coded refusal.
+ */
 function refuseMalformedCore(core: unknown): void {
-  let parsed: ReturnType<typeof CORE_SHAPE.safeParse>;
-  try {
-    parsed = CORE_SHAPE.safeParse(core);
-  } catch {
-    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', '<root>: the contract core cannot be read as plain data', { path: '<root>' });
-  }
+  const parsed = CORE_SHAPE.safeParse(core);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const path = issue === undefined || issue.path.length === 0 ? '<root>' : issue.path.map(String).join('.');
@@ -308,6 +337,10 @@ function refuseMalformedCore(core: unknown): void {
  * violation: a contract that is wrong in one place is not trusted in any other.
  */
 export function validateCanonV2ContractCore(core: CanonV2ContractCore): void {
+  coded('the contract core', () => validateCore(core));
+}
+
+function validateCore(core: CanonV2ContractCore): void {
   refuseMalformedCore(core);
   const { source } = core;
   if (!isCanonV2Key(source.key)) {
@@ -439,6 +472,10 @@ export function buildCanonV2Contract(key: string): CanonV2Contract {
 
 /** Fails closed unless `contract` is, in canonical content, the released v2 contract of its identity. */
 export function assertReleasedCanonV2Contract(contract: CanonV2Contract): void {
+  coded('the contract', () => assertReleased(contract));
+}
+
+function assertReleased(contract: CanonV2Contract): void {
   if (contract === null || typeof contract !== 'object' || Object.getPrototypeOf(contract) !== Object.prototype
     || Object.keys(contract).sort().join(',') !== 'canon,content,source,structuralHash,supersedes') {
     throw new SkillContractError('BUNDLE_SCHEMA_INVALID', 'a released v2 contract is exactly its core and its structural hash; nothing rides beside them');
@@ -477,7 +514,8 @@ function classifyCanonV2Ref(ref: string): CanonV2Classification {
   for (const source of CANON_V2_CONTRACT_SOURCES) {
     if (source.identity === ref) return { kind: 'RELEASED', source };
   }
-  const name = ref.includes('@') ? lineageOf(ref) : null;
+  // Only `<lineage>@<major>.<minor>.<patch>` is another version; any other suffix is an unknown reference.
+  const name = /^[a-z][a-z0-9-]*@\d+\.\d+\.\d+$/u.test(ref) ? lineageOf(ref) : null;
   for (const source of CANON_V2_CONTRACT_SOURCES) {
     if (name !== null && source.identity !== null && lineageOf(source.identity) === name) return { kind: 'OTHER_VERSION', source };
   }
@@ -609,8 +647,9 @@ export interface CanonV2ContractSet {
 
 /**
  * Builds the whole 2.0 line and holds it to itself: every contract released,
- * the repository's own binding pair accepted by the 2.0 context, and each slot
- * equal to the source it names. Deterministic: two calls return the same value.
+ * and the repository's own binding pair accepted by the 2.0 context (which
+ * requires each slot to name its released v2 source, page and page version).
+ * Deterministic: two calls return the same value.
  */
 export function assertCanonV2ContractSet(): CanonV2ContractSet {
   const contracts = CANON_V2_CONTRACT_KEYS.map((key) => releasedCanonV2Contract(key));
@@ -618,10 +657,5 @@ export function assertCanonV2ContractSet(): CanonV2ContractSet {
     throw new SkillContractError('BUNDLE_SCHEMA_INVALID', 'the 2.0 line carries a source it does not release');
   }
   const planBindings = assertCanonV2ContractBindings(PLAN_CONTRACT_BINDINGS_V2_0);
-  for (const key of CANON_V2_CONTRACT_KEYS) {
-    if (!sameJson(planBindings[SPECS[key].slot], bindingOf(v2SourceFor(key)))) {
-      throw new SkillContractError('BUNDLE_BINDING_MISMATCH', `the 2.0 binding pair names another ${key} than the released v2 source`, { key });
-    }
-  }
   return { contractVersion: CANON_V2_CONTRACT_VERSION, canon: CANON_V2_DECISION, contracts, planBindings };
 }
