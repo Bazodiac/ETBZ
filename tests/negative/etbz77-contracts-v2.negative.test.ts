@@ -77,6 +77,16 @@ describe('ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name', () => {
     expect(contractCodeOf(() => assertCanonV2ContractBindings(input()))).toBe('CONTRACT_DRIFT');
   });
 
+  it.each([
+    ['an extra key in a binding', () => pair({ ...lens, status: 'CURRENT' }, lexicon), 'interpretationLens unrecognized_keys'],
+    ['a numeric page version', () => pair({ ...lens, confluencePageVersion: 1 }, lexicon), 'interpretationLens.confluencePageVersion invalid_type'],
+    ['an empty Lexicon page id', () => pair(lens, { ...lexicon, confluencePageId: '' }), 'terminologyLexicon.confluencePageId too_small'],
+    ['an extra slot', () => ({ ...pair(lens, lexicon), antiBoilerplate: lens }), '<root> unrecognized_keys'],
+    ['null', () => null, '<root> invalid_type'],
+  ])('refuses a binding pair of the wrong JSON shape at its field: %s', (_label, input, where) => {
+    expect(refusalOf(() => assertCanonV2ContractBindings(input()))).toBe(`BUNDLE_SCHEMA_INVALID ${where}`);
+  });
+
   it('names the released 2.0.0 identity and says where the 1.x one still resolves', () => {
     let message = '';
     try {
@@ -300,6 +310,11 @@ describe('ETBZ-77: a v2 contract is released only at its frozen hash', () => {
     const copy = JSON.parse(JSON.stringify(released)) as Json;
     at(copy, 'source')['identity'] = 5;
     expect(refusalOf(() => assertReleasedCanonV2Contract(copy as unknown as CanonV2Contract))).toBe('BUNDLE_SCHEMA_INVALID source.identity invalid_type');
+  });
+
+  it('refuses a released contract that is not a plain object, even with the released content', () => {
+    const copy: unknown = Object.assign(Object.create(null) as object, JSON.parse(JSON.stringify(released)) as Json);
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract(copy as CanonV2Contract))).toBe('BUNDLE_SCHEMA_INVALID');
   });
 
   it.each(['source', 'supersedes', 'content', 'canon'])('refuses a released contract whose %s is null', (field) => {
