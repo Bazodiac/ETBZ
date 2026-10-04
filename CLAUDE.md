@@ -296,14 +296,15 @@ beside the unchanged 1.x line: `grounded-reflective-synthesis-lens@2.0.0` carrie
 `terminology-wording-lexicon@2.0.0` carries C5 85164034 v1 (the Style Guide v3, whole and verbatim; `styleGuideV3Text()`
 rebuilds its code block byte for byte for SKILL.md 2.0.0). The pages publish no identity, so ADR 0019 assigns them on the
 1.x lineages; ADR 0019 is the record Jira and the Coding-Plan planned as "0018" (taken by ETBZ-61). Nothing is spread from
-1.x: a 1.x block C1/C5 do not restate is not part of 2.0.0. `RELEASED_CANON_V2_CONTRACT_HASHES` freezes each contract over
+1.x: no 1.x block is part of 2.0.0. `RELEASED_CANON_V2_CONTRACT_HASHES` freezes each contract over
 its Canon v2 decision (hub 85131265, precedence quoted), source, supersessions and content; contract data holds no number,
 fact, method key or `methodRefs` (the 2.0 line binds no method before Method Profile v2, ETBZ-78). The 2.0 context is
 `PLAN_CONTRACT_BINDINGS_V2_0`: `assertCanonV2ContractBindings` refuses a 1.x (or any other) version of the lineage in a
 slot with `CONTRACT_DRIFT`, and `resolveCanonV2Contract` resolves only the 2.0.0 identities. Bundle 2.0.0 and its default
 are ETBZ-81 - `buildSkillContractBundle()` still defaults to 1.0.0, and 1.0.0/1.1.0 keep their released hashes. The 19
 1.x contract value-module and Skill-package files are pinned byte for byte to main@cb7605e5 (`tests/support/etbz77Evidence.ts`);
-the shared machinery (bundle builder, plan, source tables) is held by the two released bundle hashes instead.
+the shared machinery (bundle builder, plan, source tables) is held by the contract suite instead - the two released bundle
+hashes and the two 1.x plan-binding pairs, each pinned to its value at the base.
 Code in `src/application/skill/{canon-v2-contracts,contract-sources-v2,semantic-envelope-v2,wording-boundaries-v2}.ts`,
 evidence `docs/evidence/etbz-77/contracts-v2/`, re-derived by `tests/contract/etbz77-contracts-v2.contract.test.ts`.
 

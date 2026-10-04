@@ -3,8 +3,9 @@
  *
  * Pattern as in ETBZ-51: the released v2 contracts and the repository's 2.0
  * binding pair are the green baseline; each test changes as little as the
- * refusal needs, on a copy, and names the code it expects. A refusal that is
- * not a SkillContractError fails the test (`contractCodeOf` re-throws it).
+ * refusal needs, on a copy, and names the code it expects. A crash instead of a
+ * coded refusal fails the test by assertion (`contractCodeOf` reports it as
+ * NOT_A_CONTRACT_ERROR, which no case expects).
  */
 import { describe, expect, it } from 'vitest';
 import { structuralHash } from '../../src/domain/structural-hash.js';
@@ -87,6 +88,8 @@ describe('ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name', () => {
     ['a class instance carrying both slots', () => Object.assign(new (class BindingPair {})(), pair(lens, lexicon)), 'BUNDLE_SCHEMA_INVALID'],
     ['a null-prototype object carrying both slots', () => Object.assign(Object.create(null) as object, pair(lens, lexicon)), 'BUNDLE_SCHEMA_INVALID'],
     ['a Map', () => new Map(Object.entries(pair(lens, lexicon))), 'BUNDLE_SCHEMA_INVALID'],
+    ['a class instance in the Lens slot', () => pair(Object.assign(new (class Binding {})(), lens), lexicon), 'BUNDLE_SCHEMA_INVALID'],
+    ['a Date in the Lexicon slot', () => pair(lens, new Date(0)), 'BUNDLE_SCHEMA_INVALID'],
     ['a getter that throws', () => {
       const input = pair(lens, lexicon);
       Object.defineProperty(input, 'interpretationLens', { enumerable: true, get() { throw new Error('read refused'); } });
@@ -175,6 +178,34 @@ describe('ETBZ-77: a v2 contract core is held to its invariants', () => {
     expect(contractCodeOf(() => validateCanonV2ContractCore(coreWith(key, edit)))).toBe(code);
   });
 
+  it.each<[string, CanonV2ContractKey, (core: Json) => void]>([
+    ['the superseded Rebaseline sections as null', 'INTERPRETATION_LENS', (core) => { at(core, 'supersedes')['rebaselineSections'] = null; }],
+    ['a null Rebaseline section', 'INTERPRETATION_LENS', (core) => { at(core, 'supersedes')['rebaselineSections'] = [null]; }],
+    ['a Rebaseline section number as a number', 'INTERPRETATION_LENS', (core) => { ((at(core, 'supersedes')['rebaselineSections'] as Json[])[0] as Json)['section'] = 17; }],
+    ['the supersession record as null', 'TERMINOLOGY_LEXICON', (core) => { core['supersedes'] = null; }],
+    ['no supersession record', 'TERMINOLOGY_LEXICON', (core) => { delete core['supersedes']; }],
+    ['the replacement statement as a number', 'INTERPRETATION_LENS', (core) => { at(core, 'supersedes')['statement'] = 7; }],
+    ['owns as null', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['owns'] = null; }],
+    ['owns as a nested list', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['owns'] = [['SEMANTIC_ENVELOPE']]; }],
+    ['dependsOn as null', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['dependsOn'] = null; }],
+    ['dependsOn as a string', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['dependsOn'] = 'METHOD_PROFILE'; }],
+    ['dependsOn as an object', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['dependsOn'] = {}; }],
+    ['the title as null', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['title'] = null; }],
+    ['the title as a number', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['title'] = 7; }],
+    ['the decision date as a list', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['releasedOn'] = ['2026-10-04']; }],
+    ['the page id as a number', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['confluencePageId'] = 85229569; }],
+    ['the page version as a one-element list', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['confluencePageVersion'] = ['1']; }],
+    ['an extra key on the core', 'INTERPRETATION_LENS', (core) => { core['methods'] = ['ten_gods']; }],
+    ['an extra key on the source', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['note'] = 'x'; }],
+    ['an extra key on the supersession record', 'INTERPRETATION_LENS', (core) => { at(core, 'supersedes')['note'] = 'x'; }],
+  ])('refuses a core of the wrong JSON shape: %s', (_label, key, edit) => {
+    expect(contractCodeOf(() => validateCanonV2ContractCore(coreWith(key, edit)))).toBe('BUNDLE_SCHEMA_INVALID');
+  });
+
+  it('refuses no core at all', () => {
+    expect(contractCodeOf(() => validateCanonV2ContractCore(null as unknown as CanonV2ContractCore))).toBe('BUNDLE_SCHEMA_INVALID');
+  });
+
   it('accepts the released cores unedited (the baseline the refusals above depart from)', () => {
     expect(contractCodeOf(() => validateCanonV2ContractCore(canonV2ContractCore('INTERPRETATION_LENS')))).toBe('ACCEPTED');
     expect(contractCodeOf(() => validateCanonV2ContractCore(canonV2ContractCore('TERMINOLOGY_LEXICON')))).toBe('ACCEPTED');
@@ -198,6 +229,11 @@ describe('ETBZ-77: a v2 contract is released only at its frozen hash', () => {
   it('refuses an identity that was never released on the 2.0 line', () => {
     const core = coreWith('INTERPRETATION_LENS', (copy) => { at(copy, 'source')['identity'] = 'grounded-reflective-synthesis-lens@2.0.1'; });
     expect(contractCodeOf(() => assertReleasedCanonV2Contract({ ...core, structuralHash: structuralHash(core) }))).toBe('BUNDLE_NOT_RELEASED');
+  });
+
+  it('refuses data riding beside the released core and its hash', () => {
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract({ ...released, methods: ['ten_gods'] } as unknown as CanonV2Contract))).toBe('BUNDLE_SCHEMA_INVALID');
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract(null as unknown as CanonV2Contract))).toBe('BUNDLE_SCHEMA_INVALID');
   });
 
   it('accepts the released contracts', () => {

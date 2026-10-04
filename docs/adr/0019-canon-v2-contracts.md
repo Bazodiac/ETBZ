@@ -31,9 +31,9 @@ numbers. C1 hands voice and wording to C5 ("Stimme und Formulierung regelt verbi
 C5 declares its own text "wörtlich verbindlich" and not to be paraphrased. Neither page publishes a release
 identity. The hub records the decision; it does not name identities or this ADR.
 
-Until this slice the repository bound only the 1.x line. Bundle 1.0.0 and 1.1.0 are frozen by content hash, every
-run and every piece of evidence made under them names their identities, and nothing in the code knew a 2.0
-identity.
+Until this slice the repository bound only the 1.x line: bundles 1.0.0 and 1.1.0, frozen by content hash, and the
+runs and evidence made under them. No source module named a 2.x identity of either lineage; tests used one only as
+an unreleased reference the 1.x boundaries refuse.
 
 ## Decision
 
@@ -58,7 +58,7 @@ identity.
 ### 2. The content is the pages, verbatim, and nothing from 1.x
 
 `semantic-envelope-v2.ts` carries C1 and `wording-boundaries-v2.ts` carries C5. Neither spreads a 1.x module: Canon
-v2 replaces the 1.x contracts in content, so a 1.x block that C1 or C5 does not restate is not part of 2.0.0.
+v2 replaces the 1.x contracts in content, so no 1.x block is part of 2.0.0.
 
 - **C1.** Every section is carried and every block names its section by C1's own heading. A coverage check refuses
   a section no block cites.
@@ -70,8 +70,8 @@ v2 replaces the 1.x contracts in content, so a 1.x block that C1 or C5 does not 
   - "Kapitellänge und Füllquote" is quoted for completeness, with the contract that decides each rule
     (`LONG_FORM`, `ANTI_BOILERPLATE`). The Lens decides neither.
 - **C5.** The text is carried whole, block by block and line by line. `styleGuideV3Text()` joins it back into the
-  page's code block: 3,846 UTF-8 bytes, 44 lines, SHA-256 `75527bf7…a09196`. It was compared with the raw bytes
-  of the page's ADF code block and is identical. SKILL.md 2.0.0 (ETBZ-91) must bind those bytes; this slice does
+  page's code block: 3,846 UTF-8 bytes, 44 lines, SHA-256 `75527bf7…a09196`. It was compared with the code block
+  text of the page's ADF (version 1) as the Atlassian connector returned it, byte for byte, and is identical. SKILL.md 2.0.0 (ETBZ-91) must bind those bytes; this slice does
   not write it.
 - **What contract data never holds.** It holds no number (C1's "1–2", "8–12", "≤ 15 %" are text), no fact, no
   method, operation or mapping key, and no `methodRefs`. The 2.0 line binds no method until Method Profile v2 is
@@ -79,29 +79,30 @@ v2 replaces the 1.x contracts in content, so a 1.x block that C1 or C5 does not 
 - **The calibration paragraphs** are about the synthetic fixture chart 庚午 · 壬午 · 辛亥 · 乙未. They contain no
   Golden value and no birth data.
 
-Where the 1.x blocks went. The table names every top-level block of the 1.0 and 1.1 Lens envelopes and Lexicon
-wording boundaries (23 and 16), each once; `tests/contract/etbz77-contracts-v2.contract.test.ts` holds the list to
-the code. "Not restated" means the block is not part of 2.0.0. Canon v2 puts meaning in C3/C4 (Epic D) and
-judging in C8 (Epic F); whether a block has a successor there is decided in those slices.
+Where the 1.x blocks went. All 39 top-level blocks of the 1.0/1.1 Lens envelopes (23) and Lexicon wording
+boundaries (16) are superseded: none of them is part of 2.0.0, and all of them stay in 1.0.0/1.1.0 for the runs bound
+there. The right column only points a reader to the C1/C5 section that addresses the same topic. It claims no
+equivalence and no coverage; "none" means no C1/C5 section addresses the topic. Canon v2 puts meaning in C3/C4
+(Epic D) and judging in C8 (Epic F); whether a block has a successor there is decided in those slices.
+`tests/contract/etbz77-contracts-v2.contract.test.ts` holds the list of blocks to the code.
 
-| 1.x block | Under Canon v2 |
+| 1.x block | Related C1/C5 section (orientation only) |
 | --- | --- |
-| `Lens.epistemicLevels`, `Lens.epistemicHardLaw`, `Lens.epistemicHardLawReading` | C1 Zone B: the form of each statement type (Chartbefund, Tradition, Deutung, Vorstoß, Vorläufig) |
-| `Lens.uncertaintyCarriedNotAdded`, `Lexicon.uncertaintyCarriedNotAdded`, `Lexicon.uncertaintyLanguage` | C1 Zone B ("Vorläufig: nur bei echter Datenunsicherheit … dann sichtbar vorsichtig") and C5 WORTREGELN |
-| `Lens.languagePosture`, `Lexicon.globalLanguageRules` | C5 ZIELSTIMME and WORTREGELN, C1 Zone B; their hedge forms and L3.13 are abolished by name (C1 "Ausdrücklich abgeschafft") |
-| `Lens.tensionRule` | C1 Spannung |
-| `Lens.depthOperators` | only the grounded tension is restated (C1 Spannung); the other operators are not restated |
-| `Lens.reflectionJobs`, `Lexicon.reflectionBoundary` | C5 REFLEXIONSFRAGE and ZIELSTIMME, C1 Zone A |
-| `Lens.antiMystificationForbidden` | partly C1 Zone A (no prediction, no health) and C5 ZIELSTIMME; the list is not restated |
-| `Lens.barnumRiskPatterns` | partly C5 SPEZIFITÄTSTEST; the list is not restated |
-| `Lexicon.prohibitedWordingClasses` | C1 Zone A and C5 WORTREGELN |
-| `Lexicon.tenGodFamilyWording`, `Lexicon.tenGodRelationWording` | C5 ROLLENNAMEN, per relation; family-level wording is not restated |
-| `Lexicon.antiPhraseBankRule` | partly C5 DEUTUNGSKETTE ("Einleitung variieren; dieselbe Formel max. 2× pro Reading") |
-| `Lexicon.unknownTimeRules` | partly C1 Zone B (unknown birth time: visibly cautious); the rules are not restated |
+| `Lens.epistemicLevels`, `Lens.epistemicHardLaw`, `Lens.epistemicHardLawReading` | C1 Zone B |
+| `Lens.uncertaintyCarriedNotAdded`, `Lexicon.uncertaintyCarriedNotAdded`, `Lexicon.uncertaintyLanguage` | C1 Zone B (the row "Vorläufig"); C5 WORTREGELN |
+| `Lens.languagePosture`, `Lexicon.globalLanguageRules` | C5 ZIELSTIMME and WORTREGELN; C1 Zone B; C1 "Ausdrücklich abgeschafft" |
+| `Lens.tensionRule`, `Lens.depthOperators` | C1 Spannung |
+| `Lens.reflectionJobs`, `Lexicon.reflectionBoundary` | C5 REFLEXIONSFRAGE and ZIELSTIMME; C1 Zone A |
+| `Lens.antiMystificationForbidden`, `Lexicon.prohibitedWordingClasses` | C1 Zone A; C5 ZIELSTIMME and WORTREGELN |
+| `Lens.barnumRiskPatterns`, `Lens.nearNeighbourFeatures` | C5 SPEZIFITÄTSTEST |
+| `Lens.tenGodFamilies`, `Lens.tenGodVariants`, `Lens.variantHardRule`, `Lexicon.tenGodFamilyWording`, `Lexicon.tenGodRelationWording`, `Lexicon.tenGodsHardRule` | C5 ROLLENNAMEN (role names only) |
+| `Lexicon.antiPhraseBankRule` | C5 DEUTUNGSKETTE |
+| `Lexicon.unknownTimeRules`, `Lexicon.unknownTimePatterns`, `Lexicon.unknownTimePlacement` | C1 Zone B (the row "Vorläufig") |
+| `Lexicon.chartTerminology` | C1 Zone C (the pillars as classical rooms) |
+| `Lens.metaphorRule`, `Lexicon.metaphorConditions` | C1 Zone C (images) |
 | `Lens.voiceInvariants` | Rebaseline section 17, superseded at sentence level (section 3 below) |
-| `Lens.tenGodFamilies`, `Lens.tenGodVariants`, `Lens.variantHardRule`, `Lens.surfaceInteriorNeverInfer`, `Lens.claimTypes`, `Lens.metaphorRule`, `Lens.alternativeBinding` | not restated |
-| `Lens.evaluationDimensions`, `Lens.nearNeighbourFeatures`, `Lens.llmJudgeNeverSoleOracleFor`, `Lens.voiceEvaluationDimensions`, `Lens.voiceReviewLabels` | not restated |
-| `Lexicon.chartTerminology`, `Lexicon.tenGodsHardRule`, `Lexicon.unknownTimePatterns`, `Lexicon.unknownTimePlacement`, `Lexicon.sourceWarningWording`, `Lexicon.metaphorConditions`, `Lexicon.customerWordingIsAnAnchor` | not restated |
+| `Lens.surfaceInteriorNeverInfer`, `Lens.claimTypes`, `Lens.alternativeBinding`, `Lexicon.sourceWarningWording`, `Lexicon.customerWordingIsAnAnchor` | none |
+| `Lens.evaluationDimensions`, `Lens.llmJudgeNeverSoleOracleFor`, `Lens.voiceEvaluationDimensions`, `Lens.voiceReviewLabels` | none (judging is C8, Epic F) |
 
 ### 3. What is superseded, and what stays in force
 
@@ -114,8 +115,8 @@ judging in C8 (Epic F); whether a block has a successor there is decided in thos
   - **Grounding stays.** No meaning beyond accepted facts, claims and methods: hub precedence 2 (fail-closed,
     FuFirE as the only source of facts, mandatory citation), C1 Zone A item 5 and C5 GRUNDSATZ.
   - **Contract versioning stays.** New versions beside the old, never a rewrite.
-  - **Structured animal display stays.** Every displayed Earthly Branch shows its Hanzi, pinyin and animal (as
-    clarified in section 20). That is a presentation rule, not sentence-level safety.
+  - **Structured animal display stays.** Every structured display of an Earthly Branch shows its Hanzi, pinyin and
+    animal (section 17, as narrowed by section 20). That is a presentation rule, not sentence-level safety.
   - **The animal-interpretation ban yields to C1, later.** Section 17 forbids reading the year animal as
     personality. C1's animal-lore contract allows it under sources and a binding duty. Under hub precedence 3 C1
     wins, but only once `branch_animal_lore` is released (ETBZ-78) and an entry is sourced (ETBZ-95). Until then
@@ -127,8 +128,8 @@ judging in C8 (Epic F); whether a block has a successor there is decided in thos
 
 `PLAN_CONTRACT_BINDINGS_V2_0` is the Lexicon/Lens pair a Canon v2 run binds: the pair bundle 2.0.0 (ETBZ-81) will
 name as its plan bindings. `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The
-input is untrusted: only a plain object is read, the shape is parsed strictly, and the input is never returned
-(the repository's pair is):
+input is untrusted: the root and each slot must be plain objects, the shape is parsed strictly, and the input is
+never returned (the repository's pair is):
 
 | Input | Code |
 | --- | --- |
@@ -137,7 +138,7 @@ input is untrusted: only a plain object is read, the shape is parsed strictly, a
 | the right identity on another page or page version | `CONTRACT_SOURCE_MISMATCH` |
 | an unknown name or a page address | `UNKNOWN_CONTRACT_IDENTITY` |
 | a missing or undefined slot | `REQUIRED_CONTRACT_MISSING` |
-| any other shape (extra key, number, null, list, string, a non-plain object, a getter that throws) | `BUNDLE_SCHEMA_INVALID` |
+| any other shape (extra key, number, null, list, string, a non-plain object at the root or in a slot, a getter that throws) | `BUNDLE_SCHEMA_INVALID` |
 
 `resolveCanonV2Contract` resolves only the 2.0.0 identities; a 1.x identity is `UNKNOWN_CONTRACT_IDENTITY` there,
 naming the 2.0.0 one. `buildCanonV2Contract` refuses a key the 2.0 line does not release yet (Method Profile,
@@ -155,17 +156,21 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
   - Lexicon `sha256:f6c40f7a2383690225b684c89cda4bd3d146c97383c59c78531e33b7a05b67d6`.
 
   A changed rule, page version, dependency, supersession or precedence is a new version with a new hash, never an
-  edit. The validator checks the invariants; the freeze, not the validator, pins the exact values. A status edit of
-  the hub is not such a change: the hub is bound by page and section, like `PARENT_DECISION`.
+  edit. The validator checks the JSON shape and the invariants; the freeze, not the validator, pins the exact
+  values. The hub is bound by page id, title, decision date and the text of its precedence section, not by page
+  version: an edit elsewhere on the hub (its status lines, for example) re-releases nothing.
 - **1.x byte baseline.** The five 1.x contract value modules (Lens, Lexicon and Anti-Boilerplate tables 1.0/1.1)
   and the fourteen files of both 1.x Skill packages are compared, byte for byte, with their SHA-256 at the base
   commit. All 19 were identical at the base. The table is written once in `tests/support/etbz77Evidence.ts`, so
   regenerating the evidence cannot launder an in-place edit.
 
   Shared machinery is not pinned by bytes: the bundle builder, the plan module and the source tables are what
-  ETBZ-80/81 must extend. What that machinery binds for 1.x (sources, envelopes, wording, plan bindings, tiers,
-  repository markers) is frozen by the two released bundle hashes, which the contract suite pins to their values
-  at the base.
+  ETBZ-80/81 must extend. What that machinery binds for 1.x is held by the contract suite instead:
+  - the sources, envelopes, wording, tiers and repository markers are inside the two released bundle hashes, which
+    the suite pins to their values at the base;
+  - the 1.x plan bindings are not inside those hashes. The suite pins both pairs (`PLAN_CONTRACT_BINDINGS_V1_0`,
+    `_V1_1`) to their values at the base, and the bundle build refuses a plan binding that disagrees with its
+    contracts (`BUNDLE_BINDING_MISMATCH`).
 - **Mutation proof.** `scripts/verify-etbz77-contracts-v2.mjs` (step "guards :: ETBZ-77" of `ci-verify.sh`,
   registered in `ci-contract.test.ts`) runs nine mutants; each named test must fail an assertion.
   - Three weaken guard code: the drift refusal, the page-id half of the source check, and the section coverage
@@ -196,7 +201,9 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
   interpretation, voice or design work.
 - **ETBZ-116.** It leaves open whether the text-level Prüffrage (C1 Vorstoß part 5, C5 REFLEXIONSFRAGE) stays. This
   slice binds C1 v1 and C5 v1 as they are. If the Product Owner changes either page, the result is a new page
-  version and a new contract version with a new hash. 2.0.0 is never edited.
+  version and a new contract version with a new hash. The pair moves together: each v2 contract binds the other's
+  page version (the Lens's voice authority, the Lexicon's red-lines binding), so a new C5 version also gives the
+  Lens a new version. 2.0.0 is never edited.
 - **CI budget.** The CI job runs close to its 30-minute limit (main: 29.4 min in run 37089150274). This slice adds
   one mutation step of nine mutants and two baseline runs; the recorded mutation protocol gives its measured
   duration. The limit is not raised here.

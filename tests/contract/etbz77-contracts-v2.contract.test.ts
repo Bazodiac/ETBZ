@@ -7,9 +7,11 @@
  *      mutants in scripts/verify-etbz77-contracts-v2.mjs);
  *   2. every 1.x contract value module and both 1.x Skill packages are
  *      byte-identical to main@cb7605e5 - the in-place edit a new version must
- *      never be (the shared machinery is held by the released bundle hashes);
+ *      never be;
  *   3. 1.0.0 and 1.1.0 stay resolvable as historical run identities under
- *      their own bundles, at their released hashes;
+ *      their own bundles: the two released bundle hashes and the two 1.x
+ *      plan-binding pairs stay at their values at the base (this holds the
+ *      shared machinery the byte baseline does not pin);
  *   4. the evidence record under docs/evidence/etbz-77/contracts-v2/ re-derives
  *      byte for byte.
  */
@@ -22,6 +24,7 @@ import {
   CONTRACT_SOURCES_V1_1,
   PLAN_CONTRACT_BINDINGS_V2_0,
   RELEASED_BUNDLE_HASHES,
+  RELEASED_CANON_V2_CONTRACT_HASHES,
   RELEASED_CONTRACT_SOURCES,
   SEMANTIC_ENVELOPE,
   SEMANTIC_ENVELOPE_V1_1,
@@ -75,7 +78,7 @@ describe('ETBZ-77 AC1/AC4: the 2.0 context binds the Lens v2 and the Lexicon v2'
 });
 
 describe('ETBZ-77: version beside version - nothing of 1.x moved', () => {
-  it(`leaves every 1.x contract file byte-identical to main ${ETBZ77_BASE_COMMIT.slice(0, 8)}`, () => {
+  it(`leaves every 1.x contract value module and both 1.x Skill packages byte-identical to main ${ETBZ77_BASE_COMMIT.slice(0, 8)}`, () => {
     expect(Object.keys(V1_BASELINE_SHA256)).toHaveLength(19);
     expect(currentV1Sha256()).toEqual(V1_BASELINE_SHA256);
   });
@@ -86,6 +89,14 @@ describe('ETBZ-77: version beside version - nothing of 1.x moved', () => {
     // The released 1.x hashes as main@cb7605e5 froze them: a later bundle version (ETBZ-81) may join the table, these two never move.
     expect(RELEASED_BUNDLE_HASHES['1.0.0']).toBe('sha256:1c8f80c38b57748e65035a6bd2d671604fb19574cdf3355326352fbe0e19564e');
     expect(RELEASED_BUNDLE_HASHES['1.1.0']).toBe('sha256:9e6762f3cf339f3e03e56d52770629bd30eebe79ab6b7a70cbcc9dbb9ea599c2');
+    expect(PLAN_CONTRACT_BINDINGS_V1_0).toEqual({
+      terminologyLexicon: { contractRef: 'terminology-wording-lexicon@1.0.0', confluencePageId: '67600385', confluencePageVersion: '1' },
+      interpretationLens: { contractRef: 'grounded-reflective-synthesis-lens@1.0.0', confluencePageId: '67371029', confluencePageVersion: '1' },
+    });
+    expect(PLAN_CONTRACT_BINDINGS_V1_1).toEqual({
+      terminologyLexicon: { contractRef: 'terminology-wording-lexicon@1.1.0', confluencePageId: '77529091', confluencePageVersion: '4' },
+      interpretationLens: { contractRef: 'grounded-reflective-synthesis-lens@1.1.0', confluencePageId: '77561858', confluencePageVersion: '6' },
+    });
     expect(v1_0.structuralHash).toBe(RELEASED_BUNDLE_HASHES['1.0.0']);
     expect(v1_1.structuralHash).toBe(RELEASED_BUNDLE_HASHES['1.1.0']);
     for (const [bundle, pair] of [[v1_0, PLAN_CONTRACT_BINDINGS_V1_0], [v1_1, PLAN_CONTRACT_BINDINGS_V1_1]] as const) {
@@ -98,19 +109,27 @@ describe('ETBZ-77: version beside version - nothing of 1.x moved', () => {
   });
 });
 
-describe('ETBZ-77 AC3: ADR 0019 classifies every 1.x Lens and Lexicon block', () => {
-  it('lists every top-level block of the 1.x envelopes and wording boundaries in its drop inventory, each once, and nothing else', () => {
-    const adr = readFileSync(resolve(REPO_ROOT, 'docs/adr/0019-canon-v2-contracts.md'), 'utf8');
+describe('ETBZ-77 AC3: ADR 0019 records the drop inventory and the frozen identities', () => {
+  const adr = readFileSync(resolve(REPO_ROOT, 'docs/adr/0019-canon-v2-contracts.md'), 'utf8');
+
+  it('lists every top-level block of the 1.x envelopes and wording boundaries in a table row of its drop inventory, each once, each with a related-section cell, and nothing else', () => {
     const start = adr.indexOf('Where the 1.x blocks went');
     const end = adr.indexOf('### 3.', start);
     expect(start).toBeGreaterThan(0);
     expect(end).toBeGreaterThan(start);
-    const listed = [...adr.slice(start, end).matchAll(/`(Lens|Lexicon)\.([A-Za-z0-9]+)`/gu)].map((match) => `${match[1] ?? ''}.${match[2] ?? ''}`);
+    const rows = adr.slice(start, end).split('\n').filter((line) => line.startsWith('| `'));
+    const cells = rows.map((row) => row.split('|').map((cell) => cell.trim()).filter((cell, index, all) => index > 0 && index < all.length - 1));
+    expect(cells.every((row) => row.length === 2 && (row[1] ?? '').length > 0)).toBe(true);
+    const listed = cells.flatMap((row) => [...(row[0] ?? '').matchAll(/`(Lens|Lexicon)\.([A-Za-z0-9]+)`/gu)].map((match) => `${match[1] ?? ''}.${match[2] ?? ''}`));
     const blocks = (prefix: string, ...values: object[]): string[] =>
       [...new Set(values.flatMap((value) => Object.keys(value)).filter((name) => !name.endsWith('Source')))].map((name) => `${prefix}.${name}`);
     const expected = [...blocks('Lens', SEMANTIC_ENVELOPE, SEMANTIC_ENVELOPE_V1_1), ...blocks('Lexicon', WORDING_BOUNDARIES, WORDING_BOUNDARIES_V1_1)].sort();
     expect(expected).toHaveLength(39);
     expect([...listed].sort()).toEqual(expected);
+  });
+
+  it('quotes the frozen v2 contract hashes the code releases', () => {
+    for (const hash of Object.values(RELEASED_CANON_V2_CONTRACT_HASHES)) expect(adr).toContain(hash);
   });
 });
 

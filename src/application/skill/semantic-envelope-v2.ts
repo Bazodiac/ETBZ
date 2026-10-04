@@ -4,11 +4,11 @@
 // `grounded-reflective-synthesis-lens@2.0.0` is Confluence 85229569 "ETBZ — C1
 // Interpretationsregeln v2", page version 1 (Canon v2, Product Owner decision
 // of 2026-10-04). It replaces the Lens 1.0/1.1 in content: it is NOT the 1.1
-// envelope with blocks swapped, so nothing here is spread from the 1.x
-// modules, and a 1.x block C1 does not restate (the Ten-God envelopes, the
-// depth operators, the metaphor rule, ...) is not part of 2.0.0. Meaning moves
-// to the Bedeutungslexikon (C3, ETBZ-94) and methods to Method Profile v2 (C2,
-// ETBZ-78); ADR 0019 lists where each 1.x block went.
+// envelope with blocks swapped. Nothing here is spread from the 1.x modules,
+// and no 1.x block (the Ten-God envelopes, the depth operators, the metaphor
+// rule, ...) is part of 2.0.0. Canon v2 puts meaning in the Bedeutungslexikon
+// (C3, ETBZ-94) and methods in Method Profile v2 (C2, ETBZ-78); ADR 0019 lists
+// every 1.x block with the C1/C5 section that addresses its topic.
 //
 // Every value is C1's text as the page renders it: German, characters
 // unchanged (C1 closes its „…" quotations with a straight quote, and that is

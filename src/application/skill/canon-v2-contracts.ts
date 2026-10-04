@@ -19,8 +19,11 @@
 //
 // What this module does NOT do: it reads no page, interprets nothing, defines
 // no method, fact or operation, and enforces none of the rules it carries -
-// the gates that enforce them are Epic B. Every refusal is a
-// `SkillContractError` with a named code; the first violation throws.
+// the gates that enforce them are Epic B. Every refusal of JSON-shaped input
+// is a `SkillContractError` with a named code; the first violation throws.
+// In-process objects JSON cannot express (symbol keys, non-enumerable or
+// inherited properties, non-index properties on a list) are outside that
+// promise, as they are for the 1.x bundle (`skill-contract-bundle.ts`).
 // =============================================================================
 
 import { z } from 'zod';
@@ -197,7 +200,8 @@ const SYMBOLIC_AUTHORITY_KEYS: ReadonlySet<string> = new Set([
  * Walks the content once: strings only (a contract weighs, counts and scores
  * nothing), no symbolic-authority key, no method reference (the 2.0 line binds
  * no method before Method Profile v2 is released, ETBZ-78), and every `source`
- * names this contract and a section of its page. Returns the cited sections.
+ * names this contract and a section of its page. Collects the cited sections
+ * into `cited`.
  */
 function walkContent(value: unknown, path: string, key: CanonV2ContractKey, sections: readonly string[], cited: Set<string>): void {
   if (typeof value === 'string') {
@@ -258,11 +262,53 @@ function fieldAt(value: unknown, path: readonly string[]): unknown {
   return current;
 }
 
+const SOURCE_SHAPE = z.strictObject({
+  key: z.string(),
+  title: z.string(),
+  identity: z.string().nullable(),
+  confluencePageId: z.string(),
+  confluencePageVersion: z.string(),
+  status: z.string(),
+  releasedOn: z.string().nullable(),
+  owns: z.array(z.string()),
+  dependsOn: z.array(z.string()),
+});
+const SUPERSEDES_SHAPE = z.strictObject({
+  statement: z.string(),
+  contractRefs: z.array(z.string()),
+  rebaselineSections: z.array(z.strictObject({ confluencePageId: z.string(), section: z.string(), title: z.string(), scope: z.string() })),
+});
+const CORE_SHAPE = z.strictObject({
+  canon: z.record(z.string(), z.unknown()),
+  source: SOURCE_SHAPE,
+  supersedes: SUPERSEDES_SHAPE,
+  content: z.record(z.string(), z.unknown()),
+});
+
+/** Refuses a core that is not the declared JSON shape (path and code only, never the value). */
+function refuseMalformedCore(core: unknown): void {
+  let parsed: ReturnType<typeof CORE_SHAPE.safeParse>;
+  try {
+    parsed = CORE_SHAPE.safeParse(core);
+  } catch {
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', '<root>: the contract core cannot be read as plain data', { path: '<root>' });
+  }
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const path = issue === undefined || issue.path.length === 0 ? '<root>' : issue.path.map(String).join('.');
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${path}: ${issue?.code ?? 'invalid'}`, { path });
+  }
+}
+
 /**
- * Every invariant of a v2 contract core, in reading order. Throws on the FIRST
+ * The invariants of a v2 contract core, in reading order: its JSON shape, the
+ * decision it hangs under, its source, what it supersedes, its content and the
+ * pair's binding of each other. The exact released values are the freeze's
+ * (`assertReleasedCanonV2Contract`), not the validator's. Throws on the FIRST
  * violation: a contract that is wrong in one place is not trusted in any other.
  */
 export function validateCanonV2ContractCore(core: CanonV2ContractCore): void {
+  refuseMalformedCore(core);
   const { source } = core;
   if (!isCanonV2Key(source.key)) {
     throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `the 2.0 line releases no "${source.key}" contract yet`, { key: source.key });
@@ -393,11 +439,16 @@ export function buildCanonV2Contract(key: string): CanonV2Contract {
 
 /** Fails closed unless `contract` is, in canonical content, the released v2 contract of its identity. */
 export function assertReleasedCanonV2Contract(contract: CanonV2Contract): void {
+  if (contract === null || typeof contract !== 'object' || Object.getPrototypeOf(contract) !== Object.prototype
+    || Object.keys(contract).sort().join(',') !== 'canon,content,source,structuralHash,supersedes') {
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', 'a released v2 contract is exactly its core and its structural hash; nothing rides beside them');
+  }
+  refuseMalformedCore({ canon: contract.canon, source: contract.source, supersedes: contract.supersedes, content: contract.content });
   const core: CanonV2ContractCore = { canon: contract.canon, source: contract.source, supersedes: contract.supersedes, content: contract.content };
   const actual = structuralHash(core);
   const identity = contract.source.identity ?? '';
   const released = Object.hasOwn(RELEASED_CANON_V2_CONTRACT_HASHES, identity) ? RELEASED_CANON_V2_CONTRACT_HASHES[identity] : undefined;
-  if (!HASH_PATTERN.test(contract.structuralHash) || actual !== contract.structuralHash || released === undefined || released !== actual) {
+  if (typeof contract.structuralHash !== 'string' || !HASH_PATTERN.test(contract.structuralHash) || actual !== contract.structuralHash || released === undefined || released !== actual) {
     throw new SkillContractError(
       'BUNDLE_NOT_RELEASED',
       `contract ${identity || '<no identity>'} has content hash ${actual}, which is ${released === undefined ? 'not a released 2.0 contract' : `not the released ${released}`}; a changed rule, page version or precedence is a new version, never an edit`,
@@ -447,7 +498,7 @@ function historicalNote(ref: string): string {
  */
 export function resolveCanonV2Contract(ref: string): ContractSource {
   if (typeof ref !== 'string') {
-    throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `a ${ref === null ? 'null' : typeof ref} is not a contract reference`, {});
+    throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `a reference of type ${ref === null ? 'null' : typeof ref} is not a contract reference`, {});
   }
   const found = classifyCanonV2Ref(ref);
   if (found.kind === 'RELEASED') return found.source;
@@ -491,7 +542,7 @@ export function assertCanonV2ContractBindings(input: unknown): PlanContractBindi
   return checkBindingPair(parsed);
 }
 
-/** Only plain JSON-shaped data: a plain object (no Date, Map, class instance or null prototype), each slot present. */
+/** Only plain JSON-shaped data: a plain object at the root and in each slot (no Date, Map, class instance or null prototype), each slot present. */
 function parseBindingPair(input: unknown): ReturnType<typeof bindingPairSchema.safeParse> {
   if (input !== null && typeof input === 'object' && !Array.isArray(input)) {
     if (Object.getPrototypeOf(input) !== Object.prototype) {
@@ -500,6 +551,10 @@ function parseBindingPair(input: unknown): ReturnType<typeof bindingPairSchema.s
     for (const slot of ['interpretationLens', 'terminologyLexicon'] as const) {
       if (!Object.hasOwn(input, slot) || (input as Record<string, unknown>)[slot] === undefined) {
         throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `the binding pair has no ${slot}; a 2.0 run bound to fewer contracts is not bound`, { slot });
+      }
+      const value: unknown = (input as Record<string, unknown>)[slot];
+      if (value !== null && typeof value === 'object' && Object.getPrototypeOf(value) !== Object.prototype) {
+        throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${slot}: the binding is not a plain object`, { path: slot });
       }
     }
   }

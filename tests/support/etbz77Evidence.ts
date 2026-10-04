@@ -39,9 +39,10 @@ export const ETBZ77_BASE_COMMIT = 'cb7605e58bee57cfff68c2a3b0a6a889ca1634c6';
 /**
  * The 1.x contract value modules and both 1.x Skill packages, as main@cb7605e5
  * holds them. Shared machinery that later slices must extend - the bundle
- * builder, the plan module, the source tables - is not pinned by bytes: what
- * it binds for 1.x is frozen by RELEASED_BUNDLE_HASHES (sources, envelopes,
- * wording, plan bindings, tiers, repository markers are all in that hash).
+ * builder, the plan module, the source tables - is not pinned by bytes. What
+ * it binds for 1.x is held instead by the contract suite: the two released
+ * bundle hashes (sources, envelopes, wording, tiers, repository markers) and
+ * the two 1.x plan-binding pairs, each pinned to its value at the base.
  */
 export const V1_BASELINE_SHA256: Readonly<Record<string, string>> = {
   'src/application/skill/individuality-contract.ts': '3932aaea05a99b80a39be183fcf8441172fd7ea014ab22dc98f88f863670d667',
@@ -74,14 +75,18 @@ export function currentV1Sha256(): Record<string, string> {
   return current;
 }
 
-/** The refusal code of an action, or ACCEPTED. Anything but a SkillContractError is a defect and propagates. */
+/**
+ * The refusal code of an action, or ACCEPTED. Any other exception becomes
+ * `NOT_A_CONTRACT_ERROR:<name>`, which no test expects: a boundary that crashes
+ * instead of refusing fails its test by assertion, not by a thrown body.
+ */
 export function contractCodeOf(action: () => unknown): string {
   try {
     action();
     return 'ACCEPTED';
   } catch (error) {
     if (error instanceof SkillContractError) return error.code;
-    throw error;
+    return `NOT_A_CONTRACT_ERROR:${error instanceof Error ? error.name : typeof error}`;
   }
 }
 

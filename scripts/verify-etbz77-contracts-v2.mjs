@@ -54,7 +54,7 @@ const MUTANTS = [
   ['IN PLACE: a 1.1 contract file is edited (a comment only - no bundle hash sees it)', 'text', LEXICON_V1_1,
     '// ETBZ-57 - the Terminology & Wording Lexicon customer-voice revision as values.',
     '// ETBZ-57 - the Terminology & Wording Lexicon customer-voice revision as values (edited in place).',
-    [T.contract], 'leaves every 1.x contract file byte-identical to main'],
+    [T.contract], 'leaves every 1.x contract value module and both 1.x Skill packages byte-identical'],
   ['FREEZE: the Lens v2 loses a red line', 'text', LENS,
     "    { lineId: 'RL-8', text: 'Schattensätze greifen nie den Wert der Person an.' },\n",
     '',
