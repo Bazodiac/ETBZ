@@ -141,6 +141,10 @@ describe('AC8: the verification contract still contains every mandatory gate', (
       'ETBZ-60 position-statement guard',
       /etbz_step\s+"guards :: ETBZ-60[^"]*"\s+run_etbz60_position_guard/,
     ],
+    [
+      'ETBZ-77 Canon v2 contracts guard',
+      /etbz_step\s+"guards :: ETBZ-77[^"]*"\s+run_etbz77_contracts_v2_guard/,
+    ],
     ['secret scan', /secret-scan\.sh/],
     ['dependency risk scan', /npm audit/],
     ['container build dry run', /build-dry-run\.sh/],

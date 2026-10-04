@@ -1,0 +1,543 @@
+// =============================================================================
+// ETBZ-77 (Canon v2, A1) - the 2.0 contract line: Interpretation Lens v2 and
+// Terminology & Wording Lexicon v2 as released, hash-frozen identities beside
+// the unchanged 1.0.0 and 1.1.0 ones, and the 2.0 context that binds them.
+//
+// A v2 contract is its Canon v2 decision, its source (page, page version,
+// identity), what it supersedes and its content (`semantic-envelope-v2.ts`,
+// `wording-boundaries-v2.ts`), frozen together by content hash exactly like a
+// bundle version. A changed rule, page version or precedence is a new contract
+// version with a new hash - never an edit of 2.0.0, and never an edit of 1.x.
+//
+// The 2.0 context is the Lexicon/Lens pair a Canon v2 run binds
+// (`PLAN_CONTRACT_BINDINGS_V2_0`). Inside it only the 2.0.0 identities resolve:
+// a 1.0.0 or 1.1.0 reference of the same lineage is another version of the
+// same contract and is refused by name - the 1.x identity stays resolvable,
+// but only under the 1.x bundle its runs were made with (ADR 0019). Skill
+// Contract Bundle 2.0.0, which will compose this pair with Method Profile,
+// Long-Form and Anti-Boilerplate v2, is ETBZ-81 (A5), not this module.
+//
+// What this module does NOT do: it reads no page, interprets nothing, defines
+// no method, fact or operation, and enforces none of the rules it carries -
+// the gates that enforce them are Epic B. Every refusal is a
+// `SkillContractError` with a named code; the first violation throws.
+// =============================================================================
+
+import { z } from 'zod';
+import { canonicalJson } from '../../domain/canonical-json.js';
+import { structuralHash } from '../../domain/structural-hash.js';
+import type { PlanContractBindings, ReleasedContractBinding } from '../interpretation/meta-narrative-plan.js';
+import {
+  CONTRACT_KEYS,
+  CONTRACT_SOURCES_V1_1,
+  PARENT_DECISION,
+  RELEASED_CONTRACT_SOURCES,
+} from './contract-sources.js';
+import type { ContractDomain, ContractKey, ContractSource } from './contract-sources.js';
+import {
+  CANON_V2_CONTRACT_SOURCES,
+  CANON_V2_DECISION,
+  CANON_V2_SUPERSESSIONS,
+} from './contract-sources-v2.js';
+import type { CanonV2Decision, CanonV2Supersession } from './contract-sources-v2.js';
+import { SkillContractError } from './errors.js';
+import { C1_SECTIONS, SEMANTIC_ENVELOPE_V2 } from './semantic-envelope-v2.js';
+import type { SemanticEnvelopeV2 } from './semantic-envelope-v2.js';
+import { C5_SECTIONS, STYLE_GUIDE_V3_BLOCK_NAMES, WORDING_BOUNDARIES_V2 } from './wording-boundaries-v2.js';
+import type { WordingBoundariesV2 } from './wording-boundaries-v2.js';
+
+/** The version both v2 contracts release at; the line a 2.0 context binds. */
+export const CANON_V2_CONTRACT_VERSION = '2.0.0' as const;
+export const INTERPRETATION_LENS_V2_REF = 'grounded-reflective-synthesis-lens@2.0.0' as const;
+export const TERMINOLOGY_LEXICON_V2_REF = 'terminology-wording-lexicon@2.0.0' as const;
+
+/** The contracts the 2.0 line releases so far. Method Profile, Anti-Boilerplate and Long-Form v2 are ETBZ-78..80. */
+export const CANON_V2_CONTRACT_KEYS = ['INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON'] as const;
+export type CanonV2ContractKey = (typeof CANON_V2_CONTRACT_KEYS)[number];
+
+export interface CanonV2ContractCore {
+  readonly canon: CanonV2Decision;
+  readonly source: ContractSource;
+  readonly supersedes: CanonV2Supersession;
+  readonly content: SemanticEnvelopeV2 | WordingBoundariesV2;
+}
+
+export interface CanonV2Contract extends CanonV2ContractCore {
+  /** `sha256:` + SHA-256 of the canonical JSON of everything above. */
+  readonly structuralHash: string;
+}
+
+/**
+ * The content hash each released v2 contract is frozen to. A contract whose
+ * content is not the released one authorises nothing: a changed C1 or C5 page
+ * version, a changed rule or a changed precedence is a new identity with a new
+ * hash and a Confluence re-binding - never an in-place edit.
+ */
+export const RELEASED_CANON_V2_CONTRACT_HASHES: Readonly<Record<string, string>> = {
+  'grounded-reflective-synthesis-lens@2.0.0': 'sha256:a33711ca810fb8770d56a85646301dca02fed15a9b2aae9ed7d50baf52a351bd',
+  'terminology-wording-lexicon@2.0.0': 'sha256:d2f6d5a9b242713caac16d955de5c87e9b040b505d217c45265dd1afe038fe88',
+};
+
+/**
+ * The 2.0 context: the Lexicon and Lens pair a Canon v2 run binds - the pair
+ * Skill Contract Bundle 2.0.0 (ETBZ-81) names as its plan bindings. Written out
+ * like `PLAN_CONTRACT_BINDINGS_V1_1`, and checked against the v2 sources by
+ * `assertCanonV2ContractSet`: a pair that names a 1.x identity is refused.
+ */
+export const PLAN_CONTRACT_BINDINGS_V2_0: PlanContractBindings = {
+  terminologyLexicon: {
+    contractRef: 'terminology-wording-lexicon@2.0.0',
+    confluencePageId: '85164034',
+    confluencePageVersion: '1',
+  },
+  interpretationLens: {
+    contractRef: 'grounded-reflective-synthesis-lens@2.0.0',
+    confluencePageId: '85229569',
+    confluencePageVersion: '1',
+  },
+};
+
+// -----------------------------------------------------------------------------
+// Lookup
+// -----------------------------------------------------------------------------
+
+interface CanonV2Spec {
+  readonly content: SemanticEnvelopeV2 | WordingBoundariesV2;
+  /** The page's sections, in page order; every block of the content cites one. */
+  readonly sections: readonly string[];
+  /** The plan-binding slot the contract fills in the 2.0 context. */
+  readonly slot: keyof PlanContractBindings;
+}
+
+const SPECS: Readonly<Record<CanonV2ContractKey, CanonV2Spec>> = {
+  INTERPRETATION_LENS: { content: SEMANTIC_ENVELOPE_V2, sections: C1_SECTIONS, slot: 'interpretationLens' },
+  TERMINOLOGY_LEXICON: { content: WORDING_BOUNDARIES_V2, sections: C5_SECTIONS, slot: 'terminologyLexicon' },
+};
+
+function isCanonV2Key(key: string): key is CanonV2ContractKey {
+  return (CANON_V2_CONTRACT_KEYS as readonly string[]).includes(key);
+}
+
+function v2SourceFor(key: CanonV2ContractKey): ContractSource {
+  const found = CANON_V2_CONTRACT_SOURCES.find((source) => source.key === key);
+  if (found === undefined) {
+    throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `the 2.0 line carries no "${key}" source`, { key });
+  }
+  return found;
+}
+
+/** The released 1.x sources of a lineage, in release order, one per identity. */
+function releasedV1Sources(key: ContractKey): readonly ContractSource[] {
+  const seen = new Set<string>();
+  const found: ContractSource[] = [];
+  for (const source of [...RELEASED_CONTRACT_SOURCES, ...CONTRACT_SOURCES_V1_1]) {
+    if (source.key !== key || source.identity === null || seen.has(source.identity)) continue;
+    seen.add(source.identity);
+    found.push(source);
+  }
+  return found;
+}
+
+/** The name before `@` of an identity. */
+function lineageOf(identity: string): string {
+  const at = identity.indexOf('@');
+  return at < 0 ? identity : identity.slice(0, at);
+}
+
+/** The lineage a 2.0 contract continues: the identity name its 1.x releases carry. */
+function lineageFor(key: CanonV2ContractKey): string {
+  const [first] = releasedV1Sources(key);
+  if (first?.identity === undefined || first.identity === null) {
+    throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `no released 1.x "${key}" contract to continue`, { key });
+  }
+  return lineageOf(first.identity);
+}
+
+const bindingOf = (source: ContractSource): ReleasedContractBinding => ({
+  contractRef: source.identity ?? '',
+  confluencePageId: source.confluencePageId,
+  confluencePageVersion: source.confluencePageVersion,
+});
+
+/** Canonical equality; a side that is absent equals only an absent side (canonicalJson refuses `undefined`). */
+const sameJson = (left: unknown, right: unknown): boolean =>
+  left === undefined || right === undefined ? left === right : canonicalJson(left) === canonicalJson(right);
+
+// -----------------------------------------------------------------------------
+// Invariants
+// -----------------------------------------------------------------------------
+
+const PAGE_ID_PATTERN = /^\d+$/u;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
+const HASH_PATTERN = /^sha256:[0-9a-f]{64}$/u;
+
+/** A real calendar date in `YYYY-MM-DD`, checked without a clock. */
+function isCalendarDate(text: string): boolean {
+  if (!DATE_PATTERN.test(text)) return false;
+  const [year, month, day] = text.split('-').map((part) => Number.parseInt(part, 10));
+  if (year === undefined || month === undefined || day === undefined) return false;
+  if (month < 1 || month > 12 || day < 1) return false;
+  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  const lengths = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return day <= (lengths[month - 1] ?? 0);
+}
+
+/**
+ * Keys under which contract data would be carrying symbolic authority - the
+ * same names the bundle refuses (`skill-contract-bundle.ts`), so a v2 contract
+ * that passes here also passes the bundle that will carry it (ETBZ-81).
+ */
+const SYMBOLIC_AUTHORITY_KEYS: ReadonlySet<string> = new Set([
+  'methods', 'method', 'factKinds', 'factKind', 'facts', 'fact', 'factRefs',
+  'operations', 'operation', 'approvedDeterministicMappings', 'deterministicMappings',
+  'mappings', 'mapping', 'lookupTable', 'lookup', 'enabledSets',
+]);
+
+/**
+ * Walks the content once: strings only (a contract weighs, counts and scores
+ * nothing), no symbolic-authority key, no method reference (the 2.0 line binds
+ * no method before Method Profile v2 is released, ETBZ-78), and every `source`
+ * names this contract and a section of its page. Returns the cited sections.
+ */
+function walkContent(value: unknown, path: string, key: CanonV2ContractKey, sections: readonly string[], cited: Set<string>): void {
+  if (typeof value === 'string') {
+    if (value.trim() === '') {
+      throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${path} is empty; a contract carries no blank rule`, { path });
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${path} is an empty list`, { path });
+    }
+    value.forEach((entry, index) => walkContent(entry, `${path}[${index}]`, key, sections, cited));
+    return;
+  }
+  if (value === null || typeof value !== 'object') {
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${path} is a ${value === null ? 'null' : typeof value}; contract data is text`, { path });
+  }
+  for (const [name, entry] of Object.entries(value as Record<string, unknown>)) {
+    const at = `${path}.${name}`;
+    if (SYMBOLIC_AUTHORITY_KEYS.has(name)) {
+      throw new SkillContractError(
+        'SYMBOLIC_AUTHORITY_REFUSED',
+        `${at}: a contract may not carry methods, facts, operations or mappings; the released Method Registry is the only source of symbolic authority`,
+        { path: at },
+      );
+    }
+    if (name === 'methodRefs') {
+      throw new SkillContractError(
+        'METHOD_REF_OUT_OF_PROFILE',
+        `${at}: the 2.0 line binds no method until Method Profile v2 is released (ETBZ-78)`,
+        { path: at },
+      );
+    }
+    if (name === 'source') {
+      const source = entry as Record<string, unknown> | null;
+      const section = source !== null && typeof source === 'object' ? source['section'] : undefined;
+      if (source === null || typeof source !== 'object' || source['contract'] !== key || typeof section !== 'string' || !sections.includes(section)) {
+        throw new SkillContractError(
+          'BUNDLE_SCHEMA_INVALID',
+          `${at} does not name a section of the "${key}" page`,
+          { path: at },
+        );
+      }
+      cited.add(section);
+    }
+    walkContent(entry, at, key, sections, cited);
+  }
+}
+
+/** Reads a nested field of untyped content; undefined where the path does not exist. */
+function fieldAt(value: unknown, path: readonly string[]): unknown {
+  let current: unknown = value;
+  for (const segment of path) {
+    if (current === null || typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[segment];
+  }
+  return current;
+}
+
+/**
+ * Every invariant of a v2 contract core, in reading order. Throws on the FIRST
+ * violation: a contract that is wrong in one place is not trusted in any other.
+ */
+export function validateCanonV2ContractCore(core: CanonV2ContractCore): void {
+  const { source } = core;
+  if (!isCanonV2Key(source.key)) {
+    throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `the 2.0 line releases no "${source.key}" contract yet`, { key: source.key });
+  }
+  const key = source.key;
+  const spec = SPECS[key];
+
+  // 1. The decision it hangs under is Canon v2, unchanged.
+  if (!sameJson(core.canon, CANON_V2_DECISION)) {
+    throw new SkillContractError('BUNDLE_BINDING_MISMATCH', 'the contract does not hang under the Canon v2 decision this repository binds (hub 85131265, precedence as quoted)');
+  }
+
+  // 2. The source: on the 2.0 line of its own lineage, released, well-formed, owning what its lineage owns.
+  const expectedIdentity = `${lineageFor(key)}@${CANON_V2_CONTRACT_VERSION}`;
+  if (source.identity !== expectedIdentity) {
+    throw new SkillContractError(
+      'BUNDLE_SCHEMA_INVALID',
+      `contract "${key}" carries identity ${String(source.identity)}; the 2.0 line releases it as ${expectedIdentity}`,
+      { key, identity: source.identity },
+    );
+  }
+  if (source.status !== 'CURRENT') {
+    throw new SkillContractError('DRAFT_CONTRACT_REFUSED', `contract "${key}" has status "${source.status}"; only a CURRENT page authorises a 2.0 run`, { key });
+  }
+  if (!PAGE_ID_PATTERN.test(source.confluencePageId) || !PAGE_ID_PATTERN.test(source.confluencePageVersion)) {
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${key}" page id or page version is not a page reference`, { key });
+  }
+  if (source.title.trim() === '' || source.releasedOn === null || !isCalendarDate(source.releasedOn)) {
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${key}" has no title or no decision date`, { key });
+  }
+  const lineageDomains: readonly ContractDomain[] = releasedV1Sources(key).flatMap((released) => released.owns);
+  if ([...new Set(lineageDomains)].sort().join(',') !== [...source.owns].sort().join(',') || new Set(source.owns).size !== source.owns.length) {
+    throw new SkillContractError(
+      'PRECEDENCE_CONFLICT',
+      `contract "${key}" owns ${source.owns.join(', ') || 'nothing'}; a new version decides exactly the domains its lineage decides`,
+      { key },
+    );
+  }
+  if (new Set(source.dependsOn).size !== source.dependsOn.length || source.dependsOn.some((dependency) => dependency === key || !(CONTRACT_KEYS as readonly string[]).includes(dependency))) {
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${key}" lists a dependency twice, on itself or on no known contract`, { key });
+  }
+
+  // 3. What it supersedes: every released 1.x identity of its lineage, each still resolvable, and nothing else.
+  const expectedRefs = releasedV1Sources(key).map((released) => released.identity);
+  if (!sameJson(core.supersedes.contractRefs, expectedRefs) || core.supersedes.statement.trim() === '') {
+    throw new SkillContractError(
+      'BUNDLE_BINDING_MISMATCH',
+      `contract "${key}" must supersede exactly the released ${lineageFor(key)} identities ${expectedRefs.join(', ')}, each of which stays bound to its own runs`,
+      { key, recorded: core.supersedes.contractRefs },
+    );
+  }
+  for (const section of core.supersedes.rebaselineSections) {
+    if (section.confluencePageId !== PARENT_DECISION.confluencePageId || section.section.trim() === '' || section.scope.trim() === '') {
+      throw new SkillContractError('BUNDLE_BINDING_MISMATCH', `contract "${key}" supersedes a section of a page that is not the Rebaseline, or without its scope`, { key });
+    }
+  }
+
+  // 4. The content: text only, no symbolic authority, every block citing a section of its page, every section cited.
+  const cited = new Set<string>();
+  walkContent(core.content, key === 'INTERPRETATION_LENS' ? 'lens' : 'lexicon', key, spec.sections, cited);
+  const uncited = spec.sections.filter((section) => !cited.has(section));
+  if (uncited.length > 0) {
+    throw new SkillContractError(
+      'BUNDLE_SCHEMA_INVALID',
+      `contract "${key}" carries no block for the page section(s) ${uncited.join(' | ')}; the representation is complete or it is not released`,
+      { key, uncited },
+    );
+  }
+
+  // 5. The pair binds each other at the versions released together.
+  if (key === 'INTERPRETATION_LENS') {
+    if (!sameJson(fieldAt(core.content, ['voiceAuthority', 'binding']), bindingOf(v2SourceFor('TERMINOLOGY_LEXICON')))) {
+      throw new SkillContractError('BUNDLE_BINDING_MISMATCH', 'the Lens v2 hands voice to another C5 binding than the Lexicon v2 released with it');
+    }
+    const owners = fieldAt(core.content, ['chapterLengthAndFiller', 'rules']);
+    if (!Array.isArray(owners) || owners.some((rule) => {
+      const owner = fieldAt(rule, ['ownedBy']);
+      return typeof owner !== 'string' || owner === key || !(CONTRACT_KEYS as readonly string[]).includes(owner);
+    })) {
+      throw new SkillContractError('PRECEDENCE_CONFLICT', 'a quoted C1 rule outside the Lens domain names no other contract as its owner');
+    }
+  } else {
+    if (!sameJson(fieldAt(core.content, ['authority', 'redLinesBinding']), bindingOf(v2SourceFor('INTERPRETATION_LENS')))) {
+      throw new SkillContractError('BUNDLE_BINDING_MISMATCH', 'the Lexicon v2 concedes the red lines to another C1 binding than the Lens v2 released with it');
+    }
+    const blocks = fieldAt(core.content, ['styleGuide', 'blocks']);
+    const names = Array.isArray(blocks) ? blocks.map((block) => fieldAt(block, ['block'])) : [];
+    if (!sameJson(names, STYLE_GUIDE_V3_BLOCK_NAMES)) {
+      throw new SkillContractError('BUNDLE_SCHEMA_INVALID', 'the style guide does not carry the blocks of C5 in page order; it is carried whole or not at all');
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Building and freezing
+// -----------------------------------------------------------------------------
+
+/** The unvalidated core of a v2 contract - what the hash freezes. */
+export function canonV2ContractCore(key: CanonV2ContractKey): CanonV2ContractCore {
+  return {
+    canon: CANON_V2_DECISION,
+    source: v2SourceFor(key),
+    supersedes: CANON_V2_SUPERSESSIONS[key],
+    content: SPECS[key].content,
+  };
+}
+
+/** Builds and validates one v2 contract. A key the 2.0 line does not release is refused. */
+export function buildCanonV2Contract(key: string): CanonV2Contract {
+  if (!isCanonV2Key(key)) {
+    throw new SkillContractError(
+      'UNKNOWN_CONTRACT_IDENTITY',
+      `the 2.0 line releases no "${key}" contract yet; it releases ${CANON_V2_CONTRACT_KEYS.join(' and ')}`,
+      { key },
+    );
+  }
+  const core = canonV2ContractCore(key);
+  validateCanonV2ContractCore(core);
+  return { ...core, structuralHash: structuralHash(core) };
+}
+
+/** Fails closed unless `contract` is, in canonical content, the released v2 contract of its identity. */
+export function assertReleasedCanonV2Contract(contract: CanonV2Contract): void {
+  const core: CanonV2ContractCore = { canon: contract.canon, source: contract.source, supersedes: contract.supersedes, content: contract.content };
+  const actual = structuralHash(core);
+  const identity = contract.source.identity ?? '';
+  const released = Object.hasOwn(RELEASED_CANON_V2_CONTRACT_HASHES, identity) ? RELEASED_CANON_V2_CONTRACT_HASHES[identity] : undefined;
+  if (!HASH_PATTERN.test(contract.structuralHash) || actual !== contract.structuralHash || released === undefined || released !== actual) {
+    throw new SkillContractError(
+      'BUNDLE_NOT_RELEASED',
+      `contract ${identity || '<no identity>'} has content hash ${actual}, which is ${released === undefined ? 'not a released 2.0 contract' : `not the released ${released}`}; a changed rule, page version or precedence is a new version, never an edit`,
+      { actual, released: released ?? null, published: contract.structuralHash },
+    );
+  }
+}
+
+/** The released v2 contract of a key: built, validated and checked against its frozen hash. */
+export function releasedCanonV2Contract(key: string): CanonV2Contract {
+  const contract = buildCanonV2Contract(key);
+  assertReleasedCanonV2Contract(contract);
+  return contract;
+}
+
+// -----------------------------------------------------------------------------
+// The 2.0 context: resolving references and accepting a binding pair
+// -----------------------------------------------------------------------------
+
+type CanonV2Classification =
+  | Readonly<{ kind: 'RELEASED'; source: ContractSource }>
+  | Readonly<{ kind: 'OTHER_VERSION'; source: ContractSource }>
+  | Readonly<{ kind: 'UNKNOWN' }>;
+
+function classifyCanonV2Ref(ref: string): CanonV2Classification {
+  for (const source of CANON_V2_CONTRACT_SOURCES) {
+    if (source.identity === ref) return { kind: 'RELEASED', source };
+  }
+  const name = ref.includes('@') ? lineageOf(ref) : null;
+  for (const source of CANON_V2_CONTRACT_SOURCES) {
+    if (name !== null && source.identity !== null && lineageOf(source.identity) === name) return { kind: 'OTHER_VERSION', source };
+  }
+  return { kind: 'UNKNOWN' };
+}
+
+/** Says, for a refused reference, whether it is a released 1.x identity that stays resolvable elsewhere. */
+function historicalNote(ref: string): string {
+  const historical = [...RELEASED_CONTRACT_SOURCES, ...CONTRACT_SOURCES_V1_1].some((source) => source.identity === ref);
+  return historical ? ' - it stays bound to the runs made under its own 1.x bundle and resolves only there' : '';
+}
+
+/**
+ * The v2 contract a reference names inside the 2.0 context. Only the 2.0.0
+ * identities resolve: a 1.0.0 or 1.1.0 identity of the same lineage is another
+ * version of the same contract, refused by name; a page address or any other
+ * name is unknown here.
+ */
+export function resolveCanonV2Contract(ref: string): ContractSource {
+  const found = classifyCanonV2Ref(ref);
+  if (found.kind === 'RELEASED') return found.source;
+  throw new SkillContractError(
+    'UNKNOWN_CONTRACT_IDENTITY',
+    found.kind === 'OTHER_VERSION'
+      ? `"${ref}" is not a contract of the ${CANON_V2_CONTRACT_VERSION} context; the released one is ${String(found.source.identity)}${historicalNote(ref)}`
+      : `"${ref}" is not a contract of the ${CANON_V2_CONTRACT_VERSION} context`,
+    { ref },
+  );
+}
+
+const bindingSchema = z.strictObject({
+  contractRef: z.string().min(1),
+  confluencePageId: z.string().min(1),
+  confluencePageVersion: z.string().min(1),
+});
+const bindingPairSchema = z.strictObject({
+  terminologyLexicon: bindingSchema,
+  interpretationLens: bindingSchema,
+});
+
+/**
+ * Accepts a Lexicon/Lens pair for the 2.0 context, or refuses it - the binding
+ * a Canon v2 plan, package or run records. The input is untrusted: its shape is
+ * parsed first, then each slot must name exactly its v2 contract at its
+ * released page and page version. A 1.x identity in a slot is CONTRACT_DRIFT
+ * (re-binding is explicit, never silent), a v2 identity in the other slot
+ * BUNDLE_BINDING_MISMATCH, the right identity on another page or page version
+ * CONTRACT_SOURCE_MISMATCH. The input is never returned: the repository's pair is.
+ */
+export function assertCanonV2ContractBindings(input: unknown): PlanContractBindings {
+  if (input !== null && typeof input === 'object' && !Array.isArray(input)) {
+    for (const slot of ['interpretationLens', 'terminologyLexicon'] as const) {
+      if (!Object.hasOwn(input, slot)) {
+        throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `the binding pair has no ${slot}; a 2.0 run bound to fewer contracts is not bound`, { slot });
+      }
+    }
+  }
+  const parsed = bindingPairSchema.safeParse(input);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const path = issue === undefined || issue.path.length === 0 ? '<root>' : issue.path.map(String).join('.');
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${path}: ${issue?.code ?? 'invalid'}`, { path });
+  }
+  for (const key of CANON_V2_CONTRACT_KEYS) {
+    const slot = SPECS[key].slot;
+    const binding = parsed.data[slot];
+    const found = classifyCanonV2Ref(binding.contractRef);
+    if (found.kind === 'UNKNOWN') {
+      throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `${slot}: "${binding.contractRef}" is not a contract of the ${CANON_V2_CONTRACT_VERSION} context`, { slot, ref: binding.contractRef });
+    }
+    if (found.source.key !== key) {
+      throw new SkillContractError(
+        'BUNDLE_BINDING_MISMATCH',
+        `${slot} names "${binding.contractRef}", the ${found.source.key} lineage; the slot binds ${String(v2SourceFor(key).identity)}`,
+        { slot, ref: binding.contractRef },
+      );
+    }
+    if (found.kind === 'OTHER_VERSION') {
+      throw new SkillContractError(
+        'CONTRACT_DRIFT',
+        `${slot} binds "${binding.contractRef}"; the ${CANON_V2_CONTRACT_VERSION} context binds ${String(found.source.identity)}${historicalNote(binding.contractRef)}`,
+        { slot, recorded: binding.contractRef, bound: found.source.identity },
+      );
+    }
+    if (binding.confluencePageId !== found.source.confluencePageId || binding.confluencePageVersion !== found.source.confluencePageVersion) {
+      throw new SkillContractError(
+        'CONTRACT_SOURCE_MISMATCH',
+        `${binding.contractRef} is released from page ${found.source.confluencePageId} version ${found.source.confluencePageVersion}, not from page ${binding.confluencePageId} version ${binding.confluencePageVersion}`,
+        { slot, contractRef: binding.contractRef },
+      );
+    }
+  }
+  return PLAN_CONTRACT_BINDINGS_V2_0;
+}
+
+/** The 2.0 line as one value: its version, its decision, its released contracts and the pair a run binds. */
+export interface CanonV2ContractSet {
+  readonly contractVersion: typeof CANON_V2_CONTRACT_VERSION;
+  readonly canon: CanonV2Decision;
+  readonly contracts: readonly CanonV2Contract[];
+  readonly planBindings: PlanContractBindings;
+}
+
+/**
+ * Builds the whole 2.0 line and holds it to itself: every contract released,
+ * the repository's own binding pair accepted by the 2.0 context, and each slot
+ * equal to the source it names. Deterministic: two calls return the same value.
+ */
+export function assertCanonV2ContractSet(): CanonV2ContractSet {
+  const contracts = CANON_V2_CONTRACT_KEYS.map((key) => releasedCanonV2Contract(key));
+  if (CANON_V2_CONTRACT_SOURCES.length !== CANON_V2_CONTRACT_KEYS.length) {
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', 'the 2.0 line carries a source it does not release');
+  }
+  const planBindings = assertCanonV2ContractBindings(PLAN_CONTRACT_BINDINGS_V2_0);
+  for (const key of CANON_V2_CONTRACT_KEYS) {
+    if (!sameJson(planBindings[SPECS[key].slot], bindingOf(v2SourceFor(key)))) {
+      throw new SkillContractError('BUNDLE_BINDING_MISMATCH', `the 2.0 binding pair names another ${key} than the released v2 source`, { key });
+    }
+  }
+  return { contractVersion: CANON_V2_CONTRACT_VERSION, canon: CANON_V2_DECISION, contracts, planBindings };
+}
