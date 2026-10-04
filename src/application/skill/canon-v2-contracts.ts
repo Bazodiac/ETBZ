@@ -74,8 +74,8 @@ export interface CanonV2Contract extends CanonV2ContractCore {
  * hash and a Confluence re-binding - never an in-place edit.
  */
 export const RELEASED_CANON_V2_CONTRACT_HASHES: Readonly<Record<string, string>> = {
-  'grounded-reflective-synthesis-lens@2.0.0': 'sha256:a33711ca810fb8770d56a85646301dca02fed15a9b2aae9ed7d50baf52a351bd',
-  'terminology-wording-lexicon@2.0.0': 'sha256:d2f6d5a9b242713caac16d955de5c87e9b040b505d217c45265dd1afe038fe88',
+  'grounded-reflective-synthesis-lens@2.0.0': 'sha256:638eef2dcb822ed94f70002947c642fcf112f8d23f58390825a5c5fdd59178ea',
+  'terminology-wording-lexicon@2.0.0': 'sha256:f6c40f7a2383690225b684c89cda4bd3d146c97383c59c78531e33b7a05b67d6',
 };
 
 /**
@@ -304,6 +304,13 @@ export function validateCanonV2ContractCore(core: CanonV2ContractCore): void {
   if (new Set(source.dependsOn).size !== source.dependsOn.length || source.dependsOn.some((dependency) => dependency === key || !(CONTRACT_KEYS as readonly string[]).includes(dependency))) {
     throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${key}" lists a dependency twice, on itself or on no known contract`, { key });
   }
+  // Inside the 2.0 line, with this source in its key's place: a cycle would make "the higher authority wins" undecidable.
+  const line = new Map(CANON_V2_CONTRACT_SOURCES.map((entry) => [entry.key, entry.key === key ? source : entry]));
+  const reaches = (from: ContractKey, target: ContractKey, seen: Set<ContractKey>): boolean =>
+    (line.get(from)?.dependsOn ?? []).some((next) => next === target || (!seen.has(next) && reaches(next, target, seen.add(next))));
+  if (reaches(key, key, new Set())) {
+    throw new SkillContractError('PRECEDENCE_CONFLICT', `contract "${key}" depends, through the 2.0 line, on itself`, { key });
+  }
 
   // 3. What it supersedes: every released 1.x identity of its lineage, each still resolvable, and nothing else.
   const expectedRefs = releasedV1Sources(key).map((released) => released.identity);
@@ -439,6 +446,9 @@ function historicalNote(ref: string): string {
  * name is unknown here.
  */
 export function resolveCanonV2Contract(ref: string): ContractSource {
+  if (typeof ref !== 'string') {
+    throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `a ${ref === null ? 'null' : typeof ref} is not a contract reference`, {});
+  }
   const found = classifyCanonV2Ref(ref);
   if (found.kind === 'RELEASED') return found.source;
   throw new SkillContractError(
@@ -470,14 +480,33 @@ const bindingPairSchema = z.strictObject({
  * CONTRACT_SOURCE_MISMATCH. The input is never returned: the repository's pair is.
  */
 export function assertCanonV2ContractBindings(input: unknown): PlanContractBindings {
+  let parsed: ReturnType<typeof bindingPairSchema.safeParse>;
+  try {
+    parsed = parseBindingPair(input);
+  } catch (error) {
+    if (error instanceof SkillContractError) throw error;
+    // A getter or proxy that throws while being read is a shape the boundary does not accept, not a crash.
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', '<root>: the binding pair cannot be read as plain data', { path: '<root>' });
+  }
+  return checkBindingPair(parsed);
+}
+
+/** Only plain JSON-shaped data: a plain object (no Date, Map, class instance or null prototype), each slot present. */
+function parseBindingPair(input: unknown): ReturnType<typeof bindingPairSchema.safeParse> {
   if (input !== null && typeof input === 'object' && !Array.isArray(input)) {
+    if (Object.getPrototypeOf(input) !== Object.prototype) {
+      throw new SkillContractError('BUNDLE_SCHEMA_INVALID', '<root>: the binding pair is not a plain object', { path: '<root>' });
+    }
     for (const slot of ['interpretationLens', 'terminologyLexicon'] as const) {
-      if (!Object.hasOwn(input, slot)) {
+      if (!Object.hasOwn(input, slot) || (input as Record<string, unknown>)[slot] === undefined) {
         throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `the binding pair has no ${slot}; a 2.0 run bound to fewer contracts is not bound`, { slot });
       }
     }
   }
-  const parsed = bindingPairSchema.safeParse(input);
+  return bindingPairSchema.safeParse(input);
+}
+
+function checkBindingPair(parsed: ReturnType<typeof bindingPairSchema.safeParse>): PlanContractBindings {
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const path = issue === undefined || issue.path.length === 0 ? '<root>' : issue.path.map(String).join('.');

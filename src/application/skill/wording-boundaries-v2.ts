@@ -27,7 +27,11 @@ const c5 = (section: string): LexiconSection => ({ contract: 'TERMINOLOGY_LEXICO
  */
 export const C5_SECTIONS = ['(Kopf)', '(Codeblock)', 'Bindung'] as const;
 
-/** The page's header: the authority it claims and the precedence it concedes. */
+/**
+ * The page's header: the authority it claims and the precedence it concedes. Its
+ * decision line (Canon v2, PO, 2026-10-04, hub) is `CANON_V2_DECISION` and the
+ * source's `releasedOn`; it is not repeated here.
+ */
 export const STYLE_GUIDE_AUTHORITY = {
   onlyAdmissibleVoice: 'Dies ist die einzige zulässige Art, Interpretationstexte im Chart zu formulieren.',
   verbatim: 'Der folgende Text ist wörtlich verbindlich und darf nicht paraphrasiert werden.',

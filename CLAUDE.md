@@ -43,7 +43,7 @@ bash scripts/verify-guards.sh                # foundation guard mutation proofs 
 bash scripts/secret-scan.sh                  # gitleaks tree + history + scanner mutation proof
 bash scripts/build-dry-run.sh                # container build / provenance / smoke / reproducibility
 npm run guards:etbz34 | guards:etbz30a | guards:etbz30b   # slice source-mutation proofs (NOT part of ci-verify)
-npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59 | guards:etbz60 | guards:etbz77   # slice mutation proofs that ARE steps of ci-verify
+npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59 | guards:etbz60 | guards:etbz61 | guards:etbz77   # slice mutation proofs that ARE steps of ci-verify
 npm run build && npm run etbz51:bundle                   # print the portable Skill Contract Bundle (canonical JSON)
 npm run build && npm run etbz52:package                  # regenerate skill/bazodiac-interpretation-skill-v1/{contract-bundle,reading-schema,MANIFEST}.json
 npm run build && npm run etbz57:package                  # the same for skill/bazodiac-interpretation-skill-v1.1/ (bundle 1.1.0)
@@ -301,8 +301,9 @@ its Canon v2 decision (hub 85131265, precedence quoted), source, supersessions a
 fact, method key or `methodRefs` (the 2.0 line binds no method before Method Profile v2, ETBZ-78). The 2.0 context is
 `PLAN_CONTRACT_BINDINGS_V2_0`: `assertCanonV2ContractBindings` refuses a 1.x (or any other) version of the lineage in a
 slot with `CONTRACT_DRIFT`, and `resolveCanonV2Contract` resolves only the 2.0.0 identities. Bundle 2.0.0 and its default
-are ETBZ-81 - `buildSkillContractBundle()` still defaults to 1.0.0, and 1.0.0/1.1.0 keep their released hashes. The 22
-1.x contract files and Skill-package files are pinned byte for byte to main@cb7605e5 (`tests/support/etbz77Evidence.ts`).
+are ETBZ-81 - `buildSkillContractBundle()` still defaults to 1.0.0, and 1.0.0/1.1.0 keep their released hashes. The 19
+1.x contract value-module and Skill-package files are pinned byte for byte to main@cb7605e5 (`tests/support/etbz77Evidence.ts`);
+the shared machinery (bundle builder, plan, source tables) is held by the two released bundle hashes instead.
 Code in `src/application/skill/{canon-v2-contracts,contract-sources-v2,semantic-envelope-v2,wording-boundaries-v2}.ts`,
 evidence `docs/evidence/etbz-77/contracts-v2/`, re-derived by `tests/contract/etbz77-contracts-v2.contract.test.ts`.
 
@@ -417,7 +418,7 @@ Assemble credential-shaped test strings at runtime from fragments, never as one 
 - TypeScript is ESM + `NodeNext`: relative imports carry a `.js` extension, `verbatimModuleSyntax`
   requires `import type`, and `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess` are on (hence
   conditional spreads for optional overrides and checked array reads).
-- Decisions live in `docs/adr/0001`–`0018`. An ADR records its merge commit in the status line through a
+- Decisions live in `docs/adr/0001`–`0019`. An ADR records its merge commit in the status line through a
   separate `docs/…` closeout PR after the merge; the GOLDEN_RUN_READY reconciliation of 2026-10-02 did so for 0008-0012
   and 0014-0017 (0013 recorded its own release). `docs/evidence/` records executed gates; transient output goes to the
   git-ignored `.etbz-verify/`. Durable evidence is a green CI run for a specific SHA.

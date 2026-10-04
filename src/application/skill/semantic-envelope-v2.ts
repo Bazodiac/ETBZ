@@ -13,8 +13,11 @@
 // Every value is C1's text as the page renders it: German, characters
 // unchanged (C1 closes its „…" quotations with a straight quote, and that is
 // kept), markdown emphasis and code marks removed. Every block names its
-// section by C1's own heading; `(Kopf)` is the text above the first heading
-// and `(Schluss)` the closing paragraph below the last list.
+// section by C1's own heading. `(Kopf)` is the header above the first heading:
+// its rules and its status are carried here; its decision line (Canon v2, PO,
+// 2026-10-04) is `CANON_V2_DECISION` and the source's `releasedOn`, and its
+// "Ersetzt …" paragraph is the supersession record (`contract-sources-v2.ts`).
+// `(Schluss)` is the closing paragraph below the last list.
 //
 // It carries no method reference, no fact and no number: the counts C1 states
 // ("1–2", "8–12", "≤ 15 %") are text here, and enforcing them is the work of
@@ -43,8 +46,9 @@ export const C1_SECTIONS = [
   '(Schluss)',
 ] as const;
 
-/** The page's own rules about itself (text above the first heading). */
+/** The page's own rules about itself and its status, from the header above the first heading. */
 export const PAGE_RULES_V2 = {
+  status: 'Normative Zielarchitektur.',
   redLinesPrevail: 'Rote Linien (Zone A) haben immer Vorrang.',
   releaseRule: 'Die Umsetzung gilt erst als released, wenn die zugehörigen Jira-Tickets über scripts/ci-verify.sh grün sind.',
   source: c1('(Kopf)'),

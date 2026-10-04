@@ -80,8 +80,18 @@ describe('ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name', () => {
     ['the Lexicon in both slots', () => pair(lexicon, lexicon), 'BUNDLE_BINDING_MISMATCH'],
     ['the 2.0.0 Lens on another page version', () => pair({ ...lens, confluencePageVersion: '2' }, lexicon), 'CONTRACT_SOURCE_MISMATCH'],
     ['the 2.0.0 Lexicon on the 1.1 page', () => pair(lens, { ...lexicon, confluencePageId: '77529091', confluencePageVersion: '4' }), 'CONTRACT_SOURCE_MISMATCH'],
+    ['the 2.0.0 Lens on the C5 page at the bound version', () => pair({ ...lens, confluencePageId: '85164034' }, lexicon), 'CONTRACT_SOURCE_MISMATCH'],
     ['no Lens slot', () => ({ terminologyLexicon: lexicon }), 'REQUIRED_CONTRACT_MISSING'],
     ['no Lexicon slot', () => ({ interpretationLens: lens }), 'REQUIRED_CONTRACT_MISSING'],
+    ['an undefined Lens slot', () => ({ interpretationLens: undefined, terminologyLexicon: lexicon }), 'REQUIRED_CONTRACT_MISSING'],
+    ['a class instance carrying both slots', () => Object.assign(new (class BindingPair {})(), pair(lens, lexicon)), 'BUNDLE_SCHEMA_INVALID'],
+    ['a null-prototype object carrying both slots', () => Object.assign(Object.create(null) as object, pair(lens, lexicon)), 'BUNDLE_SCHEMA_INVALID'],
+    ['a Map', () => new Map(Object.entries(pair(lens, lexicon))), 'BUNDLE_SCHEMA_INVALID'],
+    ['a getter that throws', () => {
+      const input = pair(lens, lexicon);
+      Object.defineProperty(input, 'interpretationLens', { enumerable: true, get() { throw new Error('read refused'); } });
+      return input;
+    }, 'BUNDLE_SCHEMA_INVALID'],
     ['an extra slot', () => ({ ...pair(lens, lexicon), antiBoilerplate: lens }), 'BUNDLE_SCHEMA_INVALID'],
     ['an extra key in a binding', () => pair({ ...lens, status: 'CURRENT' }, lexicon), 'BUNDLE_SCHEMA_INVALID'],
     ['an empty identity', () => pair({ ...lens, contractRef: '' }, lexicon), 'BUNDLE_SCHEMA_INVALID'],
@@ -109,6 +119,10 @@ describe('ETBZ-77: resolving inside the 2.0 context', () => {
     expect(contractCodeOf(() => resolveCanonV2Contract(ref))).toBe('UNKNOWN_CONTRACT_IDENTITY');
   });
 
+  it.each([undefined, null, 42])('does not resolve a non-string reference (%s)', (ref) => {
+    expect(contractCodeOf(() => resolveCanonV2Contract(ref as unknown as string))).toBe('UNKNOWN_CONTRACT_IDENTITY');
+  });
+
   it.each(['ANTI_BOILERPLATE', 'METHOD_PROFILE', 'LONG_FORM', 'interpretation_lens', ''])('releases no %s contract on the 2.0 line yet', (key) => {
     expect(contractCodeOf(() => buildCanonV2Contract(key))).toBe('UNKNOWN_CONTRACT_IDENTITY');
   });
@@ -124,6 +138,11 @@ describe('ETBZ-77: a v2 contract core is held to its invariants', () => {
     ['no decision date', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['releasedOn'] = null; }, 'BUNDLE_SCHEMA_INVALID'],
     ['an impossible decision date', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['releasedOn'] = '2026-02-30'; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a page id that is not a page reference', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['confluencePageId'] = 'C5'; }, 'BUNDLE_SCHEMA_INVALID'],
+    ['a page version that is not a page reference', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['confluencePageVersion'] = 'v1'; }, 'BUNDLE_SCHEMA_INVALID'],
+    ['a blank title', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['title'] = ' '; }, 'BUNDLE_SCHEMA_INVALID'],
+    ['a dependency listed twice', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['dependsOn'] = ['METHOD_PROFILE', 'METHOD_PROFILE']; }, 'BUNDLE_SCHEMA_INVALID'],
+    ['a dependency on no known contract', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['dependsOn'] = ['STYLE_GUIDE']; }, 'BUNDLE_SCHEMA_INVALID'],
+    ['a Lens that depends on the Lexicon (a cycle through the 2.0 line)', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['dependsOn'] = ['METHOD_PROFILE', 'TERMINOLOGY_LEXICON']; }, 'PRECEDENCE_CONFLICT'],
     ['the Lexicon domain owned by the Lens', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['owns'] = ['CUSTOMER_WORDING']; }, 'PRECEDENCE_CONFLICT'],
     ['a second domain', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['owns'] = ['CUSTOMER_WORDING', 'NARRATIVE_STRUCTURE']; }, 'PRECEDENCE_CONFLICT'],
     ['a dependency on itself', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['dependsOn'] = ['TERMINOLOGY_LEXICON']; }, 'BUNDLE_SCHEMA_INVALID'],
@@ -131,6 +150,9 @@ describe('ETBZ-77: a v2 contract core is held to its invariants', () => {
     ['another decision page', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'canon')['confluencePageId'] = '62128133'; }, 'BUNDLE_BINDING_MISMATCH'],
     ['a 1.x identity left unsuperseded', 'INTERPRETATION_LENS', (core) => { at(core, 'supersedes')['contractRefs'] = ['grounded-reflective-synthesis-lens@1.0.0']; }, 'BUNDLE_BINDING_MISMATCH'],
     ['a supersession of itself', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'supersedes')['contractRefs'] = ['terminology-wording-lexicon@1.0.0', 'terminology-wording-lexicon@1.1.0', 'terminology-wording-lexicon@2.0.0']; }, 'BUNDLE_BINDING_MISMATCH'],
+    ['a blank replacement statement', 'INTERPRETATION_LENS', (core) => { at(core, 'supersedes')['statement'] = ' '; }, 'BUNDLE_BINDING_MISMATCH'],
+    ['a superseded Rebaseline section without its number', 'INTERPRETATION_LENS', (core) => { ((at(core, 'supersedes')['rebaselineSections'] as Json[])[0] as Json)['section'] = ' '; }, 'BUNDLE_BINDING_MISMATCH'],
+    ['a superseded Rebaseline section without its scope', 'INTERPRETATION_LENS', (core) => { ((at(core, 'supersedes')['rebaselineSections'] as Json[])[0] as Json)['scope'] = ' '; }, 'BUNDLE_BINDING_MISMATCH'],
     ['a superseded section of another page', 'INTERPRETATION_LENS', (core) => { (at(core, 'supersedes')['rebaselineSections'] as Json[])[0] = { confluencePageId: '85131265', section: '17', title: 'x', scope: 'y' }; }, 'BUNDLE_BINDING_MISMATCH'],
     ['a number in the content', 'INTERPRETATION_LENS', (core) => { at(core, 'content', 'vorstossContract')['perChapter'] = 2; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a methods key in the content', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'content', 'authority')['methods'] = ['ten_gods']; }, 'SYMBOLIC_AUTHORITY_REFUSED'],
@@ -138,6 +160,7 @@ describe('ETBZ-77: a v2 contract core is held to its invariants', () => {
     ['a method reference before Method Profile v2', 'INTERPRETATION_LENS', (core) => { at(core, 'content', 'animalLoreContract')['methodRefs'] = ['branch_animal_lore']; }, 'METHOD_REF_OUT_OF_PROFILE'],
     ['a block citing a C5 part in the Lens', 'INTERPRETATION_LENS', (core) => { at(core, 'content', 'principle')['source'] = { contract: 'INTERPRETATION_LENS', section: '(Codeblock)' }; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a block citing the Lens in the Lexicon', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'content', 'binding')['source'] = { contract: 'INTERPRETATION_LENS', section: 'Bindung' }; }, 'BUNDLE_SCHEMA_INVALID'],
+    ['a block citing a section C1 does not have', 'INTERPRETATION_LENS', (core) => { at(core, 'content')['extra'] = { text: 'x', source: { contract: 'INTERPRETATION_LENS', section: 'Erfunden' } }; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a C1 section carried by no block', 'INTERPRETATION_LENS', (core) => { delete at(core, 'content')['supersededModel']; }, 'BUNDLE_SCHEMA_INVALID'],
     ['an empty rule', 'INTERPRETATION_LENS', (core) => { (at(core, 'content', 'tensionRule')['poles'] as string[])[0] = ' '; }, 'BUNDLE_SCHEMA_INVALID'],
     ['an empty list', 'INTERPRETATION_LENS', (core) => { at(core, 'content', 'freeZone', 'experienceFields')['fields'] = []; }, 'BUNDLE_SCHEMA_INVALID'],
@@ -146,6 +169,7 @@ describe('ETBZ-77: a v2 contract core is held to its invariants', () => {
     ['red lines conceded to the 1.1 Lens', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'content', 'authority')['redLinesBinding'] = { ...PLAN_CONTRACT_BINDINGS_V1_1.interpretationLens }; }, 'BUNDLE_BINDING_MISMATCH'],
     ['a style guide block dropped', 'TERMINOLOGY_LEXICON', (core) => { (at(core, 'content', 'styleGuide')['blocks'] as Json[]).splice(4, 1); }, 'BUNDLE_SCHEMA_INVALID'],
     ['style guide blocks reordered', 'TERMINOLOGY_LEXICON', (core) => { (at(core, 'content', 'styleGuide')['blocks'] as Json[]).reverse(); }, 'BUNDLE_SCHEMA_INVALID'],
+    ['a quoted C1 rule owned by no known contract', 'INTERPRETATION_LENS', (core) => { ((at(core, 'content', 'chapterLengthAndFiller')['rules'] as Json[])[1] as Json)['ownedBy'] = 'STYLE_GUIDE'; }, 'PRECEDENCE_CONFLICT'],
     ['a quoted C1 rule owned by the Lens itself', 'INTERPRETATION_LENS', (core) => { ((at(core, 'content', 'chapterLengthAndFiller')['rules'] as Json[])[0] as Json)['ownedBy'] = 'INTERPRETATION_LENS'; }, 'PRECEDENCE_CONFLICT'],
   ])('refuses %s', (_label, key, edit, code) => {
     expect(contractCodeOf(() => validateCanonV2ContractCore(coreWith(key, edit)))).toBe(code);
@@ -168,7 +192,7 @@ describe('ETBZ-77: a v2 contract is released only at its frozen hash', () => {
 
   it('refuses a published hash that is not the content hash', () => {
     expect(contractCodeOf(() => assertReleasedCanonV2Contract({ ...released, structuralHash: `sha256:${'0'.repeat(64)}` }))).toBe('BUNDLE_NOT_RELEASED');
-    expect(contractCodeOf(() => assertReleasedCanonV2Contract({ ...released, structuralHash: 'a33711ca' }))).toBe('BUNDLE_NOT_RELEASED');
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract({ ...released, structuralHash: 'not-a-hash' }))).toBe('BUNDLE_NOT_RELEASED');
   });
 
   it('refuses an identity that was never released on the 2.0 line', () => {

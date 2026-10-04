@@ -35,6 +35,7 @@ import type { ContractSource } from './contract-sources.js';
  * version, never an edit.
  */
 export const CANON_V2_PRECEDENCE = {
+  replacesInContentLead: 'Canon v2 replaces, in content:',
   replacesInContent: [
     'Rebaseline 62128133 §17 ("Safety below the surface …"), as far as it concerns sentence-level safety;',
     'Interpretation Lens v1.0/v1.1 (67371029 / 77561858);',
@@ -43,6 +44,7 @@ export const CANON_V2_PRECEDENCE = {
     'Long-Form Contract v1 (57802765), as far as it concerns chapter length;',
     'Method Profile v1 (63012866), as far as it forbids the methods approved in C2.',
   ],
+  remainsInForceLead: 'Repository process and integrity rules stay in force:',
   remainsInForce: [
     'contracts are released only as new versions beside the old ones, with their own release identity, an ADR, a hash freeze and a mutation proof per gate;',
     'scripts/ci-verify.sh is the only definition of "verified";',

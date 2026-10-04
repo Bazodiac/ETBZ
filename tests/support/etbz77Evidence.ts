@@ -6,7 +6,8 @@
  * byte for byte; `npm run etbz77:evidence` only saves what that suite checks.
  *
  * The 1.x baseline is NOT derived from the working tree: it is the SHA-256 of
- * each file as `main@cb7605e5` holds it, written out here once (re-derive it
+ * each 1.x contract VALUE module (the Lens, Lexicon and Anti-Boilerplate tables
+ * 1.0/1.1) and of both 1.x Skill packages as `main@cb7605e5` holds them, written out here once (re-derive it
  * with `git cat-file blob cb7605e5:<path> | shasum -a 256`). The suite compares
  * the working tree against it, so an in-place edit of a 1.x file cannot be
  * laundered by regenerating the evidence.
@@ -35,14 +36,17 @@ import { PLAN_CONTRACT_BINDINGS_V1_0, PLAN_CONTRACT_BINDINGS_V1_1 } from '../../
 export const ETBZ77_EVIDENCE_PATH = 'docs/evidence/etbz-77/contracts-v2/contracts-v2.json';
 export const ETBZ77_BASE_COMMIT = 'cb7605e58bee57cfff68c2a3b0a6a889ca1634c6';
 
-/** Every 1.x contract file and both 1.x Skill packages, as main@cb7605e5 holds them. */
+/**
+ * The 1.x contract value modules and both 1.x Skill packages, as main@cb7605e5
+ * holds them. Shared machinery that later slices must extend - the bundle
+ * builder, the plan module, the source tables - is not pinned by bytes: what
+ * it binds for 1.x is frozen by RELEASED_BUNDLE_HASHES (sources, envelopes,
+ * wording, plan bindings, tiers, repository markers are all in that hash).
+ */
 export const V1_BASELINE_SHA256: Readonly<Record<string, string>> = {
-  'src/application/interpretation/meta-narrative-plan.ts': '23be9ba5f5617c3ced23e50fb124befdda836889607a11c2459e516781fc7cae',
-  'src/application/skill/contract-sources.ts': 'a43eb3102f05e7b4e0600dc2e3aa126ee06f59af4eda3f015c98cd9e8be6ffa8',
   'src/application/skill/individuality-contract.ts': '3932aaea05a99b80a39be183fcf8441172fd7ea014ab22dc98f88f863670d667',
   'src/application/skill/semantic-envelope-v1-1.ts': '234390e1e2461eee13023b9820fa12a1978364a6e3a05889d700c2942e307371',
   'src/application/skill/semantic-envelope.ts': '1bf0aec0e0a9da10b10ca705eafb2c50b2abc2f27d01842ad2511f27545198e2',
-  'src/application/skill/skill-contract-bundle.ts': '8c7ee0a8ab5e9c388dabe0491d448cf209c0b43a757a8f45b5249a13c6d023bf',
   'src/application/skill/wording-boundaries-v1-1.ts': '07b2770805b7706b169dd8121311a7150dcd8af5e587ce1ae2757ba922028b53',
   'src/application/skill/wording-boundaries.ts': '6f02bf51d72a88a8b993d481a7868c9e9b4315e62fdd3f26218e739c60a57b41',
   'skill/bazodiac-interpretation-skill-v1.1/MANIFEST.json': '92e23ba8f7afbf5dac0b64f36d9227a9a07dbb7c903e9f363bc47fbacc854c5f',

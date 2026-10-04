@@ -117,7 +117,7 @@ describe('ETBZ-77: the Lens v2 and the Lexicon v2 load as released identities', 
 });
 
 describe('ETBZ-77: the Lens v2 carries C1', () => {
-  it('cites every C1 section, in page order, from exactly the blocks that carry it', () => {
+  it('cites every C1 section, in page order', () => {
     expect([...new Set(citedSections(SEMANTIC_ENVELOPE_V2))]).toEqual([...C1_SECTIONS]);
   });
 
@@ -125,6 +125,7 @@ describe('ETBZ-77: the Lens v2 carries C1', () => {
     expect(SEMANTIC_ENVELOPE_V2.redLines.lines.map((line) => line.lineId)).toEqual(['RL-1', 'RL-2', 'RL-3', 'RL-4', 'RL-5', 'RL-6', 'RL-7', 'RL-8']);
     expect(SEMANTIC_ENVELOPE_V2.redLines.lines[6]?.text).toBe('Methodentreue: nur Methoden, die in Method Profile v2 (C2) freigegeben sind.');
     expect(SEMANTIC_ENVELOPE_V2.pageRules.redLinesPrevail).toBe('Rote Linien (Zone A) haben immer Vorrang.');
+    expect(SEMANTIC_ENVELOPE_V2.pageRules.status).toBe('Normative Zielarchitektur.');
   });
 
   it('carries the five statement types of Zone B and the free zone of Zone C', () => {
@@ -199,14 +200,16 @@ describe('ETBZ-77: C5 is the voice authority, consistently', () => {
 
 describe('ETBZ-77: version beside version - what the 2.0 line supersedes stays resolvable', () => {
   it.each([
-    ['INTERPRETATION_LENS', ['grounded-reflective-synthesis-lens@1.0.0', 'grounded-reflective-synthesis-lens@1.1.0']],
-    ['TERMINOLOGY_LEXICON', ['terminology-wording-lexicon@1.0.0', 'terminology-wording-lexicon@1.1.0']],
-  ] as const)('%s supersedes exactly the released 1.x identities of its lineage, each still resolving under its own bundle', (key, refs) => {
+    ['INTERPRETATION_LENS', ['grounded-reflective-synthesis-lens@1.0.0', 'grounded-reflective-synthesis-lens@1.1.0'], [['67371029', '1'], ['77561858', '6']]],
+    ['TERMINOLOGY_LEXICON', ['terminology-wording-lexicon@1.0.0', 'terminology-wording-lexicon@1.1.0'], [['67600385', '1'], ['77529091', '4']]],
+  ] as const)('%s supersedes exactly the released 1.x identities of its lineage, each still resolving under its own bundle to its own page', (key, refs, pages) => {
     const contract = key === 'INTERPRETATION_LENS' ? lensBuild.value : lexiconBuild.value;
     expect(contract?.supersedes.contractRefs).toEqual(refs);
     refs.forEach((ref, index) => {
       const bundle = buildSkillContractBundle(BAZI_METHOD_REGISTRY_V1, index === 0 ? '1.0.0' : '1.1.0');
-      expect(resolveContract(bundle, ref)).toBe(contractByKey(bundle, key));
+      const resolved = resolveContract(bundle, ref);
+      expect(resolved).toBe(contractByKey(bundle, key));
+      expect([resolved.confluencePageId, resolved.confluencePageVersion]).toEqual(pages[index]);
     });
   });
 
