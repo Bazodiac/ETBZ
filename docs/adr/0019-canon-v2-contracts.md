@@ -104,6 +104,9 @@ The Lens 1.1 voice invariants quote Rebaseline section 17; what of that section 
   - **Grounding stays.** No meaning beyond accepted facts, claims and methods: hub precedence 2 (fail-closed,
     FuFirE as the only source of facts, mandatory citation), C1 Zone A item 5 and C5 GRUNDSATZ.
   - **Contract versioning stays.** New versions beside the old, never a rewrite.
+  - **The separated Method/Data Note stays.** Invariant 4's second sentence ("Required method/data disclosure remains
+    in a clearly separated Method/Data Note") is a presentation rule, not sentence-level safety. It stays until Canon
+    v2's design slices decide the data note (Coding-Plan: ETBZ-103).
   - **Structured animal display stays.** Every structured display of an Earthly Branch shows its Hanzi, pinyin and
     animal (section 17, as narrowed by section 20). That is a presentation rule, not sentence-level safety.
   - **The animal-interpretation ban yields to C1, later.** Section 17 forbids reading the year animal as
@@ -118,16 +121,18 @@ The Lens 1.1 voice invariants quote Rebaseline section 17; what of that section 
 `PLAN_CONTRACT_BINDINGS_V2_0` is the Lexicon/Lens pair a Canon v2 run binds: the pair bundle 2.0.0 (ETBZ-81) will
 name as its plan bindings. `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The
 input is untrusted: the root and each slot must be plain objects, the shape is parsed strictly, and the input is
-never returned (the repository's pair is; it and every v2 value the module hands out are frozen). Every refusal is a
-`SkillContractError`: anything the boundaries cannot read as plain data - a throwing getter, a nesting deeper than the
-engine can walk - is `BUNDLE_SCHEMA_INVALID`, naming the cause; the same holds for the validator and the freeze.
+never returned (the repository's pair is). Every value the four v2 modules export is deep-frozen where it is defined, so
+a caller cannot change what the next caller is told; built contracts and sets are new objects per call. The binding gate,
+the resolver, the validator and the freeze run inside one wrapper: input they cannot read as plain data - a throwing
+getter, a nesting deeper than the engine can walk - is `BUNDLE_SCHEMA_INVALID`, naming the cause, and a refusal
+message shows at most 80 characters of a reference.
 
 | Input | Code |
 | --- | --- |
 | a 1.0.0 or 1.1.0 Lens or Lexicon (or any other version of the lineage, e.g. 2.0.1) in its slot | `CONTRACT_DRIFT`, naming the released 2.0.0 identity and that a 1.x identity resolves only under its own bundle |
 | an identity of the other lineage in a slot (1.x or 2.0.0: swapped, the Lexicon twice, the 1.1 Lexicon in the Lens slot) | `BUNDLE_BINDING_MISMATCH` |
 | the right identity on another page or page version | `CONTRACT_SOURCE_MISMATCH` |
-| an unknown name, a page address, or a lineage name with a malformed version (`…@`, `…@not-a-version`, a trailing space) | `UNKNOWN_CONTRACT_IDENTITY` |
+| an unknown name, a page address, or a lineage name with a malformed version (`…@`, `…@2.0`, `…@not-a-version`, a trailing space) | `UNKNOWN_CONTRACT_IDENTITY` |
 | a missing or undefined slot | `REQUIRED_CONTRACT_MISSING` |
 | any other shape (extra key, number, null, list, string, a non-plain object at the root or in a slot, a getter that throws) | `BUNDLE_SCHEMA_INVALID` |
 
@@ -169,9 +174,11 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
   - Six inject a defect the freeze, the baseline or a binding test must catch: three "v2 ref → 1.1 ref" mutants
     (the Lens slot, the Lexicon slot, the Lens source), an in-place 1.1 edit no bundle hash sees, a dropped red
     line, and a voice binding to another C5 version.
-- **Throw-site sweep.** Beyond the nine CI mutants, every `throw` of `canon-v2-contracts.ts` was disabled in turn,
-  once, and the three ETBZ-77 suites run; the record beside the evidence lists, for each site, the test that fails by
-  assertion or why the site cannot be reached by input. It is a one-time proof, not a CI step (CI budget).
+- **Sweeps.** Beyond the nine CI mutants, two one-time sweeps ran on the candidate: every `throw` statement of
+  `canon-v2-contracts.ts` disabled in turn, and 69 clause mutants across the four v2 modules (condition clauses,
+  guard calls, schema refinements, list entries, freezes, the wrapper). The record beside the evidence gives each
+  verdict, and names for each survivor why it changes no outcome for any input. The sweeps are one-time proofs, not CI
+  steps (CI budget), and they cover the mutants they list, not every possible one.
 - **Evidence.** `docs/evidence/etbz-77/contracts-v2/contracts-v2.json` records identities, page bindings, hashes,
   the 2.0 context's answer to each binding case, the historical 1.x resolution and the baseline. The contract
   suite re-derives it byte for byte. The mutation protocol and the gate run are recorded beside it.
@@ -198,9 +205,12 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
   version and a new contract version with a new hash. The pair moves together: each v2 contract binds the other's
   page version (the Lens's voice authority, the Lexicon's red-lines binding), so a new C5 version also gives the
   Lens a new version. 2.0.0 is never edited.
-- **CI budget.** The CI job runs close to its 30-minute limit (main: 29.4 min in run 37089150274). This slice adds
-  one mutation step of nine mutants and two baseline runs; the recorded mutation protocol gives its measured
-  duration. The limit is not raised here.
+- **CI budget.** The CI job runs close to its 30-minute limit (`timeout-minutes: 30`): the last eight `main` pushes
+  before this slice took 16.8–29.8 min, the longest 29.75 min (run 37083011798), and a sibling pull request that added
+  one guard step was cancelled at 30.27 min (run 37145900060). This slice adds a guard step (nine mutants and two
+  baseline runs; the recorded mutation protocol gives its local duration) and 191 tests (2170 against 1979 at the base). A timeout is an
+  infrastructure outcome, not a gate verdict: the run is repeated and every attempt recorded. Raising the limit is a
+  Product Owner decision outside this slice.
 
 ## What this ADR does not decide
 

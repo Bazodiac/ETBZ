@@ -77,8 +77,10 @@ export function currentV1Sha256(): Record<string, string> {
 
 /**
  * The refusal code of an action, or ACCEPTED. Any other exception becomes
- * `NOT_A_CONTRACT_ERROR:<name>`, which no test expects: a boundary that crashes
- * instead of refusing fails its test by assertion, not by a thrown body.
+ * `NOT_A_CONTRACT_ERROR:<name>`, which no test expects, so it fails by
+ * assertion. The four v2 boundaries code an unreadable input themselves
+ * (BUNDLE_SCHEMA_INVALID, see `coded`); tests that must tell a targeted refusal
+ * from a caught crash also pin the refusal's field path.
  */
 export function contractCodeOf(action: () => unknown): string {
   try {

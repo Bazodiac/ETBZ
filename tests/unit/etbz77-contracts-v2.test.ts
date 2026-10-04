@@ -31,6 +31,10 @@ import {
 } from '../../src/application/skill/index.js';
 import type { CanonV2Contract } from '../../src/application/skill/index.js';
 import { sha256Hex } from '../support/etbz77Evidence.js';
+import * as canonV2Module from '../../src/application/skill/canon-v2-contracts.js';
+import * as contractSourcesV2Module from '../../src/application/skill/contract-sources-v2.js';
+import * as semanticEnvelopeV2Module from '../../src/application/skill/semantic-envelope-v2.js';
+import * as wordingBoundariesV2Module from '../../src/application/skill/wording-boundaries-v2.js';
 
 /** A build that throws is an assertion failure here, never a crashed test body. */
 function attempt<T>(action: () => T): { value: T | undefined; error: string | undefined } {
@@ -118,12 +122,24 @@ describe('ETBZ-77: the Lens v2 and the Lexicon v2 load as released identities', 
 });
 
 describe('ETBZ-77: the 2.0 line is handed out frozen', () => {
-  it('freezes the pair, the sources, the decision and the content it hands out by reference', () => {
-    for (const value of [PLAN_CONTRACT_BINDINGS_V2_0, PLAN_CONTRACT_BINDINGS_V2_0.interpretationLens, CANON_V2_DECISION, CANON_V2_DECISION.precedence, SEMANTIC_ENVELOPE_V2.redLines.lines[0], WORDING_BOUNDARIES_V2.styleGuide.blocks[0]]) {
-      expect(Object.isFrozen(value)).toBe(true);
-    }
+  const isDeepFrozen = (value: unknown): boolean =>
+    value === null || typeof value !== 'object' || (Object.isFrozen(value) && Object.values(value).every((entry) => isDeepFrozen(entry)));
+
+  it.each([
+    ['canon-v2-contracts', canonV2Module],
+    ['contract-sources-v2', contractSourcesV2Module],
+    ['semantic-envelope-v2', semanticEnvelopeV2Module],
+    ['wording-boundaries-v2', wordingBoundariesV2Module],
+  ] as const)('deep-freezes every object %s exports', (_name, module) => {
+    const objects = Object.entries(module).filter(([, value]) => value !== null && typeof value === 'object');
+    expect(objects.length).toBeGreaterThan(0);
+    expect(objects.filter(([, value]) => !isDeepFrozen(value)).map(([name]) => name)).toEqual([]);
+  });
+
+  it('cannot be changed through a value it hands back', () => {
     const pair = assertCanonV2ContractBindings(structuredClone(PLAN_CONTRACT_BINDINGS_V2_0));
     expect(attempt(() => { (pair.interpretationLens as { contractRef: string }).contractRef = 'grounded-reflective-synthesis-lens@1.1.0'; }).error).toBeDefined();
+    expect(attempt(() => { (RELEASED_CANON_V2_CONTRACT_HASHES as Record<string, string>)['grounded-reflective-synthesis-lens@2.0.0'] = 'sha256:0'; }).error).toBeDefined();
     expect(PLAN_CONTRACT_BINDINGS_V2_0.interpretationLens.contractRef).toBe('grounded-reflective-synthesis-lens@2.0.0');
   });
 });

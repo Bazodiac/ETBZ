@@ -138,6 +138,7 @@ describe('ETBZ-51: the skill contract bundle is pure and binds rather than execu
       'canon-v2-contracts.ts',
       'contract-sources-v2.ts',
       'contract-sources.ts',
+      'deep-freeze.ts',
       'errors.ts',
       'index.ts',
       'individuality-contract.ts',

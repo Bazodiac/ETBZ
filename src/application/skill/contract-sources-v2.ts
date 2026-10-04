@@ -25,6 +25,7 @@
 // =============================================================================
 
 import type { ContractSource } from './contract-sources.js';
+import { deepFreeze } from './deep-freeze.js';
 
 /**
  * The hub's precedence section, quoted as the page renders it (markdown
@@ -159,3 +160,8 @@ export const CANON_V2_SUPERSESSIONS: Readonly<Record<'INTERPRETATION_LENS' | 'TE
     rebaselineSections: [],
   },
 };
+
+// Handed out by reference: frozen where defined (see deep-freeze.ts).
+deepFreeze(CANON_V2_DECISION);
+deepFreeze(CANON_V2_CONTRACT_SOURCES);
+deepFreeze(CANON_V2_SUPERSESSIONS);

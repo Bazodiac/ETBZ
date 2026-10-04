@@ -17,6 +17,7 @@
 // · 乙未 and about no real person. No method reference, no fact, no number.
 // =============================================================================
 
+import { deepFreeze } from './deep-freeze.js';
 import type { LexiconSection } from './wording-boundaries.js';
 
 const c5 = (section: string): LexiconSection => ({ contract: 'TERMINOLOGY_LEXICON', section });
@@ -166,3 +167,8 @@ export const WORDING_BOUNDARIES_V2 = {
   binding: STYLE_GUIDE_BINDING,
 } as const;
 export type WordingBoundariesV2 = typeof WORDING_BOUNDARIES_V2;
+
+// Handed out by reference: frozen where defined (see deep-freeze.ts).
+deepFreeze(WORDING_BOUNDARIES_V2);
+deepFreeze(STYLE_GUIDE_V3_BLOCK_NAMES);
+deepFreeze(C5_SECTIONS);

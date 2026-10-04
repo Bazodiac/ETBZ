@@ -43,6 +43,7 @@ import {
   CANON_V2_SUPERSESSIONS,
 } from './contract-sources-v2.js';
 import type { CanonV2Decision, CanonV2Supersession } from './contract-sources-v2.js';
+import { deepFreeze } from './deep-freeze.js';
 import { SkillContractError } from './errors.js';
 import { C1_SECTIONS, SEMANTIC_ENVELOPE_V2 } from './semantic-envelope-v2.js';
 import type { SemanticEnvelopeV2 } from './semantic-envelope-v2.js';
@@ -55,7 +56,7 @@ export const INTERPRETATION_LENS_V2_REF = 'grounded-reflective-synthesis-lens@2.
 export const TERMINOLOGY_LEXICON_V2_REF = 'terminology-wording-lexicon@2.0.0' as const;
 
 /** The contracts the 2.0 line releases so far. Method Profile, Anti-Boilerplate and Long-Form v2 are ETBZ-78..80. */
-export const CANON_V2_CONTRACT_KEYS = ['INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON'] as const;
+export const CANON_V2_CONTRACT_KEYS = deepFreeze(['INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON'] as const);
 export type CanonV2ContractKey = (typeof CANON_V2_CONTRACT_KEYS)[number];
 
 export interface CanonV2ContractCore {
@@ -76,10 +77,10 @@ export interface CanonV2Contract extends CanonV2ContractCore {
  * version, a changed rule or a changed precedence is a new identity with a new
  * hash and a Confluence re-binding - never an in-place edit.
  */
-export const RELEASED_CANON_V2_CONTRACT_HASHES: Readonly<Record<string, string>> = {
+export const RELEASED_CANON_V2_CONTRACT_HASHES: Readonly<Record<string, string>> = deepFreeze({
   'grounded-reflective-synthesis-lens@2.0.0': 'sha256:638eef2dcb822ed94f70002947c642fcf112f8d23f58390825a5c5fdd59178ea',
   'terminology-wording-lexicon@2.0.0': 'sha256:f6c40f7a2383690225b684c89cda4bd3d146c97383c59c78531e33b7a05b67d6',
-};
+});
 
 /**
  * The 2.0 context: the Lexicon and Lens pair a Canon v2 run binds - the pair
@@ -87,7 +88,7 @@ export const RELEASED_CANON_V2_CONTRACT_HASHES: Readonly<Record<string, string>>
  * like `PLAN_CONTRACT_BINDINGS_V1_1`, and checked against the v2 sources by
  * `assertCanonV2ContractSet`: a pair that names a 1.x identity is refused.
  */
-export const PLAN_CONTRACT_BINDINGS_V2_0: PlanContractBindings = {
+export const PLAN_CONTRACT_BINDINGS_V2_0: PlanContractBindings = deepFreeze({
   terminologyLexicon: {
     contractRef: 'terminology-wording-lexicon@2.0.0',
     confluencePageId: '85164034',
@@ -98,7 +99,7 @@ export const PLAN_CONTRACT_BINDINGS_V2_0: PlanContractBindings = {
     confluencePageId: '85229569',
     confluencePageVersion: '1',
   },
-};
+});
 
 // -----------------------------------------------------------------------------
 // Lookup
@@ -110,20 +111,6 @@ interface CanonV2Spec {
   readonly sections: readonly string[];
   /** The plan-binding slot the contract fills in the 2.0 context. */
   readonly slot: keyof PlanContractBindings;
-}
-
-/**
- * The 2.0 line is handed out by reference (the sources, the pair, the content),
- * so it is frozen at load: a caller that writes into a returned value cannot
- * change what the next caller is told. Freezing changes no content and no hash.
- */
-function deepFreeze(value: unknown): void {
-  if (value === null || typeof value !== 'object' || Object.isFrozen(value)) return;
-  Object.freeze(value);
-  for (const entry of Object.values(value)) deepFreeze(entry);
-}
-for (const value of [CANON_V2_DECISION, CANON_V2_CONTRACT_SOURCES, CANON_V2_SUPERSESSIONS, SEMANTIC_ENVELOPE_V2, WORDING_BOUNDARIES_V2, PLAN_CONTRACT_BINDINGS_V2_0]) {
-  deepFreeze(value);
 }
 
 const SPECS: Readonly<Record<CanonV2ContractKey, CanonV2Spec>> = {
@@ -282,9 +269,9 @@ function fieldAt(value: unknown, path: readonly string[]): unknown {
  * throwing getter) is BUNDLE_SCHEMA_INVALID, naming the cause, never a crash.
  * It refuses; it never accepts what the boundary did not.
  */
-function coded(what: string, action: () => void): void {
+function coded<T>(what: string, action: () => T): T {
   try {
-    action();
+    return action();
   } catch (error) {
     if (error instanceof SkillContractError) throw error;
     const cause = error instanceof Error ? error.name : typeof error;
@@ -522,6 +509,11 @@ function classifyCanonV2Ref(ref: string): CanonV2Classification {
   return { kind: 'UNKNOWN' };
 }
 
+/** A reference as a refusal message shows it: at most 80 characters, so a message never grows with its input. */
+function shown(ref: string): string {
+  return ref.length <= 80 ? ref : `${ref.slice(0, 80)}… (${ref.length} characters)`;
+}
+
 /** Says, for a refused reference, whether it is a released 1.x identity that stays resolvable elsewhere. */
 function historicalNote(ref: string): string {
   const historical = [...RELEASED_CONTRACT_SOURCES, ...CONTRACT_SOURCES_V1_1].some((source) => source.identity === ref);
@@ -535,6 +527,10 @@ function historicalNote(ref: string): string {
  * name is unknown here.
  */
 export function resolveCanonV2Contract(ref: string): ContractSource {
+  return coded('the reference', () => resolveRef(ref));
+}
+
+function resolveRef(ref: string): ContractSource {
   if (typeof ref !== 'string') {
     throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `a reference of type ${ref === null ? 'null' : typeof ref} is not a contract reference`, {});
   }
@@ -543,8 +539,8 @@ export function resolveCanonV2Contract(ref: string): ContractSource {
   throw new SkillContractError(
     'UNKNOWN_CONTRACT_IDENTITY',
     found.kind === 'OTHER_VERSION'
-      ? `"${ref}" is not a contract of the ${CANON_V2_CONTRACT_VERSION} context; the released one is ${String(found.source.identity)}${historicalNote(ref)}`
-      : `"${ref}" is not a contract of the ${CANON_V2_CONTRACT_VERSION} context`,
+      ? `"${shown(ref)}" is not a contract of the ${CANON_V2_CONTRACT_VERSION} context; the released one is ${String(found.source.identity)}${historicalNote(ref)}`
+      : `"${shown(ref)}" is not a contract of the ${CANON_V2_CONTRACT_VERSION} context`,
     { ref },
   );
 }
@@ -563,21 +559,15 @@ const bindingPairSchema = z.strictObject({
  * Accepts a Lexicon/Lens pair for the 2.0 context, or refuses it - the binding
  * a Canon v2 plan, package or run records. The input is untrusted: its shape is
  * parsed first, then each slot must name exactly its v2 contract at its
- * released page and page version. A 1.x identity in a slot is CONTRACT_DRIFT
- * (re-binding is explicit, never silent), a v2 identity in the other slot
- * BUNDLE_BINDING_MISMATCH, the right identity on another page or page version
- * CONTRACT_SOURCE_MISMATCH. The input is never returned: the repository's pair is.
+ * released page and page version. An identity of the slot's own lineage at
+ * another version is CONTRACT_DRIFT (re-binding is explicit, never silent), an
+ * identity of the other lineage (any version) BUNDLE_BINDING_MISMATCH, the right
+ * identity on another page or page version CONTRACT_SOURCE_MISMATCH, and input
+ * that cannot be read as plain data BUNDLE_SCHEMA_INVALID. The input is never
+ * returned: the repository's (frozen) pair is.
  */
 export function assertCanonV2ContractBindings(input: unknown): PlanContractBindings {
-  let parsed: ReturnType<typeof bindingPairSchema.safeParse>;
-  try {
-    parsed = parseBindingPair(input);
-  } catch (error) {
-    if (error instanceof SkillContractError) throw error;
-    // A getter or proxy that throws while being read is a shape the boundary does not accept, not a crash.
-    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', '<root>: the binding pair cannot be read as plain data', { path: '<root>' });
-  }
-  return checkBindingPair(parsed);
+  return coded('the binding pair', () => checkBindingPair(parseBindingPair(input)));
 }
 
 /** Only plain JSON-shaped data: a plain object at the root and in each slot (no Date, Map, class instance or null prototype), each slot present. */
@@ -610,26 +600,26 @@ function checkBindingPair(parsed: ReturnType<typeof bindingPairSchema.safeParse>
     const binding = parsed.data[slot];
     const found = classifyCanonV2Ref(binding.contractRef);
     if (found.kind === 'UNKNOWN') {
-      throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `${slot}: "${binding.contractRef}" is not a contract of the ${CANON_V2_CONTRACT_VERSION} context`, { slot, ref: binding.contractRef });
+      throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `${slot}: "${shown(binding.contractRef)}" is not a contract of the ${CANON_V2_CONTRACT_VERSION} context`, { slot, ref: binding.contractRef });
     }
     if (found.source.key !== key) {
       throw new SkillContractError(
         'BUNDLE_BINDING_MISMATCH',
-        `${slot} names "${binding.contractRef}", the ${found.source.key} lineage; the slot binds ${String(v2SourceFor(key).identity)}`,
+        `${slot} names "${shown(binding.contractRef)}", the ${found.source.key} lineage; the slot binds ${String(v2SourceFor(key).identity)}`,
         { slot, ref: binding.contractRef },
       );
     }
     if (found.kind === 'OTHER_VERSION') {
       throw new SkillContractError(
         'CONTRACT_DRIFT',
-        `${slot} binds "${binding.contractRef}"; the ${CANON_V2_CONTRACT_VERSION} context binds ${String(found.source.identity)}${historicalNote(binding.contractRef)}`,
+        `${slot} binds "${shown(binding.contractRef)}"; the ${CANON_V2_CONTRACT_VERSION} context binds ${String(found.source.identity)}${historicalNote(binding.contractRef)}`,
         { slot, recorded: binding.contractRef, bound: found.source.identity },
       );
     }
     if (binding.confluencePageId !== found.source.confluencePageId || binding.confluencePageVersion !== found.source.confluencePageVersion) {
       throw new SkillContractError(
         'CONTRACT_SOURCE_MISMATCH',
-        `${binding.contractRef} is released from page ${found.source.confluencePageId} version ${found.source.confluencePageVersion}, not from page ${binding.confluencePageId} version ${binding.confluencePageVersion}`,
+        `${shown(binding.contractRef)} is released from page ${found.source.confluencePageId} version ${found.source.confluencePageVersion}, not from page ${shown(binding.confluencePageId)} version ${shown(binding.confluencePageVersion)}`,
         { slot, contractRef: binding.contractRef },
       );
     }

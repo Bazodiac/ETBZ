@@ -7,8 +7,8 @@
 // envelope with blocks swapped. Nothing here is spread from the 1.x modules,
 // and no 1.x block (the Ten-God envelopes, the depth operators, the metaphor
 // rule, ...) is part of 2.0.0. Canon v2 puts meaning in the Bedeutungslexikon
-// (C3, ETBZ-94) and methods in Method Profile v2 (C2, ETBZ-78); ADR 0019 lists
-// every 1.x block with the C1/C5 section that addresses its topic.
+// (C3, ETBZ-94) and methods in Method Profile v2 (C2, ETBZ-78). ADR 0019 lists
+// every superseded 1.x block; it maps none of them onto C1 or C5.
 //
 // Every rule text is C1's text as the page renders it: German, characters
 // unchanged (C1 closes its „…" quotations with a straight quote, and that is
@@ -27,6 +27,7 @@
 // =============================================================================
 
 import type { ContractKey } from './contract-sources.js';
+import { deepFreeze } from './deep-freeze.js';
 import type { LensSection } from './semantic-envelope.js';
 
 const c1 = (section: string): LensSection => ({ contract: 'INTERPRETATION_LENS', section });
@@ -222,3 +223,7 @@ export const SEMANTIC_ENVELOPE_V2 = {
   voiceAuthority: VOICE_AUTHORITY,
 } as const;
 export type SemanticEnvelopeV2 = typeof SEMANTIC_ENVELOPE_V2;
+
+// Handed out by reference: frozen where defined (see deep-freeze.ts).
+deepFreeze(SEMANTIC_ENVELOPE_V2);
+deepFreeze(C1_SECTIONS);
