@@ -78,8 +78,8 @@ export function currentV1Sha256(): Record<string, string> {
 /**
  * The refusal code of an action, or ACCEPTED. Any other exception becomes
  * `NOT_A_CONTRACT_ERROR:<name>`, which no test expects, so it fails by
- * assertion. The four v2 boundaries code an unreadable input themselves
- * (BUNDLE_SCHEMA_INVALID, see `coded`); tests that must tell a targeted refusal
+ * assertion. Every exported function of canon-v2-contracts.ts that takes input
+ * codes an unreadable input itself (BUNDLE_SCHEMA_INVALID, see `coded`); tests that must tell a targeted refusal
  * from a caught crash also pin the refusal's field path and issue (a caught
  * crash reports `<root>` and no zod issue code).
  */

@@ -177,8 +177,9 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
     (the Lens slot, the Lexicon slot, the Lens source), an in-place 1.1 edit no bundle hash sees, a dropped red
     line, and a voice binding to another C5 version.
 - **Sweeps.** Beyond the nine CI mutants, two one-time sweeps ran on the candidate: every `throw` statement of
-  `canon-v2-contracts.ts` disabled in turn, and 69 clause mutants across the four v2 modules (condition clauses,
-  guard calls, schema refinements, list entries, freezes, the wrapper). The record beside the evidence gives each
+  `canon-v2-contracts.ts` disabled in turn, and a list of clause mutants across the four v2 modules (condition
+  clauses, guard calls, schema refinements, list entries, freezes, the wrapper; the record gives the list and the
+  count). The record beside the evidence gives each
   verdict, and names for each survivor why it changes no outcome for any input. The sweeps are one-time proofs, not CI
   steps (CI budget), and they cover the mutants they list, not every possible one.
 - **Evidence.** `docs/evidence/etbz-77/contracts-v2/contracts-v2.json` records identities, page bindings, hashes,

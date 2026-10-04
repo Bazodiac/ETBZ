@@ -3,9 +3,9 @@
  *
  * Pattern as in ETBZ-51: the released v2 contracts and the repository's 2.0
  * binding pair are the green baseline; each test changes as little as the
- * refusal needs, on a copy, and names the code it expects. The four boundaries
- * turn input they cannot read into a coded BUNDLE_SCHEMA_INVALID by design
- * (`coded`), so the shape cases also pin the field path and the issue of the
+ * refusal needs, on a copy, and names the code it expects. Every exported
+ * function of canon-v2-contracts.ts that takes input turns input it cannot read
+ * into a coded BUNDLE_SCHEMA_INVALID by design (`coded`), so the shape cases also pin the field path and the issue of the
  * refusal: a caught crash reports `<root>` and no zod issue code, a targeted
  * refusal its field and its issue. Any other exception shows as
  * NOT_A_CONTRACT_ERROR, which no case expects.
@@ -136,6 +136,10 @@ describe('ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name', () => {
     ['a version without digits', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@..' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
     ['a second @ in the reference', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@x@2.0.0' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
     ['a version of letters', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@a.b.c' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['a version without a major', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@.0.0' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['a version without a minor', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@2..0' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['a version without a patch', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@2.0.' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['a version with a letter for its second dot', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@2.0x0' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
     ['a numeric page version', () => pair({ ...lens, confluencePageVersion: 1 }, lexicon), 'BUNDLE_SCHEMA_INVALID'],
     ['null', () => null, 'BUNDLE_SCHEMA_INVALID'],
     ['a list', () => [lens, lexicon], 'BUNDLE_SCHEMA_INVALID'],
@@ -200,6 +204,8 @@ describe('ETBZ-77: a v2 contract core is held to its invariants', () => {
     ['a page version that is not a page reference', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['confluencePageVersion'] = 'v1'; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a page version with a trailing letter', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['confluencePageVersion'] = '1x'; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a page id with a trailing letter', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['confluencePageId'] = '85229569x'; }, 'BUNDLE_SCHEMA_INVALID'],
+    ['an empty page id', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['confluencePageId'] = ''; }, 'BUNDLE_SCHEMA_INVALID'],
+    ['an empty page version', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['confluencePageVersion'] = ''; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a blank title', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['title'] = ' '; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a dependency listed twice', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['dependsOn'] = ['METHOD_PROFILE', 'METHOD_PROFILE']; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a dependency on no known contract', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['dependsOn'] = ['STYLE_GUIDE']; }, 'BUNDLE_SCHEMA_INVALID'],
@@ -258,6 +264,12 @@ describe('ETBZ-77: a v2 contract core is held to its invariants', () => {
     ['an extra key on the core', 'INTERPRETATION_LENS', (core) => { core['methods'] = ['ten_gods']; }, '<root> unrecognized_keys'],
     ['an extra key on the source', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['note'] = 'x'; }, 'source unrecognized_keys'],
     ['an extra key on the supersession record', 'INTERPRETATION_LENS', (core) => { at(core, 'supersedes')['note'] = 'x'; }, 'supersedes unrecognized_keys'],
+    ['the key as a number', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['key'] = 5; }, 'source.key invalid_type'],
+    ['the superseded identities as a string', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'supersedes')['contractRefs'] = 'terminology-wording-lexicon@1.1.0'; }, 'supersedes.contractRefs invalid_type'],
+    ['a Rebaseline page id as a number', 'INTERPRETATION_LENS', (core) => { ((at(core, 'supersedes')['rebaselineSections'] as Json[])[0] as Json)['confluencePageId'] = 62128133; }, 'supersedes.rebaselineSections.0.confluencePageId invalid_type'],
+    ['a Rebaseline section title as a number', 'INTERPRETATION_LENS', (core) => { ((at(core, 'supersedes')['rebaselineSections'] as Json[])[0] as Json)['title'] = 17; }, 'supersedes.rebaselineSections.0.title invalid_type'],
+    ['a Rebaseline section scope as a number', 'INTERPRETATION_LENS', (core) => { ((at(core, 'supersedes')['rebaselineSections'] as Json[])[0] as Json)['scope'] = 17; }, 'supersedes.rebaselineSections.0.scope invalid_type'],
+    ['an extra key on a Rebaseline section', 'INTERPRETATION_LENS', (core) => { ((at(core, 'supersedes')['rebaselineSections'] as Json[])[0] as Json)['note'] = 'x'; }, 'supersedes.rebaselineSections.0 unrecognized_keys'],
   ])('refuses a core of the wrong JSON shape at its field: %s', (_label, key, edit, where) => {
     expect(refusalOf(() => validateCanonV2ContractCore(coreWith(key, edit)))).toBe(`BUNDLE_SCHEMA_INVALID ${where}`);
   });
@@ -273,6 +285,13 @@ describe('ETBZ-77: a v2 contract core is held to its invariants', () => {
     ['2026-10-04x', 'BUNDLE_SCHEMA_INVALID'],
     ['x2026-10-04', 'BUNDLE_SCHEMA_INVALID'],
     ['20261-10-04', 'BUNDLE_SCHEMA_INVALID'],
+    ['2026-1-04', 'BUNDLE_SCHEMA_INVALID'],
+    ['2026-10-4', 'BUNDLE_SCHEMA_INVALID'],
+    ['2026-10-004', 'BUNDLE_SCHEMA_INVALID'],
+    ['2026-1a-04', 'BUNDLE_SCHEMA_INVALID'],
+    ['2026-10-0a', 'BUNDLE_SCHEMA_INVALID'],
+    ['2026-10-1a', 'BUNDLE_SCHEMA_INVALID'],
+    ['abcd-10-04', 'BUNDLE_SCHEMA_INVALID'],
   ])('holds the decision date %s to the calendar (%s)', (date, code) => {
     expect(contractCodeOf(() => validateCanonV2ContractCore(coreWith('INTERPRETATION_LENS', (core) => { at(core, 'source')['releasedOn'] = date; })))).toBe(code);
   });
@@ -398,5 +417,61 @@ describe('ETBZ-77: every exported function of the 2.0 line answers JSON-shaped i
       }
     }
     expect(violations).toEqual([]);
+  });
+});
+
+describe('ETBZ-77: every field of a core, a released contract and a binding pair is refused with a bounded message, or accepted', () => {
+  const LONG = 'v'.repeat(100_000);
+  const LONG_KEY = 'k'.repeat(100_000);
+  /** Every path to a node of a JSON value, the root included. */
+  const paths = (value: unknown, prefix: readonly (string | number)[] = []): (readonly (string | number)[])[] => {
+    const found: (readonly (string | number)[])[] = [prefix];
+    if (Array.isArray(value)) value.forEach((entry, index) => found.push(...paths(entry, [...prefix, index])));
+    else if (value !== null && typeof value === 'object') for (const [name, entry] of Object.entries(value)) found.push(...paths(entry, [...prefix, name]));
+    return found;
+  };
+  /** Each variant: a deep copy with one leaf replaced by a long string, or one object given a long key holding a number. */
+  const variants = (base: unknown): unknown[] => paths(base).flatMap((path) => {
+    const out: unknown[] = [];
+    const node = path.reduce<unknown>((current, segment) => (current as Record<string | number, unknown>)[segment], base);
+    if (node !== null && typeof node === 'object') {
+      const copy = structuredClone(base);
+      const target = path.reduce<unknown>((current, segment) => (current as Record<string | number, unknown>)[segment], copy) as Record<string, unknown>;
+      target[LONG_KEY] = 5;
+      out.push(copy);
+    } else if (path.length > 0) {
+      const copy = structuredClone(base);
+      const parent = path.slice(0, -1).reduce<unknown>((current, segment) => (current as Record<string | number, unknown>)[segment], copy) as Record<string | number, unknown>;
+      parent[path[path.length - 1] as string | number] = LONG;
+      out.push(copy);
+    }
+    return out;
+  });
+  const bounded = (action: () => unknown): string | null => {
+    try {
+      action();
+      return null;
+    } catch (error) {
+      if (!(error instanceof SkillContractError)) return `NOT_A_CONTRACT_ERROR:${error instanceof Error ? error.name : typeof error}`;
+      return error.message.length > 2_000 ? `${error.code}: message of ${error.message.length} characters` : null;
+    }
+  };
+
+  it.each(['INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON'] as const)('validates every variant of the %s core with a coded, bounded answer', (key) => {
+    const cases = variants(JSON.parse(JSON.stringify(canonV2ContractCore(key))) as unknown);
+    expect(cases.length).toBeGreaterThan(50);
+    expect(cases.map((core) => bounded(() => validateCanonV2ContractCore(core as CanonV2ContractCore))).filter((problem) => problem !== null)).toEqual([]);
+  }, 120_000);
+
+  it.each(['INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON'] as const)('checks every variant of the released %s contract with a coded, bounded answer', (key) => {
+    const cases = variants(JSON.parse(JSON.stringify(buildCanonV2Contract(key))) as unknown);
+    expect(cases.length).toBeGreaterThan(50);
+    expect(cases.map((contract) => bounded(() => assertReleasedCanonV2Contract(contract as CanonV2Contract))).filter((problem) => problem !== null)).toEqual([]);
+  }, 120_000);
+
+  it('accepts or refuses every variant of the binding pair with a coded, bounded answer', () => {
+    const cases = variants(JSON.parse(JSON.stringify(PLAN_CONTRACT_BINDINGS_V2_0)) as unknown);
+    expect(cases.length).toBeGreaterThan(8);
+    expect(cases.map((input) => bounded(() => assertCanonV2ContractBindings(input))).filter((problem) => problem !== null)).toEqual([]);
   });
 });

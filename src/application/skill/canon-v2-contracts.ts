@@ -209,33 +209,33 @@ const SYMBOLIC_AUTHORITY_KEYS: ReadonlySet<string> = new Set([
 function walkContent(value: unknown, path: string, key: CanonV2ContractKey, sections: readonly string[], cited: Set<string>): void {
   if (typeof value === 'string') {
     if (value.trim() === '') {
-      throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${path} is empty; a contract carries no blank rule`, { path });
+      throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)} is empty; a contract carries no blank rule`, { path });
     }
     return;
   }
   if (Array.isArray(value)) {
     if (value.length === 0) {
-      throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${path} is an empty list`, { path });
+      throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)} is an empty list`, { path });
     }
     value.forEach((entry, index) => walkContent(entry, `${path}[${index}]`, key, sections, cited));
     return;
   }
   if (value === null || typeof value !== 'object') {
-    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${path} is a ${value === null ? 'null' : typeof value}; contract data is text`, { path });
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)} is a ${value === null ? 'null' : typeof value}; contract data is text`, { path });
   }
   for (const [name, entry] of Object.entries(value as Record<string, unknown>)) {
     const at = `${path}.${name}`;
     if (SYMBOLIC_AUTHORITY_KEYS.has(name)) {
       throw new SkillContractError(
         'SYMBOLIC_AUTHORITY_REFUSED',
-        `${at}: a contract may not carry methods, facts, operations or mappings; the released Method Registry is the only source of symbolic authority`,
+        `${shown(at)}: a contract may not carry methods, facts, operations or mappings; the released Method Registry is the only source of symbolic authority`,
         { path: at },
       );
     }
     if (name === 'methodRefs') {
       throw new SkillContractError(
         'METHOD_REF_OUT_OF_PROFILE',
-        `${at}: the 2.0 line binds no method until Method Profile v2 is released (ETBZ-78)`,
+        `${shown(at)}: the 2.0 line binds no method until Method Profile v2 is released (ETBZ-78)`,
         { path: at },
       );
     }
@@ -245,7 +245,7 @@ function walkContent(value: unknown, path: string, key: CanonV2ContractKey, sect
       if (source === null || typeof source !== 'object' || source['contract'] !== key || typeof section !== 'string' || !sections.includes(section)) {
         throw new SkillContractError(
           'BUNDLE_SCHEMA_INVALID',
-          `${at} does not name a section of the "${key}" page`,
+          `${shown(at)} does not name a section of the "${key}" page`,
           { path: at },
         );
       }
@@ -314,7 +314,7 @@ function refuseMalformedCore(core: unknown): void {
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const path = issue === undefined || issue.path.length === 0 ? '<root>' : issue.path.map(String).join('.');
-    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${path}: ${issue?.code ?? 'invalid'}`, { path });
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)}: ${issue?.code ?? 'invalid'}`, { path });
   }
 }
 
@@ -353,7 +353,7 @@ function validateCore(core: CanonV2ContractCore): void {
     );
   }
   if (source.status !== 'CURRENT') {
-    throw new SkillContractError('DRAFT_CONTRACT_REFUSED', `contract "${key}" has status "${source.status}"; only a CURRENT page authorises a 2.0 run`, { key });
+    throw new SkillContractError('DRAFT_CONTRACT_REFUSED', `contract "${key}" has status "${keyText(source.status)}"; only a CURRENT page authorises a 2.0 run`, { key });
   }
   if (!PAGE_ID_PATTERN.test(source.confluencePageId) || !PAGE_ID_PATTERN.test(source.confluencePageVersion)) {
     throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${key}" page id or page version is not a page reference`, { key });
@@ -365,7 +365,7 @@ function validateCore(core: CanonV2ContractCore): void {
   if ([...new Set(lineageDomains)].sort().join(',') !== [...source.owns].sort().join(',') || new Set(source.owns).size !== source.owns.length) {
     throw new SkillContractError(
       'PRECEDENCE_CONFLICT',
-      `contract "${key}" owns ${source.owns.join(', ') || 'nothing'}; a new version decides exactly the domains its lineage decides`,
+      `contract "${key}" owns ${shown(source.owns.join(', ')) || 'nothing'}; a new version decides exactly the domains its lineage decides`,
       { key },
     );
   }
@@ -615,7 +615,7 @@ function checkBindingPair(parsed: ReturnType<typeof bindingPairSchema.safeParse>
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const path = issue === undefined || issue.path.length === 0 ? '<root>' : issue.path.map(String).join('.');
-    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${path}: ${issue?.code ?? 'invalid'}`, { path });
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)}: ${issue?.code ?? 'invalid'}`, { path });
   }
   for (const key of CANON_V2_CONTRACT_KEYS) {
     const slot = SPECS[key].slot;
