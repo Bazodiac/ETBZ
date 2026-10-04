@@ -80,7 +80,8 @@ export function currentV1Sha256(): Record<string, string> {
  * `NOT_A_CONTRACT_ERROR:<name>`, which no test expects, so it fails by
  * assertion. The four v2 boundaries code an unreadable input themselves
  * (BUNDLE_SCHEMA_INVALID, see `coded`); tests that must tell a targeted refusal
- * from a caught crash also pin the refusal's field path.
+ * from a caught crash also pin the refusal's field path and issue (a caught
+ * crash reports `<root>` and no zod issue code).
  */
 export function contractCodeOf(action: () => unknown): string {
   try {

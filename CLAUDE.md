@@ -305,7 +305,7 @@ are ETBZ-81 - `buildSkillContractBundle()` still defaults to 1.0.0, and 1.0.0/1.
 1.x contract value-module and Skill-package files are pinned byte for byte to main@cb7605e5 (`tests/support/etbz77Evidence.ts`);
 the shared machinery (bundle builder, plan, source tables) is held by the contract suite instead - the two released bundle
 hashes and the two 1.x plan-binding pairs, each pinned to its value at the base.
-Code in `src/application/skill/{canon-v2-contracts,contract-sources-v2,semantic-envelope-v2,wording-boundaries-v2}.ts`,
+Code in `src/application/skill/{canon-v2-contracts,contract-sources-v2,semantic-envelope-v2,wording-boundaries-v2,deep-freeze}.ts`,
 evidence `docs/evidence/etbz-77/contracts-v2/`, re-derived by `tests/contract/etbz77-contracts-v2.contract.test.ts`.
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source

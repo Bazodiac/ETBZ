@@ -19,8 +19,10 @@
 //
 // What this module does NOT do: it reads no page, interprets nothing, defines
 // no method, fact or operation, and enforces none of the rules it carries -
-// the gates that enforce them are Epic B. Every refusal of JSON-shaped input
-// is a `SkillContractError` with a named code; the first violation throws.
+// the gates that enforce them are Epic B. Every exported function that takes
+// input runs inside one wrapper (`coded`): a refusal of JSON-shaped input is a
+// `SkillContractError` with a named code and a message that echoes at most 80
+// characters of any reference, key or identity; the first violation throws.
 // In-process objects JSON cannot express (symbol keys, non-enumerable or
 // inherited properties, non-index properties on a list) are outside that
 // promise, as they are for the 1.x bundle (`skill-contract-bundle.ts`).
@@ -125,7 +127,7 @@ function isCanonV2Key(key: string): key is CanonV2ContractKey {
 function v2SourceFor(key: CanonV2ContractKey): ContractSource {
   const found = CANON_V2_CONTRACT_SOURCES.find((source) => source.key === key);
   if (found === undefined) {
-    throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `the 2.0 line carries no "${key}" source`, { key });
+    throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `the 2.0 line carries no "${keyText(key)}" source`, { key });
   }
   return found;
 }
@@ -152,7 +154,7 @@ function lineageOf(identity: string): string {
 function lineageFor(key: CanonV2ContractKey): string {
   const [first] = releasedV1Sources(key);
   if (first?.identity === undefined || first.identity === null) {
-    throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `no released 1.x "${key}" contract to continue`, { key });
+    throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `no released 1.x "${keyText(key)}" contract to continue`, { key });
   }
   return lineageOf(first.identity);
 }
@@ -331,7 +333,7 @@ function validateCore(core: CanonV2ContractCore): void {
   refuseMalformedCore(core);
   const { source } = core;
   if (!isCanonV2Key(source.key)) {
-    throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `the 2.0 line releases no "${source.key}" contract yet`, { key: source.key });
+    throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `the 2.0 line releases no "${keyText(source.key)}" contract yet`, { key: source.key });
   }
   const key = source.key;
   const spec = SPECS[key];
@@ -346,7 +348,7 @@ function validateCore(core: CanonV2ContractCore): void {
   if (source.identity !== expectedIdentity) {
     throw new SkillContractError(
       'BUNDLE_SCHEMA_INVALID',
-      `contract "${key}" carries identity ${String(source.identity)}; the 2.0 line releases it as ${expectedIdentity}`,
+      `contract "${key}" carries identity ${keyText(source.identity)}; the 2.0 line releases it as ${expectedIdentity}`,
       { key, identity: source.identity },
     );
   }
@@ -433,8 +435,23 @@ function validateCore(core: CanonV2ContractCore): void {
 // Building and freezing
 // -----------------------------------------------------------------------------
 
-/** The unvalidated core of a v2 contract - what the hash freezes. */
+/** The unvalidated core of a v2 contract - what the hash freezes. A key the 2.0 line does not release is refused. */
 export function canonV2ContractCore(key: CanonV2ContractKey): CanonV2ContractCore {
+  return coded('the key', () => coreFor(key));
+}
+
+function refuseUnreleasedKey(key: unknown): asserts key is CanonV2ContractKey {
+  if (typeof key !== 'string' || !isCanonV2Key(key)) {
+    throw new SkillContractError(
+      'UNKNOWN_CONTRACT_IDENTITY',
+      `the 2.0 line releases no "${keyText(key)}" contract yet; it releases ${CANON_V2_CONTRACT_KEYS.join(' and ')}`,
+      { key: typeof key === 'string' ? key : null },
+    );
+  }
+}
+
+function coreFor(key: CanonV2ContractKey): CanonV2ContractCore {
+  refuseUnreleasedKey(key);
   return {
     canon: CANON_V2_DECISION,
     source: v2SourceFor(key),
@@ -445,14 +462,12 @@ export function canonV2ContractCore(key: CanonV2ContractKey): CanonV2ContractCor
 
 /** Builds and validates one v2 contract. A key the 2.0 line does not release is refused. */
 export function buildCanonV2Contract(key: string): CanonV2Contract {
-  if (!isCanonV2Key(key)) {
-    throw new SkillContractError(
-      'UNKNOWN_CONTRACT_IDENTITY',
-      `the 2.0 line releases no "${key}" contract yet; it releases ${CANON_V2_CONTRACT_KEYS.join(' and ')}`,
-      { key },
-    );
-  }
-  const core = canonV2ContractCore(key);
+  return coded('the key', () => buildContract(key));
+}
+
+function buildContract(key: string): CanonV2Contract {
+  refuseUnreleasedKey(key);
+  const core = coreFor(key);
   validateCanonV2ContractCore(core);
   return { ...core, structuralHash: structuralHash(core) };
 }
@@ -475,7 +490,7 @@ function assertReleased(contract: CanonV2Contract): void {
   if (typeof contract.structuralHash !== 'string' || !HASH_PATTERN.test(contract.structuralHash) || actual !== contract.structuralHash || released === undefined || released !== actual) {
     throw new SkillContractError(
       'BUNDLE_NOT_RELEASED',
-      `contract ${identity || '<no identity>'} has content hash ${actual}, which is ${released === undefined ? 'not a released 2.0 contract' : `not the released ${released}`}; a changed rule, page version or precedence is a new version, never an edit`,
+      `contract ${identity === '' ? '<no identity>' : keyText(identity)} has content hash ${actual}, which is ${released === undefined ? 'not a released 2.0 contract' : `not the released ${released}`}; a changed rule, page version or precedence is a new version, never an edit`,
       { actual, released: released ?? null, published: contract.structuralHash },
     );
   }
@@ -483,9 +498,11 @@ function assertReleased(contract: CanonV2Contract): void {
 
 /** The released v2 contract of a key: built, validated and checked against its frozen hash. */
 export function releasedCanonV2Contract(key: string): CanonV2Contract {
-  const contract = buildCanonV2Contract(key);
-  assertReleasedCanonV2Contract(contract);
-  return contract;
+  return coded('the key', () => {
+    const contract = buildContract(key);
+    assertReleased(contract);
+    return contract;
+  });
 }
 
 // -----------------------------------------------------------------------------
@@ -512,6 +529,11 @@ function classifyCanonV2Ref(ref: string): CanonV2Classification {
 /** A reference as a refusal message shows it: at most 80 characters, so a message never grows with its input. */
 function shown(ref: string): string {
   return ref.length <= 80 ? ref : `${ref.slice(0, 80)}… (${ref.length} characters)`;
+}
+
+/** A key or identity as a refusal message shows it, whatever its type. */
+function keyText(value: unknown): string {
+  return typeof value === 'string' ? shown(value) : `<${value === null ? 'null' : typeof value}>`;
 }
 
 /** Says, for a refused reference, whether it is a released 1.x identity that stays resolvable elsewhere. */

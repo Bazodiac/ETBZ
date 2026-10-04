@@ -121,11 +121,13 @@ The Lens 1.1 voice invariants quote Rebaseline section 17; what of that section 
 `PLAN_CONTRACT_BINDINGS_V2_0` is the Lexicon/Lens pair a Canon v2 run binds: the pair bundle 2.0.0 (ETBZ-81) will
 name as its plan bindings. `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The
 input is untrusted: the root and each slot must be plain objects, the shape is parsed strictly, and the input is
-never returned (the repository's pair is). Every value the four v2 modules export is deep-frozen where it is defined, so
-a caller cannot change what the next caller is told; built contracts and sets are new objects per call. The binding gate,
-the resolver, the validator and the freeze run inside one wrapper: input they cannot read as plain data - a throwing
-getter, a nesting deeper than the engine can walk - is `BUNDLE_SCHEMA_INVALID`, naming the cause, and a refusal
-message shows at most 80 characters of a reference.
+never returned (the repository's pair is). Every object the four v2 modules export is deep-frozen where it is defined,
+so no caller can change, through them, what the next caller is told; built contracts and sets are new objects per
+call. (The 1.x values the v2 line reads stay as the 1.x modules define them.) Every exported function of
+`canon-v2-contracts.ts` that takes input runs inside one wrapper: input it cannot read as plain data - a throwing
+getter, a nesting deeper than the engine can walk - is `BUNDLE_SCHEMA_INVALID`, naming the cause, and every refusal
+message shows at most 80 characters of an echoed reference, key or identity. A structural test calls each of those
+functions with a fixed set of adversarial JSON inputs.
 
 | Input | Code |
 | --- | --- |
@@ -208,7 +210,8 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
 - **CI budget.** The CI job runs close to its 30-minute limit (`timeout-minutes: 30`): the last eight `main` pushes
   before this slice took 16.8–29.8 min, the longest 29.75 min (run 37083011798), and a sibling pull request that added
   one guard step was cancelled at 30.27 min (run 37145900060). This slice adds a guard step (nine mutants and two
-  baseline runs; the recorded mutation protocol gives its local duration) and 191 tests (2170 against 1979 at the base). A timeout is an
+  baseline runs; the recorded mutation protocol gives its local duration) and its tests (the recorded local gate run gives
+  the count against the base). A timeout is an
   infrastructure outcome, not a gate verdict: the run is repeated and every attempt recorded. Raising the limit is a
   Product Owner decision outside this slice.
 

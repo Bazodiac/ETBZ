@@ -6,8 +6,9 @@
  * refusal needs, on a copy, and names the code it expects. The four boundaries
  * turn input they cannot read into a coded BUNDLE_SCHEMA_INVALID by design
  * (`coded`), so the shape cases also pin the field path and the issue of the
- * refusal: a targeted refusal is told from a caught crash by its path. Any other
- * exception shows as NOT_A_CONTRACT_ERROR, which no case expects.
+ * refusal: a caught crash reports `<root>` and no zod issue code, a targeted
+ * refusal its field and its issue. Any other exception shows as
+ * NOT_A_CONTRACT_ERROR, which no case expects.
  */
 import { describe, expect, it } from 'vitest';
 import { structuralHash } from '../../src/domain/structural-hash.js';
@@ -24,6 +25,7 @@ import {
 import { PLAN_CONTRACT_BINDINGS_V1_0, PLAN_CONTRACT_BINDINGS_V1_1 } from '../../src/application/interpretation/meta-narrative-plan.js';
 import type { CanonV2Contract, CanonV2ContractCore, CanonV2ContractKey } from '../../src/application/skill/index.js';
 import { contractCodeOf } from '../support/etbz77Evidence.js';
+import * as canonV2 from '../../src/application/skill/canon-v2-contracts.js';
 
 type Json = Record<string, unknown>;
 
@@ -131,6 +133,9 @@ describe('ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name', () => {
     ['an empty page id', () => pair({ ...lens, confluencePageId: '' }, lexicon), 'BUNDLE_SCHEMA_INVALID'],
     ['an empty page version', () => pair(lens, { ...lexicon, confluencePageVersion: '' }), 'BUNDLE_SCHEMA_INVALID'],
     ['a two-part version of the Lens lineage', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@2.0' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['a version without digits', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@..' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['a second @ in the reference', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@x@2.0.0' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
+    ['a version of letters', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@a.b.c' }, lexicon), 'UNKNOWN_CONTRACT_IDENTITY'],
     ['a numeric page version', () => pair({ ...lens, confluencePageVersion: 1 }, lexicon), 'BUNDLE_SCHEMA_INVALID'],
     ['null', () => null, 'BUNDLE_SCHEMA_INVALID'],
     ['a list', () => [lens, lexicon], 'BUNDLE_SCHEMA_INVALID'],
@@ -178,6 +183,7 @@ describe('ETBZ-77: resolving inside the 2.0 context', () => {
 
   it.each(['ANTI_BOILERPLATE', 'METHOD_PROFILE', 'LONG_FORM', 'interpretation_lens', ''])('releases no %s contract on the 2.0 line yet', (key) => {
     expect(contractCodeOf(() => buildCanonV2Contract(key))).toBe('UNKNOWN_CONTRACT_IDENTITY');
+    expect(contractCodeOf(() => canonV2ContractCore(key as CanonV2ContractKey))).toBe('UNKNOWN_CONTRACT_IDENTITY');
   });
 });
 
@@ -192,6 +198,8 @@ describe('ETBZ-77: a v2 contract core is held to its invariants', () => {
     ['an impossible decision date', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['releasedOn'] = '2026-02-30'; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a page id that is not a page reference', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['confluencePageId'] = 'C5'; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a page version that is not a page reference', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['confluencePageVersion'] = 'v1'; }, 'BUNDLE_SCHEMA_INVALID'],
+    ['a page version with a trailing letter', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['confluencePageVersion'] = '1x'; }, 'BUNDLE_SCHEMA_INVALID'],
+    ['a page id with a trailing letter', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['confluencePageId'] = '85229569x'; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a blank title', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['title'] = ' '; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a dependency listed twice', 'INTERPRETATION_LENS', (core) => { at(core, 'source')['dependsOn'] = ['METHOD_PROFILE', 'METHOD_PROFILE']; }, 'BUNDLE_SCHEMA_INVALID'],
     ['a dependency on no known contract', 'TERMINOLOGY_LEXICON', (core) => { at(core, 'source')['dependsOn'] = ['STYLE_GUIDE']; }, 'BUNDLE_SCHEMA_INVALID'],
@@ -262,6 +270,9 @@ describe('ETBZ-77: a v2 contract core is held to its invariants', () => {
     ['2025-02-29', 'BUNDLE_SCHEMA_INVALID'],
     ['2000-02-29', 'ACCEPTED'],
     ['2024-02-29', 'ACCEPTED'],
+    ['2026-10-04x', 'BUNDLE_SCHEMA_INVALID'],
+    ['x2026-10-04', 'BUNDLE_SCHEMA_INVALID'],
+    ['20261-10-04', 'BUNDLE_SCHEMA_INVALID'],
   ])('holds the decision date %s to the calendar (%s)', (date, code) => {
     expect(contractCodeOf(() => validateCanonV2ContractCore(coreWith('INTERPRETATION_LENS', (core) => { at(core, 'source')['releasedOn'] = date; })))).toBe(code);
   });
@@ -294,6 +305,12 @@ describe('ETBZ-77: a v2 contract is released only at its frozen hash', () => {
     const core = coreWith('INTERPRETATION_LENS', (copy) => { (at(copy, 'content', 'redLines')['lines'] as Json[]).pop(); });
     const edited: CanonV2Contract = { ...core, structuralHash: structuralHash(core) };
     expect(contractCodeOf(() => assertReleasedCanonV2Contract(edited))).toBe('BUNDLE_NOT_RELEASED');
+  });
+
+  it('refuses a published hash that is an object pretending to be the released hash', () => {
+    const copy = JSON.parse(JSON.stringify(released)) as Json;
+    copy['structuralHash'] = JSON.parse(`{"toString":"${released.structuralHash}"}`) as unknown;
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract(copy as unknown as CanonV2Contract))).toBe('BUNDLE_NOT_RELEASED');
   });
 
   it('refuses a published hash that is not the content hash', () => {
@@ -338,5 +355,48 @@ describe('ETBZ-77: a v2 contract is released only at its frozen hash', () => {
   it('accepts the released contracts', () => {
     expect(contractCodeOf(() => assertReleasedCanonV2Contract(released))).toBe('ACCEPTED');
     expect(contractCodeOf(() => assertReleasedCanonV2Contract(buildCanonV2Contract('TERMINOLOGY_LEXICON')))).toBe('ACCEPTED');
+  });
+});
+
+describe('ETBZ-77: every exported function of the 2.0 line answers JSON-shaped input with a coded, bounded refusal', () => {
+  const long = 'x'.repeat(1_000_000);
+  const longOtherVersion = `grounded-reflective-synthesis-lens@1.1.${'9'.repeat(1_000_000)}`;
+  const ADVERSARIAL: readonly [string, () => unknown][] = [
+    ['null', () => null],
+    ['undefined', () => undefined],
+    ['a number', () => 5],
+    ['an empty string', () => ''],
+    ['a string of a million characters', () => long],
+    ['another version of a lineage, a million characters long', () => longOtherVersion],
+    ['an object whose toString names the Lens key', () => JSON.parse('{"toString":"INTERPRETATION_LENS"}') as unknown],
+    ['an object whose toString names the 2.0.0 Lens', () => JSON.parse('{"toString":"grounded-reflective-synthesis-lens@2.0.0"}') as unknown],
+    ['a list nested twenty thousand deep', () => JSON.parse(`${'['.repeat(20_000)}"x"${']'.repeat(20_000)}`) as unknown],
+    ['an empty list', () => []],
+    ['an empty object', () => ({})],
+    ['an own __proto__ key', () => JSON.parse('{"__proto__":{"polluted":true}}') as unknown],
+    ['a pair with million-character references', () => pair({ ...lens, contractRef: longOtherVersion }, { ...lexicon, confluencePageId: long })],
+    ['a pair with an unknown million-character reference', () => pair({ ...lens, contractRef: long }, lexicon)],
+  ];
+  const functions = Object.entries(canonV2).filter((entry): entry is [string, (input: unknown) => unknown] => typeof entry[1] === 'function');
+
+  it('finds the exported functions to check', () => {
+    expect(functions.map(([name]) => name).sort()).toEqual([
+      'assertCanonV2ContractBindings', 'assertCanonV2ContractSet', 'assertReleasedCanonV2Contract', 'buildCanonV2Contract',
+      'canonV2ContractCore', 'releasedCanonV2Contract', 'resolveCanonV2Contract', 'validateCanonV2ContractCore',
+    ]);
+  });
+
+  it.each(functions.map(([name]) => name))('%s refuses every adversarial input with a SkillContractError of a bounded message, or accepts it', (name) => {
+    const fn = functions.find(([candidate]) => candidate === name)?.[1] as (input: unknown) => unknown;
+    const violations: string[] = [];
+    for (const [label, input] of ADVERSARIAL) {
+      try {
+        fn(input());
+      } catch (error) {
+        if (!(error instanceof SkillContractError)) violations.push(`${label}: ${error instanceof Error ? error.name : typeof error}`);
+        else if (error.message.length > 2_000) violations.push(`${label}: message of ${error.message.length} characters`);
+      }
+    }
+    expect(violations).toEqual([]);
   });
 });
