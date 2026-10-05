@@ -195,7 +195,8 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
 ## Consequences
 
 - **Forward work.** ETBZ-78, -79 and -80 release Method Profile, Anti-Boilerplate and Long-Form v2 beside these.
-  The 2.0-line module accepts only the two keys and only 2.0.0 today, so those slices extend it or add their own:
+  The 2.0-line module accepts only the two keys and only 2.0.0 today, so those slices extend it or add their own
+  (since 2026-10-05 it also releases 2.1.0 of the same two keys as a second line, ETBZ-117, ADR 0020):
   - Long-Form has no 1.x identity to continue (its 1.x binding is a page address);
   - a later 2.0.x or 2.1.0 needs a version table beside 2.0.0, not a replacement of it.
 - **Bundle 2.0.0 (ETBZ-81)** composes `CANON_V2_CONTRACT_SOURCES`, `SEMANTIC_ENVELOPE_V2`, `WORDING_BOUNDARIES_V2`

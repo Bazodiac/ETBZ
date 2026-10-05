@@ -118,6 +118,10 @@ export const ADR_0019_CLOSEOUT_EDITS: readonly { readonly base: string; readonly
     closeout: "name as its plan bindings. (Superseded for new work on 2026-10-05, ETBZ-117: since C1 and C5 moved to page version 2,\na Canon v2 run and bundle 2.0.0 bind the current context, `PLAN_CONTRACT_BINDINGS_V2_1` through\n`current-canon-contracts.ts`, ADR 0020. This pair stays the A1 context, and the 2.0 context answers as described\nhere.) `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The",
   },
   {
+    base: "  The 2.0-line module accepts only the two keys and only 2.0.0 today, so those slices extend it or add their own:",
+    closeout: "  The 2.0-line module accepts only the two keys and only 2.0.0 today, so those slices extend it or add their own\n  (since 2026-10-05 it also releases 2.1.0 of the same two keys as a second line, ETBZ-117, ADR 0020):",
+  },
+  {
     base: "  already satisfies the bundle's own data guard: strings only, and none of its refused keys.",
     closeout: "  already satisfies the bundle's own data guard: strings only, and none of its refused keys. (Superseded on\n  2026-10-05, ETBZ-117: bundle 2.0.0 composes the 2.1.0 pair - `CANON_V2_1_CONTRACT_SOURCES`,\n  `SEMANTIC_ENVELOPE_V2_1`, `WORDING_BOUNDARIES_V2_1` and `PLAN_CONTRACT_BINDINGS_V2_1`, through\n  `current-canon-contracts.ts` - not the 2.0.0 values, ADR 0020.)",
   },
@@ -142,13 +146,16 @@ export function adr0019WithoutCloseout(text: string): { text: string; missing: s
 }
 
 /**
- * Where method content could land, listed as main@9362f4e2 holds it. ETBZ-117
- * adds no file to any of them: a Method Profile v2 module, a method table or a
- * new application area belongs to ETBZ-78 (`src/application/skill/` is pinned
- * by tests/architecture/etbz51-skill-boundary.test.ts).
+ * Where the repository keeps method content today, listed as main@9362f4e2
+ * holds it: the module of the Method Registry and the method scope
+ * (`src/application/interpretation`) and the import-free tables
+ * (`src/domain`). `src/application/skill/` is pinned by
+ * tests/architecture/etbz51-skill-boundary.test.ts. ETBZ-117 adds no file to
+ * either; a method placed anywhere else is outside what this gate measures.
+ * Like every scope fence of this repository, the slice that brings Method
+ * Profile v2 (ETBZ-78) re-pins this deliberately, with its own ADR.
  */
 export const METHOD_SCOPE_DIRECTORIES_AT_BASE: Readonly<Record<string, readonly string[]>> = {
-  'src/application': ['README.md', 'attestation', 'horoscope-model.ts', 'horoscope-use-case.ts', 'interpretation', 'ports', 'presentation', 'skill', 'visual'],
   'src/application/interpretation': [
     'chart-symbol-lexicon.ts', 'deterministic-narrative-provider.ts', 'errors.ts', 'feature-set.ts', 'interpretation-input.ts',
     'interpretive-claim-graph.ts', 'interpretive-claim.ts', 'meta-narrative-plan.ts', 'method-registry.ts', 'method-scope.ts',

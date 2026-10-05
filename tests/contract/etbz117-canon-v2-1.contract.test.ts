@@ -155,8 +155,13 @@ describe('ETBZ-117 AC6: ADR 0019 is closed and ADR 0020 records the forward fix'
   });
 
   it('records in ADR 0020 the identities, page versions and hashes the code releases', () => {
-    for (const source of CANON_V2_1_CONTRACT_SOURCES) expect(adr0020).toContain(`\`${String(source.identity)}\``);
-    for (const hash of Object.values(RELEASED_CANON_V2_1_CONTRACT_HASHES)) expect(adr0020).toContain(hash);
+    // Each identity in its own row, with its page, version, date and hash as the code releases them.
+    for (const source of CANON_V2_1_CONTRACT_SOURCES) {
+      const name = source.key === 'INTERPRETATION_LENS' ? 'Interpretation Lens' : 'Terminology & Wording Lexicon';
+      const page = source.key === 'INTERPRETATION_LENS' ? 'C1' : 'C5';
+      const hash = RELEASED_CANON_V2_1_CONTRACT_HASHES[String(source.identity)] ?? '<none>';
+      expect(adr0020).toContain(`| ${name} | \`${String(source.identity)}\` | ${page} \`${source.confluencePageId}\` v${source.confluencePageVersion} | ${String(source.releasedOn)} | \`${hash}\` |`);
+    }
     expect(adr0020).toContain('C1 `85229569` v2');
     expect(adr0020).toContain('C5 `85164034` v2');
     expect(adr0020).toContain(`\`${CURRENT_CANON_V2_VERSION}\``);

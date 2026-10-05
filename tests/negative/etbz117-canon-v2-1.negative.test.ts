@@ -9,7 +9,11 @@
  * expects. The required negative paths of Jira ETBZ-117 are named in the
  * describe titles: the A1 2.0.0 binding, a 1.x reference, a wrong page or page
  * version, the other lineage, a missing, unknown, malformed or unexpected
- * version, and a method key pulled into the line.
+ * version, and a method key pulled into the line. The path "stale base or
+ * concurrent mutation between plan, CI, review and merge" is not a property of
+ * the code: it is enforced at merge (`gh pr merge --match-head-commit <sha>`
+ * after a fresh read of the PR head and of main) and by exact-head CI; a head
+ * change voids the earlier gate evidence (ADR 0020, section 5).
  */
 import { describe, expect, it } from 'vitest';
 import { structuralHash } from '../../src/domain/structural-hash.js';
@@ -238,6 +242,16 @@ describe('ETBZ-117: a context or line version that was never released is refused
     expect(contractCodeOf(absent)).toBe('ACCEPTED');
     expect(contractCodeOf(explicitlyUndefined)).toBe('UNKNOWN_CONTRACT_IDENTITY');
     expect(contractCodeOf(() => resolveCanonV2Contract('grounded-reflective-synthesis-lens@2.0.0', record.canonVersion as CanonV2LineVersion))).toBe('UNKNOWN_CONTRACT_IDENTITY');
+    const noVersions: CanonV2LineVersion[] = [];
+    expect(contractCodeOf(() => resolveCanonV2Contract('grounded-reflective-synthesis-lens@2.0.0', ...noVersions))).toBe('ACCEPTED');
+  });
+
+  it('refuses more than one version argument, so a function handed to Array.map never reads the index as a version', () => {
+    const extra = resolveCanonV2Contract as unknown as (ref: string, ...versions: unknown[]) => unknown;
+    expect(contractCodeOf(() => extra('grounded-reflective-synthesis-lens@2.1.0', '2.1.0', undefined))).toBe('UNKNOWN_CONTRACT_IDENTITY');
+    expect(contractCodeOf(() => extra('grounded-reflective-synthesis-lens@2.1.0', '2.1.0', '2.1.0'))).toBe('UNKNOWN_CONTRACT_IDENTITY');
+    expect(contractCodeOf(() => ['grounded-reflective-synthesis-lens@2.0.0'].map(resolveCanonV2Contract as unknown as (ref: string, index: number, list: string[]) => unknown))).toBe('UNKNOWN_CONTRACT_IDENTITY');
+    expect(contractCodeOf(() => ['INTERPRETATION_LENS'].map(buildCanonV2Contract as unknown as (key: string, index: number, list: string[]) => unknown))).toBe('UNKNOWN_CONTRACT_IDENTITY');
   });
 });
 
@@ -321,14 +335,22 @@ describe('ETBZ-117: a 2.1.0 contract is released only at its frozen hash, in its
   });
 
   it('does not release a contract re-shaped to pass the other line\'s schema: its content hash is released on neither line', () => {
+    const rehash = (contract: Json): Json => ({ ...contract, structuralHash: structuralHash({ canon: contract['canon'], source: contract['source'], supersedes: contract['supersedes'], content: contract['content'] }) });
+    /** The released hash the refusing line names for the identity: null when the identity is not on that line at all. */
+    const releasedNamed = (action: () => unknown): unknown => {
+      try {
+        action();
+        return 'ACCEPTED';
+      } catch (error) {
+        return error instanceof SkillContractError ? `${error.code} ${String(error.detail['released'])}` : 'NOT_A_CONTRACT_ERROR';
+      }
+    };
     const a1 = structuredClone(buildCanonV2Contract('INTERPRETATION_LENS')) as unknown as Json;
     at(a1, 'supersedes')['priorCanonVersions'] = { statement: 'x', contractRefs: ['grounded-reflective-synthesis-lens@2.0.0'] };
-    expect(contractCodeOf(() => assertReleasedCanonV2Contract(a1 as unknown as CanonV2Contract, '2.1.0'))).toBe('BUNDLE_NOT_RELEASED');
+    expect(releasedNamed(() => assertReleasedCanonV2Contract(rehash(a1) as unknown as CanonV2Contract, '2.1.0'))).toBe('BUNDLE_NOT_RELEASED null');
     const forward = structuredClone(released) as unknown as Json;
     delete at(forward, 'supersedes')['priorCanonVersions'];
-    const forwardCore = { canon: forward['canon'], source: forward['source'], supersedes: forward['supersedes'], content: forward['content'] };
-    forward['structuralHash'] = structuralHash(forwardCore);
-    expect(contractCodeOf(() => assertReleasedCanonV2Contract(forward as unknown as CanonV2Contract))).toBe('BUNDLE_NOT_RELEASED');
+    expect(releasedNamed(() => assertReleasedCanonV2Contract(rehash(forward) as unknown as CanonV2Contract))).toBe('BUNDLE_NOT_RELEASED null');
   });
 
   it('accepts each released contract on its own line', () => {

@@ -239,15 +239,20 @@ function lineFor(version: unknown): CanonV2Line {
 
 /**
  * The optional version or context argument of every exported function. Only an
- * ABSENT argument means 2.0.0 - what ETBZ-77 released; an argument that is
- * present is read as given, so an explicit `undefined` (a context field missing
- * from a record, say) is refused like any other unreleased version and never
- * falls back to the A1 context. New work does not thread a version through
+ * ABSENT argument (no argument, or an empty spread) means 2.0.0 - what ETBZ-77
+ * released; an argument that is present is read as given, so an explicit
+ * `undefined` (a context field missing from a record, say) is refused like any
+ * other unreleased version and never falls back to the A1 context. More than one
+ * version argument is refused too: the functions are not `Array.map` callbacks
+ * (the index would arrive as a version). New work does not thread a version through
  * these functions; it binds `current-canon-contracts.ts`.
  */
 type VersionArgument = [version?: CanonV2LineVersion];
 
 function lineOf(argument: VersionArgument): CanonV2Line {
+  if (argument.length > 1) {
+    throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `${argument.length} version arguments name no single Canon v2 context; pass at most one`, {});
+  }
   return argument.length === 0 ? LINE_2_0 : lineFor(argument[0]);
 }
 
@@ -332,7 +337,7 @@ const SYMBOLIC_AUTHORITY_KEYS: ReadonlySet<string> = new Set([
 
 /**
  * Walks the content once: strings only (a contract weighs, counts and scores
- * nothing), no symbolic-authority key, no method reference (the 2.0 line binds
+ * nothing), no symbolic-authority key, no method reference (a Canon v2 line binds
  * no method before Method Profile v2 is released, ETBZ-78), and every `source`
  * names this contract and a section of its page. Collects the cited sections
  * into `cited`.
@@ -663,7 +668,7 @@ export function releasedCanonV2Contract(key: string, ...version: VersionArgument
 }
 
 // -----------------------------------------------------------------------------
-// The 2.0 context: resolving references and accepting a binding pair
+// The contexts (2.0 historical, 2.1 current): resolving references and accepting a binding pair
 // -----------------------------------------------------------------------------
 
 type CanonV2Classification =
@@ -748,8 +753,11 @@ const bindingPairSchema = z.strictObject({
 });
 
 /**
- * Accepts a Lexicon/Lens pair for the 2.0 context, or refuses it - the binding
- * a Canon v2 plan, package or run records. The input is untrusted: its shape is
+ * Accepts a Lexicon/Lens pair for the context `context` names, or refuses it -
+ * the binding a plan, package or run of that line records. Without a version
+ * this is the historical A1 2.0 context; new Canon v2 plans, packages and runs
+ * bind through `assertCurrentCanonContractBindings` (current-canon-contracts.ts,
+ * ADR 0020). The input is untrusted: its shape is
  * parsed first, then each slot must name exactly its v2 contract at its
  * released page and page version. An identity of the slot's own lineage at
  * another version is CONTRACT_DRIFT (re-binding is explicit, never silent), an

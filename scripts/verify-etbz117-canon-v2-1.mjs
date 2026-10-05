@@ -43,6 +43,8 @@ const A1_HASHES = 'keeps the A1 2.0.0 hashes at their released values';
 const SCOPE = 'adds no method: the line releases exactly the Lens and the Lexicon';
 const ADR_CLOSED = 'closes ADR 0019: Accepted with its merge, no open reflection-question decision, its A1 facts intact';
 const ABSENT_ONLY = 'reads only an ABSENT version as the A1 2.0 context';
+const ONE_VERSION = 'refuses more than one version argument';
+const OWN_TABLE = 'does not release a contract re-shaped to pass the other line';
 
 /**
  * [name, kind, file, find, replace, tests, killer] - kind 'text' (find occurs
@@ -102,6 +104,14 @@ const MUTANTS = [
     '  return argument.length === 0 ? LINE_2_0 : lineFor(argument[0]);',
     '  return argument[0] === undefined ? LINE_2_0 : lineFor(argument[0]);',
     [T.negative], ABSENT_ONLY],
+  ['EXTRA ARGUMENTS: a second version argument (an Array.map index) is ignored', 'text', CONTRACTS,
+    '  if (argument.length > 1) {\n    throw new SkillContractError(',
+    '  if (argument.length > 99) {\n    throw new SkillContractError(',
+    [T.negative], ONE_VERSION],
+  ['OWN HASH TABLE: each line looks up a merged table of both lines\' released hashes', 'text', CONTRACTS,
+    '  const released = Object.hasOwn(line.releasedHashes, identity) ? line.releasedHashes[identity] : undefined;',
+    '  const merged: Readonly<Record<string, string>> = { ...RELEASED_CANON_V2_CONTRACT_HASHES, ...RELEASED_CANON_V2_1_CONTRACT_HASHES };\n  const released = Object.hasOwn(merged, identity) ? merged[identity] : undefined;',
+    [T.negative], OWN_TABLE],
   ['UNKNOWN VERSION: an unreleased context version falls back to the 2.0 line', 'text', CONTRACTS,
     "  if (typeof version !== 'string' || !Object.hasOwn(LINES, version)) {",
     "  if (typeof version !== 'string' || !Object.hasOwn(LINES, version)) {\n    return LINE_2_0;",
