@@ -163,8 +163,8 @@ describe('ETBZ-117 AC6: ADR 0019 is closed and ADR 0020 records the forward fix'
       const hash = RELEASED_CANON_V2_1_CONTRACT_HASHES[String(source.identity)] ?? '<none>';
       rows.push(`| ${name} | \`${String(source.identity)}\` | ${page} \`${source.confluencePageId}\` v${source.confluencePageVersion} | ${String(source.releasedOn)} | \`${hash}\` |`);
     }
-    // The section 1 table is exactly its header, its separator and these rows, and no other line that carries a
-    // table cell names a 2.1.0 identity in any form (backticked or not, indented or not, with or without a pipe in front).
+    // The section 1 table is exactly its header, its separator and these rows, and no other line with a markdown cell
+    // separator '|' names a 2.1.0 identity (backticked or not, indented or not, with or without a pipe in front).
     const lines = adr0020.split('\n');
     const start = lines.findIndex((line) => line.startsWith('| Contract | Identity | Page | Released on |'));
     expect(start).toBeGreaterThan(0);

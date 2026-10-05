@@ -38,9 +38,8 @@ What page version 2 changes, measured with the Confluence version diff (v1 → v
 | C5 | code block, ZIEL | "„Ja, genau so" oder „Nein, das bin ich nicht". …" | "Der Text soll klare Resonanz oder klaren Widerspruch auslösen. …" |
 
 Nothing else on either page changed, except that C5's code block lost its closing line feed (section 2). From version
-2 to version 3 the hub changed its implementation-status line and
-its repository observation and added the reconcile decision; its title, decision date and precedence section, which
-every v2 contract quotes and freezes, are unchanged.
+2 to version 3 the hub changed its implementation-status line and its repository observation and added the reconcile
+decision; its title, decision date and precedence section, which every v2 contract quotes and freezes, are unchanged.
 
 ## Decision
 
@@ -157,8 +156,9 @@ is another version of the lineage.
   `src/application/interpretation` (the registry's module) and `src/domain` (the import-free tables);
   `src/application/skill` is pinned by the ETBZ-51 boundary test. That is what the gate measures: a method added to one
   of those files, or a new module or directory in one of those directories, turns it red; a method placed anywhere
-  else (inside another existing subdirectory, or as a file directly in `src/`) is outside its reach. As every scope fence of this repository, it is re-pinned
-  deliberately by the slice that brings the capability - Method Profile v2, ETBZ-78, with its own ADR.
+  else (inside another existing subdirectory, or as a file directly in `src/`) is outside its reach. As every scope
+  fence of this repository, it is re-pinned deliberately by the slice that brings the capability - Method Profile v2,
+  ETBZ-78, with its own ADR.
 - **Stale base and head drift.** "Stale base or concurrent mutation between plan, CI, review and merge" is not a
   property of the code, and this repository does not enforce it: `main` has no branch protection and no ruleset
   (measured 2026-10-05). It is guarded at the merge step: the merge is `gh pr merge --match-head-commit <reviewed

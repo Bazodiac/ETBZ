@@ -4,16 +4,19 @@
 // `terminology-wording-lexicon@2.1.0` is Confluence 85164034 "ETBZ — Style
 // Guide v3 (kanonisch, einzige zulässige Stimme)", page version 2 (Product
 // Owner reconcile of 2026-10-05, ETBZ-117 / ETBZ-116). Version 2 changes two
-// blocks of the style guide and nothing else: REFLEXIONSFRAGE (the question
-// stays as a rhetorical text impulse; no answer format, no Ja/Nein/Teilweise
-// options, no answer affordance) and ZIEL. Every other block, the header and
+// blocks of the style guide: REFLEXIONSFRAGE (the question stays as a
+// rhetorical text impulse; no answer format, no Ja/Nein/Teilweise options, no
+// answer affordance) and ZIEL; its code block also lost the closing line feed
+// version 1 had. Every other block, the header and
 // the closing paragraph are page version 1's, so they are taken from the 2.0.0
 // module unchanged - that module is not touched: 2.0.0 stays bound to page
 // version 1 (ADR 0019, ADR 0020).
 //
 // As in 2.0.0 the text is carried whole, block by block and line by line, as
-// the page's code block holds it; `styleGuideV3Text(STYLE_GUIDE_V3_BLOCKS_V2_1)`
-// joins it back into those bytes. No method reference, no fact, no number.
+// the page's code block holds it. `styleGuideV3Text(STYLE_GUIDE_V3_BLOCKS_V2_1)`
+// renders the lines under the 2.0.0 rule, with one closing line feed: the page
+// block plus that line feed (3,950 bytes; the version 2 block itself is 3,949,
+// ADR 0020). No method reference, no fact, no number.
 // =============================================================================
 
 import { deepFreeze } from './deep-freeze.js';
