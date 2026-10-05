@@ -37,7 +37,8 @@ What page version 2 changes, measured with the Confluence version diff (v1 → v
 | C5 | code block, REFLEXIONSFRAGE | "Direkt, mit Ja / Nein / Teilweise beantwortbar, …" | "Direkt, als rhetorischer Textimpuls … verständlich. Kein verpflichtendes Antwortformat, keine Ja/Nein/Teilweise-Optionen und keine Antwort-Affordance. …" |
 | C5 | code block, ZIEL | "„Ja, genau so" oder „Nein, das bin ich nicht". …" | "Der Text soll klare Resonanz oder klaren Widerspruch auslösen. …" |
 
-Nothing else on either page changed. From version 2 to version 3 the hub changed its implementation-status line and
+Nothing else on either page changed, except that C5's code block lost its closing line feed (section 2). From version
+2 to version 3 the hub changed its implementation-status line and
 its repository observation and added the reconcile decision; its title, decision date and precedence section, which
 every v2 contract quotes and freezes, are unchanged.
 
@@ -78,10 +79,14 @@ page text; 2.0.0 keeps `PRUEFFRAGE`).
 - The unit suite holds the delta to the code: the structural difference between the 2.0.0 and 2.1.0 content is
   exactly six paths for the Lens and four for the Lexicon (`docs/evidence/etbz-117/canon-v2-1/canon-v2-1.json`,
   `pageVersionDelta`).
-- `styleGuideV3Text(STYLE_GUIDE_V3_BLOCKS_V2_1)` is 3,950 UTF-8 bytes, 44 lines, SHA-256
-  `8d40f0053678a47a87b7563097da7e92f65b6a45d37b053e5457f372b798eabf`. It was compared byte for byte with the code
-  block of C5 version 2 in the page's ADF as the Atlassian connector returned it, and is identical. Against the 2.0.0
-  text it differs in exactly the two lines the Confluence version diff shows.
+- The code block of C5 version 2, as the page's ADF returned it through the Atlassian connector, is 3,949 UTF-8 bytes
+  and 44 lines, SHA-256 `19d30903c654c13574731e5865c71176e0ef4310384ee05ec5ee5a1fe4c114b8`, and ends without a line
+  feed; ADR 0019 recorded the version 1 block with its closing line feed. The 2.1.0 content is the block's lines;
+  `styleGuideV3Text(STYLE_GUIDE_V3_BLOCKS_V2_1)` renders them under the 2.0.0 rule (blocks joined, one closing line
+  feed): 3,950 UTF-8 bytes, SHA-256 `8d40f0053678a47a87b7563097da7e92f65b6a45d37b053e5457f372b798eabf`, identical to
+  the page block plus that one line feed, compared byte for byte. Against the 2.0.0 rendering it differs in exactly
+  the two lines the Confluence version diff shows. The content hash does not depend on the line feed (the content is
+  lines, not a text); which bytes SKILL.md 2.0.0 binds is ETBZ-91's decision.
 - No text of the current Lens or Lexicon asks for an answer: no "beantwortbar", no "Ja / Nein / Teilweise" answer, no
   answer affordance. The only mention of Ja/Nein/Teilweise is C5's prohibition of such options (unit suite, AC5).
 - Contract data still holds no number, fact, method, operation, mapping or `methodRefs`.
@@ -128,10 +133,10 @@ is another version of the lineage.
 | --- | --- |
 | the 2.1.0 pair on C1/C5 page version 2 | accepted; the repository's frozen pair is returned, never the input |
 | the A1 2.0.0 Lens or Lexicon, the whole 2.0.0 pair, a 2.0.0 identity re-pointed at page version 2 | `CONTRACT_DRIFT` |
-| a 1.0.0 or 1.1.0 identity, or any other version of the lineage (2.0.1, 2.1.1, 2.2.0, 3.0.0) | `CONTRACT_DRIFT` |
+| a 1.0.0 or 1.1.0 identity, or any other version of the lineage - any digits.digits.digits suffix, zero-padded included (2.0.1, 2.1.1, 2.2.0, 3.0.0, 02.1.0) | `CONTRACT_DRIFT` |
 | the 2.1.0 identity on another page or page version (C1 v1, C5 v1, C1 v3, the other page, the hub) | `CONTRACT_SOURCE_MISMATCH` |
 | an identity of the other lineage in a slot (swapped, one lineage twice, the A1 Lexicon in the Lens slot) | `BUNDLE_BINDING_MISMATCH` |
-| an unknown name, a page address, the Method Profile, a malformed or padded version | `UNKNOWN_CONTRACT_IDENTITY` |
+| an unknown name, a page address, the Method Profile, a malformed version (`…@`, `…@2.1`, `…@2.1.0.0`, `…@not-a-version`, a pre-release suffix) or a leading or trailing space | `UNKNOWN_CONTRACT_IDENTITY` |
 | a missing or undefined slot | `REQUIRED_CONTRACT_MISSING` |
 | any other shape | `BUNDLE_SCHEMA_INVALID` |
 
@@ -151,8 +156,8 @@ is another version of the lineage.
   are pinned to the base, and so are the file listings of `src/application` (where new product modules belong),
   `src/application/interpretation` (the registry's module) and `src/domain` (the import-free tables);
   `src/application/skill` is pinned by the ETBZ-51 boundary test. That is what the gate measures: a method added to one
-  of those files, or a new module or directory in one of those directories, turns it red; a method placed inside
-  another existing subdirectory is outside its reach. As every scope fence of this repository, it is re-pinned
+  of those files, or a new module or directory in one of those directories, turns it red; a method placed anywhere
+  else (inside another existing subdirectory, or as a file directly in `src/`) is outside its reach. As every scope fence of this repository, it is re-pinned
   deliberately by the slice that brings the capability - Method Profile v2, ETBZ-78, with its own ADR.
 - **Stale base and head drift.** "Stale base or concurrent mutation between plan, CI, review and merge" is not a
   property of the code, and this repository does not enforce it: `main` has no branch protection and no ruleset
@@ -162,13 +167,14 @@ is another version of the lineage.
   tested on. Its output, the exact-head CI run and the reviewed head are recorded in Jira ETBZ-117; a new head voids
   the earlier gate evidence. Whether this procedural guard is enough is the Product Owner's call at the merge gate.
 - **Mutation proof.** `scripts/verify-etbz117-canon-v2-1.mjs` (step "guards :: ETBZ-117" of `ci-verify.sh`,
-  registered in `ci-contract.test.ts`) runs 23 mutants with the ETBZ-30B semantics; each named test must fail an
+  registered in `ci-contract.test.ts`) runs 24 mutants with the ETBZ-30B semantics; each named test must fail an
   assertion. They cover the ticket's minimum classes: the current binding back to A1 (context version, pair, page
   version, voice binding), the 2.1.0 content freeze, the frozen A1 content, evidence and hash changed in place, the
   drift, source and context guards weakened, the two lines' hash tables merged, a malformed reference, an unreleased,
   an explicitly undefined and a second context version accepted, a method pulled into the line (key, registry, a new
   module beside the registry or as a new product module), and an ADR 0019 closeout that leaves "Proposed" or the
-  open reflection question standing (verbatim and in other words). The ETBZ-77 guard step runs unchanged beside it.
+  open reflection question standing (verbatim and in other words), and a second, contradicting ADR 0020 row for a 2.1.0
+  identity. The ETBZ-77 guard step runs unchanged beside it.
 - **Evidence.** `docs/evidence/etbz-117/canon-v2-1/canon-v2-1.json` records identities, page bindings, hashes, the page
   delta, the current and the historical context's answers, the A1 baseline and the method scope. The contract suite
   re-derives it byte for byte.
@@ -198,7 +204,7 @@ not changed. The contract suite holds both: ADR 0019 is the base text with exact
   replaced); it demands no answer format. The ETBZ-117 closeout reconciles that wording on the hub, whose precedence
   section is not touched. C1 and C5 are not edited: a new page version would leave 2.1.0 behind.
 - **Rebaseline section 17** is superseded in part by the Lens line; the current identity of that line is 2.1.0.
-- **CI budget.** This slice adds one guard step (23 mutants, two baseline runs of three suites). The job ran 24.1 min
+- **CI budget.** This slice adds one guard step (24 mutants, two baseline runs of three suites). The job ran 24.1 min
   on the last `main` push (run 37253260353) against its 30-minute limit. A timeout is an infrastructure outcome: the
   run is repeated and recorded; raising the limit is a Product Owner decision outside this slice.
 

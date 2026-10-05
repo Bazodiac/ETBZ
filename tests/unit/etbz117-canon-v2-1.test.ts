@@ -193,12 +193,16 @@ describe('ETBZ-117: the 2.1.0 content is C1 and C5 at page version 2 - exactly w
     expect([...new Set(citedSections(SEMANTIC_ENVELOPE_V2_1))]).toEqual([...C1_SECTIONS]);
   });
 
-  it('carries the C5 version 2 code block whole: 44 lines, 3,950 UTF-8 bytes, the page bytes', () => {
+  it('carries the C5 version 2 code block whole: its 44 lines, rendered with the 2.0.0 closing line feed (3,950 UTF-8 bytes), the page block being those bytes without it', () => {
     expect(WORDING_BOUNDARIES_V2_1.styleGuide.blocks.map((block) => block.block)).toEqual([...STYLE_GUIDE_V3_BLOCK_NAMES]);
     const text = styleGuideV3Text(STYLE_GUIDE_V3_BLOCKS_V2_1);
     expect(text.split('\n')).toHaveLength(45);
     expect(Buffer.byteLength(text, 'utf8')).toBe(3950);
     expect(sha256Hex(text)).toBe('8d40f0053678a47a87b7563097da7e92f65b6a45d37b053e5457f372b798eabf');
+    // The page's code block of version 2 ends without a line feed (ADF as the connector returned it).
+    expect(text.endsWith('Misserfolg.\n')).toBe(true);
+    expect(Buffer.byteLength(text.slice(0, -1), 'utf8')).toBe(3949);
+    expect(sha256Hex(text.slice(0, -1))).toBe('19d30903c654c13574731e5865c71176e0ef4310384ee05ec5ee5a1fe4c114b8');
     expect(WORDING_BOUNDARIES_V2_1.styleGuide.blocks[4]?.lines).toEqual([
       'Direkt, als rhetorischer Textimpuls auf eine erinnerbare Lage der letzten Wochen bezogen und ohne BaZi-Wissen verständlich. Kein verpflichtendes Antwortformat, keine Ja/Nein/Teilweise-Optionen und keine Antwort-Affordance. Keine zwei Fragen mit gleichem Satzanfang, keine semantischen Dubletten.',
     ]);

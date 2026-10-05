@@ -156,14 +156,22 @@ describe('ETBZ-117 AC6: ADR 0019 is closed and ADR 0020 records the forward fix'
 
   it('records in ADR 0020 the identities, page versions and hashes the code releases', () => {
     // Each identity in its own row, with its page, version, date and hash as the code releases them.
+    const rows: string[] = [];
     for (const source of CANON_V2_1_CONTRACT_SOURCES) {
       const name = source.key === 'INTERPRETATION_LENS' ? 'Interpretation Lens' : 'Terminology & Wording Lexicon';
       const page = source.key === 'INTERPRETATION_LENS' ? 'C1' : 'C5';
       const hash = RELEASED_CANON_V2_1_CONTRACT_HASHES[String(source.identity)] ?? '<none>';
-      const row = `| ${name} | \`${String(source.identity)}\` | ${page} \`${source.confluencePageId}\` v${source.confluencePageVersion} | ${String(source.releasedOn)} | \`${hash}\` |`;
-      // Exactly one table row names the identity, and it is this one: no second, contradicting row.
-      expect(adr0020.split('\n').filter((line) => line.startsWith('|') && line.includes(`\`${String(source.identity)}\``))).toEqual([row]);
+      rows.push(`| ${name} | \`${String(source.identity)}\` | ${page} \`${source.confluencePageId}\` v${source.confluencePageVersion} | ${String(source.releasedOn)} | \`${hash}\` |`);
     }
+    // The section 1 table is exactly its header, its separator and these rows, and no other line that carries a
+    // table cell names a 2.1.0 identity in any form (backticked or not, indented or not, with or without a pipe in front).
+    const lines = adr0020.split('\n');
+    const start = lines.findIndex((line) => line.startsWith('| Contract | Identity | Page | Released on |'));
+    expect(start).toBeGreaterThan(0);
+    const end = lines.indexOf('', start);
+    expect(lines.slice(start + 2, end)).toEqual(rows);
+    const identities = CANON_V2_1_CONTRACT_SOURCES.map((source) => String(source.identity));
+    expect(lines.filter((line, index) => (index < start || index >= end) && line.includes('|') && identities.some((identity) => line.includes(identity)))).toEqual([]);
     expect(adr0020).toContain('C1 `85229569` v2');
     expect(adr0020).toContain('C5 `85164034` v2');
     expect(adr0020).toContain(`\`${CURRENT_CANON_V2_VERSION}\``);

@@ -11,9 +11,10 @@
  * version, the other lineage, a missing, unknown, malformed or unexpected
  * version, and a method key pulled into the line. The path "stale base or
  * concurrent mutation between plan, CI, review and merge" is not a property of
- * the code: it is enforced at merge (`gh pr merge --match-head-commit <sha>`
- * after a fresh read of the PR head and of main) and by exact-head CI; a head
- * change voids the earlier gate evidence (ADR 0020, section 5).
+ * the code, and the repository does not enforce it (main has no branch
+ * protection). It is guarded procedurally at the merge step: `gh pr merge
+ * --match-head-commit <sha>` plus a scripted pre-merge read of head, base and
+ * main; a new head voids the earlier gate evidence (ADR 0020, section 5).
  */
 import { describe, expect, it } from 'vitest';
 import { structuralHash } from '../../src/domain/structural-hash.js';
@@ -151,6 +152,7 @@ describe('ETBZ-117 AC4: the current Canon context accepts only the 2.1.0 pair on
     ['an unreleased 2.2.0 Lexicon', () => pair(lens, { ...lexicon, contractRef: 'terminology-wording-lexicon@2.2.0' })],
     ['an unreleased 3.0.0 Lens', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@3.0.0' }, lexicon)],
     ['an unreleased 2.0.1 Lexicon', () => pair(lens, { ...lexicon, contractRef: 'terminology-wording-lexicon@2.0.1' })],
+    ['a zero-padded 02.1.0 Lens', () => pair({ ...lens, contractRef: 'grounded-reflective-synthesis-lens@02.1.0' }, lexicon)],
   ])('refuses an unexpected version of the lineage as drift: %s', (_label, input) => {
     expect(contractCodeOf(() => assertCurrentCanonContractBindings(input()))).toBe('CONTRACT_DRIFT');
   });

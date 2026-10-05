@@ -277,7 +277,10 @@ export function deriveEtbz117Evidence(): Record<string, unknown> {
       releasedHash: RELEASED_CANON_V2_1_CONTRACT_HASHES[contract.source.identity ?? ''],
     })),
     planBindingsV2_1: current.planBindings,
-    styleGuideV3PageVersion2: { sha256: sha256Hex(text), utf8Bytes: Buffer.byteLength(text, 'utf8'), lines: text.split('\n').length - 1 },
+    styleGuideV3TextV2_1: {
+      rendered: { sha256: sha256Hex(text), utf8Bytes: Buffer.byteLength(text, 'utf8'), lines: text.split('\n').length - 1 },
+      pageCodeBlock: { sha256: sha256Hex(text.slice(0, -1)), utf8Bytes: Buffer.byteLength(text.slice(0, -1), 'utf8'), finalLineFeed: false },
+    },
     pageVersionDelta: {
       lens: jsonDelta(SEMANTIC_ENVELOPE_V2, SEMANTIC_ENVELOPE_V2_1),
       lexicon: jsonDelta(WORDING_BOUNDARIES_V2, WORDING_BOUNDARIES_V2_1),

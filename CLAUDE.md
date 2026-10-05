@@ -319,8 +319,8 @@ its evidence stay as they were; the contexts are disjoint (the 2.0.0 pair is `CO
 versa) and each line has its own hash table (`RELEASED_CANON_V2_1_CONTRACT_HASHES`). New Canon v2 work binds through
 `current-canon-contracts.ts` (`CURRENT_CANON_V2_VERSION` = 2.1.0, no version argument) - not through the 2.0 defaults;
 only an absent version argument means 2.0.0, an explicit `undefined` or a second version argument is refused like any
-unreleased version. The A1 value modules, the ETBZ-77 evidence, suites and guard script, and the method registry are pinned byte for byte to
-main@9362f4e2 (`tests/support/etbz117Evidence.ts`); evidence `docs/evidence/etbz-117/canon-v2-1/`, re-derived by
+unreleased version. The A1 value modules, the ETBZ-77 evidence, suites and guard script, and the method registry are
+pinned byte for byte to main@9362f4e2 (`tests/support/etbz117Evidence.ts`); evidence `docs/evidence/etbz-117/canon-v2-1/`, re-derived by
 `tests/contract/etbz117-canon-v2-1.contract.test.ts`.
 
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
