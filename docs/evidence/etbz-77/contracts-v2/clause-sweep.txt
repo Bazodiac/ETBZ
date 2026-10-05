@@ -1,0 +1,226 @@
+clause sweep at 3b88c7004f0e9fddef8c7c9e36a021b96edcaa7b: 97 mutants
+K00 freeze: shape check call removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract is released only at its frozen hash refuses, at its field, a released contract whose identity is a number
+K01 walk source: contract-name clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a block citing the Lens in the Lexicon
+K02 walk source: section-is-string clause removed
+    SURVIVED
+K03 walk source: section-in-page clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a block citing a section C1 does not have
+K04 walk: blank-rule check without trim
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses an empty rule
+K05 page id clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a page id that is not a page reference
+K06 page version clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a page version that is not a page reference
+K07 title clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a blank title
+K08 releasedOn null clause removed
+    SURVIVED
+K09 isCalendarDate: month/day range removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants holds the decision date 2026-10-00 to the calendar (BUNDLE_SCHEMA_INVALID)
+K10 isCalendarDate: day-of-month bound removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses an impossible decision date
+K11 isCalendarDate: leap rule -> every 4th year
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants holds the decision date 2100-02-29 to the calendar (BUNDLE_SCHEMA_INVALID)
+K12 owns duplicate clause removed
+    SURVIVED
+K13 dependsOn duplicate clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a dependency listed twice
+K14 dependsOn self clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a dependency on itself
+K15 dependsOn known-key clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a dependency on no known contract
+K16 supersedes blank statement clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a blank replacement statement
+K17 rebaseline page clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a superseded section of another page
+K18 rebaseline section clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a superseded Rebaseline section without its number
+K19 rebaseline scope clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a superseded Rebaseline section without its scope
+K20 chapter owners: not-a-list clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses quoted C1 rules whose owner list is not a list
+K21 chapter owners: owner-is-string clause removed
+    SURVIVED
+K22 chapter owners: owner-is-Lens clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a quoted C1 rule owned by the Lens itself
+K23 chapter owners: known-owner clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a quoted C1 rule owned by no known contract
+K24 freeze: prototype clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract is released only at its frozen hash refuses a released contract that is not a plain object, even with the released content
+K25 freeze: exact-keys clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract is released only at its frozen hash refuses data riding beside the released core and its hash
+K26 freeze: hash-is-string clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract is released only at its frozen hash refuses a published hash that is an object pretending to be the released hash
+K27 freeze: hash-pattern clause removed
+    SURVIVED
+K28 freeze: published==actual clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract is released only at its frozen hash refuses a published hash that is not the content hash
+K29 freeze: released==actual clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract is released only at its frozen hash refuses honestly re-hashed content that is not the released content
+K30 freeze: released undefined clause removed
+    SURVIVED
+K31 pair: hasOwn slot clause removed
+    SURVIVED
+K32 pair: undefined slot clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on an undefined Lens slot
+K33 pair: page id clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on the 2.0.0 Lens on the C5 page at the bound version
+K34 pair: page version clause removed
+    KILLED_BY_ASSERTION <- ETBZ-77 Evidenz: the evidence record re-derives byte for byte docs/evidence/etbz-77/contracts-v2/contracts-v2.json equals the record derived from the code
+K35 bindingSchema contractRef min(1) removed
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on an empty identity
+K36 bindingSchema page id min(1) removed
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name refuses a binding pair of the wrong JSON shape at its field: an empty Lexicon page id
+K37 bindingSchema page version min(1) removed
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on an empty page version
+K38 symbolic keys: lookupTable dropped
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses the symbolic-authority key "lookupTable" anywhere in the content
+K39 symbolic keys: operations dropped
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses the symbolic-authority key "operations" anywhere in the content
+K40 symbolic keys: facts dropped
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses the symbolic-authority key "facts" anywhere in the content
+K41 coded: SkillContractError passthrough removed
+    KILLED_BY_ASSERTION <- ETBZ-77 Evidenz: the evidence record re-derives byte for byte docs/evidence/etbz-77/contracts-v2/contracts-v2.json equals the record derived from the code
+K42 resolve: typeof guard removed
+    KILLED_BY_ASSERTION <- ETBZ-77: resolving inside the 2.0 context does not resolve a non-string reference (undefined)
+K43 version regex: patch part optional
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a two-part version of the Lens lineage
+K44 shown: echo not capped
+    KILLED_BY_ASSERTION <- ETBZ-77: resolving inside the 2.0 context keeps a refusal message short however long the reference
+K45 resolve: not wrapped
+    SURVIVED
+K46 pair: not wrapped
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a getter that throws
+K47 validator: not wrapped
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract is released only at its frozen hash refuses, coded, a nesting deeper than the engine can walk - in the validator and at the freeze
+K48 freeze path: not wrapped
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract is released only at its frozen hash refuses, coded, a nesting deeper than the engine can walk - in the validator and at the freeze
+K49 pair: root plain-object check removed
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a class instance carrying both slots
+K50 pair: slot plain-object check removed
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a class instance in the Lens slot
+K51 cycle check removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a Lens that depends on the Lexicon (a cycle through the 2.0 line)
+K52 freeze: hash table not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object canon-v2-contracts exports
+K53 freeze: pair not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object canon-v2-contracts exports
+K54 freeze: keys not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object canon-v2-contracts exports
+K55 freeze: Lens content not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object semantic-envelope-v2 exports
+K56 freeze: C1 sections not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object semantic-envelope-v2 exports
+K57 freeze: Lexicon content not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object wording-boundaries-v2 exports
+K58 freeze: block names not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object wording-boundaries-v2 exports
+K59 freeze: C5 sections not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object wording-boundaries-v2 exports
+K60 freeze: decision not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object contract-sources-v2 exports
+K61 freeze: sources not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object contract-sources-v2 exports
+K62 freeze: supersessions not frozen
+    KILLED_BY_ASSERTION <- ETBZ-77: the 2.0 line is handed out frozen deep-freezes every object contract-sources-v2 exports
+K63 style-guide block-names check removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a style guide block dropped
+K64 lexicon red-lines binding check removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses red lines conceded to the 1.1 Lens
+K65 canon decision check removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses an edited Canon v2 precedence
+K66 supersedes refs check removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a 1.x identity left unsuperseded
+K67 status check removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a CANDIDATE page
+K68 methodRefs refusal removed
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a method reference before Method Profile v2
+K69 core: not wrapped
+    SURVIVED
+K70 build: not wrapped
+    SURVIVED
+K71 released: not wrapped
+    SURVIVED
+K72 keyText: strings not bounded
+    KILLED_BY_ASSERTION <- ETBZ-77: every exported function of the 2.0 line answers JSON-shaped input with a coded, bounded refusal canonV2ContractCore refuses every adversarial input with a SkillContractError of a bounded message, or accepts it
+K73 key check: type clause removed
+    SURVIVED
+K74 core: unreleased-key check removed
+    KILLED_BY_ASSERTION <- ETBZ-77: resolving inside the 2.0 context releases no ANTI_BOILERPLATE contract on the 2.0 line yet
+K75 RX07 page id + -> *
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses an empty page id
+K76 RX10 month {2} -> {1,2}
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants holds the decision date 2026-1-04 to the calendar (BUNDLE_SCHEMA_INVALID)
+K77 RX11 month {2} -> +
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants holds the decision date 2026-1-04 to the calendar (BUNDLE_SCHEMA_INVALID)
+K78 RX12 day {2} -> {1,2}
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants holds the decision date 2026-10-4 to the calendar (BUNDLE_SCHEMA_INVALID)
+K79 RX13 day {2} -> +
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants holds the decision date 2026-10-4 to the calendar (BUNDLE_SCHEMA_INVALID)
+K80 RX14 month \d -> .
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants holds the decision date 2026-1a-04 to the calendar (BUNDLE_SCHEMA_INVALID)
+K81 RX15 day \d -> .
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants holds the decision date 2026-10-1a to the calendar (BUNDLE_SCHEMA_INVALID)
+K82 RX16 year \d -> .
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants holds the decision date abcd-10-04 to the calendar (BUNDLE_SCHEMA_INVALID)
+K83 RX22 major optional
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a version without a major
+K84 RX23 minor optional
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a version without a minor
+K85 RX24 patch optional
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a version without a patch
+K86 RX26 second dot unescaped
+    KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a version with a letter for its second dot
+K87 S01 source.key unknown
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a core of the wrong JSON shape at its field: the key as a number
+K88 S11 contractRefs unknown
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a core of the wrong JSON shape at its field: the superseded identities as a string
+K89 S13 rebaseline page id unknown
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a core of the wrong JSON shape at its field: a Rebaseline page id as a number
+K90 S15 rebaseline title unknown
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a core of the wrong JSON shape at its field: a Rebaseline section title as a number
+K91 S16 rebaseline scope unknown
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a core of the wrong JSON shape at its field: a Rebaseline section scope as a number
+K92 S21 rebaseline row loose
+    KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a core of the wrong JSON shape at its field: an extra key on a Rebaseline section
+K93 E1 status echoed whole
+    KILLED_BY_ASSERTION <- ETBZ-77: every field of a core, a released contract and a binding pair is refused with a bounded message, or accepted validates every variant of the INTERPRETATION_LENS core with a coded, bounded answer
+K94 E2 owns echoed whole
+    KILLED_BY_ASSERTION <- ETBZ-77: every field of a core, a released contract and a binding pair is refused with a bounded message, or accepted validates every variant of the INTERPRETATION_LENS core with a coded, bounded answer
+K95 E3 content path echoed whole (number)
+    KILLED_BY_ASSERTION <- ETBZ-77: every field of a core, a released contract and a binding pair is refused with a bounded message, or accepted validates every variant of the INTERPRETATION_LENS core with a coded, bounded answer
+K96 E4 schema path echoed whole
+    SURVIVED
+
+84/97 clause mutants killed by assertion · src tree after restore: clean
+
+Survivors (each: why the mutant changes no outcome for any JSON input)
+Equivalent - another clause or the same expression gives the same result:
+- K02 section-is-string: `sections.includes(section)` is false for a non-string, so the same refusal follows.
+- K08 releasedOn null: isCalendarDate(null) fails its pattern, so the same refusal follows (the shape check admits
+  only a string or null here).
+- K12 owns duplicate: a duplicate makes the sorted owns differ from the lineage's domains; the first clause refuses
+  with the same code.
+- K21 owner-is-string: `CONTRACT_KEYS.includes(owner)` is false for a non-string; same refusal.
+- K27 freeze hash pattern: a published hash that is not the content hash fails `actual !== published` with the same
+  code (a non-string hash is refused by the type clause, killed as K26).
+- K30 freeze released undefined: `released !== actual` is true for an undefined entry; same refusal.
+- K31 pair hasOwn slot: a missing slot is undefined and refused by the undefined clause; an inherited slot needs a
+  polluted Object.prototype, which JSON cannot produce (the root must be a plain object).
+- K73 key-check type clause: CANON_V2_CONTRACT_KEYS.includes(non-string) is false and the message formats any type,
+  so the same refusal follows.
+- K96 schema path unbounded: a zod issue path holds only schema field names and list indices, never an input key,
+  so it is short whatever the input.
+Defense in depth - the wrapper `coded` removed from one entry point:
+- K45 resolveCanonV2Contract, K69 canonV2ContractCore, K70 buildCanonV2Contract, K71 releasedCanonV2Contract: each
+  inner function refuses a non-string key or reference before it formats it, and every echoed value is bounded, so
+  no JSON input reaching them throws uncoded today; the wrapper keeps a future change from turning into a crash.
+  The structural test 'every exported function of the 2.0 line ...' (negative suite) guards the combination: it was
+  canaried red with a wrapper removed and an echo unbounded together.
+
+Provenance: K00-K44 derive from the round-4 reviewer's harness; K45-K74 were added for the wrapper, freeze and key
+checks; K75-K96 for the regex sub-parts, schema fields and bounded echoes round 6 named.
+Script: sweeps/clause-sweep.mjs (run from the repository root: node docs/evidence/etbz-77/contracts-v2/sweeps/clause-sweep.mjs
+<report.json>). It mutates the four v2 modules in place and restores each from bytes in memory.

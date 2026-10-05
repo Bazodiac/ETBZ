@@ -135,17 +135,22 @@ describe('ETBZ-51: the skill contract bundle is pure and binds rather than execu
   it('ships the declared modules', () => {
     const names = SKILL_FILES.map((file) => relative(SKILL_ROOT, file)).sort();
     expect(names).toEqual([
+      'canon-v2-contracts.ts',
+      'contract-sources-v2.ts',
       'contract-sources.ts',
+      'deep-freeze.ts',
       'errors.ts',
       'index.ts',
       'individuality-contract.ts',
       'semantic-envelope-v1-1.ts',
+      'semantic-envelope-v2.ts',
       'semantic-envelope.ts',
       'skill-contract-bundle.ts',
       'skill-package.ts',
       'skill-reading.ts',
       'skill-run-errors.ts',
       'wording-boundaries-v1-1.ts',
+      'wording-boundaries-v2.ts',
       'wording-boundaries.ts',
     ]);
   });

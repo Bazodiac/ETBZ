@@ -14,6 +14,11 @@
 // Lexicon and Anti-Boilerplate revisions, the customer-voice gates and the
 // editorial pass. 1.0.0 stays buildable, so its evidence is re-derived.
 //
+// ETBZ-77 (Canon v2, A1): the 2.0 contract line beside both - the Interpretation
+// Lens v2 (C1) and the Terminology & Wording Lexicon v2 (C5) as hash-frozen
+// identities, and the 2.0 context that refuses a 1.x reference (ADR 0019). The
+// 1.x modules are not touched; bundle 2.0.0 is ETBZ-81.
+//
 // The module is a CONTRACT and a GATE, not a Skill: it holds no prompt, no
 // prose of its own, calls nothing and derives no astrological fact. The Skill
 // package that consumes it lives under `skill/`. The only application module
@@ -21,14 +26,18 @@
 // index; `tests/architecture/etbz51-skill-boundary.test.ts` enforces that.
 // =============================================================================
 
+export * from './canon-v2-contracts.js';
 export * from './contract-sources.js';
+export * from './contract-sources-v2.js';
 export * from './errors.js';
 export * from './individuality-contract.js';
 export * from './semantic-envelope.js';
 export * from './semantic-envelope-v1-1.js';
+export * from './semantic-envelope-v2.js';
 export * from './skill-contract-bundle.js';
 export * from './skill-package.js';
 export * from './skill-reading.js';
 export * from './skill-run-errors.js';
 export * from './wording-boundaries.js';
 export * from './wording-boundaries-v1-1.js';
+export * from './wording-boundaries-v2.js';

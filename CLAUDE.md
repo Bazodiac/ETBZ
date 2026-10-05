@@ -43,11 +43,12 @@ bash scripts/verify-guards.sh                # foundation guard mutation proofs 
 bash scripts/secret-scan.sh                  # gitleaks tree + history + scanner mutation proof
 bash scripts/build-dry-run.sh                # container build / provenance / smoke / reproducibility
 npm run guards:etbz34 | guards:etbz30a | guards:etbz30b   # slice source-mutation proofs (NOT part of ci-verify)
-npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59 | guards:etbz60   # slice mutation proofs that ARE steps of ci-verify
+npm run guards:etbz49 | guards:etbz51 | guards:etbz52 | guards:etbz55 | guards:etbz56 | guards:etbz57 | guards:etbz58 | guards:etbz53 | guards:etbz59 | guards:etbz60 | guards:etbz61 | guards:etbz77   # slice mutation proofs that ARE steps of ci-verify
 npm run build && npm run etbz51:bundle                   # print the portable Skill Contract Bundle (canonical JSON)
 npm run build && npm run etbz52:package                  # regenerate skill/bazodiac-interpretation-skill-v1/{contract-bundle,reading-schema,MANIFEST}.json
 npm run build && npm run etbz57:package                  # the same for skill/bazodiac-interpretation-skill-v1.1/ (bundle 1.1.0)
 npm run etbz57:evidence                                  # regenerate docs/evidence/etbz-57/{fixture/accepted-reading,fixture/customer-reading,fixture/manifest,evals}.json
+npm run etbz77:evidence                                  # regenerate docs/evidence/etbz-77/contracts-v2/contracts-v2.json (Canon v2 contract release record)
 npm run etbz55:projection                                # regenerate docs/evidence/etbz-55/presentation-projection.json (runs vite-node, which is not a declared dependency: it resolves transitively through vitest 3.2.x)
 npm run etbz55:metrics                                   # regenerate src/application/presentation/font-metrics.ts from the Inter binaries
 npm run etbz56:projection                                # regenerate docs/evidence/etbz-56/presentation-projection.json (the accepted 1.1.0 Skill reading)
@@ -290,6 +291,23 @@ within `2^-48 * |value|` of the delivered number. A real decimal of up to 14 sig
 `assertWuXingValueText` refuses, with `PRESENTATION_FACT_MISMATCH`, a text outside the bound or not the canonical text
 of its number. `value`, `ratio`, the template (1.0.0) and the renderer are unchanged.
 
+ETBZ-77 (ADR 0019, Canon v2 A1) releases the Interpretation Lens v2 and the Terminology & Wording Lexicon v2
+beside the unchanged 1.x line: `grounded-reflective-synthesis-lens@2.0.0` carries Confluence C1 85229569 v1 and
+`terminology-wording-lexicon@2.0.0` carries C5 85164034 v1 (the Style Guide v3, whole and verbatim; `styleGuideV3Text()`
+rebuilds its code block byte for byte for SKILL.md 2.0.0). The pages publish no identity, so ADR 0019 assigns them on the
+1.x lineages; ADR 0019 is the record Jira and the Coding-Plan planned as "0018" (taken by ETBZ-61). Nothing is spread from
+1.x: no 1.x block is part of 2.0.0. `RELEASED_CANON_V2_CONTRACT_HASHES` freezes each contract over
+its Canon v2 decision (hub 85131265, precedence quoted), source, supersessions and content; contract data holds no number,
+fact, method key or `methodRefs` (the 2.0 line binds no method before Method Profile v2, ETBZ-78). The 2.0 context is
+`PLAN_CONTRACT_BINDINGS_V2_0`: `assertCanonV2ContractBindings` refuses a 1.x (or any other) version of the lineage in a
+slot with `CONTRACT_DRIFT`, and `resolveCanonV2Contract` resolves only the 2.0.0 identities. Bundle 2.0.0 and its default
+are ETBZ-81 - `buildSkillContractBundle()` still defaults to 1.0.0, and 1.0.0/1.1.0 keep their released hashes. The 19
+1.x contract value-module and Skill-package files are pinned byte for byte to main@cb7605e5 (`tests/support/etbz77Evidence.ts`);
+the shared machinery (bundle builder, plan, source tables) is held by the contract suite instead - the two released bundle
+hashes and the two 1.x plan-binding pairs, each pinned to its value at the base.
+Code in `src/application/skill/{canon-v2-contracts,contract-sources-v2,semantic-envelope-v2,wording-boundaries-v2,deep-freeze}.ts`,
+evidence `docs/evidence/etbz-77/contracts-v2/`, re-derived by `tests/contract/etbz77-contracts-v2.contract.test.ts`.
+
 Design rules that hold across the whole chain — the first six each pinned by negative tests and a source
 mutant in `scripts/verify-etbz{34,30a,30b}-mutations.mjs`; the last item records what no gate proves:
 
@@ -401,7 +419,7 @@ Assemble credential-shaped test strings at runtime from fragments, never as one 
 - TypeScript is ESM + `NodeNext`: relative imports carry a `.js` extension, `verbatimModuleSyntax`
   requires `import type`, and `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess` are on (hence
   conditional spreads for optional overrides and checked array reads).
-- Decisions live in `docs/adr/0001`–`0018`. An ADR records its merge commit in the status line through a
+- Decisions live in `docs/adr/0001`–`0019`. An ADR records its merge commit in the status line through a
   separate `docs/…` closeout PR after the merge; the GOLDEN_RUN_READY reconciliation of 2026-10-02 did so for 0008-0012
   and 0014-0017 (0013 recorded its own release). `docs/evidence/` records executed gates; transient output goes to the
   git-ignored `.etbz-verify/`. Durable evidence is a green CI run for a specific SHA.

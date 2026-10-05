@@ -162,6 +162,12 @@ run_etbz59_individuality_guard() { node "${REPO_ROOT}/scripts/verify-etbz59-indi
 run_etbz60_position_guard() { node "${REPO_ROOT}/scripts/verify-etbz60-position-statements.mjs"; }
 run_etbz61_wuxing_guard() { node "${REPO_ROOT}/scripts/verify-etbz61-wuxing-value-text.mjs"; }
 
+# ETBZ-77 (Canon v2, A1) releases the Interpretation Lens v2 and the Terminology &
+# Wording Lexicon v2 beside the unchanged 1.x line (ADR 0019). Their guards - the
+# 2.0 context refusing a 1.x reference, the content freeze, the 1.x byte baseline -
+# are proven by mutation, including the "v2 ref -> 1.1 ref" mutant the ticket names.
+run_etbz77_contracts_v2_guard() { node "${REPO_ROOT}/scripts/verify-etbz77-contracts-v2.mjs"; }
+
 # --- 7. secret gate -----------------------------------------------------------
 run_secret_gate() { bash "${REPO_ROOT}/scripts/secret-scan.sh"; }
 
@@ -218,6 +224,7 @@ if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: ETBZ-59 Anti-Boilerplate rehearsal (evaluation withdrawal + swap / comparison / removal / IND-8 checks + reviewed pins + reading diagnostics + judges' packets / run record / judgements mutation proofs)" run_etbz59_individuality_guard
   etbz_step "guards :: ETBZ-60 position statements (READING_POSITION_UNGROUNDED forms, exemptions, every-pillar coverage mutation proofs)" run_etbz60_position_guard
   etbz_step "guards :: ETBZ-61 Wu Xing weight display text (noise removal, no rounding, guard mutation proofs)" run_etbz61_wuxing_guard
+  etbz_step "guards :: ETBZ-77 Canon v2 contracts (2.0 context identity separation, content freeze, 1.x byte baseline mutation proofs)" run_etbz77_contracts_v2_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan

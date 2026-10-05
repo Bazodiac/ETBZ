@@ -1,0 +1,25 @@
+$ npm run guards:etbz77   # at 3b88c7004f0e9fddef8c7c9e36a021b96edcaa7b, 2026-10-04T23:51:56Z, node v22.23.1, Darwin arm64, load average before: 15,38 12,59 12,57
+BASELINE GREEN (unmutated)
+LENS REF: the 2.0 context binds the Lens 1.1.0 (v2 ref -> 1.1 ref)
+    RED (guard holds) <- ETBZ-77 AC2 and DoD mutant (v2 ref -> 1.1 ref): the 2.0 context binds the Lens v2 and the Lexicon v2 binds the Lens v2 and the Lexicon v2 at their 2.0.0 identities in the 2.0 context, never a 1.x one
+LEXICON REF: the 2.0 context binds the Lexicon 1.1.0 (v2 ref -> 1.1 ref)
+    RED (guard holds) <- ETBZ-77 AC2 and DoD mutant (v2 ref -> 1.1 ref): the 2.0 context binds the Lens v2 and the Lexicon v2 binds the Lens v2 and the Lexicon v2 at their 2.0.0 identities in the 2.0 context, never a 1.x one
+SOURCE REF: the Lens v2 source carries the 1.1.0 identity (v2 ref -> 1.1 ref)
+    RED (guard holds) <- ETBZ-77 AC2 and DoD mutant (v2 ref -> 1.1 ref): the 2.0 context binds the Lens v2 and the Lexicon v2 binds the Lens v2 and the Lexicon v2 at their 2.0.0 identities in the 2.0 context, never a 1.x one
+GATE: a 1.x identity in a 2.0 slot is let through
+    RED (guard holds) <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name refuses a 1.1 Lens reference in the 2.0 context
+PAGE: the right identity on another page passes (the page-id half of the source check is dropped)
+    RED (guard holds) <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on the 2.0.0 Lens on the C5 page at the bound version
+IN PLACE: a 1.1 contract file is edited (a comment only - no bundle hash sees it)
+    RED (guard holds) <- ETBZ-77 AC1: version beside version - nothing of 1.x moved leaves every 1.x contract value module and both 1.x Skill packages byte-identical to main cb7605e5
+FREEZE: the Lens v2 loses a red line
+    RED (guard holds) <- ETBZ-77: the Lens v2 and the Lexicon v2 load as released identities freezes Lens v2 and Lexicon v2 by content hash
+VOICE: the Lens v2 hands voice to another C5 page version
+    RED (guard holds) <- ETBZ-77: C5 is the voice authority, consistently has the Lens hand voice to exactly the Lexicon v2 it is released with, and the Lexicon concede the red lines to exactly that Lens
+COVERAGE: a page section carried by no block passes
+    RED (guard holds) <- ETBZ-77: a v2 contract core is held to its invariants refuses a C1 section carried by no block
+
+9/9 mutants killed · baseline after restore: GREEN
+exit=0 wall_seconds=32
+
+Note: measured while other processes kept the machine's load average near 12 (recorded above). Earlier runs of the same script on 67ac5787, bbc55181 and 9d4e7784 took 13, 12 and 14 s; the load was not recorded for those runs.

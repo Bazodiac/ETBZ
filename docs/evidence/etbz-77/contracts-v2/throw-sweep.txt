@@ -1,0 +1,97 @@
+sweep over src/application/skill/canon-v2-contracts.ts at 3b88c7004f0e9fddef8c7c9e36a021b96edcaa7b (working tree sha256 e8cab1d8f7e1cdfd9a9b3aab9022ce65f6a3f704a2a11d2de717c2424d487418)
+throw sites: 41
+L130 SURVIVED 
+    throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `the 2.0 line carries no "${keyText(key)}" source`, { key });
+L157 SURVIVED 
+    throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `no released 1.x "${keyText(key)}" contract to continue`, { key });
+L212 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses an empty rule
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)} is empty; a contract carries no blank rule`, { path });
+L218 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses an empty list
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)} is an empty list`, { path });
+L224 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a number in the content
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)} is a ${value === null ? 'null' : typeof value}; contract data is text`, { path }
+L229 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a methods key in the content
+    throw new SkillContractError(
+L236 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a method reference before Method Profile v2
+    throw new SkillContractError(
+L246 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a block citing the Lens in the Lexicon
+    throw new SkillContractError(
+L278 KILLED_BY_ASSERTION <- ETBZ-77 Evidenz: the evidence record re-derives byte for byte docs/evidence/etbz-77/contracts-v2/contracts-v2.json equals the record derived from the code
+    if (error instanceof SkillContractError) throw error;
+L280 KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a getter that throws
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `<root>: ${what} cannot be read as plain data (${cause})`, { path: '<root>', cause });
+L317 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a core of the wrong JSON shape at its field: the superseded Rebaseline sections as null
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)}: ${issue?.code ?? 'invalid'}`, { path });
+L336 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a key the 2.0 line does not release
+    throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `the 2.0 line releases no "${keyText(source.key)}" contract yet`, { key: source.key });
+L343 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses an edited Canon v2 precedence
+    throw new SkillContractError('BUNDLE_BINDING_MISMATCH', 'the contract does not hang under the Canon v2 decision this repository binds (hub 85131265, p
+L349 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses an identity on the 1.1 line
+    throw new SkillContractError(
+L356 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a CANDIDATE page
+    throw new SkillContractError('DRAFT_CONTRACT_REFUSED', `contract "${key}" has status "${keyText(source.status)}"; only a CURRENT page authorises a 2.0
+L359 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a page id that is not a page reference
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${key}" page id or page version is not a page reference`, { key });
+L362 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses no decision date
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${key}" has no title or no decision date`, { key });
+L366 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses the Lexicon domain owned by the Lens
+    throw new SkillContractError(
+L373 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a dependency listed twice
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `contract "${key}" lists a dependency twice, on itself or on no known contract`, { key });
+L380 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a Lens that depends on the Lexicon (a cycle through the 2.0 line)
+    throw new SkillContractError('PRECEDENCE_CONFLICT', `contract "${key}" depends, through the 2.0 line, on itself`, { key });
+L386 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a 1.x identity left unsuperseded
+    throw new SkillContractError(
+L394 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a superseded Rebaseline section without its number
+    throw new SkillContractError('BUNDLE_BINDING_MISMATCH', `contract "${key}" supersedes a section of a page that is not the Rebaseline, or without its s
+L403 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a C1 section carried by no block
+    throw new SkillContractError(
+L413 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses voice handed to another C5 version
+    throw new SkillContractError('BUNDLE_BINDING_MISMATCH', 'the Lens v2 hands voice to another C5 binding than the Lexicon v2 released with it');
+L420 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a quoted C1 rule owned by no known contract
+    throw new SkillContractError('PRECEDENCE_CONFLICT', 'a quoted C1 rule outside the Lens domain names no other contract as its owner');
+L424 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses red lines conceded to the 1.1 Lens
+    throw new SkillContractError('BUNDLE_BINDING_MISMATCH', 'the Lexicon v2 concedes the red lines to another C1 binding than the Lens v2 released with it
+L429 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract core is held to its invariants refuses a style guide block dropped
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', 'the style guide does not carry the blocks of C5 in page order; it is carried whole or not at al
+L445 KILLED_BY_ASSERTION <- ETBZ-77: resolving inside the 2.0 context releases no ANTI_BOILERPLATE contract on the 2.0 line yet
+    throw new SkillContractError(
+L483 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract is released only at its frozen hash refuses a released contract that is not a plain object, even with the released content
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', 'a released v2 contract is exactly its core and its structural hash; nothing rides beside them')
+L491 KILLED_BY_ASSERTION <- ETBZ-77: a v2 contract is released only at its frozen hash refuses honestly re-hashed content that is not the released content
+    throw new SkillContractError(
+L557 KILLED_BY_ASSERTION <- ETBZ-77: resolving inside the 2.0 context does not resolve a non-string reference (undefined)
+    throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `a reference of type ${ref === null ? 'null' : typeof ref} is not a contract reference`, {})
+L561 KILLED_BY_ASSERTION <- ETBZ-77 Evidenz: the evidence record re-derives byte for byte docs/evidence/etbz-77/contracts-v2/contracts-v2.json equals the record derived from the code
+    throw new SkillContractError(
+L599 KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a class instance carrying both slots
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', '<root>: the binding pair is not a plain object', { path: '<root>' });
+L603 KILLED_BY_ASSERTION <- ETBZ-77 Evidenz: the evidence record re-derives byte for byte docs/evidence/etbz-77/contracts-v2/contracts-v2.json equals the record derived from the code
+    throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `the binding pair has no ${slot}; a 2.0 run bound to fewer contracts is not bound`, { slot }
+L607 KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name fails closed on a class instance in the Lens slot
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${slot}: the binding is not a plain object`, { path: slot });
+L618 KILLED_BY_ASSERTION <- ETBZ-77 AC2: the 2.0 context refuses a 1.x reference by name refuses a binding pair of the wrong JSON shape at its field: an extra key in a binding
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)}: ${issue?.code ?? 'invalid'}`, { path });
+L625 KILLED_BY_ASSERTION <- ETBZ-77 Evidenz: the evidence record re-derives byte for byte docs/evidence/etbz-77/contracts-v2/contracts-v2.json equals the record derived from the code
+    throw new SkillContractError('UNKNOWN_CONTRACT_IDENTITY', `${slot}: "${shown(binding.contractRef)}" is not a contract of the ${CANON_V2_CONTRACT_VERSI
+L628 KILLED_BY_ASSERTION <- ETBZ-77 Evidenz: the evidence record re-derives byte for byte docs/evidence/etbz-77/contracts-v2/contracts-v2.json equals the record derived from the code
+    throw new SkillContractError(
+L635 KILLED_BY_ASSERTION <- ETBZ-77 Evidenz: the evidence record re-derives byte for byte docs/evidence/etbz-77/contracts-v2/contracts-v2.json equals the record derived from the code
+    throw new SkillContractError(
+L642 KILLED_BY_ASSERTION <- ETBZ-77 Evidenz: the evidence record re-derives byte for byte docs/evidence/etbz-77/contracts-v2/contracts-v2.json equals the record derived from the code
+    throw new SkillContractError(
+L669 SURVIVED 
+    throw new SkillContractError('BUNDLE_SCHEMA_INVALID', 'the 2.0 line carries a source it does not release');
+
+38/41 throw sites killed by assertion · restored identical: true
+
+Survivors (each: why no input reaches it)
+- L130 v2SourceFor: called only with a key that coreFor (canonV2ContractCore, buildCanonV2Contract,
+  releasedCanonV2Contract) has already checked against CANON_V2_CONTRACT_KEYS, with a literal key in the
+  validator's pair check, or with a key from the frozen CANON_V2_CONTRACT_KEYS in the binding gate; every such key
+  has a source in the frozen CANON_V2_CONTRACT_SOURCES.
+- L157 lineageFor: called only with a checked 2.0 key; both lineages (Lens, Lexicon) have released 1.x identities.
+- L669 assertCanonV2ContractSet: compares the lengths of two frozen module constants; it takes no input.
+
+Script: sweeps/throw-sweep.mjs (run from the repository root: node docs/evidence/etbz-77/contracts-v2/sweeps/throw-sweep.mjs
+<report.json>). It mutates src/application/skill/canon-v2-contracts.ts in place and restores it from bytes in memory.
