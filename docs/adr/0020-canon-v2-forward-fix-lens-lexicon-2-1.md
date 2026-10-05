@@ -1,8 +1,9 @@
 # ADR 0020 — Canon v2 forward fix: Interpretation Lens and Terminology & Wording Lexicon 2.1.0 on C1/C5 page version 2 beside the A1 2.0.0 pair (ETBZ-117)
 
-- **Status:** Proposed — the ETBZ-117 candidate. Following the repository's ADR convention (CLAUDE.md, "Working
-  notes"), the merge commit is recorded in this line by a docs closeout after the merge. Until then Jira ETBZ-117
-  records the merge commit, its CI runs and the Product Owner's merge authorisation.
+- **Status:** Accepted — merged to `main` as `7a988a2e` (PR #32, head `8c400ec4`, 2026-10-05). Merged under the
+  Product Owner's merge authorisation of 2026-10-05 (merge gate after R4M, recorded in Jira ETBZ-117) after the
+  exact-head CI run 37375933194, attempt 3; attempts 1 and 2 ended without a gate verdict (a SIGTERM after 10 minutes,
+  and the 30-minute job limit on a runner about 25 % slower on every step). Post-merge CI run 37384881610 green.
 - **Date:** 2026-10-05
 - **Slice:** ETBZ-117 [CANON-V2/R0], the pre-A2 canonical reconcile between the released A1 (ETBZ-77, ADR 0019) and
   Method Profile v2 (ETBZ-78). It does not touch Method Profile, Anti-Boilerplate or Long-Form (ETBZ-78, -79, -80),
