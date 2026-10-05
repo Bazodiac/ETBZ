@@ -1,0 +1,53 @@
+$ npm run guards:etbz117   # at 2cf40b757c60be69b704ed96a7496af435bc5815, 2026-10-05T19:27:46Z, node v22.23.1, Darwin arm64, load average before: 22,10 26,49 26,05
+BASELINE GREEN (unmutated)
+CURRENT -> A1: the current Canon context is pointed back at 2.0.0
+    RED (guard holds) <- ETBZ-117 AC3/AC4: the current Canon context binds the forward identities binds Lens and Lexicon 2.1.0 on C1 and C5 page version 2 in the current context, never the A1 2.0.0 pair
+PAIR -> A1: the 2.1 pair binds the Lens 2.0.0 on C1 page version 1
+    RED (guard holds) <- ETBZ-117 AC3/AC4: the current Canon context binds the forward identities binds Lens and Lexicon 2.1.0 on C1 and C5 page version 2 in the current context, never the A1 2.0.0 pair
+PAGE -> v1: the Lexicon 2.1.0 source is bound to C5 page version 1
+    RED (guard holds) <- ETBZ-117 AC3/AC4: the current Canon context binds the forward identities binds Lens and Lexicon 2.1.0 on C1 and C5 page version 2 in the current context, never the A1 2.0.0 pair
+VOICE -> v1: the Lens 2.1.0 hands voice to C5 page version 1
+    RED (guard holds) <- ETBZ-117: Lens and Lexicon 2.1.0 bind each other at page version 2 has the Lens 2.1.0 hand voice to exactly the Lexicon 2.1.0, and the Lexicon concede the red lines to exactly that Lens
+FREEZE 2.1: the Lexicon 2.1.0 ZIEL block is reworded (no hash sees a re-release)
+    RED (guard holds) <- ETBZ-117: Lens and Lexicon 2.1.0 load as released identities on C1 and C5 page version 2 freezes Lens and Lexicon 2.1.0 by content hash, in a table of their own
+A1 CONTENT: the frozen 2.0.0 Lens is edited in place to the page version 2 rule
+    RED (guard holds) <- ETBZ-117 AC2: A1 2.0.0 is immutable leaves the A1 value modules, its evidence, its suites and its guard script byte-identical to main 9362f4e2
+A1 EVIDENCE: the released ETBZ-77 evidence record is edited in place
+    RED (guard holds) <- ETBZ-117 AC2: A1 2.0.0 is immutable leaves the A1 value modules, its evidence, its suites and its guard script byte-identical to main 9362f4e2
+A1 HASH: the frozen 2.0.0 Lens hash is replaced by the 2.1.0 one
+    RED (guard holds) <- ETBZ-117 AC2: A1 2.0.0 is immutable keeps the A1 2.0.0 hashes at their released values, rebuilds 2.0.0 to them and keeps the 2.0 context answering as released
+DRIFT GUARD: another version of the lineage is let through
+    RED (guard holds) <- ETBZ-117 AC4: the current Canon context accepts only the 2.1.0 pair on C1 and C5 page version 2 refuses the A1 2.0.0 binding in the current context as drift: the whole A1 2.0.0 pair on C1/C5 page version 1
+SOURCE GUARD: the page-version half of the source check is dropped
+    RED (guard holds) <- ETBZ-117 AC4: the current Canon context accepts only the 2.1.0 pair on C1 and C5 page version 2 refuses a wrong page or page version: the 2.1.0 Lens on C1 page version 1
+CONTEXT GUARD: a context also resolves the identities of its earlier lines
+    RED (guard holds) <- ETBZ-117 AC4: the current Canon context accepts only the 2.1.0 pair on C1 and C5 page version 2 refuses the A1 2.0.0 binding in the current context as drift: the whole A1 2.0.0 pair on C1/C5 page version 1
+MALFORMED: a reference that only starts with a released identity is accepted
+    RED (guard holds) <- ETBZ-117 AC4: the current Canon context accepts only the 2.1.0 pair on C1 and C5 page version 2 refuses an unknown or malformed reference: the 2.1.0 Lens identity with a trailing space
+EXPLICIT UNDEFINED: a present but undefined version falls back to the A1 2.0 context
+    RED (guard holds) <- ETBZ-117: a context or line version that was never released is refused reads only an ABSENT version as the A1 2.0 context: an explicit undefined is refused, never defaulted
+EXTRA ARGUMENTS: a second version argument (an Array.map index) is ignored
+    RED (guard holds) <- ETBZ-117: a context or line version that was never released is refused refuses more than one version argument, so a function handed to Array.map never reads the index as a version
+OWN HASH TABLE: each line looks up a merged table of both lines' released hashes
+    RED (guard holds) <- ETBZ-117: a 2.1.0 contract is released only at its frozen hash, in its own line does not release a contract re-shaped to pass the other line's schema: its content hash is released on neither line
+UNKNOWN VERSION: an unreleased context version falls back to the 2.0 line
+    RED (guard holds) <- ETBZ-117: a context or line version that was never released is refused refuses the version 2.2.0 at every function that takes one
+SCOPE: the Method Profile key joins the Canon v2 line
+    RED (guard holds) <- ETBZ-117 AC7 scope gate: no method enters the Canon v2 line adds no method: the line releases exactly the Lens and the Lexicon, and the method registry is byte-identical to main 9362f4e2
+SCOPE: a Method Profile v2 module is added beside the registry
+    RED (guard holds) <- ETBZ-117 AC7 scope gate: no method enters the Canon v2 line adds no method: the line releases exactly the Lens and the Lexicon, and the method registry is byte-identical to main 9362f4e2
+SCOPE: a Method Profile v2 module is added as a new product module
+    RED (guard holds) <- ETBZ-117 AC7 scope gate: no method enters the Canon v2 line adds no method: the line releases exactly the Lens and the Lexicon, and the method registry is byte-identical to main 9362f4e2
+ADR ROW: ADR 0020 carries a second, contradicting row for the Lens 2.1.0 (C1 v1, no backticks)
+    RED (guard holds) <- ETBZ-117 AC6: ADR 0019 is closed and ADR 0020 records the forward fix records in ADR 0020 the identities, page versions and hashes the code releases
+SCOPE: the method registry is edited inside this slice
+    RED (guard holds) <- ETBZ-117 AC7 scope gate: no method enters the Canon v2 line adds no method: the line releases exactly the Lens and the Lexicon, and the method registry is byte-identical to main 9362f4e2
+ADR PROPOSED: the ADR 0019 closeout leaves the status Proposed
+    RED (guard holds) <- ETBZ-117 AC6: ADR 0019 is closed and ADR 0020 records the forward fix closes ADR 0019: Accepted with its merge, no open reflection-question decision, its A1 facts intact
+ADR OPEN QUESTION: the ADR 0019 closeout keeps the reflection question open
+    RED (guard holds) <- ETBZ-117 AC6: ADR 0019 is closed and ADR 0020 records the forward fix closes ADR 0019: Accepted with its merge, no open reflection-question decision, its A1 facts intact
+ADR PARAPHRASE: the ADR 0019 closeout reopens the reflection question in other words
+    RED (guard holds) <- ETBZ-117 AC6: ADR 0019 is closed and ADR 0020 records the forward fix closes ADR 0019: Accepted with its merge, no open reflection-question decision, its A1 facts intact
+
+24/24 mutants killed · baseline after restore: GREEN
+exit=0 wall_seconds=80

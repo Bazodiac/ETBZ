@@ -1,0 +1,64 @@
+$ PATH=<PATH without the modern-python plugin shim directory> ETBZ_REVISION=<HEAD> bash scripts/ci-verify.sh
+
+== Attempt 2 (the result) ==
+HEAD 2cf40b757c60be69b704ed96a7496af435bc5815 start 2026-10-05T20:12:15Z load: { 10,46 12,33 16,22 }
+python3 for the gate: /usr/local/bin/python3 (the modern-python plugin shim directory is removed from PATH; CI has no such shim)
+
+Steps:
+<<< [03] typecheck :: tsc --noEmit (strict) :: PASS (exit 0)
+<<< [04] lint :: eslint (type-aware defect rules, zero warnings) :: PASS (exit 0)
+<<< [05] tests :: vitest run (all suites) :: PASS (exit 0)
+<<< [06] tests :: executed-count and suite-coverage assertion :: PASS (exit 0)
+<<< [07] build :: tsc -p tsconfig.build.json :: PASS (exit 0)
+<<< [08] build :: output assertion :: PASS (exit 0)
+<<< [09] guards :: architecture + contract + lint mutation proofs :: PASS (exit 0)
+<<< [10] guards :: ETBZ-49 visual system (contract + asset + boundary mutation proofs) :: PASS (exit 0)
+<<< [11] guards :: ETBZ-51 skill contract bundle (binding + precedence + boundary mutation proofs) :: PASS (exit 0)
+<<< [12] guards :: ETBZ-52 skill reading boundary (acceptance + package mutation proofs) :: PASS (exit 0)
+<<< [13] guards :: ETBZ-55 presentation projection (projection + paginator + template + boundary mutation proofs) :: PASS (exit 0)
+<<< [14] guards :: ETBZ-57 customer voice (voice gates + editorial pass + candidate bundle mutation proofs) :: PASS (exit 0)
+<<< [15] guards :: ETBZ-56 Skill-reading presentation (identity + binding + spec + animal-label + quotation mutation proofs) :: PASS (exit 0)
+<<< [16] guards :: ETBZ-58 Pre-Golden rehearsal orchestrator (live gates + replay integrity + eligibility + draft-fact pin mutation proofs) :: PASS (exit 0)
+<<< [17] guards :: ETBZ-53 Golden freeze (input gates + oracle agreement + record value guard + private archive mutation proofs) :: PASS (exit 0)
+<<< [18] guards :: ETBZ-59 Anti-Boilerplate rehearsal (evaluation withdrawal + swap / comparison / removal / IND-8 checks + reviewed pins + reading diagnostics + judges' packets / run record / judgements mutation proofs) :: PASS (exit 0)
+<<< [19] guards :: ETBZ-60 position statements (READING_POSITION_UNGROUNDED forms, exemptions, every-pillar coverage mutation proofs) :: PASS (exit 0)
+<<< [20] guards :: ETBZ-61 Wu Xing weight display text (noise removal, no rounding, guard mutation proofs) :: PASS (exit 0)
+<<< [21] guards :: ETBZ-77 Canon v2 contracts (2.0 context identity separation, content freeze, 1.x byte baseline mutation proofs) :: PASS (exit 0)
+<<< [22] guards :: ETBZ-117 Canon v2 forward fix (current context binding, A1 immutability, method scope, ADR closeout mutation proofs) :: PASS (exit 0)
+<<< [23] security :: secret scan + scanner mutation proof :: PASS (exit 0)
+<<< [24] security :: dependency risk scan (runtime tree, high+) :: PASS (exit 0)
+<<< [25] security :: full dependency audit (informational) :: PASS (exit 0)
+<<< [26] container :: BUILD_DRY_RUN (build, provenance, non-root, smoke, cleanup) :: PASS (exit 0)
+
+Test count line:
+executed=2389 passed=2389 failed=0 minimum=160
+
+Contract summary:
+  ETBZ-9 VERIFICATION CONTRACT :: SUMMARY
+-------------------------------------------------------------------------------
+steps executed : 26
+result         : ALL GREEN
+ci-verify rc=0 end 2026-10-05T20:49:30Z
+
+== Attempt 1 (same commit; failed on test timeouts under machine load) ==
+HEAD 2cf40b757c60be69b704ed96a7496af435bc5815 start 2026-10-05T19:29:13Z load: { 27,76 27,43 26,45 }
+python3 for the gate: /usr/local/bin/python3 (the modern-python plugin shim directory is removed from PATH; CI has no such shim)
+<<< [05] tests :: vitest run (all suites) :: FAIL (exit 1)
+<<< [06] tests :: executed-count and suite-coverage assertion :: FAIL (exit 1)
+Failing tests (each "Error: Test timed out in 5000ms"; vitest also reported "[vitest-worker]: Timeout calling \"onTaskUpdate\""):
+  tests/negative/interpretive-claim-graph.negative.test.ts > ETBZ-30A N2: method attribution (PD-6, I1–I5) stays fail-closed inside a graph > refuses an unknown methodRef, and every deferred or forbidden one
+  tests/negative/interpretive-claim-graph.negative.test.ts > ETBZ-30A N6: the draft is untrusted input with a closed shape > refuses a malformed draft without echoing what it received
+  tests/unit/etbz55-presentation.test.ts > ETBZ-55: the template > carries no label that is prohibited wording, a deferred method or evidence chrome
+  tests/unit/etbz55-presentation.test.ts > ETBZ-55: the template > prints every label as a string of its own, except the three composed forms and the one conditional caption
+  tests/unit/etbz55-presentation.test.ts > ETBZ-55: the page model > prints the zero caption only when a phase is 0
+ci-verify rc=1 end 2026-10-05T20:11:28Z
+The two files rerun alone on the same commit right after: "Test Files  2 passed (2)", "Tests  58 passed (58)";
+the ETBZ-30A test that had run 17999 ms took 564 ms. No file of src/application/presentation, src/application/interpretation
+or of those two tests differs between this commit and 46e3cde2, whose full gate passed 26/26. Attempt 1 started at a load
+average of 27 on 8 cores. A timeout is an infrastructure outcome, not a gate verdict (ADR 0019, Consequences): the run
+was repeated and both attempts are recorded.
+
+Note on the PATH. On this machine a Claude Code plugin puts a `python3` shim first on PATH
+(~/.claude/plugins/.../modern-python/.../hooks/shims/python3). It rejects `python3 -`, which scripts/verify-guards.sh
+uses to inject mutations, so with the shim those sub-steps fail without the guard ever being exercised (recorded for
+ETBZ-77 in docs/evidence/etbz-77/contracts-v2/local-gate.txt). Both attempts ran without the shim. CI has no such shim.
