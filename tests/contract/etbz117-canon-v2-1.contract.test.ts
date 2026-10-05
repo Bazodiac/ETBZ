@@ -160,7 +160,9 @@ describe('ETBZ-117 AC6: ADR 0019 is closed and ADR 0020 records the forward fix'
       const name = source.key === 'INTERPRETATION_LENS' ? 'Interpretation Lens' : 'Terminology & Wording Lexicon';
       const page = source.key === 'INTERPRETATION_LENS' ? 'C1' : 'C5';
       const hash = RELEASED_CANON_V2_1_CONTRACT_HASHES[String(source.identity)] ?? '<none>';
-      expect(adr0020).toContain(`| ${name} | \`${String(source.identity)}\` | ${page} \`${source.confluencePageId}\` v${source.confluencePageVersion} | ${String(source.releasedOn)} | \`${hash}\` |`);
+      const row = `| ${name} | \`${String(source.identity)}\` | ${page} \`${source.confluencePageId}\` v${source.confluencePageVersion} | ${String(source.releasedOn)} | \`${hash}\` |`;
+      // Exactly one table row names the identity, and it is this one: no second, contradicting row.
+      expect(adr0020.split('\n').filter((line) => line.startsWith('|') && line.includes(`\`${String(source.identity)}\``))).toEqual([row]);
     }
     expect(adr0020).toContain('C1 `85229569` v2');
     expect(adr0020).toContain('C5 `85164034` v2');

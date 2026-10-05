@@ -147,7 +147,8 @@ export function adr0019WithoutCloseout(text: string): { text: string; missing: s
 
 /**
  * Where the repository keeps method content today, listed as main@9362f4e2
- * holds it: the module of the Method Registry and the method scope
+ * holds it: `src/application` (where a new product module belongs), the
+ * module of the Method Registry and the method scope
  * (`src/application/interpretation`) and the import-free tables
  * (`src/domain`). `src/application/skill/` is pinned by
  * tests/architecture/etbz51-skill-boundary.test.ts. ETBZ-117 adds no file to
@@ -156,6 +157,7 @@ export function adr0019WithoutCloseout(text: string): { text: string; missing: s
  * Profile v2 (ETBZ-78) re-pins this deliberately, with its own ADR.
  */
 export const METHOD_SCOPE_DIRECTORIES_AT_BASE: Readonly<Record<string, readonly string[]>> = {
+  'src/application': ['README.md', 'attestation', 'horoscope-model.ts', 'horoscope-use-case.ts', 'interpretation', 'ports', 'presentation', 'skill', 'visual'],
   'src/application/interpretation': [
     'chart-symbol-lexicon.ts', 'deterministic-narrative-provider.ts', 'errors.ts', 'feature-set.ts', 'interpretation-input.ts',
     'interpretive-claim-graph.ts', 'interpretive-claim.ts', 'meta-narrative-plan.ts', 'method-registry.ts', 'method-scope.ts',

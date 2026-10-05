@@ -148,23 +148,27 @@ is another version of the lineage.
   suites, not by bytes: it is what this slice extends.
 - **Method scope.** The Canon v2 line releases exactly the Lens and the Lexicon; `METHOD_PROFILE` is
   `UNKNOWN_CONTRACT_IDENTITY` on the 2.1 line; `method-registry.ts`, `method-scope.ts` and `RELEASED_REGISTRY_HASHES`
-  are pinned to the base, and so are the file listings of `src/application/interpretation` (the registry's module) and
-  `src/domain` (the import-free tables); `src/application/skill` is pinned by the ETBZ-51 boundary test. That is what
-  the gate measures: a method added to one of those files, or a new module in one of those directories, turns it red;
-  a method placed elsewhere is outside its reach. As every scope fence of this repository, it is re-pinned
+  are pinned to the base, and so are the file listings of `src/application` (where new product modules belong),
+  `src/application/interpretation` (the registry's module) and `src/domain` (the import-free tables);
+  `src/application/skill` is pinned by the ETBZ-51 boundary test. That is what the gate measures: a method added to one
+  of those files, or a new module or directory in one of those directories, turns it red; a method placed inside
+  another existing subdirectory is outside its reach. As every scope fence of this repository, it is re-pinned
   deliberately by the slice that brings the capability - Method Profile v2, ETBZ-78, with its own ADR.
 - **Stale base and head drift.** "Stale base or concurrent mutation between plan, CI, review and merge" is not a
-  property of the code; it is enforced where it happens. The evidence names the candidate it measured; exact-head CI
-  and the independent review run on the pull request head; a new head voids the earlier gate evidence; and the merge
-  is guarded (`gh pr merge --match-head-commit <reviewed head>`, after a fresh read of the head and of `main`).
+  property of the code, and this repository does not enforce it: `main` has no branch protection and no ruleset
+  (measured 2026-10-05). It is guarded at the merge step: the merge is `gh pr merge --match-head-commit <reviewed
+  head>` (GitHub refuses a moved head), and immediately before it a scripted check reads the PR head and base and
+  `main` and refuses unless the head is the reviewed and CI-tested commit and `main` is the base that commit was
+  tested on. Its output, the exact-head CI run and the reviewed head are recorded in Jira ETBZ-117; a new head voids
+  the earlier gate evidence. Whether this procedural guard is enough is the Product Owner's call at the merge gate.
 - **Mutation proof.** `scripts/verify-etbz117-canon-v2-1.mjs` (step "guards :: ETBZ-117" of `ci-verify.sh`,
-  registered in `ci-contract.test.ts`) runs 22 mutants with the ETBZ-30B semantics; each named test must fail an
+  registered in `ci-contract.test.ts`) runs 23 mutants with the ETBZ-30B semantics; each named test must fail an
   assertion. They cover the ticket's minimum classes: the current binding back to A1 (context version, pair, page
   version, voice binding), the 2.1.0 content freeze, the frozen A1 content, evidence and hash changed in place, the
   drift, source and context guards weakened, the two lines' hash tables merged, a malformed reference, an unreleased,
-  an explicitly undefined and a second context version accepted, a method pulled into the line (key, registry, new
-  module), and an ADR 0019 closeout that leaves "Proposed" or the open reflection question standing (verbatim and in
-  other words). The ETBZ-77 guard step runs unchanged beside it.
+  an explicitly undefined and a second context version accepted, a method pulled into the line (key, registry, a new
+  module beside the registry or as a new product module), and an ADR 0019 closeout that leaves "Proposed" or the
+  open reflection question standing (verbatim and in other words). The ETBZ-77 guard step runs unchanged beside it.
 - **Evidence.** `docs/evidence/etbz-117/canon-v2-1/canon-v2-1.json` records identities, page bindings, hashes, the page
   delta, the current and the historical context's answers, the A1 baseline and the method scope. The contract suite
   re-derives it byte for byte.
@@ -174,8 +178,8 @@ is another version of the lineage.
 ADR 0019 is closed in the same change: its status records the ETBZ-77 merge (`9362f4e2`, PR #31) and its CI runs; its
 ETBZ-116 consequence and its "does not decide" paragraph no longer present the reflection question as open; and its
 section 4, its forward-work consequence and its bundle 2.0.0 consequence carry dated pointers to the 2.1 line and the
-current context. Its 2.0.0 identities, page bindings (C1 v1, C5 v1), hashes, drop inventory and release provenance are not
-changed. The contract suite holds both: ADR 0019 is the base text with exactly the declared closeout edits
+current context. Its 2.0.0 identities, page bindings (C1 v1, C5 v1), hashes, drop inventory and release provenance are
+not changed. The contract suite holds both: ADR 0019 is the base text with exactly the declared closeout edits
 (`ADR_0019_CLOSEOUT_EDITS`; undoing them gives back the base bytes), and the closeout says what it must.
 
 ## Consequences
@@ -194,7 +198,7 @@ changed. The contract suite holds both: ADR 0019 is the base text with exactly t
   replaced); it demands no answer format. The ETBZ-117 closeout reconciles that wording on the hub, whose precedence
   section is not touched. C1 and C5 are not edited: a new page version would leave 2.1.0 behind.
 - **Rebaseline section 17** is superseded in part by the Lens line; the current identity of that line is 2.1.0.
-- **CI budget.** This slice adds one guard step (22 mutants, two baseline runs of three suites). The job ran 24.1 min
+- **CI budget.** This slice adds one guard step (23 mutants, two baseline runs of three suites). The job ran 24.1 min
   on the last `main` push (run 37253260353) against its 30-minute limit. A timeout is an infrastructure outcome: the
   run is repeated and recorded; raising the limit is a Product Owner decision outside this slice.
 
