@@ -1,7 +1,9 @@
 # ETBZ-117 — Canon v2 forward fix: Lens and Lexicon 2.1.0 on C1/C5 page version 2 beside the A1 2.0.0 pair
 
-Evidence for Jira ETBZ-117 (Canon v2, R0 pre-A2 canonical reconcile) and ADR 0020. Every file here is either
-re-derived by a test or is the verbatim output of a command named below, with the commit it ran on.
+Evidence for Jira ETBZ-117 (Canon v2, R0 pre-A2 canonical reconcile) and ADR 0020. `canon-v2-1.json` is re-derived
+by a test; `mutation-proof.txt` is the output of the command named in its first line, framed by that line and an exit
+line; `local-gate.txt` is an excerpt of the gate's output (step lines, test count, summary) with notes, as the ETBZ-77
+record is.
 
 - **Base:** `main@9362f4e21504bc5e01e8ef7ab29507778a8582cc` (the merge of ETBZ-77, PR #31).
 - **Implementation candidate measured here:** `2cf40b757c60be69b704ed96a7496af435bc5815`. The commit that adds `README.md`,
@@ -39,7 +41,7 @@ re-derived by a test or is the verbatim output of a command named below, with th
 | --- | --- | --- |
 | `canon-v2-1.json` | identities, page bindings, hashes, the page-version delta, the current context's answer to 25 cases, the historical 2.0 context's answer to 5 cases, the A1 byte baseline and hashes, the method scope | re-derived byte for byte by `tests/contract/etbz117-canon-v2-1.contract.test.ts`; regenerate with `npm run etbz117:evidence` |
 | `mutation-proof.txt` | `npm run guards:etbz117` at the candidate: 24 mutants, each killed by a named test failing an assertion | re-run the command (it mutates source files and restores them from bytes) |
-| `local-gate.txt` | `bash scripts/ci-verify.sh` at the candidate: every step and the summary of the green run, and the first attempt on the same commit, which failed on five test timeouts under machine load | re-run the command (see the PATH note in the file) |
+| `local-gate.txt` | `bash scripts/ci-verify.sh` at the candidate: steps [03]-[26] and the summary of the green run (steps [01]-[02], lockfile and `npm ci`, are left out as in the ETBZ-77 record), and the first attempt on the same commit, which failed on five test timeouts under machine load | re-run the command (see the PATH note in the file) |
 
 ## Acceptance (Jira ETBZ-117), repository side
 
