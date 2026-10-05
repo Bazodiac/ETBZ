@@ -39,6 +39,12 @@ import { contractCodeOf } from '../support/etbz77Evidence.js';
 import {
   A1_BASELINE_SHA256,
   A1_RELEASED_HASHES,
+  ADR_0019_BASE_SHA256,
+  ADR_0019_CLOSEOUT_EDITS,
+  METHOD_SCOPE_DIRECTORIES_AT_BASE,
+  adr0019WithoutCloseout,
+  currentDirectoryListings,
+  sha256Hex,
   ETBZ117_ADR,
   ETBZ117_BASE_COMMIT,
   ETBZ117_EVIDENCE_PATH,
@@ -120,6 +126,7 @@ describe('ETBZ-117 AC7 scope gate: no method enters the Canon v2 line', () => {
     expect(contractCodeOf(() => buildCanonV2Contract('METHOD_PROFILE', '2.1.0'))).toBe('UNKNOWN_CONTRACT_IDENTITY');
     expect(RELEASED_REGISTRY_HASHES).toEqual(RELEASED_REGISTRY_HASHES_AT_BASE);
     expect(currentSha256(METHOD_SCOPE_BASELINE_SHA256)).toEqual(METHOD_SCOPE_BASELINE_SHA256);
+    expect(currentDirectoryListings()).toEqual(METHOD_SCOPE_DIRECTORIES_AT_BASE);
   });
 });
 
@@ -129,6 +136,11 @@ describe('ETBZ-117 AC6: ADR 0019 is closed and ADR 0020 records the forward fix'
   const statusOf = (text: string): string => text.slice(text.indexOf('- **Status:**'), text.indexOf('\n- **Date:**'));
 
   it('closes ADR 0019: Accepted with its merge, no open reflection-question decision, its A1 facts intact', () => {
+    // Every A1 fact: ADR 0019 is the base text plus exactly the declared closeout edits, nothing else.
+    const reverted = adr0019WithoutCloseout(adr0019);
+    expect(reverted.missing).toBeNull();
+    expect(sha256Hex(reverted.text)).toBe(ADR_0019_BASE_SHA256);
+    expect(ADR_0019_CLOSEOUT_EDITS.map((edit) => edit.closeout).filter((text) => /Proposed|leaves open whether|Whether the text-level Prüffrage stays/u.test(text))).toEqual([]);
     const status = statusOf(adr0019);
     expect(status.startsWith('- **Status:** Accepted')).toBe(true);
     expect(status).not.toMatch(/Proposed/u);

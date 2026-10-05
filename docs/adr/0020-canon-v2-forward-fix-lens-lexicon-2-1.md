@@ -34,11 +34,12 @@ What page version 2 changes, measured with the Confluence version diff (v1 → v
 | C1 | header | — | adds the paragraph "PO-Reconcile 2026-10-05 (ETBZ-117 / ETBZ-116): …" |
 | C1 | Zone B, row Vorstoß | "pointiert, widerlegbar, mit Prüffrage" | "pointiert, widerlegbar, mit nicht-interaktiver Reflexionsfrage" |
 | C1 | Vorstoß-Kontrakt, part 5 | "eine Prüffrage, beantwortbar mit Ja / Nein / Teilweise." | "eine Reflexionsfrage als rhetorischen Textimpuls, ohne verpflichtendes Antwortformat oder Antwortoptionen." |
-| C5 | code block, REFLEXIONSFRAGE | "Direkt, mit Ja / Nein / Teilweise beantwortbar, …" | "Direkt, als rhetorischer Textimpuls …; kein verpflichtendes Antwortformat, keine Ja/Nein/Teilweise-Optionen und keine Antwort-Affordance. …" |
+| C5 | code block, REFLEXIONSFRAGE | "Direkt, mit Ja / Nein / Teilweise beantwortbar, …" | "Direkt, als rhetorischer Textimpuls … verständlich. Kein verpflichtendes Antwortformat, keine Ja/Nein/Teilweise-Optionen und keine Antwort-Affordance. …" |
 | C5 | code block, ZIEL | "„Ja, genau so" oder „Nein, das bin ich nicht". …" | "Der Text soll klare Resonanz oder klaren Widerspruch auslösen. …" |
 
-Nothing else on either page changed. The hub changed only its status lines and added the reconcile decision; its
-precedence section, which every v2 contract quotes and freezes, is unchanged.
+Nothing else on either page changed. From version 2 to version 3 the hub changed its implementation-status line and
+its repository observation and added the reconcile decision; its title, decision date and precedence section, which
+every v2 contract quotes and freezes, are unchanged.
 
 ## Decision
 
@@ -58,7 +59,10 @@ precedence section, which every v2 contract quotes and freezes, is unchanged.
   Lexicon concedes the red lines to the Lens. A new C5 version therefore also gives the Lens a new version, as ADR
   0019 recorded. Both are 2.1.0.
 - **Released on.** 2026-10-05, the date of the Product Owner's reconcile decision (C1 v2 header, hub v3). It is
-  not a page-version timestamp.
+  not a page-version timestamp. For the Lexicon this departs from the rule of ADR 0010 and ADR 0019 (the decision
+  date in the contract's own page header): C5 version 2 changed its code block but not its header, which still names
+  only the Canon v2 decision of 2026-10-04. The decision that changed C5 is the pair's shared reconcile of
+  2026-10-05 (C1 v2 header, hub v3, C5 version message "ETBZ-117: …"), so both 2.1.0 contracts carry that date.
 - **Title, domain, dependency** are 2.0.0's: the Lens owns `SEMANTIC_ENVELOPE` and depends on `METHOD_PROFILE`; the
   Lexicon owns `CUSTOMER_WORDING` and depends on `INTERPRETATION_LENS`.
 
@@ -99,17 +103,23 @@ supersessions, content, hash table and binding pair. 2.0.0 is not edited: its ta
   `resolveCanonV2Contract`, `buildCanonV2Contract`, `releasedCanonV2Contract`, `canonV2ContractCore`,
   `validateCanonV2ContractCore`, `assertReleasedCanonV2Contract` and `assertCanonV2ContractSet` take an optional
   version or context; without one they answer for 2.0.0, exactly as ETBZ-77 released them (the ETBZ-77 suites run
-  unchanged and its evidence re-derives byte for byte). A version that was never released is refused
-  (`UNKNOWN_CONTRACT_IDENTITY`), never read as 2.0.0.
+  unchanged and its evidence re-derives byte for byte). Only an ABSENT argument means 2.0.0: a version that was never
+  released is refused (`UNKNOWN_CONTRACT_IDENTITY`), and so is an argument that is present but `undefined` (a
+  context field missing from a record), so data can never select the A1 context by omission.
 - **The contexts are disjoint.** A context resolves and binds only its own identities. In the 2.1 context the A1 2.0.0
   pair is `CONTRACT_DRIFT`, naming the 2.1.0 identity and that 2.0.0 resolves only in its own 2.0.0 context; in the 2.0
-  context the 2.1.0 pair is `CONTRACT_DRIFT`. Each line checks a contract only against its own hash table.
+  context the 2.1.0 pair is `CONTRACT_DRIFT`. Each line has its own schema and hash table: a contract of one line fails
+  the other line's schema (`BUNDLE_SCHEMA_INVALID`), and re-shaped to pass it, its content hash is released on neither
+  line (`BUNDLE_NOT_RELEASED`).
 - **The current context.** `current-canon-contracts.ts` fixes `CURRENT_CANON_V2_VERSION` = `2.1.0` and exports
   `assertCurrentCanonContractBindings`, `resolveCurrentCanonContract`, `releasedCurrentCanonContract` and
   `assertCurrentCanonContractSet`. None takes a version. This is the input boundary ETBZ-78 and later Canon v2 work
   bind through; `PLAN_CONTRACT_BINDINGS_V2_1` is its pair.
 
-The current context's answers (ADR 0019 section 4 codes; recorded case by case in the evidence):
+What `assertCurrentCanonContractBindings` answers (ADR 0019 section 4 codes; recorded case by case in the evidence).
+`resolveCurrentCanonContract` resolves only the two 2.1.0 identities; any other reference - the A1 2.0.0 ones, 1.x,
+the Method Profile, an unknown or malformed one - is `UNKNOWN_CONTRACT_IDENTITY`, naming the 2.1.0 identity where it
+is another version of the lineage.
 
 | Input | Code |
 | --- | --- |
@@ -135,33 +145,49 @@ The current context's answers (ADR 0019 section 4 codes; recorded case by case i
   suites, not by bytes: it is what this slice extends.
 - **Method scope.** The Canon v2 line releases exactly the Lens and the Lexicon; `METHOD_PROFILE` is
   `UNKNOWN_CONTRACT_IDENTITY` on the 2.1 line; `method-registry.ts`, `method-scope.ts` and `RELEASED_REGISTRY_HASHES`
-  are pinned to the base.
+  are pinned to the base, and so are the file listings of `src/application`, `src/application/interpretation` and
+  `src/domain` (`src/application/skill` is pinned by the ETBZ-51 boundary test). That is what the gate measures: a
+  method added to one of those files, or a new module in one of those directories, turns it red.
 - **Mutation proof.** `scripts/verify-etbz117-canon-v2-1.mjs` (step "guards :: ETBZ-117" of `ci-verify.sh`,
-  registered in `ci-contract.test.ts`) runs 17 mutants with the ETBZ-30B semantics; each named test must fail an
+  registered in `ci-contract.test.ts`) runs 20 mutants with the ETBZ-30B semantics; each named test must fail an
   assertion. They cover the ticket's minimum classes: the current binding back to A1 (context version, pair, page
   version, voice binding), the 2.1.0 content freeze, the frozen A1 content, evidence and hash changed in place, the
-  drift, source and context guards weakened, a malformed reference and an unreleased context version accepted, a
-  method pulled into the line (key and registry), and an ADR 0019 closeout that leaves "Proposed" or the open
-  reflection question standing. The ETBZ-77 guard step runs unchanged beside it.
+  drift, source and context guards weakened, a malformed reference, an unreleased and an explicitly undefined context
+  version accepted, a method pulled into the line (key, registry, new module), and an ADR 0019 closeout that leaves
+  "Proposed" or the open reflection question standing (verbatim and in other words). The ETBZ-77 guard step runs
+  unchanged beside it. One candidate mutant is equivalent and not in the list: merging the two lines' hash tables
+  changes no outcome, because the tables are keyed by identity and each line's schema already refuses the other
+  line's contracts.
 - **Evidence.** `docs/evidence/etbz-117/canon-v2-1/canon-v2-1.json` records identities, page bindings, hashes, the page
   delta, the current and the historical context's answers, the A1 baseline and the method scope. The contract suite
   re-derives it byte for byte.
 
 ### 6. ADR 0019 closeout
 
-ADR 0019 is closed in the same change: its status records the ETBZ-77 merge (`9362f4e2`, PR #31) and its CI runs, and
-its ETBZ-116 consequence and its "does not decide" paragraph no longer present the reflection question as open. Its
-2.0.0 identities, page bindings (C1 v1, C5 v1), hashes, drop inventory and release provenance are not changed. The
-contract suite holds both: the closeout, and the A1 facts.
+ADR 0019 is closed in the same change: its status records the ETBZ-77 merge (`9362f4e2`, PR #31) and its CI runs; its
+ETBZ-116 consequence and its "does not decide" paragraph no longer present the reflection question as open; and its
+section 4 and its bundle 2.0.0 consequence carry a dated pointer that new work and bundle 2.0.0 bind the current
+context. Its 2.0.0 identities, page bindings (C1 v1, C5 v1), hashes, drop inventory and release provenance are not
+changed. The contract suite holds both: ADR 0019 is the base text with exactly the declared closeout edits
+(`ADR_0019_CLOSEOUT_EDITS`; undoing them gives back the base bytes), and the closeout says what it must.
 
 ## Consequences
 
-- **ETBZ-78 onward** binds the current context (`current-canon-contracts.ts`), not the 2.0 context. Method Profile v2
-  adds its own key and version to the line in its own slice.
+- **ETBZ-78 onward** binds the current context (`current-canon-contracts.ts`), not the 2.0 context, and does not
+  thread a version into the generic functions. How Method Profile v2 joins the Canon v2 line is ETBZ-78's decision,
+  with its own ADR: the line machinery today gives every contract of a line that line's version and shares one key
+  list across lines, so Method Profile v2 either brings per-key versions to the line or is released in a module of
+  its own.
 - **Bundle 2.0.0 (ETBZ-81)** composes the current pair (`PLAN_CONTRACT_BINDINGS_V2_1`, Lens and Lexicon 2.1.0), not
-  the A1 2.0.0 pair; its acceptance criterion that names the 2.0 context needs that reading.
+  the A1 2.0.0 pair. This follows from the hub's precedence ("If Canon v2 conflicts with an existing page or ticket,
+  Canon v2 wins") and from C1 version 2 ("Diese Seitenversion gilt für neue Canon-v2-Arbeit"). ETBZ-81's acceptance
+  criterion 4 names the 2.0 context (`PLAN_CONTRACT_BINDINGS_V2_0`); the ETBZ-117 closeout records in Jira that it
+  reads against the current context.
+- **Confluence closeout.** The hub's Zone B still pairs the Vorstoß with a "check question" (the term C1 version 2
+  replaced); it demands no answer format. The ETBZ-117 closeout reconciles that wording on the hub, whose precedence
+  section is not touched. C1 and C5 are not edited: a new page version would leave 2.1.0 behind.
 - **Rebaseline section 17** is superseded in part by the Lens line; the current identity of that line is 2.1.0.
-- **CI budget.** This slice adds one guard step (17 mutants, two baseline runs of three suites). The job ran 24.1 min
+- **CI budget.** This slice adds one guard step (20 mutants, two baseline runs of three suites). The job ran 24.1 min
   on the last `main` push (run 37253260353) against its 30-minute limit. A timeout is an infrastructure outcome: the
   run is repeated and recorded; raising the limit is a Product Owner decision outside this slice.
 

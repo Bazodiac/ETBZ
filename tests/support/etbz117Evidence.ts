@@ -16,7 +16,7 @@
  * registry cannot be laundered by regenerating the evidence.
  */
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { canonicalJson } from '../../src/domain/canonical-json.js';
 import { BAZI_METHOD_REGISTRY_V1, RELEASED_REGISTRY_HASHES } from '../../src/application/interpretation/method-registry.js';
@@ -97,6 +97,74 @@ export const METHOD_SCOPE_BASELINE_SHA256: Readonly<Record<string, string>> = {
 export const RELEASED_REGISTRY_HASHES_AT_BASE: Readonly<Record<string, string>> = {
   '1.0.0': 'sha256:77545607f6e547f67df14ec9936ff66a9f90d643b51302e614c7bc0922085224',
 };
+
+/**
+ * ADR 0019 as main@9362f4e2 holds it, and every edit the ETBZ-117 closeout
+ * makes to it. The closeout is exactly these replacements: undoing each
+ * (closeout -> base, each closeout text present once) must give back the base
+ * bytes. So a changed identity, page version, hash, base, date, drop inventory
+ * or release fact anywhere in ADR 0019 - or any further wording, such as an
+ * open reflection question in other words - turns the contract suite red.
+ * Re-derive the base with `git cat-file blob 9362f4e2:docs/adr/0019-canon-v2-contracts.md | shasum -a 256`.
+ */
+export const ADR_0019_BASE_SHA256 = '8c9c375debbe0917dc4bce9db4cb41a2a50a9b915bf3ba4a6f490991b02cb140';
+export const ADR_0019_CLOSEOUT_EDITS: readonly { readonly base: string; readonly closeout: string }[] = [
+  {
+    base: "- **Status:** Proposed — the ETBZ-77 candidate. Following the repository's ADR convention (CLAUDE.md, \"Working\n  notes\"), the merge commit is recorded in this line by a docs closeout after the merge. Until then Jira ETBZ-77\n  records the merge commit, its CI run and the Product Owner's merge authorisation.",
+    closeout: "- **Status:** Accepted — merged to `main` as `9362f4e2` (PR #31, head `eaeb3ada`, 2026-10-05). Merged under the\n  Product Owner's authorisation of 2026-10-05 (\"Push, PR, merge if green\", Jira ETBZ-77 comment 17277) after the\n  exact-head CI run 37249568719; post-merge CI run 37253260353 green. The released 2.0.0 identities, their page\n  bindings (C1 v1, C5 v1) and their hashes below are unchanged. On 2026-10-05 the Product Owner revised C1 and C5 to\n  page version 2 (ETBZ-116 decided, see Consequences); the forward fix is Lens and Lexicon 2.1.0 beside 2.0.0,\n  ADR 0020 (ETBZ-117), which records this closeout.",
+  },
+  {
+    base: "name as its plan bindings. `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The",
+    closeout: "name as its plan bindings. (Superseded for new work on 2026-10-05, ETBZ-117: since C1 and C5 moved to page version 2,\na Canon v2 run and bundle 2.0.0 bind the current context, `PLAN_CONTRACT_BINDINGS_V2_1` through\n`current-canon-contracts.ts`, ADR 0020. This pair stays the A1 context, and the 2.0 context answers as described\nhere.) `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The",
+  },
+  {
+    base: "  already satisfies the bundle's own data guard: strings only, and none of its refused keys.",
+    closeout: "  already satisfies the bundle's own data guard: strings only, and none of its refused keys. (Superseded on\n  2026-10-05, ETBZ-117: bundle 2.0.0 composes the 2.1.0 pair - `CANON_V2_1_CONTRACT_SOURCES`,\n  `SEMANTIC_ENVELOPE_V2_1`, `WORDING_BOUNDARIES_V2_1` and `PLAN_CONTRACT_BINDINGS_V2_1`, through\n  `current-canon-contracts.ts` - not the 2.0.0 values, ADR 0020.)",
+  },
+  {
+    base: "- **ETBZ-116.** It leaves open whether the text-level Prüffrage (C1 Vorstoß part 5, C5 REFLEXIONSFRAGE) stays. This\n  slice binds C1 v1 and C5 v1 as they are. If the Product Owner changes either page, the result is a new page\n  version and a new contract version with a new hash. The pair moves together: each v2 contract binds the other's\n  page version (the Lens's voice authority, the Lexicon's red-lines binding), so a new C5 version also gives the\n  Lens a new version. 2.0.0 is never edited.",
+    closeout: "- **ETBZ-116 (decided 2026-10-05, after this release).** When this slice was released, ETBZ-116 still held the\n  question whether the text-level Prüffrage (C1 Vorstoß part 5, C5 REFLEXIONSFRAGE) stays; 2.0.0 binds C1 v1 and\n  C5 v1 as they were. The Product Owner has since decided it (Jira ETBZ-116, Canon v2 hub v3 \"Pre-A2 reconcile\n  decision\"): the reflection question stays as a non-interactive text impulse, with no mandatory Ja / Nein /\n  Teilweise answer and no answer affordance, and C1 and C5 carry that at page version 2. As this record foresaw,\n  the change is a new contract version with a new hash, never an edit of 2.0.0, and the pair moved together (each v2\n  contract binds the other's page version): Lens and Lexicon 2.1.0, ADR 0020 (ETBZ-117). 2.0.0 stays the historical\n  A1 release, bound to C1 v1 and C5 v1, resolvable in its own 2.0 context.",
+  },
+  {
+    base: "is added or changed. Whether the text-level Prüffrage stays (ETBZ-116) and the WIP question for Epic E remain with\nthe Product Owner. The Golden run (ETBZ-33/54) stays frozen.",
+    closeout: "is added or changed. The WIP question for Epic E remains with the Product Owner; the text-level reflection question\n(ETBZ-116) is decided, see Consequences. The Golden run (ETBZ-33/54) stays frozen.",
+  },
+];
+
+/** ADR 0019 with every closeout edit undone, or the first closeout text that is not present exactly once. */
+export function adr0019WithoutCloseout(text: string): { text: string; missing: string | null } {
+  let reverted = text;
+  for (const edit of ADR_0019_CLOSEOUT_EDITS) {
+    if (reverted.split(edit.closeout).length !== 2) return { text: reverted, missing: edit.closeout.slice(0, 80) };
+    reverted = reverted.replace(edit.closeout, () => edit.base);
+  }
+  return { text: reverted, missing: null };
+}
+
+/**
+ * Where method content could land, listed as main@9362f4e2 holds it. ETBZ-117
+ * adds no file to any of them: a Method Profile v2 module, a method table or a
+ * new application area belongs to ETBZ-78 (`src/application/skill/` is pinned
+ * by tests/architecture/etbz51-skill-boundary.test.ts).
+ */
+export const METHOD_SCOPE_DIRECTORIES_AT_BASE: Readonly<Record<string, readonly string[]>> = {
+  'src/application': ['README.md', 'attestation', 'horoscope-model.ts', 'horoscope-use-case.ts', 'interpretation', 'ports', 'presentation', 'skill', 'visual'],
+  'src/application/interpretation': [
+    'chart-symbol-lexicon.ts', 'deterministic-narrative-provider.ts', 'errors.ts', 'feature-set.ts', 'interpretation-input.ts',
+    'interpretive-claim-graph.ts', 'interpretive-claim.ts', 'meta-narrative-plan.ts', 'method-registry.ts', 'method-scope.ts',
+    'narrative-brief.ts', 'primary-theme.ts', 'report-model.ts', 'specificity-policy.ts', 'theme-graph.ts',
+  ],
+  'src/domain': ['README.md', 'birth-input.ts', 'canonical-json.ts', 'sizhu.ts', 'structural-hash.ts'],
+};
+
+/** The entries of each listed directory as the working tree holds them now, sorted. */
+export function currentDirectoryListings(): Record<string, string[]> {
+  const listings: Record<string, string[]> = {};
+  for (const directory of Object.keys(METHOD_SCOPE_DIRECTORIES_AT_BASE)) {
+    listings[directory] = readdirSync(resolve(process.cwd(), directory)).filter((entry) => entry !== '.DS_Store').sort();
+  }
+  return listings;
+}
 
 export const sha256Hex = (data: Buffer | string): string => createHash('sha256').update(data).digest('hex');
 

@@ -219,8 +219,8 @@ describe('ETBZ-117: the historical 2.0 context stays as released and refuses the
 });
 
 describe('ETBZ-117: a context or line version that was never released is refused', () => {
-  it.each(['2.0.1', '2.2.0', '3.0.0', '1.1.0', '', 'current', null, 21, {}])('refuses the version %s at every function that takes one', (version) => {
-    const v = version as unknown as CanonV2LineVersion;
+  it.each(['2.0.1', '2.2.0', '3.0.0', '1.1.0', '', 'current', ' 2.1.0', '2.1.0 ', 'constructor', '__proto__', 'toString', 'hasOwnProperty', null, 21, {}, undefined])('refuses the version %s at every function that takes one', (version) => {
+    const v = version as CanonV2LineVersion;
     expect(contractCodeOf(() => assertCanonV2ContractBindings(structuredClone(PLAN_CONTRACT_BINDINGS_V2_1), v))).toBe('UNKNOWN_CONTRACT_IDENTITY');
     expect(contractCodeOf(() => resolveCanonV2Contract('grounded-reflective-synthesis-lens@2.1.0', v))).toBe('UNKNOWN_CONTRACT_IDENTITY');
     expect(contractCodeOf(() => buildCanonV2Contract('INTERPRETATION_LENS', v))).toBe('UNKNOWN_CONTRACT_IDENTITY');
@@ -229,6 +229,15 @@ describe('ETBZ-117: a context or line version that was never released is refused
     expect(contractCodeOf(() => validateCanonV2ContractCore(canonV2ContractCore('INTERPRETATION_LENS', '2.1.0'), v))).toBe('UNKNOWN_CONTRACT_IDENTITY');
     expect(contractCodeOf(() => assertReleasedCanonV2Contract(buildCanonV2Contract('INTERPRETATION_LENS', '2.1.0'), v))).toBe('UNKNOWN_CONTRACT_IDENTITY');
     expect(contractCodeOf(() => assertCanonV2ContractSet(v))).toBe('UNKNOWN_CONTRACT_IDENTITY');
+  });
+
+  it('reads only an ABSENT version as the A1 2.0 context: an explicit undefined is refused, never defaulted', () => {
+    const absent = (): unknown => assertCanonV2ContractBindings(structuredClone(PLAN_CONTRACT_BINDINGS_V2_0));
+    const explicitlyUndefined = (): unknown => assertCanonV2ContractBindings(structuredClone(PLAN_CONTRACT_BINDINGS_V2_0), undefined as unknown as CanonV2LineVersion);
+    const record: { canonVersion?: CanonV2LineVersion } = {};
+    expect(contractCodeOf(absent)).toBe('ACCEPTED');
+    expect(contractCodeOf(explicitlyUndefined)).toBe('UNKNOWN_CONTRACT_IDENTITY');
+    expect(contractCodeOf(() => resolveCanonV2Contract('grounded-reflective-synthesis-lens@2.0.0', record.canonVersion as CanonV2LineVersion))).toBe('UNKNOWN_CONTRACT_IDENTITY');
   });
 });
 
@@ -306,9 +315,23 @@ describe('ETBZ-117: a 2.1.0 contract is released only at its frozen hash, in its
     expect(contractCodeOf(() => assertReleasedCanonV2Contract({ ...released, structuralHash: `sha256:${'0'.repeat(64)}` }, '2.1.0'))).toBe('BUNDLE_NOT_RELEASED');
   });
 
-  it('checks each line against its own hash table only: the A1 2.0.0 contract is not released on the 2.1 line, the 2.1.0 contract not on the 2.0 line', () => {
-    expect(contractCodeOf(() => assertReleasedCanonV2Contract(buildCanonV2Contract('INTERPRETATION_LENS'), '2.1.0'))).not.toBe('ACCEPTED');
-    expect(contractCodeOf(() => assertReleasedCanonV2Contract(released))).not.toBe('ACCEPTED');
+  it('separates the lines by shape: a 2.0.0 contract lacks the 2.1 record of its earlier version, a 2.1.0 contract carries one the 2.0 line does not know', () => {
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract(buildCanonV2Contract('INTERPRETATION_LENS'), '2.1.0'))).toBe('BUNDLE_SCHEMA_INVALID');
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract(released))).toBe('BUNDLE_SCHEMA_INVALID');
+  });
+
+  it('does not release a contract re-shaped to pass the other line\'s schema: its content hash is released on neither line', () => {
+    const a1 = structuredClone(buildCanonV2Contract('INTERPRETATION_LENS')) as unknown as Json;
+    at(a1, 'supersedes')['priorCanonVersions'] = { statement: 'x', contractRefs: ['grounded-reflective-synthesis-lens@2.0.0'] };
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract(a1 as unknown as CanonV2Contract, '2.1.0'))).toBe('BUNDLE_NOT_RELEASED');
+    const forward = structuredClone(released) as unknown as Json;
+    delete at(forward, 'supersedes')['priorCanonVersions'];
+    const forwardCore = { canon: forward['canon'], source: forward['source'], supersedes: forward['supersedes'], content: forward['content'] };
+    forward['structuralHash'] = structuralHash(forwardCore);
+    expect(contractCodeOf(() => assertReleasedCanonV2Contract(forward as unknown as CanonV2Contract))).toBe('BUNDLE_NOT_RELEASED');
+  });
+
+  it('accepts each released contract on its own line', () => {
     expect(contractCodeOf(() => assertReleasedCanonV2Contract(buildCanonV2Contract('INTERPRETATION_LENS')))).toBe('ACCEPTED');
     expect(contractCodeOf(() => assertReleasedCanonV2Contract(released, '2.1.0'))).toBe('ACCEPTED');
   });
@@ -319,7 +342,7 @@ describe('ETBZ-117: a 2.1.0 contract is released only at its frozen hash, in its
   });
 });
 
-describe('ETBZ-117: every exported function of the current context answers JSON-shaped input with a coded, bounded refusal', () => {
+describe('ETBZ-117: every exported function of the current context refuses JSON-shaped input with a coded, bounded refusal, and never crashes', () => {
   const long = 'x'.repeat(1_000_000);
   const longOtherVersion = `grounded-reflective-synthesis-lens@2.0.${'9'.repeat(1_000_000)}`;
   const ADVERSARIAL: readonly [string, () => unknown][] = [
@@ -343,12 +366,13 @@ describe('ETBZ-117: every exported function of the current context answers JSON-
     ]);
   });
 
-  it.each(functions.map(([name]) => name))('%s refuses every adversarial input with a SkillContractError of a bounded message, or accepts it', (name) => {
+  it.each(functions.map(([name]) => name).filter((name) => name !== 'assertCurrentCanonContractSet'))('%s refuses every adversarial input with a SkillContractError of a bounded message', (name) => {
     const fn = functions.find(([candidate]) => candidate === name)?.[1] as (input: unknown) => unknown;
     const violations: string[] = [];
     for (const [label, input] of ADVERSARIAL) {
       try {
         fn(input());
+        violations.push(`${label}: accepted`);
       } catch (error) {
         if (!(error instanceof SkillContractError)) violations.push(`${label}: ${error instanceof Error ? error.name : typeof error}`);
         else if (error.message.length > 2_000) violations.push(`${label}: message of ${error.message.length} characters`);
@@ -368,7 +392,6 @@ describe('ETBZ-117: every exported function of the current context answers JSON-
               : 'INTERPRETATION_LENS';
       const violations: string[] = [];
       for (const [label, input] of ADVERSARIAL) {
-        if (input() === undefined) continue;
         try {
           if (name === 'assertCanonV2ContractSet') fn(input(), undefined);
           else fn(first, input());
@@ -381,6 +404,14 @@ describe('ETBZ-117: every exported function of the current context answers JSON-
       expect(violations).toEqual([]);
     },
   );
+});
+
+describe('ETBZ-117: refusals in the current context name the 2.1 line', () => {
+  it('names the 2.1 line, not the A1 2.0 one, for a missing slot and for a method reference', () => {
+    expect(messageOf(() => assertCurrentCanonContractBindings({ terminologyLexicon: lexicon }))).toContain('a 2.1 run bound to fewer contracts is not bound');
+    expect(messageOf(() => validateCanonV2ContractCore(coreWith('INTERPRETATION_LENS', (core) => { at(core, 'content', 'vorstossContract')['methodRefs'] = ['branch_animal_lore']; }), '2.1.0'))).toContain('the 2.1 line binds no method');
+    expect(messageOf(() => assertCanonV2ContractBindings({ terminologyLexicon: a1Lexicon }))).toContain('a 2.0 run bound to fewer contracts is not bound');
+  });
 });
 
 describe('ETBZ-117: a released 2.1.0 contract cannot be changed in memory', () => {

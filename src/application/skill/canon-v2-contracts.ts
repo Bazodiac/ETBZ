@@ -9,13 +9,14 @@
 // bundle version. A changed rule, page version or precedence is a new contract
 // version with a new hash - never an edit of 2.0.0, and never an edit of 1.x.
 //
-// The 2.0 context is the Lexicon/Lens pair a Canon v2 run binds
+// The 2.0 context is the Lexicon/Lens pair the A1 release binds
 // (`PLAN_CONTRACT_BINDINGS_V2_0`). Inside it only the 2.0.0 identities resolve:
 // a 1.0.0 or 1.1.0 reference of the same lineage is another version of the
 // same contract and is refused by name - the 1.x identity stays resolvable,
-// but only under the 1.x bundle its runs were made with (ADR 0019). Skill
-// Contract Bundle 2.0.0, which will compose this pair with Method Profile,
-// Long-Form and Anti-Boilerplate v2, is ETBZ-81 (A5), not this module.
+// but only under the 1.x bundle its runs were made with (ADR 0019). Since
+// ETBZ-117 the 2.0 context is historical: C1 and C5 moved to page version 2,
+// and new Canon v2 work - Skill Contract Bundle 2.0.0 (ETBZ-81) among it -
+// binds the current context (`current-canon-contracts.ts`, ADR 0020).
 //
 // What this module does NOT do: it reads no page, interprets nothing, defines
 // no method, fact or operation, and enforces none of the rules it carries -
@@ -108,9 +109,11 @@ export const RELEASED_CANON_V2_CONTRACT_HASHES: Readonly<Record<string, string>>
 });
 
 /**
- * The 2.0 context: the Lexicon and Lens pair a Canon v2 run binds - the pair
- * Skill Contract Bundle 2.0.0 (ETBZ-81) names as its plan bindings. Written out
- * like `PLAN_CONTRACT_BINDINGS_V1_1`, and checked against the v2 sources by
+ * The 2.0 context: the Lexicon and Lens pair the A1 release (ETBZ-77) binds, on
+ * C5 and C1 page version 1. Historical since ETBZ-117: new Canon v2 work and
+ * Skill Contract Bundle 2.0.0 (ETBZ-81) bind `PLAN_CONTRACT_BINDINGS_V2_1`
+ * through `current-canon-contracts.ts` (ADR 0020). Written out like
+ * `PLAN_CONTRACT_BINDINGS_V1_1`, and checked against the v2 sources by
  * `assertCanonV2ContractSet`: a pair that names a 1.x identity is refused.
  */
 export const PLAN_CONTRACT_BINDINGS_V2_0: PlanContractBindings = deepFreeze({
@@ -234,6 +237,20 @@ function lineFor(version: unknown): CanonV2Line {
   return LINES[version as CanonV2LineVersion];
 }
 
+/**
+ * The optional version or context argument of every exported function. Only an
+ * ABSENT argument means 2.0.0 - what ETBZ-77 released; an argument that is
+ * present is read as given, so an explicit `undefined` (a context field missing
+ * from a record, say) is refused like any other unreleased version and never
+ * falls back to the A1 context. New work does not thread a version through
+ * these functions; it binds `current-canon-contracts.ts`.
+ */
+type VersionArgument = [version?: CanonV2LineVersion];
+
+function lineOf(argument: VersionArgument): CanonV2Line {
+  return argument.length === 0 ? LINE_2_0 : lineFor(argument[0]);
+}
+
 function isCanonV2Key(key: string): key is CanonV2ContractKey {
   return (CANON_V2_CONTRACT_KEYS as readonly string[]).includes(key);
 }
@@ -320,7 +337,7 @@ const SYMBOLIC_AUTHORITY_KEYS: ReadonlySet<string> = new Set([
  * names this contract and a section of its page. Collects the cited sections
  * into `cited`.
  */
-function walkContent(value: unknown, path: string, key: CanonV2ContractKey, sections: readonly string[], cited: Set<string>): void {
+function walkContent(value: unknown, path: string, key: CanonV2ContractKey, sections: readonly string[], cited: Set<string>, label: string): void {
   if (typeof value === 'string') {
     if (value.trim() === '') {
       throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)} is empty; a contract carries no blank rule`, { path });
@@ -331,7 +348,7 @@ function walkContent(value: unknown, path: string, key: CanonV2ContractKey, sect
     if (value.length === 0) {
       throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `${shown(path)} is an empty list`, { path });
     }
-    value.forEach((entry, index) => walkContent(entry, `${path}[${index}]`, key, sections, cited));
+    value.forEach((entry, index) => walkContent(entry, `${path}[${index}]`, key, sections, cited, label));
     return;
   }
   if (value === null || typeof value !== 'object') {
@@ -349,7 +366,7 @@ function walkContent(value: unknown, path: string, key: CanonV2ContractKey, sect
     if (name === 'methodRefs') {
       throw new SkillContractError(
         'METHOD_REF_OUT_OF_PROFILE',
-        `${shown(at)}: the 2.0 line binds no method until Method Profile v2 is released (ETBZ-78)`,
+        `${shown(at)}: the ${label} line binds no method until Method Profile v2 is released (ETBZ-78)`,
         { path: at },
       );
     }
@@ -365,7 +382,7 @@ function walkContent(value: unknown, path: string, key: CanonV2ContractKey, sect
       }
       cited.add(section);
     }
-    walkContent(entry, at, key, sections, cited);
+    walkContent(entry, at, key, sections, cited, label);
   }
 }
 
@@ -447,8 +464,8 @@ function refuseMalformedCore(core: unknown, line: CanonV2Line): void {
  * The core is held to the line of `version` (2.0.0 when none is named): a
  * core of another version is refused, never re-read as one of this line.
  */
-export function validateCanonV2ContractCore(core: CanonV2ContractCore, version: CanonV2LineVersion = CANON_V2_CONTRACT_VERSION): void {
-  coded('the contract core', () => validateCore(core, lineFor(version)));
+export function validateCanonV2ContractCore(core: CanonV2ContractCore, ...version: VersionArgument): void {
+  coded('the contract core', () => validateCore(core, lineOf(version)));
 }
 
 function validateCore(core: CanonV2ContractCore, line: CanonV2Line): void {
@@ -532,7 +549,7 @@ function validateCore(core: CanonV2ContractCore, line: CanonV2Line): void {
 
   // 4. The content: text only, no symbolic authority, every block citing a section of its page, every section cited.
   const cited = new Set<string>();
-  walkContent(core.content, key === 'INTERPRETATION_LENS' ? 'lens' : 'lexicon', key, spec.sections, cited);
+  walkContent(core.content, key === 'INTERPRETATION_LENS' ? 'lens' : 'lexicon', key, spec.sections, cited, line.label);
   const uncited = spec.sections.filter((section) => !cited.has(section));
   if (uncited.length > 0) {
     throw new SkillContractError(
@@ -571,8 +588,8 @@ function validateCore(core: CanonV2ContractCore, line: CanonV2Line): void {
 // -----------------------------------------------------------------------------
 
 /** The unvalidated core of a v2 contract - what the hash freezes. A key the line does not release is refused. */
-export function canonV2ContractCore(key: CanonV2ContractKey, version: CanonV2LineVersion = CANON_V2_CONTRACT_VERSION): CanonV2ContractCore {
-  return coded('the key', () => coreFor(key, lineFor(version)));
+export function canonV2ContractCore(key: CanonV2ContractKey, ...version: VersionArgument): CanonV2ContractCore {
+  return coded('the key', () => coreFor(key, lineOf(version)));
 }
 
 function refuseUnreleasedKey(key: unknown, line: CanonV2Line): asserts key is CanonV2ContractKey {
@@ -596,8 +613,8 @@ function coreFor(key: CanonV2ContractKey, line: CanonV2Line): CanonV2ContractCor
 }
 
 /** Builds and validates one v2 contract of a line (2.0.0 when none is named). A key the line does not release is refused. */
-export function buildCanonV2Contract(key: string, version: CanonV2LineVersion = CANON_V2_CONTRACT_VERSION): CanonV2Contract {
-  return coded('the key', () => buildContract(key, lineFor(version)));
+export function buildCanonV2Contract(key: string, ...version: VersionArgument): CanonV2Contract {
+  return coded('the key', () => buildContract(key, lineOf(version)));
 }
 
 function buildContract(key: string, line: CanonV2Line): CanonV2Contract {
@@ -612,8 +629,8 @@ function buildContract(key: string, line: CanonV2Line): CanonV2Contract {
  * contract of its identity on the line of `version` (2.0.0 when none is
  * named): each line checks only its own hash table.
  */
-export function assertReleasedCanonV2Contract(contract: CanonV2Contract, version: CanonV2LineVersion = CANON_V2_CONTRACT_VERSION): void {
-  coded('the contract', () => assertReleased(contract, lineFor(version)));
+export function assertReleasedCanonV2Contract(contract: CanonV2Contract, ...version: VersionArgument): void {
+  coded('the contract', () => assertReleased(contract, lineOf(version)));
 }
 
 function assertReleased(contract: CanonV2Contract, line: CanonV2Line): void {
@@ -636,9 +653,9 @@ function assertReleased(contract: CanonV2Contract, line: CanonV2Line): void {
 }
 
 /** The released v2 contract of a key on a line (2.0.0 when none is named): built, validated and checked against its frozen hash. */
-export function releasedCanonV2Contract(key: string, version: CanonV2LineVersion = CANON_V2_CONTRACT_VERSION): CanonV2Contract {
+export function releasedCanonV2Contract(key: string, ...version: VersionArgument): CanonV2Contract {
   return coded('the key', () => {
-    const line = lineFor(version);
+    const line = lineOf(version);
     const contract = buildContract(key, line);
     assertReleased(contract, line);
     return contract;
@@ -701,8 +718,8 @@ function historicalNote(ref: string, line: CanonV2Line): string {
  * version of the same contract, refused by name; a page address or any other
  * name is unknown here.
  */
-export function resolveCanonV2Contract(ref: string, context: CanonV2LineVersion = CANON_V2_CONTRACT_VERSION): ContractSource {
-  return coded('the reference', () => resolveRef(ref, lineFor(context)));
+export function resolveCanonV2Contract(ref: string, ...context: VersionArgument): ContractSource {
+  return coded('the reference', () => resolveRef(ref, lineOf(context)));
 }
 
 function resolveRef(ref: string, line: CanonV2Line): ContractSource {
@@ -745,22 +762,22 @@ const bindingPairSchema = z.strictObject({
  * accepts only its own pair: the 2.0.0 pair is CONTRACT_DRIFT in the 2.1
  * context, the 2.1.0 pair CONTRACT_DRIFT in the 2.0 context.
  */
-export function assertCanonV2ContractBindings(input: unknown, context: CanonV2LineVersion = CANON_V2_CONTRACT_VERSION): PlanContractBindings {
+export function assertCanonV2ContractBindings(input: unknown, ...context: VersionArgument): PlanContractBindings {
   return coded('the binding pair', () => {
-    const line = lineFor(context);
-    return checkBindingPair(parseBindingPair(input), line);
+    const line = lineOf(context);
+    return checkBindingPair(parseBindingPair(input, line), line);
   });
 }
 
 /** Only plain JSON-shaped data: a plain object at the root and in each slot (no Date, Map, class instance or null prototype), each slot present. */
-function parseBindingPair(input: unknown): ReturnType<typeof bindingPairSchema.safeParse> {
+function parseBindingPair(input: unknown, line: CanonV2Line): ReturnType<typeof bindingPairSchema.safeParse> {
   if (input !== null && typeof input === 'object' && !Array.isArray(input)) {
     if (Object.getPrototypeOf(input) !== Object.prototype) {
       throw new SkillContractError('BUNDLE_SCHEMA_INVALID', '<root>: the binding pair is not a plain object', { path: '<root>' });
     }
     for (const slot of ['interpretationLens', 'terminologyLexicon'] as const) {
       if (!Object.hasOwn(input, slot) || (input as Record<string, unknown>)[slot] === undefined) {
-        throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `the binding pair has no ${slot}; a 2.0 run bound to fewer contracts is not bound`, { slot });
+        throw new SkillContractError('REQUIRED_CONTRACT_MISSING', `the binding pair has no ${slot}; a ${line.label} run bound to fewer contracts is not bound`, { slot });
       }
       const value: unknown = (input as Record<string, unknown>)[slot];
       if (value !== null && typeof value === 'object' && Object.getPrototypeOf(value) !== Object.prototype) {
@@ -824,9 +841,9 @@ export interface CanonV2ContractSet {
  * released source, page and page version). Deterministic: two calls return the
  * same value.
  */
-export function assertCanonV2ContractSet(version: CanonV2LineVersion = CANON_V2_CONTRACT_VERSION): CanonV2ContractSet {
+export function assertCanonV2ContractSet(...version: VersionArgument): CanonV2ContractSet {
   return coded('the version', () => {
-    const line = lineFor(version);
+    const line = lineOf(version);
     const contracts = CANON_V2_CONTRACT_KEYS.map((key) => releasedCanonV2Contract(key, line.version));
     if (line.sources.length !== CANON_V2_CONTRACT_KEYS.length) {
       throw new SkillContractError('BUNDLE_SCHEMA_INVALID', `the ${line.label} line carries a source it does not release`);

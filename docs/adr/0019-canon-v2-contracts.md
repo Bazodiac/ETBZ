@@ -122,7 +122,10 @@ The Lens 1.1 voice invariants quote Rebaseline section 17; what of that section 
 ### 4. The 2.0 context
 
 `PLAN_CONTRACT_BINDINGS_V2_0` is the Lexicon/Lens pair a Canon v2 run binds: the pair bundle 2.0.0 (ETBZ-81) will
-name as its plan bindings. `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The
+name as its plan bindings. (Superseded for new work on 2026-10-05, ETBZ-117: since C1 and C5 moved to page version 2,
+a Canon v2 run and bundle 2.0.0 bind the current context, `PLAN_CONTRACT_BINDINGS_V2_1` through
+`current-canon-contracts.ts`, ADR 0020. This pair stays the A1 context, and the 2.0 context answers as described
+here.) `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The
 input is untrusted: the root and each slot must be plain objects, the shape is parsed strictly, and the input is
 never returned (the repository's pair is). Every object the four v2 modules export is deep-frozen where it is defined,
 so no caller can change, through them, what the next caller is told; built contracts and sets are new objects per
@@ -198,7 +201,10 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
 - **Bundle 2.0.0 (ETBZ-81)** composes `CANON_V2_CONTRACT_SOURCES`, `SEMANTIC_ENVELOPE_V2`, `WORDING_BOUNDARIES_V2`
   and `PLAN_CONTRACT_BINDINGS_V2_0`. It must also carry the 1.1-reference refusal of `assertCanonV2ContractBindings`
   at bundle level: this slice proves that refusal in the 2.0 context, not yet under a 2.0.0 bundle. The v2 content
-  already satisfies the bundle's own data guard: strings only, and none of its refused keys.
+  already satisfies the bundle's own data guard: strings only, and none of its refused keys. (Superseded on
+  2026-10-05, ETBZ-117: bundle 2.0.0 composes the 2.1.0 pair - `CANON_V2_1_CONTRACT_SOURCES`,
+  `SEMANTIC_ENVELOPE_V2_1`, `WORDING_BOUNDARIES_V2_1` and `PLAN_CONTRACT_BINDINGS_V2_1`, through
+  `current-canon-contracts.ts` - not the 2.0.0 values, ADR 0020.)
 - **Precedence in bundle 2.0.0.** The 1.x `PRECEDENCE_TIERS` rank Method Profile and Long-Form above the Lens, and
   every bundle version is built under `PARENT_DECISION` (Rebaseline section 4). Canon v2 puts the red lines, which
   live in the Lens v2, above everything. Bundle 2.0.0 has to record that precedence and its parent decision; this

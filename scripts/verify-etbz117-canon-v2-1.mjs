@@ -30,6 +30,7 @@ const LENS_V2 = 'src/application/skill/semantic-envelope-v2.ts';
 const A1_EVIDENCE = 'docs/evidence/etbz-77/contracts-v2/README.md';
 const REGISTRY = 'src/application/interpretation/method-registry.ts';
 const ADR_0019 = 'docs/adr/0019-canon-v2-contracts.md';
+const NEW_METHOD_MODULE = 'src/application/interpretation/method-profile-v2.ts';
 
 const T = {
   unit: 'tests/unit/etbz117-canon-v2-1.test.ts',
@@ -41,8 +42,13 @@ const A1_BYTES = 'leaves the A1 value modules, its evidence, its suites and its 
 const A1_HASHES = 'keeps the A1 2.0.0 hashes at their released values';
 const SCOPE = 'adds no method: the line releases exactly the Lens and the Lexicon';
 const ADR_CLOSED = 'closes ADR 0019: Accepted with its merge, no open reflection-question decision, its A1 facts intact';
+const ABSENT_ONLY = 'reads only an ABSENT version as the A1 2.0 context';
 
-/** [name, kind, file, find, replace, tests, killer] - kind 'text' (find occurs exactly once). */
+/**
+ * [name, kind, file, find, replace, tests, killer] - kind 'text' (find occurs
+ * exactly once) or 'add' (the file must not exist; it is created with
+ * `replace` as its content and deleted afterwards).
+ */
 const MUTANTS = [
   ['CURRENT -> A1: the current Canon context is pointed back at 2.0.0', 'text', CURRENT,
     'export const CURRENT_CANON_V2_VERSION: CanonV2LineVersion = CANON_V2_1_CONTRACT_VERSION;',
@@ -92,6 +98,10 @@ const MUTANTS = [
     "    if (source.identity === ref) return { kind: 'RELEASED', source };",
     "    if (source.identity !== null && ref.startsWith(source.identity)) return { kind: 'RELEASED', source };",
     [T.negative], 'the 2.1.0 Lens identity with a trailing space'],
+  ['EXPLICIT UNDEFINED: a present but undefined version falls back to the A1 2.0 context', 'text', CONTRACTS,
+    '  return argument.length === 0 ? LINE_2_0 : lineFor(argument[0]);',
+    '  return argument[0] === undefined ? LINE_2_0 : lineFor(argument[0]);',
+    [T.negative], ABSENT_ONLY],
   ['UNKNOWN VERSION: an unreleased context version falls back to the 2.0 line', 'text', CONTRACTS,
     "  if (typeof version !== 'string' || !Object.hasOwn(LINES, version)) {",
     "  if (typeof version !== 'string' || !Object.hasOwn(LINES, version)) {\n    return LINE_2_0;",
@@ -99,6 +109,10 @@ const MUTANTS = [
   ['SCOPE: the Method Profile key joins the Canon v2 line', 'text', CONTRACTS,
     "export const CANON_V2_CONTRACT_KEYS = deepFreeze(['INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON'] as const);",
     "export const CANON_V2_CONTRACT_KEYS = deepFreeze(['INTERPRETATION_LENS', 'TERMINOLOGY_LEXICON', 'METHOD_PROFILE'] as const);",
+    [T.contract], SCOPE],
+  ['SCOPE: a Method Profile v2 module is added beside the registry', 'add', NEW_METHOD_MODULE,
+    '',
+    "// ETBZ-78 preview\nexport const METHOD_PROFILE_V2 = { profileVersion: '2.0.0' };\n",
     [T.contract], SCOPE],
   ['SCOPE: the method registry is edited inside this slice', 'text', REGISTRY,
     'export const RELEASED_REGISTRY_HASHES: Readonly<Record<string, string>> = {',
@@ -111,6 +125,10 @@ const MUTANTS = [
   ['ADR OPEN QUESTION: the ADR 0019 closeout keeps the reflection question open', 'text', ADR_0019,
     'is added or changed. The WIP question for Epic E remains with the Product Owner;',
     'is added or changed. Whether the text-level Prüffrage stays (ETBZ-116) and the WIP question for Epic E remain with the Product Owner;',
+    [T.contract], ADR_CLOSED],
+  ['ADR PARAPHRASE: the ADR 0019 closeout reopens the reflection question in other words', 'text', ADR_0019,
+    'The Golden run (ETBZ-33/54) stays frozen.',
+    'The Golden run (ETBZ-33/54) stays frozen. Ob die Reflexionsfrage als Textimpuls bleibt, entscheidet der Product Owner noch.',
     [T.contract], ADR_CLOSED],
 ];
 
@@ -167,6 +185,22 @@ const results = [];
 for (const [name, kind, file, find, replace, tests, killer] of MUTANTS) {
   let restore;
   try {
+    if (kind === 'add') {
+      if (existsSync(file)) {
+        results.push([name, `SETUP_ERROR (${file} already exists)`]);
+        continue;
+      }
+      writeFileSync(file, replace);
+      restore = () => rmSync(file, { force: true });
+      let verdict;
+      try {
+        verdict = run(tests);
+      } finally {
+        restore();
+      }
+      results.push([name, verdictOf(verdict, killer)]);
+      continue;
+    }
     if (kind !== 'text') {
       results.push([name, `SETUP_ERROR (unknown mutation kind "${kind}")`]);
       continue;
