@@ -168,6 +168,12 @@ run_etbz61_wuxing_guard() { node "${REPO_ROOT}/scripts/verify-etbz61-wuxing-valu
 # are proven by mutation, including the "v2 ref -> 1.1 ref" mutant the ticket names.
 run_etbz77_contracts_v2_guard() { node "${REPO_ROOT}/scripts/verify-etbz77-contracts-v2.mjs"; }
 
+# ETBZ-117 (Canon v2, R0) releases Lens and Lexicon 2.1.0 on C1 and C5 page version 2
+# beside the immutable A1 2.0.0 pair (ADR 0020). Their guards - the current Canon
+# context refusing the A1 pair, a 1.x reference, a wrong page or version, the A1 byte
+# baseline and hashes, the method scope and the ADR 0019 closeout - are proven by mutation.
+run_etbz117_canon_v2_1_guard() { node "${REPO_ROOT}/scripts/verify-etbz117-canon-v2-1.mjs"; }
+
 # --- 7. secret gate -----------------------------------------------------------
 run_secret_gate() { bash "${REPO_ROOT}/scripts/secret-scan.sh"; }
 
@@ -225,6 +231,7 @@ if [ "${RUN_MUTATIONS}" -eq 1 ]; then
   etbz_step "guards :: ETBZ-60 position statements (READING_POSITION_UNGROUNDED forms, exemptions, every-pillar coverage mutation proofs)" run_etbz60_position_guard
   etbz_step "guards :: ETBZ-61 Wu Xing weight display text (noise removal, no rounding, guard mutation proofs)" run_etbz61_wuxing_guard
   etbz_step "guards :: ETBZ-77 Canon v2 contracts (2.0 context identity separation, content freeze, 1.x byte baseline mutation proofs)" run_etbz77_contracts_v2_guard
+  etbz_step "guards :: ETBZ-117 Canon v2 forward fix (current context binding, A1 immutability, method scope, ADR closeout mutation proofs)" run_etbz117_canon_v2_1_guard
 fi
 etbz_step "security :: secret scan + scanner mutation proof" run_secret_gate
 etbz_step "security :: dependency risk scan (runtime tree, high+)" run_dependency_scan

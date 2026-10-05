@@ -1,8 +1,11 @@
 # ADR 0019 — Canon v2: Interpretation Lens v2 and Terminology & Wording Lexicon v2 beside 1.x (ETBZ-77)
 
-- **Status:** Proposed — the ETBZ-77 candidate. Following the repository's ADR convention (CLAUDE.md, "Working
-  notes"), the merge commit is recorded in this line by a docs closeout after the merge. Until then Jira ETBZ-77
-  records the merge commit, its CI run and the Product Owner's merge authorisation.
+- **Status:** Accepted — merged to `main` as `9362f4e2` (PR #31, head `eaeb3ada`, 2026-10-05). Merged under the
+  Product Owner's authorisation of 2026-10-05 ("Push, PR, merge if green", Jira ETBZ-77 comment 17277) after the
+  exact-head CI run 37249568719; post-merge CI run 37253260353 green. The released 2.0.0 identities, their page
+  bindings (C1 v1, C5 v1) and their hashes below are unchanged. On 2026-10-05 the Product Owner revised C1 and C5 to
+  page version 2 (ETBZ-116 decided, see Consequences); the forward fix is Lens and Lexicon 2.1.0 beside 2.0.0,
+  ADR 0020 (ETBZ-117), which records this closeout.
 - **Date:** 2026-10-04
 - **Slice:** ETBZ-77 [CANON-V2/A1], the first slice of Epic ETBZ-69 (Verträge v2). It does not touch Method
   Profile, Long-Form or Anti-Boilerplate (ETBZ-78, -80, -79), Skill Contract Bundle 2.0.0 (ETBZ-81), any gate
@@ -119,7 +122,10 @@ The Lens 1.1 voice invariants quote Rebaseline section 17; what of that section 
 ### 4. The 2.0 context
 
 `PLAN_CONTRACT_BINDINGS_V2_0` is the Lexicon/Lens pair a Canon v2 run binds: the pair bundle 2.0.0 (ETBZ-81) will
-name as its plan bindings. `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The
+name as its plan bindings. (Superseded for new work on 2026-10-05, ETBZ-117: since C1 and C5 moved to page version 2,
+a Canon v2 run and bundle 2.0.0 bind the current context, `PLAN_CONTRACT_BINDINGS_V2_1` through
+`current-canon-contracts.ts`, ADR 0020. This pair stays the A1 context, and the 2.0 context answers as described
+here.) `assertCanonV2ContractBindings` accepts a pair for that context or refuses it. The
 input is untrusted: the root and each slot must be plain objects, the shape is parsed strictly, and the input is
 never returned (the repository's pair is). Every object the four v2 modules export is deep-frozen where it is defined,
 so no caller can change, through them, what the next caller is told; built contracts and sets are new objects per
@@ -189,13 +195,17 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
 ## Consequences
 
 - **Forward work.** ETBZ-78, -79 and -80 release Method Profile, Anti-Boilerplate and Long-Form v2 beside these.
-  The 2.0-line module accepts only the two keys and only 2.0.0 today, so those slices extend it or add their own:
+  The 2.0-line module accepts only the two keys and only 2.0.0 today, so those slices extend it or add their own
+  (since 2026-10-05 it also releases 2.1.0 of the same two keys as a second line, ETBZ-117, ADR 0020):
   - Long-Form has no 1.x identity to continue (its 1.x binding is a page address);
   - a later 2.0.x or 2.1.0 needs a version table beside 2.0.0, not a replacement of it.
 - **Bundle 2.0.0 (ETBZ-81)** composes `CANON_V2_CONTRACT_SOURCES`, `SEMANTIC_ENVELOPE_V2`, `WORDING_BOUNDARIES_V2`
   and `PLAN_CONTRACT_BINDINGS_V2_0`. It must also carry the 1.1-reference refusal of `assertCanonV2ContractBindings`
   at bundle level: this slice proves that refusal in the 2.0 context, not yet under a 2.0.0 bundle. The v2 content
-  already satisfies the bundle's own data guard: strings only, and none of its refused keys.
+  already satisfies the bundle's own data guard: strings only, and none of its refused keys. (Superseded on
+  2026-10-05, ETBZ-117: bundle 2.0.0 composes the 2.1.0 pair - `CANON_V2_1_CONTRACT_SOURCES`,
+  `SEMANTIC_ENVELOPE_V2_1`, `WORDING_BOUNDARIES_V2_1` and `PLAN_CONTRACT_BINDINGS_V2_1`, through
+  `current-canon-contracts.ts` - not the 2.0.0 values, ADR 0020.)
 - **Precedence in bundle 2.0.0.** The 1.x `PRECEDENCE_TIERS` rank Method Profile and Long-Form above the Lens, and
   every bundle version is built under `PARENT_DECISION` (Rebaseline section 4). Canon v2 puts the red lines, which
   live in the Lens v2, above everything. Bundle 2.0.0 has to record that precedence and its parent decision; this
@@ -203,11 +213,14 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
 - **Nothing enforces the rules yet.** The gates are Epic B, and the Skill that writes in C5's voice is Epic C.
   Until they release, the 1.x runtime stays the only executable path, but the hub forbids using it for new
   interpretation, voice or design work.
-- **ETBZ-116.** It leaves open whether the text-level Prüffrage (C1 Vorstoß part 5, C5 REFLEXIONSFRAGE) stays. This
-  slice binds C1 v1 and C5 v1 as they are. If the Product Owner changes either page, the result is a new page
-  version and a new contract version with a new hash. The pair moves together: each v2 contract binds the other's
-  page version (the Lens's voice authority, the Lexicon's red-lines binding), so a new C5 version also gives the
-  Lens a new version. 2.0.0 is never edited.
+- **ETBZ-116 (decided 2026-10-05, after this release).** When this slice was released, ETBZ-116 still held the
+  question whether the text-level Prüffrage (C1 Vorstoß part 5, C5 REFLEXIONSFRAGE) stays; 2.0.0 binds C1 v1 and
+  C5 v1 as they were. The Product Owner has since decided it (Jira ETBZ-116, Canon v2 hub v3 "Pre-A2 reconcile
+  decision"): the reflection question stays as a non-interactive text impulse, with no mandatory Ja / Nein /
+  Teilweise answer and no answer affordance, and C1 and C5 carry that at page version 2. As this record foresaw,
+  the change is a new contract version with a new hash, never an edit of 2.0.0, and the pair moved together (each v2
+  contract binds the other's page version): Lens and Lexicon 2.1.0, ADR 0020 (ETBZ-117). 2.0.0 stays the historical
+  A1 release, bound to C1 v1 and C5 v1, resolvable in its own 2.0 context.
 - **CI budget.** The CI job runs close to its 30-minute limit (`timeout-minutes: 30`): the last eight `main` pushes
   before this slice took 16.8–29.8 min, the longest 29.75 min (run 37083011798), and a sibling pull request that added
   one guard step was cancelled at 30.27 min (run 37145900060). This slice adds a guard step (nine mutants and two
@@ -219,5 +232,5 @@ repository's own pair to the released sources. The 1.x boundaries are unchanged:
 ## What this ADR does not decide
 
 No method, fact kind, claim, relation, plan field, reading-schema field, gate, Skill package, template or renderer
-is added or changed. Whether the text-level Prüffrage stays (ETBZ-116) and the WIP question for Epic E remain with
-the Product Owner. The Golden run (ETBZ-33/54) stays frozen.
+is added or changed. The WIP question for Epic E remains with the Product Owner; the text-level reflection question
+(ETBZ-116) is decided, see Consequences. The Golden run (ETBZ-33/54) stays frozen.
