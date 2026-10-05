@@ -1,0 +1,44 @@
+$ PATH=<PATH without the modern-python plugin shim directory> ETBZ_REVISION=<HEAD> bash scripts/ci-verify.sh
+HEAD 3b88c7004f0e9fddef8c7c9e36a021b96edcaa7b start 2026-10-04T23:59:01Z load: 18,64 16,95 14,84
+python3 for the gate: /usr/local/bin/python3 (the modern-python plugin shim directory is removed from PATH; CI has no such shim)
+
+Steps:
+<<< [03] typecheck :: tsc --noEmit (strict) :: PASS (exit 0)
+<<< [04] lint :: eslint (type-aware defect rules, zero warnings) :: PASS (exit 0)
+<<< [05] tests :: vitest run (all suites) :: PASS (exit 0)
+<<< [06] tests :: executed-count and suite-coverage assertion :: PASS (exit 0)
+<<< [07] build :: tsc -p tsconfig.build.json :: PASS (exit 0)
+<<< [08] build :: output assertion :: PASS (exit 0)
+<<< [09] guards :: architecture + contract + lint mutation proofs :: PASS (exit 0)
+<<< [10] guards :: ETBZ-49 visual system (contract + asset + boundary mutation proofs) :: PASS (exit 0)
+<<< [11] guards :: ETBZ-51 skill contract bundle (binding + precedence + boundary mutation proofs) :: PASS (exit 0)
+<<< [12] guards :: ETBZ-52 skill reading boundary (acceptance + package mutation proofs) :: PASS (exit 0)
+<<< [13] guards :: ETBZ-55 presentation projection (projection + paginator + template + boundary mutation proofs) :: PASS (exit 0)
+<<< [14] guards :: ETBZ-57 customer voice (voice gates + editorial pass + candidate bundle mutation proofs) :: PASS (exit 0)
+<<< [15] guards :: ETBZ-56 Skill-reading presentation (identity + binding + spec + animal-label + quotation mutation proofs) :: PASS (exit 0)
+<<< [16] guards :: ETBZ-58 Pre-Golden rehearsal orchestrator (live gates + replay integrity + eligibility + draft-fact pin mutation proofs) :: PASS (exit 0)
+<<< [17] guards :: ETBZ-53 Golden freeze (input gates + oracle agreement + record value guard + private archive mutation proofs) :: PASS (exit 0)
+<<< [18] guards :: ETBZ-59 Anti-Boilerplate rehearsal (evaluation withdrawal + swap / comparison / removal / IND-8 checks + reviewed pins + reading diagnostics + judges' packets / run record / judgements mutation proofs) :: PASS (exit 0)
+<<< [19] guards :: ETBZ-60 position statements (READING_POSITION_UNGROUNDED forms, exemptions, every-pillar coverage mutation proofs) :: PASS (exit 0)
+<<< [20] guards :: ETBZ-61 Wu Xing weight display text (noise removal, no rounding, guard mutation proofs) :: PASS (exit 0)
+<<< [21] guards :: ETBZ-77 Canon v2 contracts (2.0 context identity separation, content freeze, 1.x byte baseline mutation proofs) :: PASS (exit 0)
+<<< [22] security :: secret scan + scanner mutation proof :: PASS (exit 0)
+<<< [23] security :: dependency risk scan (runtime tree, high+) :: PASS (exit 0)
+<<< [24] security :: full dependency audit (informational) :: PASS (exit 0)
+<<< [25] container :: BUILD_DRY_RUN (build, provenance, non-root, smoke, cleanup) :: PASS (exit 0)
+
+Test count line:
+executed=2218 passed=2218 failed=0 minimum=160
+
+Contract summary:
+  ETBZ-9 VERIFICATION CONTRACT :: SUMMARY
+steps executed : 25
+result         : ALL GREEN
+ci-verify rc=0 end 2026-10-05T00:32:40Z
+
+Note on the PATH. On the machine these records were made on, a Claude Code plugin puts a `python3` shim first on
+PATH (~/.claude/plugins/.../modern-python/.../hooks/shims/python3). It rejects `python3 -`, which
+scripts/verify-guards.sh uses to inject mutations C, C2 and the install-drift mutation, so with the shim those seven
+sub-steps fail without the guard ever being exercised. Measured: with the shim, two earlier branch heads (1f8111e5,
+f1cc43c1) and the base main@cb7605e5 failed exactly the same seven sub-steps (the failure lists are identical,
+`diff` empty). Without the shim, as above, all 33 guard sub-steps pass. CI has no such shim.
