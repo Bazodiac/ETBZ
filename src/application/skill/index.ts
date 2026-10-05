@@ -19,6 +19,11 @@
 // identities, and the 2.0 context that refuses a 1.x reference (ADR 0019). The
 // 1.x modules are not touched; bundle 2.0.0 is ETBZ-81.
 //
+// ETBZ-117 (Canon v2, R0): the 2.1 line beside the 2.0 line - Lens and Lexicon
+// 2.1.0 over C1 and C5 page version 2 - and the current Canon v2 context new
+// work binds (`current-canon-contracts.ts`, ADR 0020). The 2.0.0 modules are
+// not touched.
+//
 // The module is a CONTRACT and a GATE, not a Skill: it holds no prompt, no
 // prose of its own, calls nothing and derives no astrological fact. The Skill
 // package that consumes it lives under `skill/`. The only application module
@@ -29,11 +34,14 @@
 export * from './canon-v2-contracts.js';
 export * from './contract-sources.js';
 export * from './contract-sources-v2.js';
+export * from './contract-sources-v2-1.js';
+export * from './current-canon-contracts.js';
 export * from './errors.js';
 export * from './individuality-contract.js';
 export * from './semantic-envelope.js';
 export * from './semantic-envelope-v1-1.js';
 export * from './semantic-envelope-v2.js';
+export * from './semantic-envelope-v2-1.js';
 export * from './skill-contract-bundle.js';
 export * from './skill-package.js';
 export * from './skill-reading.js';
@@ -41,3 +49,4 @@ export * from './skill-run-errors.js';
 export * from './wording-boundaries.js';
 export * from './wording-boundaries-v1-1.js';
 export * from './wording-boundaries-v2.js';
+export * from './wording-boundaries-v2-1.js';
